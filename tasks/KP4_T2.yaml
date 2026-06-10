@@ -1,0 +1,32 @@
+id: KP4_T2
+knowledge_point: Black-Scholes pricing and Greeks
+pillar: derivatives_risk
+task_type: T2
+title: Delta versus spot as volatility varies
+description: >
+  For the European call with strike 97.5, risk-free rate 4.3% per year
+  (continuous compounding), and 0.58 years to expiry on a non-dividend
+  stock, draw the call delta as a function of the spot price from 70 to 140,
+  with three curves for implied volatilities 15%, 27.6%, and 40%, labeled in
+  a legend. Volatility should be an adjustable parameter. Save the figure
+  to the path given by the output contract. Also report the delta at spot
+  110 with volatility 27.6%. Decimals.
+inputs:
+  strike: 97.5
+  r_annual_cc: 0.043
+  t_years: 0.58
+  sigma_values: [0.15, 0.276, 0.40]
+  spot_grid: [70.0, 140.0]
+  spot_for_number: 110.0
+  sigma_for_number: 0.276
+data_file: null
+figure_required: true
+required_keys: [delta_at_s110, figure_path]
+scoring:
+  optimization: false
+  keys:
+    - key: delta_at_s110
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-6
+conventions_binding: [opt_cont_comp, decimal_units]

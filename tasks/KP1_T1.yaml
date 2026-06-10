@@ -1,0 +1,29 @@
+id: KP1_T1
+knowledge_point: Mean-variance efficient frontier
+pillar: portfolio_theory
+task_type: T1
+title: Global minimum-variance portfolio (3 assets)
+description: >
+  Three risky assets have annualized volatilities 18.7%, 24.3%, and 31.2%.
+  Their correlations are: corr(1,2)=0.21, corr(1,3)=-0.13, corr(2,3)=0.37.
+  Short sales are allowed and the portfolio is fully invested. Compute the
+  weights of the global minimum-variance portfolio and its annualized
+  volatility. Express all quantities as decimals.
+inputs:
+  vols_annual: [0.187, 0.243, 0.312]
+  corr: [[1.0, 0.21, -0.13], [0.21, 1.0, 0.37], [-0.13, 0.37, 1.0]]
+data_file: null
+figure_required: false
+required_keys: [mvp_weights, mvp_vol_annual]
+scoring:
+  optimization: true
+  keys:
+    - key: mvp_vol_annual
+      method: tolerance
+      tau_rel: 1.0e-3
+      tau_abs: 1.0e-6
+    - key: mvp_weights
+      method: portfolio_objective
+      tau_rel: 1.0e-3
+      tau_abs: 1.0e-8
+conventions_binding: [decimal_units]

@@ -1,0 +1,39 @@
+id: KP3_T1
+knowledge_point: Bond duration and convexity
+pillar: fixed_income
+task_type: T1
+title: Price, Macaulay/modified duration, convexity
+description: >
+  A bullet bond has face value 100, a 4.6% annual coupon (paid once a year),
+  7 years to maturity, and trades at a yield to maturity of 5.3% (annual
+  compounding), valued at a coupon date. Compute the price, the Macaulay
+  duration (years), the modified duration (years), and the convexity
+  (in years squared, defined as sum[t(t+1)CF_t/(1+y)^(t+2)]/P).
+inputs:
+  face: 100.0
+  coupon_rate_annual: 0.046
+  n_years: 7
+  ytm_annual: 0.053
+data_file: null
+figure_required: false
+required_keys: [price, macaulay_duration_years, modified_duration_years, convexity]
+scoring:
+  optimization: false
+  keys:
+    - key: price
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-4
+    - key: macaulay_duration_years
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-6
+    - key: modified_duration_years
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-6
+    - key: convexity
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-4
+conventions_binding: [bond_annual_comp, decimal_units]

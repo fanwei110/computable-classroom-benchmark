@@ -1,0 +1,36 @@
+id: KP1_T2
+knowledge_point: Mean-variance efficient frontier
+pillar: portfolio_theory
+task_type: T2
+title: Efficient frontier as correlation varies (2 assets)
+description: >
+  Two risky assets have expected annual returns 7.1% and 12.4% and annualized
+  volatilities 16.3% and 28.9%. Produce a figure that draws the
+  mean-variance frontier (volatility on x, expected return on y) for
+  correlations 0.15, 0.45, and 0.75 on the same axes, marking the global
+  minimum-variance portfolio on each curve. Short sales allowed, fully
+  invested. Save the figure to the path given by the output contract. Also
+  report, for correlation 0.45: the annualized volatility of the global
+  minimum-variance portfolio, and the minimum annualized volatility
+  achievable at a target expected return of 10%. Decimals throughout.
+inputs:
+  mus_annual: [0.071, 0.124]
+  vols_annual: [0.163, 0.289]
+  rho_values: [0.15, 0.45, 0.75]
+  rho_for_numbers: 0.45
+  target_return_annual: 0.10
+data_file: null
+figure_required: true
+required_keys: [mvp_vol_at_rho45, frontier_vol_at_target, figure_path]
+scoring:
+  optimization: true
+  keys:
+    - key: mvp_vol_at_rho45
+      method: tolerance
+      tau_rel: 1.0e-3
+      tau_abs: 1.0e-6
+    - key: frontier_vol_at_target
+      method: tolerance
+      tau_rel: 1.0e-3
+      tau_abs: 1.0e-6
+conventions_binding: [decimal_units]

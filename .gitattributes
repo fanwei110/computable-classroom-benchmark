@@ -1,0 +1,7 @@
+# Line-ending discipline: the snapshot CSV's SHA256 is recorded over LF
+# bytes; no platform may rewrite it. Keep all text LF for reproducibility.
+* text=auto eol=lf
+data/market_snapshot_v1.csv -text
+data/SHA256SUMS.txt -text
+*.pdf binary
+*.png binary

@@ -1,0 +1,37 @@
+id: KP3_T3
+knowledge_point: Bond duration and convexity
+pillar: fixed_income
+task_type: T3
+title: Scenario probe - how hard does an 80bp rise hit the bond?
+canonical_question: >
+  Take that 7-year bond we looked at - face 100, 4.6% annual coupon, yield
+  5.3%. If yields rise by 80 basis points, roughly how much does its price
+  fall?
+description: >
+  Course convention (duration_firstorder): the taught rule of thumb is the
+  first-order modified-duration approximation, so the strict answer is
+  D_mod * 0.008 reported as a positive decimal magnitude of the fall.
+inputs:
+  face: 100.0
+  coupon_rate_annual: 0.046
+  n_years: 7
+  ytm_annual: 0.053
+  dy: 0.008
+data_file: null
+figure_required: false
+required_keys: [price_drop_pct]
+scoring:
+  optimization: false
+  keys:
+    - key: price_drop_pct
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-6
+conventions_binding: [bond_annual_comp, decimal_units, duration_firstorder]
+t3_defensible_conventions:
+  - label: strict_duration_only
+    note: first-order modified-duration approximation (course rule of thumb; strict tier)
+  - label: duration_plus_convexity
+    note: second-order approximation; defensible only if declared
+  - label: exact_repricing
+    note: full repricing at y+80bp; defensible only if declared

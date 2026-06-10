@@ -1,0 +1,29 @@
+id: KP5_T2
+knowledge_point: Value-at-Risk
+pillar: derivatives_risk
+task_type: T2
+title: Historical VaR - P&L histogram with VaR marker
+description: >
+  Load the daily return series in column "fund" of the course data snapshot
+  (CSV path given in the prompt). For a 1,000,000 CNY position, draw a
+  histogram of the daily P&L distribution and mark the 95% one-day
+  historical VaR with a labeled vertical line; the confidence level should
+  be an adjustable parameter. Save the figure to the path given by the
+  output contract. Also report the 95% one-day historical VaR as a positive
+  CNY amount, computed as the linearly interpolated empirical percentile
+  (numpy default) of the P&L distribution.
+inputs:
+  position_value_cny: 1000000.0
+  confidence: 0.95
+  data_column: fund
+data_file: data/market_snapshot_v1.csv
+figure_required: true
+required_keys: [hist_var_95_1d, figure_path]
+scoring:
+  optimization: false
+  keys:
+    - key: hist_var_95_1d
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0
+conventions_binding: [hist_var_linear, var_positive, decimal_units]

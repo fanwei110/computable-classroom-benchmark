@@ -1,0 +1,38 @@
+id: KP2_T1
+knowledge_point: CAPM and the security market line
+pillar: asset_pricing
+task_type: T1
+title: CAPM expected returns and alpha
+description: >
+  The risk-free rate is 2.3% per year and the expected market return is 9.4%
+  per year. Stocks X, Y, Z have betas 0.62, 1.18, and 1.51. Compute the CAPM
+  expected annual return of each stock. Stock Y actually returned 13.1% over
+  the year; compute its alpha relative to the CAPM prediction. Decimals.
+inputs:
+  rf_annual: 0.023
+  expected_market_return_annual: 0.094
+  betas: {x: 0.62, y: 1.18, z: 1.51}
+  realized_return_y_annual: 0.131
+data_file: null
+figure_required: false
+required_keys: [er_x, er_y, er_z, alpha_y]
+scoring:
+  optimization: false
+  keys:
+    - key: er_x
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-6
+    - key: er_y
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-6
+    - key: er_z
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-6
+    - key: alpha_y
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-6
+conventions_binding: [decimal_units]

@@ -1,0 +1,53 @@
+# Acceptance manifest for the adversarial validation suite (frozen at
+# preregistration). 20 correct-but-format-hostile samples must be judged
+# correct (or defensible / clarify where stated); 20 planted-error samples
+# must be judged wrong AND archived to the right bucket.
+# planted_class documents the intended human error-coding class
+# (codebook.md) - it is drill material for coder calibration, not an
+# automated output of the harness.
+
+correct:
+  - {file: c01_kp1t1_noisy_prints.py,      task: KP1_T1, expect: correct, note: noisy prints}
+  - {file: c02_kp2t1_dict_subclass.py,     task: KP2_T1, expect: correct, note: dict subclass}
+  - {file: c03_kp4t1_numpy_scalars.py,     task: KP4_T1, expect: correct, note: numpy scalars and 0-d arrays}
+  - {file: c04_kp5t1_pandas_series.py,     task: KP5_T1, expect: correct, note: result is a pandas Series}
+  - {file: c05_kp6t1_dataframe_row.py,     task: KP6_T1, expect: correct, note: result is a 1-row DataFrame}
+  - {file: c06_kp3t1_class_encapsulation.py, task: KP3_T1, expect: correct, note: heavy OOP}
+  - {file: c07_kp1t1_tuple_weights.py,     task: KP1_T1, expect: correct, note: weights as tuple}
+  - {file: c08_kp1t1_scipy_optimizer.py,   task: KP1_T1, expect: correct, note: solver route - objective comparison}
+  - {file: c09_kp4t1_put_call_parity.py,   task: KP4_T1, expect: correct, note: equivalent formula via parity}
+  - {file: c10_kp5t1_verbose_warnings.py,  task: KP5_T1, expect: correct, note: warnings and stderr noise}
+  - {file: c11_kp2t1_decimal_values.py,    task: KP2_T1, expect: correct, note: Decimal values}
+  - {file: c12_kp3t1_zip_dict.py,          task: KP3_T1, expect: correct, note: dict(zip()) and hostile formatting}
+  - {file: c13_kp6t1_extra_keys.py,        task: KP6_T1, expect: correct, note: extra keys beyond contract}
+  - {file: c14_kp4t2_figure.py,            task: KP4_T2, expect: correct, note: T2 with real figure}
+  - {file: c15_kp5t2_manual_percentile.py, task: KP5_T2, expect: correct, note: hand-rolled percentile}
+  - {file: c16_kp5t3_declared_365.py,      task: KP5_T3, expect: defensible, tier: defensible,
+     note: alternative convention explicitly declared}
+  - {file: c17_kp1t3_strict.py,            task: KP1_T3, expect: correct, tier: strict, note: strict weights}
+  - {file: c18_kp6t3_strict.py,            task: KP6_T3, expect: correct, tier: strict, note: strict conventions}
+  - {file: c19_kp3t3_strict_rule_of_thumb.py, task: KP3_T3, expect: correct, tier: strict, note: course rule of thumb}
+  - {file: c20_kp2t3_clarify.txt,          task: KP2_T3, expect: clarify, completion_only: true,
+     note: clarifying question instead of code}
+
+planted:
+  - {file: p01_kp5t1_365_silent.py,        task: KP5_T1, expect: numeric_wrong, planted_class: conventional, note: sqrt(365) silent}
+  - {file: p02_kp5t1_negative_sign.py,     task: KP5_T1, expect: numeric_wrong, planted_class: conventional, note: negative VaR sign}
+  - {file: p03_kp2t1_percent_units.py,     task: KP2_T1, expect: numeric_wrong, planted_class: conventional, note: percent vs decimal}
+  - {file: p04_kp6t1_250_silent.py,        task: KP6_T1, expect: numeric_wrong, planted_class: conventional, note: 250-day annualization}
+  - {file: p05_kp6t1_ddof0.py,             task: KP6_T1, expect: numeric_wrong, planted_class: conventional, note: ddof=0}
+  - {file: p06_kp3t1_macaulay_as_modified.py, task: KP3_T1, expect: numeric_wrong, planted_class: conceptual, note: Macaulay under modified key}
+  - {file: p07_kp4t1_discrete_discount.py, task: KP4_T1, expect: numeric_wrong, planted_class: conventional, note: discrete discounting}
+  - {file: p08_kp4t1_vega_percent.py,      task: KP4_T1, expect: numeric_wrong, planted_class: conventional, note: vega per percentage point}
+  - {file: p09_kp5t1_twotailed_z.py,       task: KP5_T1, expect: numeric_wrong, planted_class: conceptual, note: two-tailed z for one-tailed VaR}
+  - {file: p10_kp2t3_annual_rf.py,         task: KP2_T3, expect: numeric_wrong, tier: wrong, planted_class: conventional, note: annual rf in monthly CAPM}
+  - {file: p11_kp1t1_corr_as_cov.py,       task: KP1_T1, expect: numeric_wrong, planted_class: conceptual, note: correlation as covariance}
+  - {file: p12_kp1t1_syntax_error.py,      task: KP1_T1, expect: code_error, planted_class: code, note: syntax error}
+  - {file: p13_kp1t1_shape_error.py,       task: KP1_T1, expect: code_error, planted_class: code, note: runtime shape error}
+  - {file: p14_kp4t1_wrong_case_keys.py,   task: KP4_T1, expect: format_failure, planted_class: format, note: wrong-case keys}
+  - {file: p15_kp6t1_no_result.py,         task: KP6_T1, expect: format_failure, planted_class: format, note: result never defined}
+  - {file: p16_kp3t1_semiannual.py,        task: KP3_T1, expect: numeric_wrong, planted_class: conventional, note: semiannual treatment of annual bond}
+  - {file: p17_kp3t1_convexity_variant.py, task: KP3_T1, expect: numeric_wrong, planted_class: conventional, note: convexity without (1+y)^2 divisor}
+  - {file: p18_kp5t3_declare365_use250.py, task: KP5_T3, expect: numeric_wrong, tier: wrong, planted_class: conventional, note: declares 365 but implements 250}
+  - {file: p19_kp6t3_ignore_rf.py,         task: KP6_T3, expect: numeric_wrong, tier: wrong, planted_class: conventional, note: silently ignores stated rf}
+  - {file: p20_kp1t2_missing_figure.py,    task: KP1_T2, expect: vis_failure, planted_class: visualization, note: figure never saved}

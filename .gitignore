@@ -1,0 +1,8 @@
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+harness/_tmp/
+figures/_fig1_preview.png
+runs/raw/
+config/models.yaml
+*.tmp

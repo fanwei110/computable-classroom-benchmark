@@ -1,0 +1,32 @@
+id: KP2_T3
+knowledge_point: CAPM and the security market line
+pillar: asset_pricing
+task_type: T3
+title: Scenario probe - what should the stock have returned last month?
+canonical_question: >
+  A stock has a beta of 1.42. Last month the market fell 5.8%, and the
+  risk-free rate is 4.7% a year. What does CAPM say the stock's return
+  should have been last month?
+description: >
+  CAPM prediction at the monthly horizon. Course convention converts the
+  annual risk-free rate to monthly by simple division (0.047/12). Decimals.
+inputs:
+  beta: 1.42
+  market_return_monthly: -0.058
+  rf_annual: 0.047
+data_file: null
+figure_required: false
+required_keys: [capm_return_monthly]
+scoring:
+  optimization: false
+  keys:
+    - key: capm_return_monthly
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-6
+conventions_binding: [decimal_units, rf_simple_split]
+t3_defensible_conventions:
+  - label: strict_rf_simple
+    note: rf_monthly = 0.047/12 (course convention; strict tier)
+  - label: rf_geometric
+    note: rf_monthly = 1.047**(1/12) - 1; defensible only if declared

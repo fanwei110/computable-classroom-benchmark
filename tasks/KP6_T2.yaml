@@ -1,0 +1,28 @@
+id: KP6_T2
+knowledge_point: Sharpe ratio and performance attribution
+pillar: portfolio_theory
+task_type: T2
+title: Rolling Sharpe ratio
+description: >
+  Load the daily return series in column "fund" of the course data snapshot
+  (CSV path given in the prompt). With an annual risk-free rate of 2.1%
+  (daily = annual/252), draw the rolling 60-trading-day annualized Sharpe
+  ratio over time (ddof=1, 252-day annualization), with the window length
+  as an adjustable parameter. Save the figure to the path given by the
+  output contract. Also report the Sharpe value of the final (most recent)
+  60-day window.
+inputs:
+  data_column: fund
+  rf_annual: 0.021
+  window_days: 60
+data_file: data/market_snapshot_v1.csv
+figure_required: true
+required_keys: [rolling_sharpe_last, figure_path]
+scoring:
+  optimization: false
+  keys:
+    - key: rolling_sharpe_last
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-6
+conventions_binding: [ann_252, ddof_1, rf_simple_split, decimal_units]

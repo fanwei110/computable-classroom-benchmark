@@ -1,0 +1,5 @@
+Before I run this calculation, could you clarify one thing: which convention
+should I use to bring the 4.7% annual risk-free rate down to a monthly figure -
+simple division by 12, or geometric compounding? The CAPM answer will differ
+slightly between the two, and I'd rather match the course's convention than
+guess. Also, do you want the result as a decimal or in percent?

@@ -1,0 +1,33 @@
+id: KP5_T1
+knowledge_point: Value-at-Risk
+pillar: derivatives_risk
+task_type: T1
+title: Parametric VaR at two confidence/horizon settings
+description: >
+  A position is worth 1,850,000 CNY and its annualized return volatility is
+  21.8%. Under the delta-normal (parametric) model with zero mean, compute
+  (i) the 95% one-day VaR and (ii) the 99% ten-day VaR (square-root-of-time
+  scaling from one day). Course conventions: de-annualize by sqrt(252);
+  one-tailed z; report VaR as positive CNY loss amounts.
+inputs:
+  position_value_cny: 1850000.0
+  sigma_annual: 0.218
+  conf_a: 0.95
+  horizon_a_days: 1
+  conf_b: 0.99
+  horizon_b_days: 10
+data_file: null
+figure_required: false
+required_keys: [var_95_1d, var_99_10d]
+scoring:
+  optimization: false
+  keys:
+    - key: var_95_1d
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0
+    - key: var_99_10d
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0
+conventions_binding: [ann_252, var_positive, decimal_units]

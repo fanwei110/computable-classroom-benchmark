@@ -1,0 +1,45 @@
+id: KP6_T1
+knowledge_point: Sharpe ratio and performance attribution
+pillar: portfolio_theory
+task_type: T1
+title: Annualized Sharpe from daily data, plus BHB attribution
+description: >
+  Part 1: Load the daily return series in column "fund" of the course data
+  snapshot (CSV path given in the prompt). With an annual risk-free rate of
+  2.1% (converted to daily by dividing by 252), compute the annualized
+  Sharpe ratio using the sample standard deviation (ddof=1) and a 252-day
+  annualization. Part 2: A portfolio and its benchmark have three sectors.
+  Portfolio weights [0.45, 0.35, 0.20] and sector returns [0.083, 0.021,
+  -0.014]; benchmark weights [0.40, 0.40, 0.20] and sector returns [0.067,
+  0.034, -0.009]. Compute the Brinson-Hood-Beebower allocation, selection,
+  and interaction effects (decimals).
+inputs:
+  data_column: fund
+  rf_annual: 0.021
+  w_portfolio: [0.45, 0.35, 0.20]
+  r_portfolio: [0.083, 0.021, -0.014]
+  w_benchmark: [0.40, 0.40, 0.20]
+  r_benchmark: [0.067, 0.034, -0.009]
+data_file: data/market_snapshot_v1.csv
+figure_required: false
+required_keys: [sharpe_annual, allocation_effect, selection_effect, interaction_effect]
+scoring:
+  optimization: false
+  keys:
+    - key: sharpe_annual
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-6
+    - key: allocation_effect
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-8
+    - key: selection_effect
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-8
+    - key: interaction_effect
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-8
+conventions_binding: [ann_252, ddof_1, rf_simple_split, attr_bhb, decimal_units]

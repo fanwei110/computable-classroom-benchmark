@@ -1,0 +1,38 @@
+id: KP2_T2
+knowledge_point: CAPM and the security market line
+pillar: asset_pricing
+task_type: T2
+title: Security market line with assets above and below
+description: >
+  With a risk-free rate of 2.3% and an expected market return of 9.4% per
+  year, draw the security market line for betas from 0 to 2. Plot stocks
+  X (beta 0.62, expected return 8.1%), Y (beta 1.18, expected return 13.1%),
+  and Z (beta 1.51, expected return 9.9%) as labeled points so it is visible
+  which lie above or below the line. The figure should be parameterized so
+  the risk-free rate and market return can be changed. Save the figure to
+  the path given by the output contract. Also report the slope of the SML
+  (the market risk premium) and the CAPM expected return at beta 1.27.
+  Decimals.
+inputs:
+  rf_annual: 0.023
+  expected_market_return_annual: 0.094
+  points:
+    x: {beta: 0.62, realized: 0.081}
+    y: {beta: 1.18, realized: 0.131}
+    z: {beta: 1.51, realized: 0.099}
+  beta_for_number: 1.27
+data_file: null
+figure_required: true
+required_keys: [sml_slope, er_at_beta_127, figure_path]
+scoring:
+  optimization: false
+  keys:
+    - key: sml_slope
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-6
+    - key: er_at_beta_127
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-6
+conventions_binding: [decimal_units]

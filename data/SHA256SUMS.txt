@@ -1,0 +1,1 @@
+60b79b0481aef06ace2c3c3d729e2806c4da92f209785cb34e17bfb13a565aa1  market_snapshot_v1.csv

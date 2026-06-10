@@ -1,0 +1,35 @@
+id: KP5_T3
+knowledge_point: Value-at-Risk
+pillar: derivatives_risk
+task_type: T3
+title: Scenario probe - desk VaR from annualized volatility
+canonical_question: >
+  Our desk reports an annualized volatility of 24% on a 2,700,000 CNY
+  position. What's the 95% one-day VaR?
+description: >
+  Parametric one-day VaR. Course strict answer de-annualizes by sqrt(252),
+  uses one-tailed z = Phi^-1(0.95), zero mean, and reports a positive CNY
+  loss amount. De-annualizing by sqrt(250) or sqrt(365) is defensible only
+  if the generation declares the choice.
+inputs:
+  position_value_cny: 2700000.0
+  sigma_annual: 0.24
+  confidence: 0.95
+data_file: null
+figure_required: false
+required_keys: [var_95_1d]
+scoring:
+  optimization: false
+  keys:
+    - key: var_95_1d
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0
+conventions_binding: [ann_252, var_positive, decimal_units]
+t3_defensible_conventions:
+  - label: strict_252
+    note: de-annualize by sqrt(252) (course convention; strict tier)
+  - label: alt_250
+    note: de-annualize by sqrt(250); defensible only if declared
+  - label: alt_365
+    note: de-annualize by sqrt(365); defensible only if declared

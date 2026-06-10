@@ -1,0 +1,37 @@
+# Model & decoding configuration - TEMPLATE.
+# The author must fill and LOCK this file before stage 2 (manual step #2 in
+# the stage-1 plan). Once the first generation is collected, this file is
+# frozen; any change is disclosed.
+#
+# Paper mapping: M1 = international frontier model; M2, M3 = widely deployed
+# Chinese models (real names + versions are reported in the paper, not
+# anonymized).
+
+models:
+  M1:
+    provider: ""            # e.g. anthropic / openai
+    model_id: ""            # exact API model id, pinned version
+    api_snapshot_date: ""   # YYYY-MM-DD
+  M2:
+    provider: ""
+    model_id: ""
+    api_snapshot_date: ""
+  M3:
+    provider: ""
+    model_id: ""
+    api_snapshot_date: ""
+
+decoding:                   # classroom-deployment values ([TEMP]/[TOPP])
+  temperature: null
+  top_p: null
+
+prompt_language: ""         # [PROMPT_LANG] - matches classroom practice
+
+system_prompt: |
+  # released verbatim with the benchmark; classroom deployment value
+
+repetitions:
+  c1_c3: {variants_per_task: 2, reps_per_variant: 5}
+  c2_c4: {variants_per_task: 1, reps_per_variant: 10}
+
+locked: false               # set true at freeze; stage 2 refuses to run if false

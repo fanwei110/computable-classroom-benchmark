@@ -1,0 +1,57 @@
+Dual-path verification report
+checks: 52
+
+[PASS] KP1_T1.mvp_vol_annual: ref=0.146502688061 alt=0.146502688061 |diff|=2.78e-17
+[PASS] KP1_T1.mvp_weights[0]: ref=0.619322048227 alt=0.619322048227 |diff|=0
+[PASS] KP1_T1.mvp_weights[1]: ref=0.157251631106 alt=0.157251631106 |diff|=2.78e-17
+[PASS] KP1_T1.mvp_weights[2]: ref=0.223426320667 alt=0.223426320667 |diff|=1.11e-16
+[PASS] KP1_T1.objective.min_variance: ref=0.0214630376091 alt=0.0214630376091 |diff|=3.47e-18
+[PASS] KP1_T2.mvp_vol_at_rho45: ref=0.161687582191 alt=0.161687582191 |diff|=0
+[PASS] KP1_T2.frontier_vol_at_target: ref=0.202382331181 alt=0.202382331181 |diff|=2.5e-16
+[PASS] KP1_T2.mvp_vol_at_rho45 (SLSQP): ref=0.161687582191 alt=0.161687582191 |diff|=2.78e-17
+[PASS] KP1_T3[strict_60A_40B].vol_before_annual: ref=0.184853758415 alt=0.184853758415 |diff|=0
+[PASS] KP1_T3[strict_60A_40B].vol_after_annual: ref=0.217454436607 alt=0.217454436607 |diff|=2.78e-17
+[PASS] KP1_T3[reversed_40A_60B].vol_before_annual: ref=0.212229856524 alt=0.212229856524 |diff|=2.78e-17
+[PASS] KP1_T3[reversed_40A_60B].vol_after_annual: ref=0.241157691148 alt=0.241157691148 |diff|=0
+[PASS] KP2_T1.er_x: ref=0.06702 alt=0.06702 |diff|=0
+[PASS] KP2_T1.er_y: ref=0.10678 alt=0.10678 |diff|=1.39e-17
+[PASS] KP2_T1.er_z: ref=0.13021 alt=0.13021 |diff|=2.78e-17
+[PASS] KP2_T1.alpha_y: ref=0.02422 alt=0.02422 |diff|=6.94e-18
+[PASS] KP2_T2.sml_slope: ref=0.071 alt=0.071 |diff|=1.39e-17
+[PASS] KP2_T2.er_at_beta_127: ref=0.11317 alt=0.11317 |diff|=1.39e-17
+[PASS] KP2_T3[strict_rf_simple]: ref=-0.084005 alt=-0.084005 |diff|=0
+[PASS] KP2_T3[rf_geometric]: ref=-0.0839705928503 alt=-0.0839705928503 |diff|=2.78e-17
+[PASS] KP3_T1.price: ref=95.9932100708 alt=95.9932100708 |diff|=2.84e-14
+[PASS] KP3_T1.macaulay_duration_years: ref=6.12058275166 alt=6.12058275166 |diff|=0
+[PASS] KP3_T1.modified_duration_years: ref=5.81251923235 alt=5.81251923235 |diff|=8.88e-16
+[PASS] KP3_T1.convexity: ref=42.1336329947 alt=42.1336329947 |diff|=1.42e-14
+[PASS] KP3_T2.price_at_up100bp: ref=90.6103159206 alt=90.6103159206 |diff|=1.42e-14
+[PASS] KP3_T2.dur_approx_change_up100bp: ref=-0.0581251923235 alt=-0.0581251923235 |diff|=6.94e-18
+[PASS] KP3_T3[strict_duration_only]: ref=0.0465001538588 alt=0.0465001538588 |diff|=0
+[PASS] KP3_T3[duration_plus_convexity]: ref=0.0451518776029 alt=0.0451518776029 |diff|=6.94e-18
+[PASS] KP3_T3[exact_repricing]: ref=0.0451813349901 alt=0.0451813349901 |diff|=9.02e-17
+[PASS] KP4_T1.call_price: ref=13.3137046518 alt=13.3137046518 |diff|=8.88e-15
+[PASS] KP4_T1.call_delta: ref=0.697438173015 alt=0.697438173015 |diff|=1.11e-16
+[PASS] KP4_T1.call_vega: ref=27.5645746027 alt=27.5645746027 |diff|=3.55e-15
+[PASS] KP4_T2.delta_at_s110: ref=0.787458652923 alt=0.787458652923 |diff|=0
+[PASS] KP4_T3[strict_exact_reprice]: ref=0.276409106108 alt=0.276409106108 |diff|=8.94e-15
+[PASS] KP4_T3[vega_approximation]: ref=0.275645746027 alt=0.275645746027 |diff|=0
+[PASS] z(0.95): scipy vs mpmath: ref=1.64485362695 alt=1.64485362695 |diff|=4.44e-16
+[PASS] z(0.99): scipy vs mpmath: ref=2.32634787404 alt=2.32634787404 |diff|=4.44e-16
+[PASS] KP5_T1.var_95_1d: ref=41788.3485481 alt=41788.3485481 |diff|=2.18e-11
+[PASS] KP5_T1.var_99_10d: ref=186897.120265 alt=186897.120265 |diff|=5.82e-11
+[PASS] KP5_T2.hist_var_95_1d: ref=17801.6655 alt=17801.6655 |diff|=0
+[PASS] KP5_T3[strict_252]: ref=67143.1933031 alt=67143.1933031 |diff|=4.37e-11
+[PASS] KP5_T3[alt_250]: ref=67411.2310687 alt=67411.2310687 |diff|=2.91e-11
+[PASS] KP5_T3[alt_365]: ref=55789.9317904 alt=55789.9317904 |diff|=1.46e-11
+[PASS] KP6_T1.sharpe_annual: ref=0.212021287935 alt=0.212021287935 |diff|=8.33e-17
+[PASS] KP6_T1.allocation_effect: ref=0.00165 alt=0.00165 |diff|=2.6e-18
+[PASS] KP6_T1.selection_effect: ref=0.0002 alt=0.0002 |diff|=1.08e-18
+[PASS] KP6_T1.interaction_effect: ref=0.00145 alt=0.00145 |diff|=4.34e-19
+[PASS] KP6_T2.rolling_sharpe_last: ref=-0.0907989348882 alt=-0.0907989348882 |diff|=6.94e-17
+[PASS] KP6_T3[strict_252_ddof1_rfsimple]: ref=0.212021287935 alt=0.212021287935 |diff|=8.33e-17
+[PASS] KP6_T3[rf_geometric]: ref=0.213234029398 alt=0.213234029398 |diff|=0
+[PASS] KP6_T3[ddof_0]: ref=0.212231940036 alt=0.212231940036 |diff|=8.33e-17
+[PASS] KP6_T3[alt_250]: ref=0.210241383736 alt=0.210241383736 |diff|=5.55e-17
+
+RESULT: 52/52 passed

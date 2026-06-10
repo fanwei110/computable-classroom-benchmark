@@ -1,0 +1,36 @@
+id: KP4_T3
+knowledge_point: Black-Scholes pricing and Greeks
+pillar: derivatives_risk
+task_type: T3
+title: Scenario probe - one-point volatility bump
+canonical_question: >
+  Same call as before - spot 103.7, strike 97.5, vol 27.6%, rate 4.3%, 0.58
+  years left. If implied volatility goes up by one percentage point, how
+  much does the call price rise?
+description: >
+  Course strict answer: exact repricing, BS(sigma=0.286) - BS(sigma=0.276).
+  The vega approximation (vega * 0.01) is a defensible alternative if
+  declared. Currency units of the option price.
+inputs:
+  spot: 103.7
+  strike: 97.5
+  sigma_annual: 0.276
+  r_annual_cc: 0.043
+  t_years: 0.58
+  dsigma: 0.01
+data_file: null
+figure_required: false
+required_keys: [price_change]
+scoring:
+  optimization: false
+  keys:
+    - key: price_change
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-6
+conventions_binding: [opt_cont_comp, decimal_units]
+t3_defensible_conventions:
+  - label: strict_exact_reprice
+    note: BS(sigma+0.01) - BS(sigma) (course convention; strict tier)
+  - label: vega_approximation
+    note: vega * 0.01; defensible only if declared

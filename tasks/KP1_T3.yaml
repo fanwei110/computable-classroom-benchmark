@@ -1,0 +1,39 @@
+id: KP1_T3
+knowledge_point: Mean-variance efficient frontier
+pillar: portfolio_theory
+task_type: T3
+title: Scenario probe - correlation shock on a 60/40 portfolio
+canonical_question: >
+  Asset A runs at about 18.4% annualized volatility and asset B at about
+  29.7%. If the correlation between them rises from 0.3 to 0.8, what happens
+  to the volatility of a 60/40 portfolio of A and B?
+description: >
+  Compute the annualized volatility of the 60/40 portfolio (weights mapping
+  per course convention: 60% in the first-named asset A) at correlation 0.3
+  and at correlation 0.8. Decimals.
+inputs:
+  vol_a_annual: 0.184
+  vol_b_annual: 0.297
+  rho_before: 0.3
+  rho_after: 0.8
+  weights_strict: [0.6, 0.4]
+data_file: null
+figure_required: false
+required_keys: [vol_before_annual, vol_after_annual]
+scoring:
+  optimization: false
+  keys:
+    - key: vol_before_annual
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-6
+    - key: vol_after_annual
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-6
+conventions_binding: [decimal_units, first_named_first]
+t3_defensible_conventions:
+  - label: strict_60A_40B
+    note: 60% in first-named asset A (course convention; strict tier)
+  - label: reversed_40A_60B
+    note: 60% in B; defensible only if the generation declares the weight mapping

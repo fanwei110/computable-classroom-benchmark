@@ -1,0 +1,37 @@
+id: KP3_T2
+knowledge_point: Bond duration and convexity
+pillar: fixed_income
+task_type: T2
+title: Price-yield curve with duration approximations
+description: >
+  For the bond with face 100, 4.6% annual coupon, 7 years to maturity, and
+  current yield 5.3% (annual compounding), draw the exact price-yield curve
+  for yields from 2% to 9%, and overlay (i) the first-order modified-duration
+  approximation and (ii) the duration-plus-convexity approximation around the
+  current yield, with a legend distinguishing the three. The yield shift
+  should be an adjustable parameter. Save the figure to the path given by
+  the output contract. Also report the exact price if the yield rises by 100
+  basis points, and the first-order modified-duration estimate of the
+  relative price change for that move (a decimal, negative for a fall).
+inputs:
+  face: 100.0
+  coupon_rate_annual: 0.046
+  n_years: 7
+  ytm_annual: 0.053
+  yield_grid: [0.02, 0.09]
+  dy_for_numbers: 0.01
+data_file: null
+figure_required: true
+required_keys: [price_at_up100bp, dur_approx_change_up100bp, figure_path]
+scoring:
+  optimization: false
+  keys:
+    - key: price_at_up100bp
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-4
+    - key: dur_approx_change_up100bp
+      method: tolerance
+      tau_rel: 1.0e-4
+      tau_abs: 1.0e-6
+conventions_binding: [bond_annual_comp, decimal_units, duration_firstorder]
