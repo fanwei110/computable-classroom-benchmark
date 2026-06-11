@@ -30,7 +30,7 @@ sys.stdout = io.TextIOWrapper(sys.stdout.buffer, encoding="utf-8")
 ROOT = Path(__file__).resolve().parents[1]
 AUTO = ROOT / "coding" / "auto"
 ITEMS = ROOT / "coding" / "items"
-ADJUDICATOR = "meta-llama/llama-4-maverick"
+ADJUDICATOR = "minimax/minimax-m3"   # Llama became coder L; MiniMax adjudicates
 CLASSES = ["CD", "CV", "CN", "VZ"]
 
 
@@ -90,7 +90,7 @@ def main():
 
     key = pd.read_csv(ROOT / "coding" / "_key_do_not_open.csv").set_index("blind_id")
     mech = pd.read_csv(AUTO / "mechanical_coded.csv").set_index("run_id")
-    q, k = load_ai("Q"), load_ai("K")
+    q, k = load_ai("Q"), load_ai("L")
 
     rows = []
     for bid, krow_key in key.iterrows():

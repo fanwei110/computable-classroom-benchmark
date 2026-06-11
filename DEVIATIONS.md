@@ -101,12 +101,18 @@ opted for a fully automated protocol, disclosed as follows:
     explains all failed keys within the task tolerances; it resolves 343 of
     686 items (50%) deterministically;
 (b) two LLM coders that are architecturally distinct from each other and
-    from the three evaluated models - Qwen3-235B-A22B-2507 and Kimi K2.6 -
-    independently code all 686 items from the same blinded item files
-    prepared for human coders, under the frozen manual; inter-coder
-    agreement (κ) and agreement with the mechanical layer are reported;
-    Q/K disagreements not settled by the mechanical layer are adjudicated
-    by a third non-evaluated model (Llama-4-Maverick);
+    from the three evaluated models independently code all 686 items from
+    the same blinded item files prepared for human coders, under the frozen
+    manual. Originally Qwen3-235B-A22B-2507 + Kimi K2.6; Kimi proved
+    operationally unstable (minutes-long thinking, intermittent empty
+    completions, silent process crashes after 197 of 686 items) and was
+    replaced by Llama-4-Maverick BEFORE any reconciliation was computed;
+    Kimi's 197 completed votes are archived as supplementary third votes
+    (coding/auto/ai_coder_K.jsonl). Inter-coder agreement (κ) and agreement
+    with the mechanical layer are reported; Q/L disagreements not settled
+    by the mechanical layer are adjudicated by a third non-evaluated model
+    (MiniMax-M3, replacing Llama in the adjudicator role after Llama became
+    a coder);
 (c) boundary exemplar 13 (code that hardcodes a hand-rounded constant
     instead of computing; submitted values within 0.2% of reference) was
     ruled **CN with subtag `hardcoded_constant`** per the letter of the
@@ -115,4 +121,15 @@ opted for a fully automated protocol, disclosed as follows:
     reported separately in the paper so readers can reallocate it;
 (d) the paper (§IV.D) is rewritten to describe this protocol truthfully -
     the "two human raters" claim is removed, and the absence of human
-    validation is stated as a limitation.
+    validation is stated as a limitation;
+(e) visualization adequacy (§IV.B) is likewise rated by two non-evaluated
+    vision models (Qwen2.5-VL-72B, Llama-4-Maverick) on the rebuilt
+    per-run figure archive (632/720 reproducible; 57 generations never
+    executed, 21 produced no code, 10 set no figure path - all counted
+    inadequate). Rules pre-stated: adequate iff BOTH raters pass all four
+    rubric items; rater disagreements count as inadequate. Nine generations
+    produced interactive HTML figures the vision raters cannot score; they
+    are excluded from the adequacy denominator and disclosed. Because
+    adequacy prevalence is extreme (~90%), Cohen's κ collapses (0.09, the
+    κ paradox); the paper reports raw agreement (83.5%) and Gwet's AC1
+    (0.80) alongside it.

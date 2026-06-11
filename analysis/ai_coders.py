@@ -33,7 +33,12 @@ ITEMS = ROOT / "coding" / "items"
 KEY = ROOT / "coding" / "_key_do_not_open.csv"
 OUTDIR = ROOT / "coding" / "auto"
 
-CODERS = {"Q": "qwen/qwen3-235b-a22b-2507", "K": "moonshotai/kimi-k2.6"}
+# Coder K (Kimi K2.6) proved unstable in production (very slow thinking,
+# intermittent empty completions, silent process crashes); replaced by
+# Llama-4-Maverick as coder L before any reconciliation was run. Kimi's
+# 197 completed votes are archived as supplementary third votes
+# (ai_coder_K.jsonl). Disclosed in DEVIATIONS #7.
+CODERS = {"Q": "qwen/qwen3-235b-a22b-2507", "L": "meta-llama/llama-4-maverick"}
 
 MANUAL = """你是一名金融学课程的研究助理，负责给"AI生成的金融计算代码的失败记录"做错误分类。
 严格按以下手册判断，输出JSON。
@@ -149,16 +154,22 @@ def main():
                 rec = {"blind_id": bid, "coder": coder,
                        "primary_class": "API_FAIL", "raw": repr(e)[:200]}
             with lock:
-                with open(OUTDIR / f"ai_coder_{coder}.jsonl", "a",
-                          encoding="utf-8") as f:
-                    f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+                for retry in range(5):   # OneDrive sync can lock the file
+                    try:
+                        with open(OUTDIR / f"ai_coder_{coder}.jsonl", "a",
+                                  encoding="utf-8") as f:
+                            f.write(json.dumps(rec, ensure_ascii=False) + "\n")
+                        break
+                    except OSError:
+                        time.sleep(1 + retry)
                 counts["done"] += 1
                 if rec["primary_class"] in ("PARSE_FAIL", "API_FAIL"):
                     counts["fail"] += 1
-                if counts["done"] % 50 == 0:
+                if counts["done"] % 25 == 0:
                     el = time.time() - t0
                     print(f"{counts['done']}/{len(jobs)} "
-                          f"({counts['fail']} fail) {counts['done']/el*3600:.0f}/h")
+                          f"({counts['fail']} fail) {counts['done']/el*3600:.0f}/h",
+                          flush=True)
 
     threads = [threading.Thread(target=worker, daemon=True)
                for _ in range(args.workers)]
