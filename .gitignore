@@ -4,5 +4,4 @@ __pycache__/
 harness/_tmp/
 figures/_fig1_preview.png
 runs/raw/
-config/models.yaml
 *.tmp

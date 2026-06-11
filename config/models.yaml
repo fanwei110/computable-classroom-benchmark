@@ -1,0 +1,72 @@
+# =============================================================================
+# benchmark/config/models.yaml  —  LOCKED (pre-registration freeze)
+# Frozen: 2026-06-11
+# Decision owner: Nian (PI decision per pre-registration protocol)
+#
+# 锁定原则：
+#   1. 三个模型为论文实名报告的真实型号，slug 以 OpenRouter 实际可调用为准。
+#   2. 解码参数 = 各 provider 默认值（不显式传 temperature / top_p /
+#      reasoning 参数）。理由：PI 课堂部署从未自定义解码参数，且
+#      GPT-5.5 等推理模型 API 不接受自定义 temperature，统一传参会
+#      造成跨模型设定不对等。论文表述：
+#      "All models were queried via OpenRouter with provider-default
+#       decoding parameters, mirroring the instructor's actual classroom
+#       deployment (no custom temperature, top-p, or reasoning settings)."
+#   3. 提问语言：中文（与 C1/C3 教师措辞一致）。
+#   4. API key 一律走环境变量 OPENROUTER_API_KEY，禁止写入任何受版本
+#      控制的文件。
+# =============================================================================
+
+api:
+  provider: openrouter
+  base_url: https://openrouter.ai/api/v1
+  key_env_var: OPENROUTER_API_KEY   # 运行前 export OPENROUTER_API_KEY=...
+  timeout_seconds: 300
+  max_retries: 3
+  retry_backoff_seconds: [5, 15, 60]
+
+models:
+  M1:
+    label: "GPT-5.5"
+    vendor: "OpenAI"
+    openrouter_slug: "openai/gpt-5.5"
+    role: "国际前沿模型"
+    released: "2026-04-23"
+  M2:
+    label: "DeepSeek-V4 Pro"
+    vendor: "DeepSeek"
+    openrouter_slug: "deepseek/deepseek-v4-pro"
+    role: "国产主流模型 1"
+    released: "2026-04-24"
+  M3:
+    label: "GLM-5.1"
+    vendor: "Z.ai (Zhipu)"
+    openrouter_slug: "z-ai/glm-5.1"
+    role: "国产主流模型 2"
+    released: "2026-04-07"
+
+decoding:
+  policy: "provider_default"
+  # 显式声明：以下参数一律不传，由各 provider 默认值决定
+  temperature: null
+  top_p: null
+  reasoning: null
+  max_tokens: 8192        # 仅设输出上限，防止截断与失控计费；不属于解码分布参数
+
+prompt_language: "zh-CN"
+
+reproducibility:
+  # OpenRouter 会在多个托管方之间路由同一模型；为保证可追溯：
+  log_full_request: true            # 每次调用记录完整 request body
+  log_response_metadata: true       # 记录实际响应的 provider、model id、用量
+  log_dir: "benchmark/runs/raw/"
+  # 如需固定托管方（消除路由方差），取消下行注释并指定：
+  # provider_routing: { order: ["..."], allow_fallbacks: false }
+
+run:
+  total_generations: 2160
+  # 费用粗估（按当前 OpenRouter 牌价、单次生成约 1.5K 输入 + 2K 输出）：
+  #   M1 GPT-5.5 为大头；M2/M3 较便宜。总量级预计 ¥100–300，
+  #   实际以 OpenRouter dashboard 为准。建议先充 $30 跑 pilot 一轮核实。
+
+locked: true               # frozen 2026-06-11; stage-2 runner refuses to run if false
