@@ -75,6 +75,19 @@ gaps in the *infrastructure* (not in any judging rule):
     implementation now prefers python-tagged blocks that define `result`.
 Tolerances, tiers, the T3 rules, and the codebook are untouched.
 
+## 6. max_tokens 8192 → 32768; first 9 formal generations discarded and
+##    re-run (2026-06-11)
+
+M2/M3 are reasoning models whose thinking tokens count toward the
+completion limit; under max_tokens=8192 three of the first nine formal
+generations returned EMPTY content with finish_reason=length - an
+infrastructure truncation, not a model-capability observation. The cap
+(whose stated purpose was preventing truncation) was raised to 32768.
+For uniformity of settings across all 2,160 generations, the nine
+generations produced under the old cap were discarded (archived verbatim
+in runs/raw/formal_discarded_8k/) and their cells re-generated under the
+amended config.
+
 ## 7. Error coding: deterministic mechanical classifier + heterogeneous AI
 ##    double-coding, no human raters (2026-06-12)
 
@@ -103,16 +116,3 @@ opted for a fully automated protocol, disclosed as follows:
 (d) the paper (§IV.D) is rewritten to describe this protocol truthfully -
     the "two human raters" claim is removed, and the absence of human
     validation is stated as a limitation.
-
-## 6. max_tokens 8192 → 32768; first 9 formal generations discarded and
-##    re-run (2026-06-11)
-
-M2/M3 are reasoning models whose thinking tokens count toward the
-completion limit; under max_tokens=8192 three of the first nine formal
-generations returned EMPTY content with finish_reason=length - an
-infrastructure truncation, not a model-capability observation. The cap
-(whose stated purpose was preventing truncation) was raised to 32768.
-For uniformity of settings across all 2,160 generations, the nine
-generations produced under the old cap were discarded (archived verbatim
-in runs/raw/formal_discarded_8k/) and their cells re-generated under the
-amended config.
