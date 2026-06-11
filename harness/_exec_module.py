@@ -9,7 +9,6 @@ Mappings, pandas Series, and single-row DataFrames are all accepted; numpy
 scalars, 0-d arrays, Decimals, and sequences are coerced to plain floats.
 """
 
-import importlib.util
 import json
 import sys
 import traceback
@@ -72,12 +71,15 @@ def main():
     out = {"exec_ok": False, "has_result": False, "result": None,
            "container": None, "error_type": None, "error": None}
     try:
-        spec = importlib.util.spec_from_file_location("generated_solution", module_path)
-        mod = importlib.util.module_from_spec(spec)
-        spec.loader.exec_module(mod)
+        # Execute the generated file the way a classroom would run a script
+        # (python file.py): run_name="__main__" so `if __name__ == "__main__"`
+        # guards fire. Disclosed amendment to the original import-based
+        # loader - see DEVIATIONS.md #5; judging rules are unchanged.
+        import runpy
+        namespace = runpy.run_path(module_path, run_name="__main__")
         out["exec_ok"] = True
-        if hasattr(mod, "result"):
-            extracted, kind = extract_result(getattr(mod, "result"))
+        if "result" in namespace:
+            extracted, kind = extract_result(namespace["result"])
             if extracted is not None:
                 out["has_result"] = True
                 out["result"] = extracted

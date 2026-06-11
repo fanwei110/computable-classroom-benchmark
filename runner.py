@@ -118,15 +118,29 @@ def call_openrouter(model_slug, prompt, api_key):
     raise RuntimeError(f"API failed after retries: {last_err}")
 
 
-CODE_FENCE = re.compile(r"```(?:python|py)?\s*\n(.*?)```", re.S)
+PY_FENCE = re.compile(r"```(?:python|py)[ \t]*\n(.*?)```", re.S | re.I)
+ANY_FENCE = re.compile(r"```[^\n`]*\n(.*?)```", re.S)
 
 
 def extract_code(completion):
-    """Frozen extraction rule: first fenced python block; else, if the text
-    looks like bare code, the whole completion; else empty."""
-    m = CODE_FENCE.search(completion)
-    if m:
-        return m.group(1)
+    """Extraction rule (runs/schema.md): the first python-tagged fenced
+    block; among several, prefer the first that defines `result`. If no
+    python-tagged block exists, fall back to untagged fenced blocks that
+    look like Python, then to bare-code completions; else empty."""
+    tagged = PY_FENCE.findall(completion)
+    for block in tagged:
+        if "result" in block:
+            return block
+    if tagged:
+        return tagged[0]
+    untagged = [b for b in ANY_FENCE.findall(completion)
+                if re.search(r"^\s*(import|from)\s+\w+", b, re.M)
+                or "result" in b]
+    for block in untagged:
+        if "result" in block:
+            return block
+    if untagged:
+        return untagged[0]
     if re.search(r"^\s*(import|from)\s+\w+", completion, re.M) and \
             "result" in completion:
         return completion

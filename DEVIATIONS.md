@@ -57,3 +57,33 @@ C1/C3/C4) was executed to validate the runner, logging, and judging
 pipeline. Pilot data are archived separately (runs/raw/pilot/) and excluded
 from all formal analyses. No judging rule was changed as a result of the
 pilot.
+
+## 5. Harness executor: import → script execution; extraction aligned to
+##    the registered rule (2026-06-11, after 9 of 2,160 formal generations)
+
+The first formal smoke batch (9 generations) exposed two format-neutrality
+gaps in the *infrastructure* (not in any judging rule):
+(a) the executor imported the generated file as a module, so a fully
+    contract-compliant script that assigns `result` under
+    `if __name__ == "__main__":` never populated `result`. The executor now
+    runs the file as a script (runpy, run_name="__main__"), exactly as a
+    classroom would. The adversarial suite was extended with sample c21
+    covering this idiom; the full suite passes 41/41 under the new executor.
+(b) the code-extraction implementation matched ANY fenced block, while the
+    registered rule (runs/schema.md) says "first fenced python block"; a
+    display block placed before the code therefore shadowed it. The
+    implementation now prefers python-tagged blocks that define `result`.
+Tolerances, tiers, the T3 rules, and the codebook are untouched.
+
+## 6. max_tokens 8192 → 32768; first 9 formal generations discarded and
+##    re-run (2026-06-11)
+
+M2/M3 are reasoning models whose thinking tokens count toward the
+completion limit; under max_tokens=8192 three of the first nine formal
+generations returned EMPTY content with finish_reason=length - an
+infrastructure truncation, not a model-capability observation. The cap
+(whose stated purpose was preventing truncation) was raised to 32768.
+For uniformity of settings across all 2,160 generations, the nine
+generations produced under the old cap were discarded (archived verbatim
+in runs/raw/formal_discarded_8k/) and their cells re-generated under the
+amended config.

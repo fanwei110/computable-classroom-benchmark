@@ -57,7 +57,10 @@ decoding:
   temperature: null
   top_p: null
   reasoning: null
-  max_tokens: 8192        # 仅设输出上限，防止截断与失控计费；不属于解码分布参数
+  # AMENDMENT 2026-06-11 (DEVIATIONS.md #6): 8192 -> 32768。推理型模型
+  # （M2/M3）的思考 token 计入 completion 限额，8192 导致正文被截断为空
+  # （finish_reason=length），违背本参数"防截断"的设定初衷。仍非解码分布参数。
+  max_tokens: 32768
 
 prompt_language: "zh-CN"
 

@@ -42,8 +42,11 @@ Rules:
 - `prompt` is stored verbatim; nothing is normalized.
 - `latency_ms.total` is wall-clock from prompt submission to executed
   output (the paper's latency metric).
-- Code extraction rule (frozen): first fenced python block; if none, the
-  whole completion is tried as code; the raw completion is always kept.
+- Code extraction rule: among python-tagged fenced blocks, the first that
+  defines `result` (else the first python-tagged block); if none, untagged
+  fenced blocks that look like Python under the same preference; if none,
+  a bare-code completion is tried whole. The raw completion is always kept.
+  (Implementation aligned to this rule 2026-06-11 - DEVIATIONS.md #5.)
 - One retry on transport errors only (HTTP failure, timeout at the API
   layer); model-content failures are never retried.
 - The judge verdict is written by harness/judge.py at run time; manual

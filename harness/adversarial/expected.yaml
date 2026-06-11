@@ -29,6 +29,8 @@ correct:
   - {file: c19_kp3t3_strict_rule_of_thumb.py, task: KP3_T3, expect: correct, tier: strict, note: course rule of thumb}
   - {file: c20_kp2t3_clarify.txt,          task: KP2_T3, expect: clarify, completion_only: true,
      note: clarifying question instead of code}
+  - {file: c21_kp2t1_main_guard.py,        task: KP2_T1, expect: correct,
+     note: result assigned under a main-guard idiom (added 2026-06-11 with the runpy executor amendment)}
 
 planted:
   - {file: p01_kp5t1_365_silent.py,        task: KP5_T1, expect: numeric_wrong, planted_class: conventional, note: sqrt(365) silent}

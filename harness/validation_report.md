@@ -1,6 +1,6 @@
 # Harness adversarial validation report
 
-Result: **40/40**
+Result: **41/41**
 
 | sample | task | expected | got | ok |
 |---|---|---|---|---|
@@ -24,6 +24,7 @@ Result: **40/40**
 | c18_kp6t3_strict.py | KP6_T3 | correct/strict | correct/strict | PASS |
 | c19_kp3t3_strict_rule_of_thumb.py | KP3_T3 | correct/strict | correct/strict | PASS |
 | c20_kp2t3_clarify.txt | KP2_T3 | clarify | clarify | PASS |
+| c21_kp2t1_main_guard.py | KP2_T1 | correct | correct | PASS |
 | p01_kp5t1_365_silent.py | KP5_T1 | numeric_wrong | numeric_wrong | PASS |
 | p02_kp5t1_negative_sign.py | KP5_T1 | numeric_wrong | numeric_wrong | PASS |
 | p03_kp2t1_percent_units.py | KP2_T1 | numeric_wrong | numeric_wrong | PASS |
