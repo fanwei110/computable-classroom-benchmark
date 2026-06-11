@@ -75,6 +75,35 @@ gaps in the *infrastructure* (not in any judging rule):
     implementation now prefers python-tagged blocks that define `result`.
 Tolerances, tiers, the T3 rules, and the codebook are untouched.
 
+## 7. Error coding: deterministic mechanical classifier + heterogeneous AI
+##    double-coding, no human raters (2026-06-12)
+
+The registered protocol called for two human raters double-coding all
+failures (codebook.md §5). Under submission time constraints the authors
+opted for a fully automated protocol, disclosed as follows:
+(a) a deterministic *mechanical classifier* (analysis/mechanical_coder.py,
+    released) implements the codebook's preregistered mechanical criterion
+    literally - recomputing every enumerated candidate convention with the
+    reference implementations and accepting a class only when one swap
+    explains all failed keys within the task tolerances; it resolves 343 of
+    686 items (50%) deterministically;
+(b) two LLM coders that are architecturally distinct from each other and
+    from the three evaluated models - Qwen3-235B-A22B-2507 and Kimi K2.6 -
+    independently code all 686 items from the same blinded item files
+    prepared for human coders, under the frozen manual; inter-coder
+    agreement (κ) and agreement with the mechanical layer are reported;
+    Q/K disagreements not settled by the mechanical layer are adjudicated
+    by a third non-evaluated model (Llama-4-Maverick);
+(c) boundary exemplar 13 (code that hardcodes a hand-rounded constant
+    instead of computing; submitted values within 0.2% of reference) was
+    ruled **CN with subtag `hardcoded_constant`** per the letter of the
+    frozen codebook ("a choice with no textbook standing is not a
+    convention"), by the analyst, BEFORE the AI coding ran; its share is
+    reported separately in the paper so readers can reallocate it;
+(d) the paper (§IV.D) is rewritten to describe this protocol truthfully -
+    the "two human raters" claim is removed, and the absence of human
+    validation is stated as a limitation.
+
 ## 6. max_tokens 8192 → 32768; first 9 formal generations discarded and
 ##    re-run (2026-06-11)
 
