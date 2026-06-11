@@ -1,0 +1,51 @@
+=== pooled by condition (n=540 each) ===
+C1: corr 185/540 = 34.3% [22.4, 46.9] | def-tier 187/540 = 34.6% [22.8, 47.0] | exec 465/540 = 86.1% [79.4, 91.5]
+C2: corr 345/540 = 63.9% [52.2, 75.0] | def-tier 358/540 = 66.3% [54.1, 77.6] | exec 496/540 = 91.9% [87.8, 95.6]
+C3: corr 193/540 = 35.7% [20.7, 52.0] | def-tier 203/540 = 37.6% [23.1, 53.0] | exec 468/540 = 86.7% [77.4, 93.1]
+C4: corr 476/540 = 88.1% [84.6, 91.5] | def-tier 476/540 = 88.1% [84.6, 91.5] | exec 508/540 = 94.1% [90.7, 96.9]
+
+=== deltas (exact fractions, pp) ===
+C4-C1 = 53.9pp ; C2-C1 = 29.6pp ; C3-C1 = 1.5pp ; C4-C2 = 24.3pp ; C4-C3 = 52.4pp
+
+=== model x condition (n=180 cells): exec / correct with CI ===
+M1 C1: exec 164/180=91.1% | corr 31/180 = 17.2% [7.2, 30.6]
+M1 C2: exec 179/180=99.4% | corr 101/180 = 56.1% [36.1, 75.0]
+M1 C3: exec 163/180=90.6% | corr 47/180 = 26.1% [10.6, 43.9]
+M1 C4: exec 178/180=98.9% | corr 159/180 = 88.3% [78.3, 96.7]
+M2 C1: exec 141/180=78.3% | corr 83/180 = 46.1% [31.7, 60.0]
+M2 C2: exec 159/180=88.3% | corr 123/180 = 68.3% [56.7, 78.9]
+M2 C3: exec 151/180=83.9% | corr 81/180 = 45.0% [28.9, 61.1]
+M2 C4: exec 161/180=89.4% | corr 149/180 = 82.8% [75.6, 88.9]
+M3 C1: exec 160/180=88.9% | corr 71/180 = 39.4% [22.8, 57.8]
+M3 C2: exec 158/180=87.8% | corr 121/180 = 67.2% [53.3, 79.4]
+M3 C3: exec 154/180=85.6% | corr 65/180 = 36.1% [17.8, 56.1]
+M3 C4: exec 169/180=93.9% | corr 168/180 = 93.3% [90.0, 96.7]
+
+=== task type x condition (n=180): strict ===
+T1: C1 49/180=27.2% | C2 133/180=73.9% | C3 55/180=30.6% | C4 160/180=88.9%
+T2: C1 91/180=50.6% | C2 125/180=69.4% | C3 103/180=57.2% | C4 154/180=85.6%
+T3: C1 45/180=25.0% | C2 87/180=48.3% | C3 35/180=19.4% | C4 162/180=90.0%
+T3 defensible: C1 47/180=26.1% | C2 100/180=55.6% | C3 45/180=25.0% | C4 162/180=90.0%
+
+=== T-type gains C4-C1 (pp) ===
+T1: 61.7pp
+T2: 35.0pp
+T3: 65.0pp
+
+=== reliability / latency / behavior ===
+C1: task-model pairs all-10 correct: 4/54 ; tasks all-30 correct: 0/18
+C4: task-model pairs all-10 correct: 24/54 ; tasks all-30 correct: 0/18
+latency C1: median 30.4s p90 144.8s
+latency C2: median 28.5s p90 103.2s
+latency C3: median 35.6s p90 150.9s
+latency C4: median 23.4s p90 79.0s
+latency overall: median 28.3s p90 117.7s
+clarify: 0 of 2160
+defensible bucket total: 25
+no-code by condition: C1=35, C2=8, C3=37, C4=7
+strict-failure totals by condition (540-correct): C1=355, C2=195, C3=347, C4=64
+
+=== GEE (task clusters): correct ~ conv*struct + model ===
+conv: coef=0.064 OR=1.07 se=0.220 p=7.71e-01
+struct: coef=1.248 OR=3.48 se=0.282 p=9.47e-06
+conv:struct: coef=1.512 OR=4.54 se=0.444 p=6.69e-04
