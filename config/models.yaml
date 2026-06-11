@@ -26,12 +26,18 @@ api:
   retry_backoff_seconds: [5, 15, 60]
 
 models:
+  # AMENDMENT 2026-06-11 (disclosed, before any formal generation):
+  # M1 was originally locked as openai/gpt-5.5, but the API probe returned
+  # HTTP 403 "not available in your region" for ALL OpenAI/Anthropic/Google
+  # models from the deployment network. M1 is therefore replaced by the
+  # strongest international frontier model actually reachable from the
+  # classroom deployment environment. See DEVIATIONS.md #2.
   M1:
-    label: "GPT-5.5"
-    vendor: "OpenAI"
-    openrouter_slug: "openai/gpt-5.5"
+    label: "Mistral Large 2512"
+    vendor: "Mistral AI"
+    openrouter_slug: "mistralai/mistral-large-2512"
     role: "国际前沿模型"
-    released: "2026-04-23"
+    released: "2025-12"
   M2:
     label: "DeepSeek-V4 Pro"
     vendor: "DeepSeek"
@@ -70,3 +76,5 @@ run:
   #   实际以 OpenRouter dashboard 为准。建议先充 $30 跑 pilot 一轮核实。
 
 locked: true               # frozen 2026-06-11; stage-2 runner refuses to run if false
+
+api_snapshot_date: 2026-06-11   # all three slugs probed reachable on this date

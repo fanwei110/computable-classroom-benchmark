@@ -65,6 +65,12 @@ OSF on public release).
 - **Model selection and classroom decoding parameters**: filled by the
   authors into the config and locked before stage 2.
 
+> **Resolution (2026-06-11)**: both pending items were resolved with
+> disclosed deviations before any formal generation — the phrasings are
+> LLM-simulated personas under honest labeling (DEVIATIONS.md #3), and the
+> config was locked with one availability-forced substitution
+> (DEVIATIONS.md #2). This section is retained verbatim for the record.
+
 ## 4. Repository hygiene
 
 No draft manuscript, no expected or simulated result figures, and no
