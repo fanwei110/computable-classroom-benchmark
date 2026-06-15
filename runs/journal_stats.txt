@@ -1,0 +1,58 @@
+================================================================
+JOURNAL-REVISION STATS  (source of truth for paper_C_journal)
+================================================================
+
+[1] Headline grid (pooled, n=540/condition), strict correctness
+  C1: corr 185/540 = 34.3% [22.4,46.9] | exec 86.1%
+  C2: corr 345/540 = 63.9% [52.2,75.0] | exec 91.9%
+  C3: corr 193/540 = 35.7% [20.7,52.0] | exec 86.7%
+  C4: corr 476/540 = 88.1% [84.6,91.5] | exec 94.1%
+  deltas pp: C4-C1=53.9  C2-C1=29.6  C3-C1=1.5  C4-C2=24.3
+
+[2] Fig.2 population = C1 coded failures (numeric_wrong+defensible+vis_failure
+    coded in final_coded) PLUS C1 code_error auto-CD. Format failures excluded.
+    C1 coded rows in final_coded: 266
+    C1 code_error (auto-CD): 40
+    ==> Fig.2 N = 306
+    class counts: CV=88 (28.8%), CN=145 (47.4%), CD=73 (23.9%), VZ=0 (0.0%)
+    hardcoded_constant within CN: 42
+
+[3] Mechanical lower bound (C1, source=='mechanical' only) — kappa-immune
+    deterministically settled: 122/266 coded items
+    >= 80 C1 failures are CV confirmed mechanically (26.1% of Fig.2 N, as a floor)
+    >= 42 C1 failures are CN confirmed mechanically (13.7% of Fig.2 N, as a floor)
+
+[4] Per-coder proportion interval (C1 coded items with both AI votes)
+    items with both votes: 266
+    CV: Q=20.3%  L=18.0%  -> report as 18-20%
+    CN: Q=75.9%  L=66.9%  -> report as 67-76%
+    CD: Q=3.8%  L=15.0%  -> report as 4-15%
+    VZ: Q=0.0%  L=0.0%  -> report as 0-0%
+    Cohen kappa (C1 subset) = 0.339; agreement 70.3%
+    Cohen kappa (all 686) = 0.492; agreement 73.8%
+
+[5] Correctness conditional on code that executes (exec_ok==1)
+    C1: 185/465 = 39.8% (unconditional 34.3%)
+    C2: 345/496 = 69.6% (unconditional 63.9%)
+    C3: 193/468 = 41.2% (unconditional 35.7%)
+    C4: 476/508 = 93.7% (unconditional 88.1%)
+
+[6] Visible vs silent failures (C1, n=540)
+    visible (no-code format + code errors): 75
+    silent (executed but numerically wrong): 264
+    format failures total: 49 (no-code: 35)
+
+[7] Latency truncation cost (fraction of CORRECT generations lost)
+    cutoff 45s: lose 419/1199 correct = 34.9%
+        C1: 44.3% of its correct lost
+        C4: 26.7% of its correct lost
+    cutoff 60s: lose 293/1199 correct = 24.4%
+        C1: 34.6% of its correct lost
+        C4: 16.0% of its correct lost
+    overall latency: median 28.3s p90 117.7s
+
+[8] C3-T3 anomaly (19.4% vs C1-T3 25.0%): bootstrap CI on the difference
+    C1-T3 = 25.0% [5.6,44.4]
+    C3-T3 = 19.4% [1.1,43.9]
+    C3-C1 on T3 = -5.6pp  CI [-25.6,+8.9]
+    -> within noise (CI spans 0)

@@ -1,10 +1,24 @@
 # Disclosed Deviations from the Preregistration
 
 Per the freeze rules (PREREGISTRATION.md §2), every post-registration change
-is recorded here with its reason and timing. All deviations below were made
+is recorded here with its reason and timing. Deviations #1–#7 were made
 **before any formal generation was collected**; the judging harness, the
 tolerances, the codebook, and the reference answers are unchanged since the
-initial commit (1184058f).
+initial commit (1184058f). Item #8 is a post-hoc *analysis-only* addendum
+(journal revision) that adds reporting, not data or judging.
+
+## 8. Journal-revision analysis addendum (2026-06-14, analysis-only)
+
+For the journal version, `analysis/journal_revision_stats.py` recomputes —
+from the already-collected `runs/results_formal.csv` and
+`coding/auto/final_coded.csv`, with no new generations and no change to any
+judging or coding rule — the following additional reported quantities:
+mechanical (κ-immune) lower bounds per error class; per-coder proportion
+intervals; correctness conditional on executable code; the visible-vs-silent
+failure split; latency-truncation cost at 45 s / 60 s; and a cluster-bootstrap
+CI on the C3−C1 difference for T3. These were added to address peer-review
+concerns and are the single source of truth for the journal manuscript's
+numbers. The Fig.2 population is confirmed at N = 306.
 
 ## 1. Prompt language: English → Chinese (2026-06-11)
 
