@@ -81,9 +81,8 @@ b = re.sub(r"\*\*TABLE III\.[^\n]*\*\*\n+(?:\|[^\n]*\n)+", "\n\n@@TBL3@@\n\n", b
 b = re.sub(r"^\*Note:\*.*$", "", b, flags=re.M)
 # safety net: any pipe-table rows that survived become nothing (caught by floats)
 b = re.sub(r"^(?:\|[^\n]*\n)+", "", b, flags=re.M)
+b = re.sub(r"\*\*Fig\. 1\.[^\n]*\*\*\n+\[Figure 1[^\]]*\]\n", "\n\n@@FIG1@@\n\n", b, flags=re.S)
 b = re.sub(r"\*\*Fig\. 2\..*?(\n\[Figure 2[^\]]*\])?\n", "\n\n@@FIG2@@\n\n", b, flags=re.S)
-b = b.replace("## III. The Computable Classroom and Its Resource Library",
-              "## III. The Computable Classroom and Its Resource Library\n\n@@FIG1@@\n")
 # strip manual section/subsection numbering for IEEEtran auto-numbering
 b = re.sub(r"^## [IVX]+\.\s+", "## ", b, flags=re.M)
 b = re.sub(r"^### [A-E]\.\s+", "### ", b, flags=re.M)
@@ -184,7 +183,7 @@ doc = r"""\documentclass[journal]{IEEEtran}
 \providecommand{\tightlist}{\setlength{\itemsep}{0pt}\setlength{\parskip}{0pt}}
 
 \begin{document}
-\title{Can LLMs Teach Finance Live? Structure, Not Conventions, Is the Binding Constraint on Concept-to-Code Generation in a Generative-Inquiry Classroom}
+\title{Can LLMs Teach Finance Live? A Preregistered Benchmark Showing That Templates, Not a One-Line Convention Header, Make Concept-to-Code Generation Reliable}
 \author{Wei~Fan%
 \thanks{Manuscript submitted June 2026. Supported by the Zhengzhou University Undergraduate Education and Teaching Reform Project ``Construction and Practice of a Generative-AI-Enabled `Computable Classroom' for Securities Investment.''}%
 \thanks{The author is with Zhengzhou University, Zhengzhou, China (e-mail: fanweigp@gmail.com).}}
