@@ -1,0 +1,33 @@
+============================================================
+REAL-TEACHER vs PERSONA-SIMULATED  (same 10 tasks)
+============================================================
+real-teacher generations: 600  | persona (same tasks): 600
+
+--- C1 ---
+  real-teacher correct: 60/300 = 20.0% [9.0,32.7]
+  persona      correct: 86/300 = 28.7% [15.7,41.3]
+  difference (real-persona): -8.7 pp
+  paired-bootstrap CI on difference: [-19.7,-1.0] pp -> DIFFERENT
+
+--- C3 ---
+  real-teacher correct: 93/300 = 31.0% [14.0,50.0]
+  persona      correct: 80/300 = 26.7% [9.3,47.7]
+  difference (real-persona): +4.3 pp
+  paired-bootstrap CI on difference: [-1.0,+10.3] pp -> indistinguishable (spans 0)
+
+--- chat-mode behavior (C1, the diagnostic condition) ---
+  real-teacher no-code rate: 9.0% (27/300)
+  persona no-code (approx, same tasks): 9.0%
+  clarifying questions (real-teacher, all 600): 0
+
+--- per-task C1 strict correctness (real / persona) ---
+  KP1_T1:   47% /   40%
+  KP2_T1:   30% /   43%
+  KP2_T3:    7% /   60%
+  KP3_T1:   23% /   30%
+  KP3_T3:    0% /    0%
+  KP4_T1:   10% /   20%
+  KP4_T3:    0% /    7%
+  KP5_T1:   27% /   30%
+  KP5_T3:   57% /   57%
+  KP6_T3:    0% /    0%
