@@ -12,7 +12,8 @@ import subprocess
 import sys
 from pathlib import Path
 
-ROOT = Path(r"D:\onedrive\桌面\论文\可计算课堂")
+# manuscript folder = two levels above this script (…/<paper-folder>/benchmark/analysis/)
+ROOT = Path(__file__).resolve().parents[2]
 SRC = ROOT / "TALE2026_paper_C_journal.md"
 OUTDIR = ROOT / "paper_C_ieee"
 OUTDIR.mkdir(exist_ok=True)
