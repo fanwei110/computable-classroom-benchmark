@@ -214,6 +214,7 @@ Item & Specification \\
 \midrule
 Model identifiers (requested) & M1 \texttt{mistralai/mistral-large-2512} (Mistral AI, released 2025-12); M2 \texttt{deepseek/deepseek-v4-pro} (DeepSeek, released 2026-04-24); M3 \texttt{z-ai/glm-5.1} (Z.ai/Zhipu, released 2026-04-07) \\
 Endpoint and routing & OpenRouter \texttt{POST /api/v1/chat/completions}; the aggregator may route a requested identifier across hosting providers, so the serving provider and model ID of every call are recorded from the response metadata \\
+Client region and network path & All requests issued from Zhengzhou, mainland China, over the public Internet to the aggregator's global endpoint; no region pinning was requested. The aggregator does not disclose the hosting region of the serving provider, so region is not a controlled variable here; what is auditable instead is the per-call serving-provider record, and Section V.B reports a provider-adjusted sensitivity analysis \\
 Request schema & A single user message containing the frozen prompt; no system message; no tools; \texttt{max\_tokens} $=$ 32768 (deviation \#6); no other parameters transmitted \\
 Decoding policy & Provider-default: \texttt{temperature}, \texttt{top\_p}, and reasoning parameters deliberately not transmitted (deployment-realistic; some reasoning APIs reject custom temperature); decoding sensitivity checked in Section V.F \\
 Retry and error handling & Transport failures and HTTP 429/5xx retried up to 3 times (backoff 5/15/60\,s; timeout 300\,s); model content never retried; \texttt{finish\_reason} logged per generation \\
@@ -314,12 +315,13 @@ doc = r"""\documentclass{ieeeaccess}
 \title{Structure Before Convention: A Pre-Registered Reliability Benchmark and Two-Layer Deployment Architecture for Classroom LLM-Generated Financial Code}
 \author{\uppercase{Ping Guo}\authorrefmark{1},
 \uppercase{Wei Fan}\authorrefmark{2},
+\uppercase{Qinying Li}\authorrefmark{2},
 \uppercase{Jiaqiang Yang}\authorrefmark{3},
 AND \uppercase{Xiaorui Li}\authorrefmark{2}}
 \address[1]{School of Foreign Languages, Henan University of Technology, Zhengzhou 450001, China (e-mail: guopingapple@haut.edu.cn; ORCID: 0009-0005-3867-1007)}
-\address[2]{Business School, Zhengzhou University, Zhengzhou 450001, China. Wei Fan (e-mail: vincentfan@whu.edu.cn; ORCID: 0000-0002-4174-1345); Xiaorui Li (ORCID: 0009-0003-5119-4079)}
-\address[3]{Laboratory of Key Metals, Zhengzhou University, Zhengzhou 450001, China (e-mail: jqyang@zzu.edu.cn; ORCID: 0000-0003-4707-2928)}
-\tfootnote{This work was supported by the Zhengzhou University Undergraduate Education and Teaching Reform Project ``Construction and Practice of a Generative-AI-Enabled `Computable Classroom' for Securities Investment.''}
+\address[2]{Business School, Zhengzhou University, Zhengzhou 450001, China. Wei Fan (e-mail: vincentfan@whu.edu.cn; ORCID: 0000-0002-4174-1345); Qinying Li (e-mail: lqy@zzu.edu.cn); Xiaorui Li (ORCID: 0009-0003-5119-4079)}
+\address[3]{Zhongyuan Critical Metals Laboratory, Zhengzhou University, Zhengzhou 450001, China (e-mail: jqyang@zzu.edu.cn; ORCID: 0000-0003-4707-2928)}
+\tfootnote{This work was supported by the Zhengzhou University Undergraduate Education and Teaching Reform Project ``Construction and Practice of a Generative-AI-Enabled `Computable Classroom' for Securities Investment''; by the Zhengzhou University Graduate Education Research Project ``Innovation in the Full-Process Industry--Education Integration Training Model for the Master of Finance Programme'' (Grant No. YJSJY2025005); by the Henan Provincial Soft Science Research Program under Grant 252400411308 (``Carbon-Finance Innovation Mechanisms from the Perspectives of Risk Prevention and Simulation-Based Empirical Analysis,'' 2025); and by the Key Program of the Henan Provincial Soft Science Research Program under Grant 262400411016 (``Pathways and Policy Mechanisms for Building a Digital-Intelligent Sharing System for Large Scientific Instruments in Henan Province,'' 2026).}
 
 \markboth
 {P. Guo \headeretal: Structure Before Convention}
@@ -362,8 +364,12 @@ is a Lecturer with the School of Foreign Languages, Henan University of Technolo
 is an Associate Professor and doctoral supervisor with the Business School, Zhengzhou University, Zhengzhou, China, where he teaches securities investment. His research interests lie in quantitative finance and computational economics, spanning asset pricing, risk measurement, and the empirical methods that underpin them. In this study he anchored the financial-domain content (the curriculum's knowledge points, the analytic ground truth, and the conventions against which the generated code is judged), so that correctness is assessed as a finance instructor would assess it.
 \end{IEEEbiography}
 
+\begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{photos/liqy.jpg}}]{Qinying Li}
+is a Professor and Associate Dean of the Business School, Zhengzhou University, Zhengzhou, China, where she holds a doctorate in finance. She serves on the council of the Insurance Society of China and as a senior expert in the expert think tank of the Henan Insurance Society. She has led two National Social Science Fund projects, more than ten provincial projects, and over twenty departmental projects, and has published more than twenty papers in core journals including \emph{Insurance Studies}, three of which were reprinted in full by the Renmin University reprint series \emph{Finance and Insurance}, together with two research monographs. Her work has received two second prizes in the Henan Provincial Outstanding Social Science Achievement Awards and two third prizes from the Insurance Society of China, and she has been recognized with the Zhengzhou University First Prize for Teaching Excellence and the Outstanding Programme Director award. In the present revision she guided the finance-domain content, advised on the research design and its interpretation, and provided academic supervision, and her funded projects supported the additional experimental work reported here.
+\end{IEEEbiography}
+
 \begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{photos/yang.jpg}}]{Jiaqiang Yang}
-is with the Laboratory of Key Metals, Zhengzhou University, Zhengzhou, China, working at the intersection of artificial intelligence and machine learning, where he has authored more than twenty peer-reviewed papers. His expertise in model evaluation and machine-learning methodology shaped the benchmark's technical design, including the format-neutral judging harness, the error-coding pipeline, and the cluster-robust statistical inference, grounding the study's reliability claims in rigorous evaluation practice.
+is with the Zhongyuan Critical Metals Laboratory, Zhengzhou University, Zhengzhou, China, working at the intersection of artificial intelligence and machine learning, where he has authored more than twenty peer-reviewed papers. His expertise in model evaluation and machine-learning methodology shaped the benchmark's technical design, including the format-neutral judging harness, the error-coding pipeline, and the cluster-robust statistical inference, grounding the study's reliability claims in rigorous evaluation practice.
 \end{IEEEbiography}
 
 \begin{IEEEbiography}[{\includegraphics[width=1in,height=1.25in,clip,keepaspectratio]{photos/li.jpg}}]{Xiaorui Li}
