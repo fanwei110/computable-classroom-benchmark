@@ -1,0 +1,38 @@
+import math
+
+# 已知参数
+S = 103.7      # 标的现价
+K = 97.5       # 行权价
+sigma = 0.276  # 隐含波动率 (27.6%)
+r = 0.043      # 无风险利率 (4.3%)
+T = 0.58       # 剩余到期时间 (年)
+
+# 计算d1和d2
+d1 = (math.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * math.sqrt(T))
+d2 = d1 - sigma * math.sqrt(T)
+
+# 标准正态分布的累积概率函数和概率密度函数近似计算
+def norm_cdf(x):
+    return 0.5 * (1 + math.erf(x / math.sqrt(2)))
+
+def norm_pdf(x):
+    return math.exp(-0.5 * x ** 2) / math.sqrt(2 * math.pi)
+
+# 计算期权价格
+N_d1 = norm_cdf(d1)
+N_d2 = norm_cdf(d2)
+call_price = S * N_d1 - K * math.exp(-r * T) * N_d2
+
+# 计算Delta
+call_delta = N_d1
+
+# 计算Vega (原始数学导数，即波动率每变动1个单位(100%)期权价格的变化量)
+# 注：金融实务中Vega常按波动率每变动1%(0.01)报价，即 call_vega / 100
+call_vega = S * math.sqrt(T) * norm_pdf(d1)
+
+# 按照契约要求存入字典
+result = {
+    'call_price': round(call_price, 4),
+    'call_delta': round(call_delta, 4),
+    'call_vega': round(call_vega, 4)  # 若需1%变动口径，此处值为 0.2758
+}

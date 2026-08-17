@@ -1,0 +1,29 @@
+import numpy as np
+
+# 输入数据
+sigma = np.array([0.187, 0.243, 0.312])
+rho12, rho13, rho23 = 0.21, -0.13, 0.37
+
+# 构造协方差矩阵
+cov = np.array([
+    [sigma[0]**2, rho12 * sigma[0] * sigma[1], rho13 * sigma[0] * sigma[2]],
+    [rho12 * sigma[0] * sigma[1], sigma[1]**2, rho23 * sigma[1] * sigma[2]],
+    [rho13 * sigma[0] * sigma[2], rho23 * sigma[1] * sigma[2], sigma[2]**2]
+])
+
+# 最小方差组合权重（允许卖空、全额投资）
+inv_cov = np.linalg.inv(cov)
+ones = np.ones(3)
+w_mvp = inv_cov @ ones / (ones @ inv_cov @ ones)
+
+# 组合波动率（年化）
+vol_mvp = np.sqrt(w_mvp @ cov @ w_mvp)
+
+# 输出结果
+result = {
+    'mvp_weights': w_mvp.tolist(),
+    'mvp_vol_annual': vol_mvp
+}
+
+# 打印到控制台（实际回答时仅需输出result字典）
+print(result)

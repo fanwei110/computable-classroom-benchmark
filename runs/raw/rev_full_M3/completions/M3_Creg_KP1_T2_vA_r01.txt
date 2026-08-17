@@ -1,0 +1,133 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==================== Asset Parameters ====================
+mu1 = 0.071       # Expected annual return of asset 1
+mu2 = 0.124       # Expected annual return of asset 2
+sigma1 = 0.163    # Annualized volatility of asset 1
+sigma2 = 0.289    # Annualized volatility of asset 2
+
+# Correlations to plot
+rhos = [0.15, 0.45, 0.75]
+
+# ==================== Helper Functions ====================
+def portfolio_return(w1, mu1, mu2):
+    """Portfolio expected return for weight w1 in asset 1."""
+    return w1 * mu1 + (1 - w1) * mu2
+
+def portfolio_volatility(w1, sigma1, sigma2, rho):
+    """Portfolio volatility for weight w1 in asset 1."""
+    w2 = 1 - w1
+    var = (w1**2 * sigma1**2 + w2**2 * sigma2**2
+           + 2 * w1 * w2 * rho * sigma1 * sigma2)
+    return np.sqrt(var)
+
+def mvp_weight(sigma1, sigma2, rho):
+    """Weight of asset 1 in the minimum-variance portfolio."""
+    num = sigma2**2 - rho * sigma1 * sigma2
+    den = sigma1**2 + sigma2**2 - 2 * rho * sigma1 * sigma2
+    return num / den
+
+# ==================== Compute and Plot ====================
+w1_range = np.linspace(-1.0, 2.0, 3000)  # short-selling allowed
+
+fig, ax = plt.subplots(figsize=(11, 7))
+
+colors = ['#1f77b4', '#2ca02c', '#d62728']
+mvp_vol_rho45 = None
+frontier_vol_target = None
+
+# Annotation offsets (x, y) to avoid overlap among three MVP labels
+mvp_offsets = [
+    (0.04,  0.005),   # rho = 0.15
+    (0.04, -0.008),   # rho = 0.45
+    (0.04, -0.022),   # rho = 0.75
+]
+
+for idx, (rho, color) in enumerate(zip(rhos, colors)):
+    # --- frontier curve ---
+    mus = portfolio_return(w1_range, mu1, mu2)
+    sigmas = portfolio_volatility(w1_range, sigma1, sigma2, rho)
+
+    ax.plot(sigmas, mus, color=color, label=f'ρ = {rho}', linewidth=1.5)
+
+    # --- minimum-variance portfolio ---
+    w1_mvp = mvp_weight(sigma1, sigma2, rho)
+    mu_mvp = portfolio_return(w1_mvp, mu1, mu2)
+    sigma_mvp = portfolio_volatility(w1_mvp, sigma1, sigma2, rho)
+
+    ax.scatter(sigma_mvp, mu_mvp, color=color, s=80, zorder=5,
+               marker='o', edgecolors='black', linewidths=0.5)
+
+    off_x, off_y = mvp_offsets[idx]
+    ax.annotate(f'MVP (ρ={rho})\nσ={sigma_mvp:.2%}, μ={mu_mvp:.2%}',
+                xy=(sigma_mvp, mu_mvp),
+                xytext=(sigma_mvp + off_x, mu_mvp + off_y),
+                fontsize=7.5, color=color,
+                arrowprops=dict(arrowstyle='->', color=color, lw=0.8))
+
+    # --- store values for ρ = 0.45 ---
+    if rho == 0.45:
+        mvp_vol_rho45 = sigma_mvp
+
+        # Target expected return = 10%
+        target_mu = 0.10
+        w1_target = (target_mu - mu2) / (mu1 - mu2)
+        sigma_target = portfolio_volatility(w1_target, sigma1, sigma2, rho)
+        frontier_vol_target = sigma_target
+
+        ax.scatter(sigma_target, target_mu, color='black', s=120, zorder=6,
+                   marker='*', edgecolors='black', linewidths=0.5)
+        ax.annotate(f'Target (μ=10%)\nσ={sigma_target:.2%}',
+                    xy=(sigma_target, target_mu),
+                    xytext=(sigma_target + 0.05, target_mu + 0.005),
+                    fontsize=8,
+                    arrowprops=dict(arrowstyle='->', color='black', lw=0.8))
+
+# Mark individual assets
+ax.scatter([sigma1, sigma2], [mu1, mu2], color='black', s=60, zorder=5,
+           marker='D')
+ax.annotate('Asset 1', xy=(sigma1, mu1),
+            xytext=(sigma1 + 0.01, mu1 - 0.008), fontsize=9)
+ax.annotate('Asset 2', xy=(sigma2, mu2),
+            xytext=(sigma2 + 0.01, mu2 + 0.005), fontsize=9)
+
+ax.set_xlabel('Volatility (Annualized)', fontsize=12)
+ax.set_ylabel('Expected Return', fontsize=12)
+ax.set_title('Mean-Variance Frontiers for Different Correlations', fontsize=14)
+ax.legend(fontsize=10)
+ax.grid(True, alpha=0.3)
+
+figure_path = 'mean_variance_frontier.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ==================== Result Dictionary ====================
+result = {
+    'mvp_vol_at_rho45': mvp_vol_rho45,
+    'frontier_vol_at_target': frontier_vol_target,
+    'figure_path': figure_path
+}
+
+print("Result:", result)
+print(f"\nMVP volatility at ρ=0.45: {mvp_vol_rho45:.6f} ({mvp_vol_rho45:.4%})")
+print(f"Frontier volatility at target 10% return (ρ=0.45): "
+      f"{frontier_vol_target:.6f} ({frontier_vol_target:.4%})")
+```
+
+**关键公式说明：**
+
+| 公式 | 表达 |
+|------|------|
+| 组合收益 | $\mu_p = w_1\mu_1 + (1-w_1)\mu_2$ |
+| 组合方差 | $\sigma_p^2 = w_1^2\sigma_1^2 + (1-w_1)^2\sigma_2^2 + 2w_1(1-w_1)\rho\sigma_1\sigma_2$ |
+| MVP 权重 | $w_1^* = \dfrac{\sigma_2^2 - \rho\sigma_1\sigma_2}{\sigma_1^2 + \sigma_2^2 - 2\rho\sigma_1\sigma_2}$ |
+| 目标收益对应权重 | $w_1 = \dfrac{\mu_{target} - \mu_2}{\mu_1 - \mu_2}$ |
+
+**数值验证（ρ=0.45）：**
+
+- **MVP**：$w_1^* \approx 0.9207$，$\sigma_{MVP} \approx 16.17\%$，$\mu_{MVP} \approx 7.52\%$
+- **目标 10%**：$w_1 \approx 0.4528$，$\sigma \approx 20.24\%$
+
+`result` 字典严格包含三个键：`mvp_vol_at_rho45`、`frontier_vol_at_target`、`figure_path`，图已保存为 PNG 文件。

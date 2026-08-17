@@ -1,0 +1,45 @@
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+S = 103.7          # 标的资产现价
+K = 97.5           # 行权价
+sigma = 0.276      # 隐含波动率（27.6%）
+r = 0.043          # 无风险利率（4.3%）
+T = 0.58           # 到期时间（0.58年）
+
+# Black-Scholes模型计算欧式期权价格和Vega
+def black_scholes(S, K, T, r, sigma, option_type='call'):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+
+    if option_type == 'call':
+        price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+        vega = S * np.sqrt(T) * norm.pdf(d1) * 0.01  # Vega（每1%波动率变化的价格变化）
+    else:
+        price = K * np.exp(-r * T) * norm.cdf(-d2) - S * norm.cdf(-d1)
+        vega = S * np.sqrt(T) * norm.pdf(d1) * 0.01  # Vega（每1%波动率变化的价格变化）
+
+    return price, vega
+
+# 计算初始期权价格和Vega
+option_price, vega = black_scholes(S, K, T, r, sigma, option_type='call')
+
+# 波动率增加1个百分点（0.01）时的价格变化
+sigma_new = sigma + 0.01
+new_option_price, _ = black_scholes(S, K, T, r, sigma_new, option_type='call')
+price_change = new_option_price - option_price
+
+# 也可以直接用Vega近似计算价格变化（理论上应一致）
+price_change_vega = vega * 1  # 因为Vega是每1%波动率变化的价格变化
+
+# 验证两种方法结果是否一致（允许浮点误差）
+assert np.isclose(price_change, price_change_vega, atol=1e-6), "Vega近似与精确计算不一致"
+
+# 存储结果
+result = {
+    'price_change': price_change
+}
+
+# 输出结果（可选，便于调试）
+print("Price change when IV increases by 1%:", result['price_change'])

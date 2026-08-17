@@ -1,0 +1,12 @@
+# 计算月无风险利率（简单除以12）
+annual_rf = 0.047
+monthly_rf = annual_rf / 12
+
+# 给定参数
+beta = 1.42
+market_return_monthly = -0.058
+
+# CAPM公式：预期收益 = 无风险利率 + beta * (市场收益 - 无风险利率)
+capm_return = monthly_rf + beta * (market_return_monthly - monthly_rf)
+
+result = {'capm_return_monthly': capm_return}

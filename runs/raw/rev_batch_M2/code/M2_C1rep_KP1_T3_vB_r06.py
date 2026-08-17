@@ -1,0 +1,30 @@
+import math
+
+# 给定数据
+sigma_A = 0.184
+sigma_B = 0.297
+rho_before = 0.3
+rho_after = 0.8
+w_A = 0.6  # 六四开，假设A占60%
+w_B = 0.4
+
+# 计算组合方差函数
+def portfolio_variance(w_A, w_B, sigma_A, sigma_B, rho):
+    var = (w_A**2 * sigma_A**2 +
+           w_B**2 * sigma_B**2 +
+           2 * w_A * w_B * rho * sigma_A * sigma_B)
+    return var
+
+var_before = portfolio_variance(w_A, w_B, sigma_A, sigma_B, rho_before)
+var_after = portfolio_variance(w_A, w_B, sigma_A, sigma_B, rho_after)
+
+vol_before = math.sqrt(var_before)
+vol_after = math.sqrt(var_after)
+
+result = {
+    'vol_before_annual': round(vol_before, 6),
+    'vol_after_annual': round(vol_after, 6)
+}
+
+# 打印结果供查看（实际环境中只需生成 result 字典）
+print(result)

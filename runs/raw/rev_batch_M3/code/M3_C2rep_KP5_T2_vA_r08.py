@@ -1,0 +1,82 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 参数设置 (Parameterization)
+# ==========================================
+POSITION = 1_000_000          # 头寸金额（人民币）
+CONFIDENCE_LEVEL = 0.95       # 置信水平，可调参数
+DATA_PATH = 'data/market_snapshot_v1.csv'
+FIGURE_PATH = 'hist_var_distribution.png'
+
+# ==========================================
+# 1. 读取快照 CSV，构造头寸的日损益
+# ==========================================
+# 假设1: 'fund' 列即为日收益率序列（如0.01代表1%），而非净值/价格序列。
+# 假设2: VaR 按照惯例以正数报告潜在损失金额。
+df = pd.read_csv(DATA_PATH)
+
+# 提取日收益率并剔除可能存在的缺失值
+daily_returns = df['fund'].dropna()
+
+# 构造日损益 (P&L)
+pnl = POSITION * daily_returns
+
+# ==========================================
+# 2. 由经验分布计算历史 VaR（人民币）
+# ==========================================
+significance_level = 1 - CONFIDENCE_LEVEL
+
+# 计算经验分布的分位数（此处为损失阈值，通常为负数）
+var_quantile = pnl.quantile(significance_level)
+
+# VaR 取绝对值作为风险暴露报告（正数代表可能损失的最大金额）
+hist_var_95_1d = abs(var_quantile)
+
+# ==========================================
+# 3. 画直方图并加带标注的 VaR 线
+# ==========================================
+# 使用英文和通用字体以避免在不同操作系统中文字体缺失导致投屏报错
+plt.rcParams['font.family'] = 'sans-serif'
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 绘制日损益分布直方图
+ax.hist(pnl, bins=50, color='steelblue', edgecolor='black', alpha=0.75)
+
+# 绘制 VaR 竖线（定位于分位数本身，即负数区域）
+ax.axvline(var_quantile, color='red', linestyle='--', linewidth=2, 
+           label=f'{CONFIDENCE_LEVEL*100:.0f}% VaR Threshold')
+
+# 添加标注文本（箭头指向VaR线，文本展示VaR绝对值金额）
+ax.annotate(f'VaR = {hist_var_95_1d:,.2f} RMB\n(Quantile: {var_quantile:,.2f})',
+            xy=(var_quantile, ax.get_ylim()[1] * 0.8),    # 箭头指向位置
+            xytext=(var_quantile + np.std(pnl), ax.get_ylim()[1] * 0.9), # 文本位置偏移至右侧
+            arrowprops=dict(facecolor='black', shrink=0.05, width=1.5, headwidth=8),
+            fontsize=12, color='red', fontweight='bold',
+            bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="red", lw=1))
+
+ax.set_title(f'Daily P&L Distribution and {CONFIDENCE_LEVEL*100:.0f}% 1-Day Historical VaR', fontsize=14)
+ax.set_xlabel('Daily Profit and Loss (RMB)', fontsize=12)
+ax.set_ylabel('Frequency', fontsize=12)
+ax.legend(fontsize=11)
+ax.grid(axis='y', alpha=0.3)
+
+plt.tight_layout()
+plt.savefig(FIGURE_PATH, dpi=150)
+plt.close()
+
+# ==========================================
+# 4. 保存图形并填充 result
+# ==========================================
+result = {
+    'hist_var_95_1d': hist_var_95_1d,
+    'figure_path': FIGURE_PATH
+}
+
+# 供课堂演示打印输出
+print(f"Calculation Complete.")
+print(f"Confidence Level: {CONFIDENCE_LEVEL*100:.0f}%")
+print(f"1-Day Historical VaR: {result['hist_var_95_1d']:,.2f} RMB")
+print(f"Figure saved to: {result['figure_path']}")

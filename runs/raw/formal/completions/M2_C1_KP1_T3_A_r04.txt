@@ -1,0 +1,26 @@
+```python
+import math
+
+# è¾åæ°æ®
+sigma_A = 0.184
+sigma_B = 0.297
+w_A = 0.6
+w_B = 0.4
+rho_before = 0.3
+rho_after = 0.8
+
+# ç»åæ¹å·®åæ³¢å¨çè®¡ç®å½æ°
+def portfolio_vol(w1, w2, s1, s2, rho):
+    var = w1**2 * s1**2 + w2**2 * s2**2 + 2 * w1 * w2 * rho * s1 * s2
+    return math.sqrt(var)
+
+vol_before = portfolio_vol(w_A, w_B, sigma_A, sigma_B, rho_before)
+vol_after = portfolio_vol(w_A, w_B, sigma_A, sigma_B, rho_after)
+
+result = {
+    'vol_before_annual': vol_before,
+    'vol_after_annual': vol_after
+}
+
+result
+```

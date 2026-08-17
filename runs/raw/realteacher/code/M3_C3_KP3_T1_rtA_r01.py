@@ -1,0 +1,46 @@
+import math
+
+# 债券参数
+face_value = 100
+coupon_rate = 0.046
+ytm = 0.053
+maturity = 7
+annual_coupon = face_value * coupon_rate
+
+# 1. 计算债券价格
+price = 0
+for t in range(1, maturity + 1):
+    price += annual_coupon / ((1 + ytm) ** t)
+price += face_value / ((1 + ytm) ** maturity)
+
+# 2. 计算麦考利久期 (Macaulay Duration)
+mac_duration_numerator = 0
+for t in range(1, maturity + 1):
+    pv_cf = annual_coupon / ((1 + ytm) ** t)
+    mac_duration_numerator += t * pv_cf
+pv_principal = face_value / ((1 + ytm) ** maturity)
+mac_duration_numerator += maturity * pv_principal
+
+macaulay_duration_years = mac_duration_numerator / price
+
+# 3. 计算修正久期 (Modified Duration)
+modified_duration_years = macaulay_duration_years / (1 + ytm)
+
+# 4. 计算凸性 (Convexity)
+convexity_numerator = 0
+for t in range(1, maturity + 1):
+    pv_cf = annual_coupon / ((1 + ytm) ** t)
+    convexity_numerator += t * (t + 1) * pv_cf
+convexity_numerator += maturity * (maturity + 1) * pv_principal
+
+convexity = convexity_numerator / (price * (1 + ytm) ** 2)
+
+# 按照输出契约存入字典
+result = {
+    'price': price,
+    'macaulay_duration_years': macaulay_duration_years,
+    'modified_duration_years': modified_duration_years,
+    'convexity': convexity
+}
+
+print(result)

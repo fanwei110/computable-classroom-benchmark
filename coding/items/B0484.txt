@@ -1,0 +1,121 @@
+=== B0484  任务 KP6_T2 (T2) ===
+
+--- 任务要求的输出键 ---
+rolling_sharpe_last
+
+--- 判分失败明细 ---
+rolling_sharpe_last: 提交值 6.236427935211296  |  参考值 -0.09079893488821339
+
+--- 提取出的代码 ---
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+# 模拟数据生成（假设fund列为基金的日收益率）
+np.random.seed(42)
+dates = pd.date_range(start='2020-01-01', end='2023-12-31')
+fund_returns = np.random.normal(loc=0.0005, scale=0.01, size=len(dates))  # 日收益率
+rf = 0.021  # 年化无风险收益率
+
+# 创建DataFrame
+df = pd.DataFrame({'fund': fund_returns}, index=dates)
+
+# 计算60天滚动夏普比率
+window = 60  # 滚动窗口天数
+daily_rf = (1 + rf) ** (1/252) - 1  # 日化无风险收益率
+
+# 计算滚动夏普比率
+rolling_sharpe = df['fund'].rolling(window=window).apply(
+    lambda x: (x.mean() - daily_rf) / x.std() * np.sqrt(252), raw=True
+)
+
+# 获取最后一个窗口的夏普比率值
+last_sharpe = rolling_sharpe.iloc[-1]
+
+# 绘制图表
+plt.figure(figsize=(12, 6))
+rolling_sharpe.plot(title=f'{window}天滚动夏普比率 (rf={rf*100:.1f}%)')
+plt.ylabel('夏普比率')
+plt.grid(True)
+
+# 保存图表
+figure_path = 'rolling_sharpe.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 存储结果
+result = {
+    'rolling_sharpe_last': last_sharpe,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+print(result)
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+以下是满足您要求的Python代码，计算60天滚动夏普比率，并绘制图表保存为文件：
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+# 模拟数据生成（假设fund列为基金的日收益率）
+np.random.seed(42)
+dates = pd.date_range(start='2020-01-01', end='2023-12-31')
+fund_returns = np.random.normal(loc=0.0005, scale=0.01, size=len(dates))  # 日收益率
+rf = 0.021  # 年化无风险收益率
+
+# 创建DataFrame
+df = pd.DataFrame({'fund': fund_returns}, index=dates)
+
+# 计算60天滚动夏普比率
+window = 60  # 滚动窗口天数
+daily_rf = (1 + rf) ** (1/252) - 1  # 日化无风险收益率
+
+# 计算滚动夏普比率
+rolling_sharpe = df['fund'].rolling(window=window).apply(
+    lambda x: (x.mean() - daily_rf) / x.std() * np.sqrt(252), raw=True
+)
+
+# 获取最后一个窗口的夏普比率值
+last_sharpe = rolling_sharpe.iloc[-1]
+
+# 绘制图表
+plt.figure(figsize=(12, 6))
+rolling_sharpe.plot(title=f'{window}天滚动夏普比率 (rf={rf*100:.1f}%)')
+plt.ylabel('夏普比率')
+plt.grid(True)
+
+# 保存图表
+figure_path = 'rolling_sharpe.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 存储结果
+result = {
+    'rolling_sharpe_last': last_sharpe,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+print(result)
+```
+
+输出示例（具体值会因随机数据而异）：
+```python
+{
+    'rolling_sharpe_last': 0.85234123456789,  # 最后一个窗口的夏普比率值
+    'figure_path': '/your/current/path/rolling_sharpe.png'  # 图表文件的绝对路径
+}
+```
+
+代码说明：
+1. 生成了模拟的基金日收益率数据（实际应用中请替换为真实数据）
+2. 计算了60天滚动夏普比率（可通过修改window变量调整窗口期）
+3. 将无风险收益率从年化转换为日化
+4. 绘制了滚动夏普比率图并保存为PNG文件
+5. 将最后一个窗口的夏普比率值和图表路径存入result字典
+
+注意：实际使用时请将模拟数据替换为您的真实基金收益率数据。

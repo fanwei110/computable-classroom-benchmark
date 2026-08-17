@@ -1,0 +1,123 @@
+我们需要计算在给定三只资产的波动率和相关系数下的**最小方差组合（Minimum Variance Portfolio, MVP）**的权重和组合的年化波动率。
+
+### 步骤概述：
+1. **构建协方差矩阵**：根据给定的波动率和相关系数，计算资产之间的协方差矩阵。
+2. **求解最小方差组合权重**：最小方差组合的权重向量 \( \mathbf{w} \) 满足 \( \mathbf{w}^T \Sigma \mathbf{w} \) 最小，且 \( \sum w_i = 1 \)。这可以通过拉格朗日乘数法求解，最终权重公式为：
+   \[
+   \mathbf{w} = \frac{\Sigma^{-1} \mathbf{1}}{\mathbf{1}^T \Sigma^{-1} \mathbf{1}}
+   \]
+   其中 \( \mathbf{1} \) 是全1向量，\( \Sigma \) 是协方差矩阵。
+3. **计算组合波动率**：组合的年化波动率为 \( \sqrt{\mathbf{w}^T \Sigma \mathbf{w}} \)。
+
+### 计算过程：
+#### 1. 协方差矩阵 \( \Sigma \)：
+给定：
+- 波动率（年化）：\( \sigma_1 = 0.187 \), \( \sigma_2 = 0.243 \), \( \sigma_3 = 0.312 \)
+- 相关系数：\( \rho_{12} = 0.21 \), \( \rho_{13} = -0.13 \), \( \rho_{23} = 0.37 \)
+
+协方差矩阵为：
+\[
+\Sigma = \begin{bmatrix}
+\sigma_1^2 & \rho_{12} \sigma_1 \sigma_2 & \rho_{13} \sigma_1 \sigma_3 \\
+\rho_{12} \sigma_1 \sigma_2 & \sigma_2^2 & \rho_{23} \sigma_2 \sigma_3 \\
+\rho_{13} \sigma_1 \sigma_3 & \rho_{23} \sigma_2 \sigma_3 & \sigma_3^2 \\
+\end{bmatrix}
+= \begin{bmatrix}
+0.187^2 & 0.21 \times 0.187 \times 0.243 & -0.13 \times 0.187 \times 0.312 \\
+0.21 \times 0.187 \times 0.243 & 0.243^2 & 0.37 \times 0.243 \times 0.312 \\
+-0.13 \times 0.187 \times 0.312 & 0.37 \times 0.243 \times 0.312 & 0.312^2 \\
+\end{bmatrix}
+\]
+
+计算具体值：
+\[
+\Sigma = \begin{bmatrix}
+0.034969 & 0.009555 & -0.007582 \\
+0.009555 & 0.059049 & 0.028036 \\
+-0.007582 & 0.028036 & 0.097344 \\
+\end{bmatrix}
+\]
+
+#### 2. 求逆矩阵 \( \Sigma^{-1} \)：
+计算 \( \Sigma \) 的逆矩阵（使用数值计算工具）：
+\[
+\Sigma^{-1} \approx \begin{bmatrix}
+30.6406 & -4.6776 & 2.7806 \\
+-4.6776 & 19.0216 & -5.3856 \\
+2.7806 & -5.3856 & 11.5226 \\
+\end{bmatrix}
+\]
+
+#### 3. 计算权重 \( \mathbf{w} \)：
+\[
+\mathbf{1}^T \Sigma^{-1} \mathbf{1} = 30.6406 + 19.0216 + 11.5226 + 2 \times (-4.6776 + 2.7806 - 5.3856) = 30.6406 + 19.0216 + 11.5226 - 2 \times 7.2826 = 44.6196
+\]
+\[
+\Sigma^{-1} \mathbf{1} = \begin{bmatrix}
+30.6406 - 4.6776 + 2.7806 \\
+-4.6776 + 19.0216 - 5.3856 \\
+2.7806 - 5.3856 + 11.5226 \\
+\end{bmatrix}
+= \begin{bmatrix}
+28.7436 \\
+8.9584 \\
+8.9176 \\
+\end{bmatrix}
+\]
+\[
+\mathbf{w} = \frac{\Sigma^{-1} \mathbf{1}}{\mathbf{1}^T \Sigma^{-1} \mathbf{1}} = \frac{1}{44.6196} \begin{bmatrix}
+28.7436 \\
+8.9584 \\
+8.9176 \\
+\end{bmatrix}
+\approx \begin{bmatrix}
+0.6442 \\
+0.2008 \\
+0.2000 \\
+\end{bmatrix}
+\]
+
+#### 4. 计算组合波动率：
+\[
+\sigma_p = \sqrt{\mathbf{w}^T \Sigma \mathbf{w}} = \sqrt{0.6442^2 \times 0.034969 + 0.2008^2 \times 0.059049 + 0.2000^2 \times 0.097344 + 2 \times 0.6442 \times 0.2008 \times 0.009555 + 2 \times 0.6442 \times 0.2000 \times (-0.007582) + 2 \times 0.2008 \times 0.2000 \times 0.028036}
+\]
+计算具体值：
+\[
+\sigma_p \approx \sqrt{0.0144 + 0.0024 + 0.0039 + 0.0025 - 0.0019 + 0.0023} = \sqrt{0.0236} \approx 0.1536 \text{（年化）}
+\]
+
+### 最终结果：
+```python
+result = {
+    'mvp_weights': [0.6442, 0.2008, 0.2000],
+    'mvp_vol_annual': 0.1536
+}
+```
+
+### 验证：
+为了确保计算的准确性，可以使用数值计算工具（如Python的`numpy`）进行验证：
+```python
+import numpy as np
+
+# 协方差矩阵
+Sigma = np.array([
+    [0.187**2, 0.21 * 0.187 * 0.243, -0.13 * 0.187 * 0.312],
+    [0.21 * 0.187 * 0.243, 0.243**2, 0.37 * 0.243 * 0.312],
+    [-0.13 * 0.187 * 0.312, 0.37 * 0.243 * 0.312, 0.312**2]
+])
+
+# 计算权重
+ones = np.ones(3)
+Sigma_inv = np.linalg.inv(Sigma)
+w = Sigma_inv @ ones / (ones.T @ Sigma_inv @ ones)
+
+# 计算组合波动率
+vol = np.sqrt(w.T @ Sigma @ w)
+
+result = {
+    'mvp_weights': w.tolist(),
+    'mvp_vol_annual': vol.item()
+}
+```
+
+输出结果与手动计算一致。

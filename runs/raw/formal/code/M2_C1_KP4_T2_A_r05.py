@@ -1,0 +1,58 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+
+# ============================================================
+# 可调参数区域（修改此处即可改变输入）
+# ============================================================
+K = 97.5          # 行权价
+r = 0.043         # 无风险利率
+T = 0.58          # 剩余到期时间（年）
+S_vals = np.linspace(70, 140, 200)  # 标的价格范围
+sigma_list = [0.15, 0.276, 0.40]    # 波动率列表
+S_target = 110.0                     # 计算单点 delta 的标的价格
+sigma_target = 0.276                 # 计算单点 delta 的波动率
+figure_filename = "delta_vs_spot.png"
+
+# ============================================================
+# 计算 Delta 函数（欧式看涨期权）
+# ============================================================
+def delta_call(S, K, r, sigma, T):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# ============================================================
+# 计算指定点的 delta
+# ============================================================
+delta_at_s110 = delta_call(S_target, K, r, sigma_target, T)
+
+# ============================================================
+# 绘制 Delta 随标的价格变化的曲线
+# ============================================================
+plt.figure(figsize=(8, 5))
+for sigma in sigma_list:
+    delta_vals = delta_call(S_vals, K, r, sigma, T)
+    plt.plot(S_vals, delta_vals, linewidth=2, label=f'σ = {sigma*100:.1f}%')
+
+plt.axvline(K, color='gray', linestyle='--', alpha=0.6, label=f'K = {K}')
+plt.xlabel('Spot Price')
+plt.ylabel('Delta')
+plt.title('Delta vs Spot Price (Call Option)')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+
+# 保存图片
+plt.savefig(figure_filename, dpi=150)
+plt.close()
+
+# ============================================================
+# 按要求构造 result 字典
+# ============================================================
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': figure_filename
+}
+
+# 输出查看
+print(result)

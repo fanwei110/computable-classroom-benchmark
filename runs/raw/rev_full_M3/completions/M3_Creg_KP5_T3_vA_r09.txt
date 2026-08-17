@@ -1,0 +1,28 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 已知参数
+position_value = 2_700_000  # 头寸规模（元）
+annual_volatility = 0.24   # 年化波动率 (24%)
+confidence_level = 0.95     # 95% 置信度
+trading_days = 252          # 一年的标准交易日数量（市场惯例）
+
+# 将年化波动率转换为1日波动率
+# 假设收益率服从正态分布，且各交易日独立，时间平方根法则：sigma_1d = sigma_ann / sqrt(T)
+daily_volatility = annual_volatility / np.sqrt(trading_days)
+
+# 95% 置信度对应的正态分布分位数 (Z-score)
+z_score = norm.ppf(confidence_level)
+
+# 计算 95% 一日 VaR (参数法/方差-协方差法)
+# VaR = 头寸规模 * Z-score * 1日波动率
+var_95_1d = position_value * z_score * daily_volatility
+
+# 按照输出契约存入字典
+result = {
+    'var_95_1d': var_95_1d
+}
+
+print(result)
+```

@@ -1,0 +1,34 @@
+import numpy as np
+from scipy import stats
+
+# ==========================================
+# 在险价值 (VaR) 计算：参数法 (Delta-Normal)
+# ==========================================
+
+# 1. 已知参数设定
+sigma_annual = 0.24          # 年化波动率 (24%)
+position_value = 2_700_000   # 头寸金额 (元)
+trading_days = 252           # 一年交易日数
+confidence_level = 0.95      # 置信水平
+
+# 2. 步骤1：按每年252个交易日把24%波动率去年化到一日
+# 波动率缩放规则：sigma_daily = sigma_annual / sqrt(252)
+sigma_daily = sigma_annual / np.sqrt(trading_days)
+
+# 3. 步骤2：用单尾95%正态分位数，均值取零
+# 获取标准正态分布的95%分位数 (单尾)
+z_95 = stats.norm.ppf(confidence_level)
+
+# 4. 步骤3：把VaR作为正的人民币金额计算
+# VaR = 头寸金额 × 日波动率 × 正态分位数 (均值取零)
+var_95_1d = position_value * sigma_daily * z_95
+
+# 5. 按输出契约存入result字典
+result = {
+    'var_95_1d': var_95_1d
+}
+
+# (可选) 课堂打印展示
+print(f"日波动率: {sigma_daily:.6f}")
+print(f"95% 正态分位数: {z_95:.4f}")
+print(f"95% 一日 VaR: {var_95_1d:,.2f} 元")

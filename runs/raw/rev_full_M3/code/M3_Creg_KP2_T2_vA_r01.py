@@ -1,0 +1,88 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 可调参数
+# ==========================================
+rf = 0.023  # 无风险利率
+rm = 0.094  # 市场期望收益
+
+# ==========================================
+# 股票数据
+# ==========================================
+stocks = {
+    'X': {'beta': 0.62, 'return': 0.081},
+    'Y': {'beta': 1.18, 'return': 0.131},
+    'Z': {'beta': 1.51, 'return': 0.099}
+}
+
+# ==========================================
+# 计算 SML 及要求指标
+# ==========================================
+# 生成 beta 从 0 到 2 的数据
+betas = np.linspace(0, 2, 200)
+sml_returns = rf + betas * (rm - rf)
+
+# SML 斜率
+sml_slope = rm - rf
+
+# beta = 1.27 处的 CAPM 期望收益
+beta_target = 1.27
+er_at_beta_127 = rf + beta_target * (rm - rf)
+
+# ==========================================
+# 绘图
+# ==========================================
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 画证券市场线 (SML)
+ax.plot(betas, sml_returns * 100, label='Security Market Line (SML)', color='blue', linewidth=2)
+
+# 画股票点并标注（手动调整标注位置以防止重叠）
+offsets = {
+    'X': (-70, 20),
+    'Y': (15, 20),
+    'Z': (15, -40)
+}
+
+for name, data in stocks.items():
+    ax.scatter(data['beta'], data['return'] * 100, color='red', zorder=5)
+    ax.annotate(f"Stock {name}\n(β={data['beta']}, E={data['return']*100:.1f}%)",
+                xy=(data['beta'], data['return'] * 100),
+                xytext=offsets[name],
+                textcoords='offset points',
+                fontsize=9,
+                bbox=dict(boxstyle='round,pad=0.3', fc='yellow', alpha=0.6),
+                arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0'))
+
+# 画市场组合和无风险利率点
+ax.scatter(1, rm * 100, color='green', marker='s', s=80, zorder=5, label='Market Portfolio (M)')
+ax.scatter(0, rf * 100, color='black', marker='D', s=80, zorder=5, label='Risk-Free Rate (Rf)')
+
+# 图形格式设置
+ax.set_xlabel('Beta (β)', fontsize=12)
+ax.set_ylabel('Expected Return (%)', fontsize=12)
+ax.set_title(f'Security Market Line (SML)\nRf={rf*100:.1f}%, Rm={rm*100:.1f}%', fontsize=14)
+ax.set_xlim(0, 2)
+ax.set_ylim(0, 18)
+ax.grid(True, linestyle='--', alpha=0.7)
+ax.legend(loc='upper left')
+
+# 保存图像
+figure_path = 'sml_plot.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ==========================================
+# 构建输出字典
+# ==========================================
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': figure_path
+}
+
+# 打印验证
+print(f"SML Slope: {result['sml_slope']:.4f}")
+print(f"Expected Return at Beta=1.27: {result['er_at_beta_127']:.4f}")
+print(f"Figure saved at: {result['figure_path']}")

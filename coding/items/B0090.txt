@@ -1,0 +1,144 @@
+=== B0090  任务 KP6_T2 (T2) ===
+
+--- 任务要求的输出键 ---
+rolling_sharpe_last
+
+--- 判分失败明细 ---
+rolling_sharpe_last: 提交值 0.1001403398358599  |  参考值 -0.09079893488821339
+
+--- 提取出的代码 ---
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+# 1. 读取数据并计算日无风险利率
+data_path = 'data/market_snapshot_v1.csv'
+df = pd.read_csv(data_path, parse_dates=['date'])
+daily_rf_rate = 0.021 / 252  # 年利率2.1%转换为日利率
+
+# 提取基金日收益率
+fund_returns = df['fund'].dropna().values
+dates = df['date'].dropna().values[-len(fund_returns):]  # 对齐日期
+
+# 2. 计算滚动夏普比率
+window_length = 60  # 可调窗口长度
+rolling_sharpe = []
+
+for i in range(window_length, len(fund_returns)):
+    window_returns = fund_returns[i-window_length:i]
+    excess_returns = window_returns - daily_rf_rate
+    mean_excess = np.mean(excess_returns)
+    std_excess = np.std(excess_returns, ddof=1)
+    annualized_sharpe = (mean_excess / std_excess) * np.sqrt(252)
+    rolling_sharpe.append(annualized_sharpe)
+
+# 3. 报告最后一个窗口的夏普值
+last_sharpe = rolling_sharpe[-1]
+
+# 准备绘图数据
+plot_dates = dates[window_length:]
+plot_sharpe = rolling_sharpe
+
+# 绘制时间序列图
+plt.figure(figsize=(10, 6))
+plt.plot(plot_dates, plot_sharpe, label=f'{window_length}-day Rolling Sharpe Ratio')
+plt.axhline(0, color='gray', linestyle='--', linewidth=0.5)
+plt.title('60-Day Rolling Annualized Sharpe Ratio')
+plt.xlabel('Date')
+plt.ylabel('Sharpe Ratio')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 保存图形
+figure_dir = 'figures'
+os.makedirs(figure_dir, exist_ok=True)
+figure_path = os.path.join(figure_dir, 'rolling_sharpe.png')
+plt.savefig(figure_path)
+plt.close()
+
+# 4. 填充result字典
+result = {
+    'rolling_sharpe_last': float(last_sharpe),
+    'figure_path': figure_path
+}
+
+# 输出结果以供验证
+print(result)
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+以下是自包含的Python脚本，满足课程要求：
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+# 1. 读取数据并计算日无风险利率
+data_path = 'data/market_snapshot_v1.csv'
+df = pd.read_csv(data_path, parse_dates=['date'])
+daily_rf_rate = 0.021 / 252  # 年利率2.1%转换为日利率
+
+# 提取基金日收益率
+fund_returns = df['fund'].dropna().values
+dates = df['date'].dropna().values[-len(fund_returns):]  # 对齐日期
+
+# 2. 计算滚动夏普比率
+window_length = 60  # 可调窗口长度
+rolling_sharpe = []
+
+for i in range(window_length, len(fund_returns)):
+    window_returns = fund_returns[i-window_length:i]
+    excess_returns = window_returns - daily_rf_rate
+    mean_excess = np.mean(excess_returns)
+    std_excess = np.std(excess_returns, ddof=1)
+    annualized_sharpe = (mean_excess / std_excess) * np.sqrt(252)
+    rolling_sharpe.append(annualized_sharpe)
+
+# 3. 报告最后一个窗口的夏普值
+last_sharpe = rolling_sharpe[-1]
+
+# 准备绘图数据
+plot_dates = dates[window_length:]
+plot_sharpe = rolling_sharpe
+
+# 绘制时间序列图
+plt.figure(figsize=(10, 6))
+plt.plot(plot_dates, plot_sharpe, label=f'{window_length}-day Rolling Sharpe Ratio')
+plt.axhline(0, color='gray', linestyle='--', linewidth=0.5)
+plt.title('60-Day Rolling Annualized Sharpe Ratio')
+plt.xlabel('Date')
+plt.ylabel('Sharpe Ratio')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 保存图形
+figure_dir = 'figures'
+os.makedirs(figure_dir, exist_ok=True)
+figure_path = os.path.join(figure_dir, 'rolling_sharpe.png')
+plt.savefig(figure_path)
+plt.close()
+
+# 4. 填充result字典
+result = {
+    'rolling_sharpe_last': float(last_sharpe),
+    'figure_path': figure_path
+}
+
+# 输出结果以供验证
+print(result)
+```
+
+这个脚本：
+1. 读取CSV文件并计算日无风险利率
+2. 使用60日滚动窗口计算年化夏普比率（可通过修改window_length调整窗口长度）
+3. 报告最后一个窗口的夏普值并绘制时间序列图
+4. 将结果保存到result字典中，包括最后一个夏普值和图形文件路径
+
+注意事项：
+- 脚本假设CSV文件中有'date'和'fund'列
+- 图形保存在figures目录下（会自动创建）
+- 所有计算都符合课程约定（年化、ddof=1等）
+- 输出结果直接打印以便验证

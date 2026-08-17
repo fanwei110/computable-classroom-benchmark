@@ -1,0 +1,56 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ==================== 可调参数 ====================
+WINDOW = 60                # 滚动窗口长度（交易日）
+RISK_FREE_ANNUAL = 0.021   # 年化无风险利率
+TRADING_DAYS = 252         # 每年交易日数
+# =================================================
+
+# 1. 读取数据
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 如果存在日期列，将其解析为 datetime 并设为索引
+if 'date' in df.columns:
+    df['date'] = pd.to_datetime(df['date'])
+    df.set_index('date', inplace=True)
+
+# 获取 fund 列的日收益率（去掉缺失值）
+fund_returns = df['fund'].dropna()
+
+# 2. 计算日度无风险利率及超额收益
+rf_daily = RISK_FREE_ANNUAL / TRADING_DAYS
+excess_returns = fund_returns - rf_daily
+
+# 3. 滚动计算年化夏普比率（样本标准差 ddof=1）
+rolling_mean = excess_returns.rolling(window=WINDOW).mean()
+rolling_std = excess_returns.rolling(window=WINDOW).apply(
+    lambda x: np.std(x, ddof=1), raw=True
+)
+rolling_sharpe = (rolling_mean / rolling_std) * np.sqrt(TRADING_DAYS)
+
+# 4. 最后一个窗口的夏普值（去掉 NaN 后取最后一个）
+rolling_sharpe_last = float(rolling_sharpe.dropna().iloc[-1])
+
+# 5. 绘图并保存
+fig, ax = plt.subplots(figsize=(12, 5))
+ax.plot(rolling_sharpe.index, rolling_sharpe.values, linewidth=1.2,
+        label=f'{WINDOW}-Day Rolling Annualized Sharpe')
+ax.axhline(y=0, color='grey', linestyle='--', linewidth=0.8)
+ax.set_title(f'Rolling Annualized Sharpe Ratio ({WINDOW}-Day Window)')
+ax.set_xlabel('Date' if isinstance(rolling_sharpe.index, pd.DatetimeIndex) else 'Period')
+ax.set_ylabel('Sharpe Ratio')
+ax.legend()
+plt.tight_layout()
+figure_path = 'rolling_sharpe.png'
+fig.savefig(figure_path, dpi=150)
+plt.close(fig)
+
+# 6. 输出契约
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': figure_path
+}
+
+print(result)

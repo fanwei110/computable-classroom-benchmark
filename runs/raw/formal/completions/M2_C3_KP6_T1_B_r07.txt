@@ -1,0 +1,37 @@
+由于第一问缺少计算年化夏普比率所必需的基金（fund）日收益序列，无法完成计算，结果置为 `None`。第二问根据提供的数据完成 Brinson 归因，配置、选择和交互效应均已用小数表示。
+
+```python
+# 计算归因效应
+# 组合
+w_p = [0.45, 0.35, 0.20]
+r_p = [0.083, 0.021, -0.014]
+# 基准
+w_b = [0.40, 0.40, 0.20]
+r_b = [0.067, 0.034, -0.009]
+
+# 总收益
+R_p = sum(w * r for w, r in zip(w_p, r_p))  # 0.0419
+R_b = sum(w * r for w, r in zip(w_b, r_b))  # 0.0386
+
+# 配置效应: (w_p - w_b) * (r_b - R_b)
+alloc = sum((wp - wb) * (rb - R_b) for wp, wb, rb in zip(w_p, w_b, r_b))
+# 选择效应: w_b * (r_p - r_b)
+select = sum(wb * (rp - rb) for wb, rp, rb in zip(w_b, r_p, r_b))
+# 交互效应: (w_p - w_b) * (r_p - r_b)
+interact = sum((wp - wb) * (rp - rb) for wp, wb, rp, rb in zip(w_p, w_b, r_p, r_b))
+
+result = {
+    'sharpe_annual': None,  # 第一问缺失基金日收益序列，无法计算
+    'allocation_effect': round(alloc, 6),    # 0.00165
+    'selection_effect': round(select, 6),    # 0.0002
+    'interaction_effect': round(interact, 6) # 0.00145
+}
+```
+
+**计算结果：**
+- 年化夏普比率：数据缺失，未计算
+- 配置效应：0.00165（即 0.165%）
+- 选择效应：0.00020（即 0.020%）
+- 交互效应：0.00145（即 0.145%）
+
+三项效应之和等于组合超越基准的超额收益（0.00165 + 0.00020 + 0.00145 = 0.0033，即 0.33%），验证归因分解正确。如需计算第一问，请提供基金完整的日收益率序列。

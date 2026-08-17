@@ -1,0 +1,84 @@
+我们按照题目要求计算债券的价格、麦考利久期、修正久期和凸性。以下是详细的计算过程和结果：
+
+### 1. 债券价格（Price）
+债券价格是未来现金流的现值总和。对于面值100、票息4.6%、7年期、到期收益率5.3%的债券，现金流包括每年的票息和到期时的面值。
+
+票息现金流：每年 \( C = 100 \times 4.6\% = 4.6 \) 元
+面值现金流：到期时 \( F = 100 \) 元
+到期收益率（年复利）：\( y = 5.3\% = 0.053 \)
+
+价格公式：
+\[
+P = \sum_{t=1}^{7} \frac{C}{(1 + y)^t} + \frac{F}{(1 + y)^7}
+\]
+
+计算过程：
+\[
+P = \frac{4.6}{1.053} + \frac{4.6}{1.053^2} + \frac{4.6}{1.053^3} + \frac{4.6}{1.053^4} + \frac{4.6}{1.053^5} + \frac{4.6}{1.053^6} + \frac{104.6}{1.053^7}
+\]
+
+计算结果：
+\[
+P \approx 95.57
+\]
+
+### 2. 麦考利久期（Macaulay Duration）
+麦考利久期是现金流的加权平均时间，权重为现金流的现值占价格的比例。
+
+公式：
+\[
+\text{Macaulay Duration} = \frac{1}{P} \sum_{t=1}^{7} \frac{t \cdot C}{(1 + y)^t} + \frac{7 \cdot F}{(1 + y)^7}
+\]
+
+计算过程：
+\[
+\text{Macaulay Duration} = \frac{1}{95.57} \left( \frac{1 \times 4.6}{1.053} + \frac{2 \times 4.6}{1.053^2} + \frac{3 \times 4.6}{1.053^3} + \frac{4 \times 4.6}{1.053^4} + \frac{5 \times 4.6}{1.053^5} + \frac{6 \times 4.6}{1.053^6} + \frac{7 \times 104.6}{1.053^7} \right)
+\]
+
+计算结果：
+\[
+\text{Macaulay Duration} \approx 6.03 \text{ 年}
+\]
+
+### 3. 修正久期（Modified Duration）
+修正久期衡量债券价格对收益率变化的敏感性，是麦考利久期除以 \( (1 + y) \)。
+
+公式：
+\[
+\text{Modified Duration} = \frac{\text{Macaulay Duration}}{1 + y}
+\]
+
+计算结果：
+\[
+\text{Modified Duration} = \frac{6.03}{1.053} \approx 5.73 \text{ 年}
+\]
+
+### 4. 凸性（Convexity）
+凸性衡量债券价格对收益率变化的二阶敏感性。
+
+公式：
+\[
+\text{Convexity} = \frac{1}{P} \sum_{t=1}^{7} \frac{t(t + 1) \cdot C}{(1 + y)^{t + 2}} + \frac{7 \times 8 \cdot F}{(1 + y)^9}
+\]
+
+计算过程：
+\[
+\text{Convexity} = \frac{1}{95.57} \left( \frac{1 \times 2 \times 4.6}{1.053^3} + \frac{2 \times 3 \times 4.6}{1.053^4} + \frac{3 \times 4 \times 4.6}{1.053^5} + \frac{4 \times 5 \times 4.6}{1.053^6} + \frac{5 \times 6 \times 4.6}{1.053^7} + \frac{6 \times 7 \times 4.6}{1.053^8} + \frac{7 \times 8 \times 104.6}{1.053^9} \right)
+\]
+
+计算结果：
+\[
+\text{Convexity} \approx 40.5
+\]
+
+### 最终结果
+将所有结果存入 `result` 字典：
+
+```python
+result = {
+    'price': 95.57,
+    'macaulay_duration_years': 6.03,
+    'modified_duration_years': 5.73,
+    'convexity': 40.5
+}
+```

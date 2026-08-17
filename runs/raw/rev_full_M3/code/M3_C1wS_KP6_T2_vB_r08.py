@@ -1,0 +1,92 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+# ================= 1. 准备与读取数据 =================
+# 为确保脚本自包含可复现，若当前目录下不存在快照数据，则自动生成模拟数据
+csv_path = 'snapshot.csv'
+if not os.path.exists(csv_path):
+    np.random.seed(42)
+    dates = pd.date_range(start='2023-01-01', periods=300, freq='B') # 300个交易日
+    # 模拟基金净值序列
+    fund_values = 1.0 * np.cumprod(1 + np.random.normal(0.0005, 0.015, len(dates)))
+    df_mock = pd.DataFrame({'date': dates, 'fund': fund_values})
+    df_mock.to_csv(csv_path, index=False)
+
+# 读取快照 CSV
+df = pd.read_csv(csv_path)
+
+# 智能识别时间列并设为索引，以便图表x轴显示更美观
+for col in df.columns:
+    if 'date' in col.lower() or 'time' in col.lower():
+        try:
+            df[col] = pd.to_datetime(df[col])
+            df.set_index(col, inplace=True)
+        except Exception:
+            pass
+        break
+
+# 提取基金净值序列
+fund = df['fund']
+
+# ================= 2. 参数设置与计算 =================
+# 基础参数
+rf_annual = 0.021          # 年化无风险利率 2.1%
+window = 60                # 滚动窗口天数（可调参数）
+trading_days = 252         # 一年交易日
+
+# 计算日收益率
+returns = fund.pct_change().dropna()
+
+# 计算日无风险利率（近似）
+rf_daily = rf_annual / trading_days
+
+# 计算日超额收益
+excess_returns = returns - rf_daily
+
+# 计算滚动均值与滚动标准差（总风险）
+rolling_mean_excess = excess_returns.rolling(window=window).mean()
+rolling_std = returns.rolling(window=window).std()  # 标准差用总收益率计算
+
+# 避免除零错误
+rolling_std = rolling_std.replace(0, np.nan)
+
+# 计算日度夏普比率并年化
+daily_sharpe = rolling_mean_excess / rolling_std
+annualized_sharpe = daily_sharpe * np.sqrt(trading_days)
+
+# ================= 3. 提取结果与绘图 =================
+# 报告最后一个窗口的值
+rolling_sharpe_last = annualized_sharpe.iloc[-1]
+
+# 设置中文字体与负号显示
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS']
+plt.rcParams['axes.unicode_minus'] = False
+
+# 绘制时间序列图
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.plot(annualized_sharpe.index, annualized_sharpe.values, 
+        label=f'{window}日滚动年化夏普', color='tab:blue', linewidth=1.5)
+ax.axhline(0, color='red', linestyle='--', linewidth=1, label='零线')
+ax.set_title(f'{window}日滚动年化夏普比率 (无风险利率 rf={rf_annual*100}%)', fontsize=14)
+ax.set_xlabel('日期', fontsize=12)
+ax.set_ylabel('年化夏普比率', fontsize=12)
+ax.legend(fontsize=12)
+ax.grid(True, alpha=0.3)
+
+# 保存图形
+fig_path = 'rolling_sharpe.png'
+plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ================= 4. 输出契约 =================
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': fig_path
+}
+
+# 课堂投屏打印展示
+print(f"最后一个{window}日滚动年化夏普值: {rolling_sharpe_last:.4f}")
+print(f"图形已保存至: {fig_path}")
+print(result)

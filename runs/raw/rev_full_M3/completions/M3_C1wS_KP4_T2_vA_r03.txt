@@ -1,0 +1,82 @@
+```python
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 1. 参数设定
+# ==========================================
+K = 97.5          # 行权价
+r = 0.043         # 无风险利率 4.3%
+T = 0.58          # 剩余期限 0.58 年
+S_min = 70        # 标的价格网格下限
+S_max = 140       # 标的价格网格上限
+num_points = 500  # 网格点数，保证曲线平滑
+
+# 波动率参数化：三条曲线对应的波动率
+sigmas = [0.15, 0.276, 0.40]
+
+# ==========================================
+# 2. 定义 Black-Scholes 欧式看涨期权 Delta 函数
+# ==========================================
+def bs_call_delta(S, K, r, T, sigma):
+    """
+    计算欧式看涨期权的 Delta (闭式解)
+    S: 标的资产价格
+    K: 行权价
+    r: 无风险利率
+    T: 剩余期限
+    sigma: 波动率
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# ==========================================
+# 3. 在标的网格上计算不同波动率下的 delta
+# ==========================================
+S_grid = np.linspace(S_min, S_max, num_points)
+
+deltas_dict = {}
+for sigma in sigmas:
+    deltas_dict[sigma] = bs_call_delta(S_grid, K, r, T, sigma)
+
+# ==========================================
+# 4. 计算标的110、波动率27.6%时的 delta
+# ==========================================
+S_target = 110
+sigma_target = 0.276
+delta_at_s110 = bs_call_delta(S_target, K, r, T, sigma_target)
+
+# ==========================================
+# 5. 绘图：Delta 随标的价格变化曲线
+# ==========================================
+plt.figure(figsize=(10, 6))
+
+for sigma, deltas in deltas_dict.items():
+    plt.plot(S_grid, deltas, linewidth=2, label=f'σ = {sigma*100:.1f}%')
+
+plt.title('European Call Option Delta vs Underlying Price', fontsize=14)
+plt.xlabel('Underlying Price (S)', fontsize=12)
+plt.ylabel('Delta', fontsize=12)
+plt.axhline(0, color='grey', linestyle='--', linewidth=0.5)
+plt.axhline(1, color='grey', linestyle='--', linewidth=0.5)
+plt.legend(fontsize=11)
+plt.grid(True, linestyle=':', alpha=0.7)
+
+# 保存图形
+figure_path = 'delta_vs_underlying.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ==========================================
+# 6. 封装结果到 result 字典
+# ==========================================
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': figure_path
+}
+
+# 课堂展示辅助输出
+print(f"当标的价=110，波动率=27.6%时，看涨期权 Delta = {result['delta_at_s110']:.6f}")
+print(f"图形已保存至: {result['figure_path']}")
+```

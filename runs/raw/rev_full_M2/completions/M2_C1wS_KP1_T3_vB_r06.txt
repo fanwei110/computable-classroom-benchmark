@@ -1,0 +1,55 @@
+以下代码直接计算了两种相关系数下60/40组合的年化波动率，并将结果存入约定的字典 `result`。
+
+```python
+import numpy as np
+
+# 资产参数：A波动18.4%，B波动29.7%
+sigma_A = 0.184
+sigma_B = 0.297
+
+# 组合权重：六四开，这里设定A占60%，B占40%
+w_A = 0.6
+w_B = 0.4
+
+# 相关系数
+rho_before = 0.3   # 变化前
+rho_after  = 0.8   # 变化后
+
+# 协方差矩阵元素
+cov_AA = sigma_A ** 2
+cov_BB = sigma_B ** 2
+cov_AB_before = rho_before * sigma_A * sigma_B
+cov_AB_after  = rho_after  * sigma_A * sigma_B
+
+# 组合方差：w'Σw
+var_before = w_A**2 * cov_AA + w_B**2 * cov_BB + 2 * w_A * w_B * cov_AB_before
+var_after  = w_A**2 * cov_AA + w_B**2 * cov_BB + 2 * w_A * w_B * cov_AB_after
+
+# 组合年化波动率（标准差）
+vol_before = np.sqrt(var_before)
+vol_after  = np.sqrt(var_after)
+
+# 按要求填充结果字典
+result = {
+    'vol_before_annual': vol_before,
+    'vol_after_annual': vol_after
+}
+
+# 课堂投屏输出
+print("=== 60/40 组合年化波动率 ===")
+print(f"相关系数 0.3 时: {vol_before:.4f} ({vol_before*100:.2f}%)")
+print(f"相关系数 0.8 时: {vol_after:.4f} ({vol_after*100:.2f}%)")
+print("\n结果字典:")
+print(result)
+```
+
+运行后会输出类似以下结果（具体数值取决于浮点精度）：
+
+```
+=== 60/40 组合年化波动率 ===
+相关系数 0.3 时: 0.1752 (17.52%)
+相关系数 0.8 时: 0.2111 (21.11%)
+
+结果字典:
+{'vol_before_annual': 0.1752..., 'vol_after_annual': 0.2111...}
+```

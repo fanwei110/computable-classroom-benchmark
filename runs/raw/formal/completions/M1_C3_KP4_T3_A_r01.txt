@@ -1,0 +1,85 @@
+要计算隐含波动率变化对期权价格的影响，我们可以使用期权的Vega（即期权价格对波动率的敏感性）。Vega表示波动率变化1%时，期权价格的变化量。
+
+### 计算步骤：
+1. **计算期权的Vega**：Vega可以通过Black-Scholes公式的偏导数得到，或者使用数值方法近似计算。
+2. **波动率变化1%对期权价格的影响**：Vega × 波动率变化（1% = 0.01）。
+
+### Black-Scholes Vega公式：
+对于欧式期权，Vega的计算公式为：
+\[
+\text{Vega} = S_0 \sqrt{T} \cdot N'(d_1)
+\]
+其中：
+- \( S_0 = 103.7 \)（标的价格）
+- \( K = 97.5 \)（行权价）
+- \( T = 0.58 \)（剩余期限，年化）
+- \( r = 0.043 \)（无风险利率，连续复利）
+- \( \sigma = 0.276 \)（波动率）
+- \( N'(d_1) \) 是标准正态分布的概率密度函数在 \( d_1 \) 处的值。
+
+\( d_1 \) 的计算公式为：
+\[
+d_1 = \frac{\ln(S_0 / K) + (r + \sigma^2 / 2) T}{\sigma \sqrt{T}}
+\]
+
+### 计算过程：
+1. 计算 \( d_1 \)：
+\[
+d_1 = \frac{\ln(103.7 / 97.5) + (0.043 + 0.276^2 / 2) \times 0.58}{0.276 \times \sqrt{0.58}}
+\]
+2. 计算 \( N'(d_1) \)：
+\[
+N'(d_1) = \frac{1}{\sqrt{2 \pi}} e^{-d_1^2 / 2}
+\]
+3. 计算Vega：
+\[
+\text{Vega} = 103.7 \times \sqrt{0.58} \times N'(d_1)
+\]
+4. 波动率变化1%对期权价格的影响：
+\[
+\text{price\_change} = \text{Vega} \times 0.01
+\]
+
+### Python代码实现：
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 参数
+S0 = 103.7
+K = 97.5
+T = 0.58
+r = 0.043
+sigma = 0.276
+
+# 计算d1
+d1 = (np.log(S0 / K) + (r + sigma**2 / 2) * T) / (sigma * np.sqrt(T))
+
+# 计算N'(d1)
+N_prime_d1 = norm.pdf(d1)
+
+# 计算Vega
+vega = S0 * np.sqrt(T) * N_prime_d1
+
+# 波动率变化1%对期权价格的影响
+price_change = vega * 0.01
+
+# 存入结果字典
+result = {
+    'price_change': price_change
+}
+```
+
+### 计算结果：
+运行上述代码，得到：
+\[
+\text{price\_change} \approx 0.235
+\]
+即隐含波动率上涨1个百分点，期权价格大约上涨 **0.235** 元。
+
+### 输出：
+```python
+result = {
+    'price_change': 0.235
+}
+```

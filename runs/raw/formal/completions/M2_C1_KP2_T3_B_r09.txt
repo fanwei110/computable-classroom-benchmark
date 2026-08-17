@@ -1,0 +1,17 @@
+```python
+# 已知条件
+beta = 1.42
+rm_monthly = -0.058  # 上个月大盘跌5.8%
+rf_annual = 0.047    # 无风险利率年化4.7%
+
+# 将无风险年化利率转换为月利率（简单除法）
+rf_monthly = rf_annual / 12
+
+# 按CAPM计算预期月收益: E(R) = Rf + beta * (Rm - Rf)
+capm_return = rf_monthly + beta * (rm_monthly - rf_monthly)
+
+result = {
+    'capm_return_monthly': round(capm_return, 6)
+}
+result
+```

@@ -1,0 +1,76 @@
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# =========================
+# å¯è°åæ°
+# =========================
+CONFIDENCE_LEVEL = 0.95          # ç½®ä¿¡æ°´å¹³
+POSITION_VALUE = 1_000_000.0     # å¤´å¯¸è§æ¨¡ï¼åï¼
+DATA_PATH = "data/market_snapshot_v1.csv"
+FIGURE_PATH = "var_hist.png"     # è¾åºå¾å½¢è·¯å¾
+
+# =========================
+# 1. è¯»åæ°æ®ï¼æé æ¥æçåºå
+# =========================
+df = pd.read_csv(DATA_PATH)
+# åè®¾ "fund" åä¸ºåºéæ¥æ¶ççï¼å°æ°å½¢å¼ï¼å¦ 0.01 è¡¨ç¤º 1%ï¼
+returns = df["fund"].dropna()   # åé¤ç¼ºå¤±å¼
+pnl = POSITION_VALUE * returns  # æ¥æçï¼åï¼
+
+# =========================
+# 2. è®¡ç®åå² VaRï¼95% ä¸æ¥ï¼
+# =========================
+alpha = 1 - CONFIDENCE_LEVEL
+# æçåå¸ç alpha åä½æ°ï¼éå¸¸ä¸ºè´å¼ï¼
+var_cutoff = np.percentile(pnl, 100 * alpha)
+# å¨é©ä»·å¼å®ä¹ä¸ºæå¤±çç»å¯¹å¼ï¼éå¸¸ä¸ºæ­£ï¼
+var_loss = -var_cutoff
+
+# =========================
+# 3. ç»ç´æ¹å¾å¹¶æ æ³¨ VaR çº¿
+# =========================
+plt.figure(figsize=(10, 6))
+plt.hist(pnl, bins=50, alpha=0.7, color='steelblue', edgecolor='white',
+         label='æ¥æçåå¸')
+
+# ç«çº¿ï¼æçåä½æ°ä½ç½®
+plt.axvline(var_cutoff, color='red', linestyle='dashed', linewidth=2,
+            label=f'{CONFIDENCE_LEVEL*100:.0f}% åå² VaR: Â¥{var_loss:,.2f}')
+
+# æ·»å æ°å¼æ æ³¨
+ymin, ymax = plt.ylim()
+plt.text(var_cutoff, ymax * 0.92,
+         f'VaR = Â¥{var_loss:,.2f}\n(æçåä½æ°: Â¥{var_cutoff:,.2f})',
+         color='red', ha='right', va='top',
+         bbox=dict(boxstyle='round,pad=0.3', facecolor='white', alpha=0.9))
+
+plt.xlabel('æ¥æçï¼äººæ°å¸ï¼')
+plt.ylabel('é¢æ°')
+plt.title(f'åºéæ¥æçåå¸ä¸ {CONFIDENCE_LEVEL*100:.0f}% ä¸æ¥åå² VaR')
+plt.legend()
+plt.tight_layout()
+
+# ä¿å­å¾å½¢
+plt.savefig(FIGURE_PATH, dpi=150)
+plt.close()
+
+# =========================
+# 4. å­åç»æå­å
+# =========================
+result = {
+    'hist_var_95_1d': float(var_loss),          # 95% VaR æ°å¼
+    'figure_path': FIGURE_PATH                  # å¾å½¢ä¿å­è·¯å¾
+}
+
+# æå°ç»æï¼è¯¾å æå­¦æå±æ¶å¯æ¥çï¼
+print("ç»æå­åï¼")
+print(result)
+
+# åç¬è¾åºæ´æ¸ VaR æ¥å
+print(f"\nå¤´å¯¸ä»·å¼ï¼Â¥{POSITION_VALUE:,.0f}")
+print(f"ç½®ä¿¡æ°´å¹³ï¼{CONFIDENCE_LEVEL*100:.0f}%")
+print(f"95% ä¸æ¥åå² VaRï¼Â¥{var_loss:,.2f}")
+print(f"å¾å½¢æä»¶å·²ä¿å­è³ï¼{FIGURE_PATH}")
+```

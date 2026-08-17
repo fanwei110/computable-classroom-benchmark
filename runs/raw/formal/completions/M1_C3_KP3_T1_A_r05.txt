@@ -1,0 +1,114 @@
+我们按照给定的条件计算这只债券的价格、Macaulay久期、修正久期和凸性。以下是详细的计算过程和结果：
+
+### 1. 债券价格（Price）
+债券价格是未来现金流的现值总和。现金流包括每年的票息和到期时的面值。计算公式为：
+\[
+P = \sum_{t=1}^{T} \frac{C}{(1 + y)^t} + \frac{F}{(1 + y)^T}
+\]
+其中：
+- \( C = 100 \times 4.6\% = 4.6 \)（每年票息）
+- \( F = 100 \)（面值）
+- \( y = 5.3\% \)（到期收益率）
+- \( T = 7 \)（期限）
+
+计算过程：
+\[
+P = \sum_{t=1}^{7} \frac{4.6}{(1 + 0.053)^t} + \frac{100}{(1 + 0.053)^7}
+\]
+
+逐项计算：
+\[
+\begin{align*}
+\frac{4.6}{1.053^1} &\approx 4.3685 \\
+\frac{4.6}{1.053^2} &\approx 4.1486 \\
+\frac{4.6}{1.053^3} &\approx 3.9398 \\
+\frac{4.6}{1.053^4} &\approx 3.7423 \\
+\frac{4.6}{1.053^5} &\approx 3.5553 \\
+\frac{4.6}{1.053^6} &\approx 3.3781 \\
+\frac{4.6}{1.053^7} &\approx 3.2102 \\
+\frac{100}{1.053^7} &\approx 70.2098 \\
+\end{align*}
+\]
+总和：
+\[
+P \approx 4.3685 + 4.1486 + 3.9398 + 3.7423 + 3.5553 + 3.3781 + 3.2102 + 70.2098 = 96.5526
+\]
+
+### 2. Macaulay久期（Macaulay Duration）
+Macaulay久期是现金流的加权平均时间，权重为现金流的现值占债券价格的比例。计算公式为：
+\[
+D_{\text{mac}} = \frac{1}{P} \sum_{t=1}^{T} t \cdot \frac{C}{(1 + y)^t} + \frac{T \cdot F}{(1 + y)^T}
+\]
+
+计算过程：
+\[
+\begin{align*}
+1 \cdot \frac{4.6}{1.053^1} &\approx 4.3685 \\
+2 \cdot \frac{4.6}{1.053^2} &\approx 8.2972 \\
+3 \cdot \frac{4.6}{1.053^3} &\approx 11.8194 \\
+4 \cdot \frac{4.6}{1.053^4} &\approx 14.9692 \\
+5 \cdot \frac{4.6}{1.053^5} &\approx 17.7765 \\
+6 \cdot \frac{4.6}{1.053^6} &\approx 20.2686 \\
+7 \cdot \frac{4.6}{1.053^7} &\approx 22.4714 \\
+7 \cdot \frac{100}{1.053^7} &\approx 491.4686 \\
+\end{align*}
+\]
+总和：
+\[
+\sum t \cdot \text{PV} \approx 4.3685 + 8.2972 + 11.8194 + 14.9692 + 17.7765 + 20.2686 + 22.4714 + 491.4686 = 591.4394
+\]
+Macaulay久期：
+\[
+D_{\text{mac}} = \frac{591.4394}{96.5526} \approx 6.1255 \text{ 年}
+\]
+
+### 3. 修正久期（Modified Duration）
+修正久期是Macaulay久期对收益率的导数，衡量债券价格对收益率变化的敏感性。计算公式为：
+\[
+D_{\text{mod}} = \frac{D_{\text{mac}}}{1 + y}
+\]
+
+计算过程：
+\[
+D_{\text{mod}} = \frac{6.1255}{1 + 0.053} \approx 5.8172 \text{ 年}
+\]
+
+### 4. 凸性（Convexity）
+凸性衡量债券价格对收益率变化的二阶敏感性。计算公式为：
+\[
+\text{Convexity} = \frac{1}{P} \sum_{t=1}^{T} \frac{t(t + 1) \cdot C}{(1 + y)^{t + 2}} + \frac{T(T + 1) \cdot F}{(1 + y)^{T + 2}}
+\]
+
+计算过程：
+\[
+\begin{align*}
+\frac{1 \cdot 2 \cdot 4.6}{1.053^3} &\approx 8.0686 \\
+\frac{2 \cdot 3 \cdot 4.6}{1.053^4} &\approx 23.9507 \\
+\frac{3 \cdot 4 \cdot 4.6}{1.053^5} &\approx 46.4189 \\
+\frac{4 \cdot 5 \cdot 4.6}{1.053^6} &\approx 74.3256 \\
+\frac{5 \cdot 6 \cdot 4.6}{1.053^7} &\approx 108.0357 \\
+\frac{6 \cdot 7 \cdot 4.6}{1.053^8} &\approx 147.1486 \\
+\frac{7 \cdot 8 \cdot 4.6}{1.053^9} &\approx 191.2666 \\
+\frac{7 \cdot 8 \cdot 100}{1.053^9} &\approx 4157.9696 \\
+\end{align*}
+\]
+总和：
+\[
+\sum t(t + 1) \cdot \text{PV} \approx 8.0686 + 23.9507 + 46.4189 + 74.3256 + 108.0357 + 147.1486 + 191.2666 + 4157.9696 = 4757.1843
+\]
+凸性：
+\[
+\text{Convexity} = \frac{4757.1843}{96.5526 \cdot (1 + 0.053)^2} \approx 42.1056
+\]
+
+### 最终结果
+将所有结果存入 `result` 字典：
+
+```python
+result = {
+    'price': 96.5526,
+    'macaulay_duration_years': 6.1255,
+    'modified_duration_years': 5.8172,
+    'convexity': 42.1056
+}
+```

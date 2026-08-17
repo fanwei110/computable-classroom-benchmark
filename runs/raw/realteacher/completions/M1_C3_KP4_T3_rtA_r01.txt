@@ -1,0 +1,59 @@
+要计算隐含波动率（隐波）上涨1个点（即隐波增加0.01）时期权价格的变化，我们可以使用**Vega**来近似估计。Vega衡量的是期权价格对隐含波动率变化的敏感性。
+
+### 计算步骤：
+1. **Vega的定义**：Vega表示隐含波动率变化1%时，期权价格的变化量。对于标准欧式期权，Vega的计算公式为：
+   \[
+   \text{Vega} = S \cdot \sqrt{T} \cdot N'(d_1)
+   \]
+   其中：
+   - \( S \) 是标的资产价格，
+   - \( T \) 是期权到期时间（以年为单位），
+   - \( N'(d_1) \) 是标准正态分布的概率密度函数在 \( d_1 \) 处的值，
+   - \( d_1 = \frac{\ln(S/K) + (r + \sigma^2/2)T}{\sigma \sqrt{T}} \)，其中 \( K \) 是行权价，\( r \) 是无风险利率，\( \sigma \) 是隐含波动率。
+
+2. **隐波变化1个点的价格变化**：
+   隐波变化1个点（即 \( \Delta \sigma = 0.01 \)）时，期权价格的变化约为：
+   \[
+   \Delta \text{Price} \approx \text{Vega} \times \Delta \sigma
+   \]
+
+### 假设条件：
+由于题目没有给出具体的期权参数（如标的价格 \( S \)、行权价 \( K \)、到期时间 \( T \)、无风险利率 \( r \)、当前隐波 \( \sigma \)），我们无法直接计算具体数值。但可以给出通用的计算逻辑。
+
+### 示例代码（假设参数）：
+假设以下参数（仅为示例）：
+- \( S = 100 \)（标的价格），
+- \( K = 100 \)（行权价），
+- \( T = 0.5 \)（半年到期，即126个交易日），
+- \( r = 0.05 \)（无风险利率），
+- \( \sigma = 0.2 \)（当前隐波）。
+
+```python
+import numpy as np
+from scipy.stats import norm
+
+def black_scholes_vega(S, K, T, r, sigma):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    vega = S * np.sqrt(T) * norm.pdf(d1)
+    return vega
+
+# 示例参数
+S = 100
+K = 100
+T = 0.5  # 半年
+r = 0.05
+sigma = 0.2
+
+vega = black_scholes_vega(S, K, T, r, sigma)
+price_change = vega * 0.01  # 隐波变化1个点（0.01）
+
+result = {
+    'price_change': price_change
+}
+```
+
+### 输出：
+`result` 字典中的 `'price_change'` 键存储的是隐波上涨1个点时期权价格的变化量。例如，在上述示例中，`price_change` 约为 `0.24`（即期权价格上涨约0.24元）。
+
+### 注意：
+如果题目中给出了具体的期权参数，请替换示例中的参数进行计算。若无具体参数，则无法给出精确数值。

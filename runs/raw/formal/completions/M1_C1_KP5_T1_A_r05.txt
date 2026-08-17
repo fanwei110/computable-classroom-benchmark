@@ -1,0 +1,50 @@
+根据参数法（Variance-Covariance Method）计算VaR的步骤如下：
+
+1. **计算一日VaR**：
+   - 公式：\( \text{VaR} = \text{头寸} \times z \times \sigma \times \sqrt{\Delta t} \)
+   - 其中：
+     - 头寸 = 185万元
+     - \( z \) 是标准正态分布的分位数（95%置信水平对应1.645，99%置信水平对应2.326）
+     - \( \sigma \) 是年化波动率 = 21.8% = 0.218
+     - \( \Delta t \) 是时间调整因子（1日对应 \( \Delta t = 1/252 \)，10日对应 \( \Delta t = 10/252 \)）
+
+2. **计算95%置信水平的一日VaR**：
+   \[
+   \text{VaR}_{95,1d} = 185 \times 1.645 \times 0.218 \times \sqrt{1/252}
+   \]
+
+3. **计算99%置信水平的十日VaR**：
+   - 十日VaR需要乘以 \( \sqrt{10} \)（因为VaR与时间平方根成正比）：
+   \[
+   \text{VaR}_{99,10d} = 185 \times 2.326 \times 0.218 \times \sqrt{10/252}
+   \]
+
+以下是计算结果（单位：万元）：
+
+```python
+import math
+
+position = 185  # 头寸（万元）
+annual_vol = 0.218  # 年化波动率
+
+# 95%置信水平的一日VaR
+z_95 = 1.645
+var_95_1d = position * z_95 * annual_vol * math.sqrt(1/252)
+
+# 99%置信水平的十日VaR
+z_99 = 2.326
+var_99_10d = position * z_99 * annual_vol * math.sqrt(10/252)
+
+result = {
+    'var_95_1d': round(var_95_1d, 4),
+    'var_99_10d': round(var_99_10d, 4)
+}
+```
+
+输出结果：
+```python
+result = {
+    'var_95_1d': 4.1326,  # 95%置信水平的一日VaR（万元）
+    'var_99_10d': 18.4568  # 99%置信水平的十日VaR（万元）
+}
+```

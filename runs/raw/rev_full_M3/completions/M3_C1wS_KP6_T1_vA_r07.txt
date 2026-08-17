@@ -1,0 +1,68 @@
+下面脚本假设：`snapshot.csv` 含 `fund` 列且为小数日收益率；年交易日 252 天；日无风险利率用 `2.1%/252`；夏普比率用样本标准差 `ddof=1`；业绩归因采用 Brinson 分解。
+
+```python
+# -*- coding: utf-8 -*-
+import numpy as np
+import pandas as pd
+
+# ===== 参数假设 =====
+CSV_PATH = "snapshot.csv"   # 如文件名不同，修改此处即可
+FUND_COL = "fund"
+TRADING_DAYS = 252
+RF_ANNUAL = 0.021
+
+# ===== 1. 读取快照 CSV，计算计入无风险利率后的超额日收益 =====
+df = pd.read_csv(CSV_PATH)
+
+if FUND_COL not in df.columns:
+    candidates = [c for c in df.columns if str(c).strip().lower() == FUND_COL.lower()]
+    if len(candidates) != 1:
+        raise KeyError(f"未找到唯一 {FUND_COL} 列，当前列：{list(df.columns)}")
+    FUND_COL = candidates[0]
+
+fund_ret = pd.to_numeric(df[FUND_COL], errors="coerce").dropna().astype(float)
+if fund_ret.empty:
+    raise ValueError("fund 列无有效日收益数据。")
+
+rf_daily = RF_ANNUAL / TRADING_DAYS
+excess_ret = fund_ret - rf_daily
+
+# ===== 2. 年化夏普比率 =====
+mean_excess = float(excess_ret.mean())
+std_excess = float(excess_ret.std(ddof=1))
+
+if not np.isfinite(std_excess) or std_excess == 0.0:
+    raise ValueError("超额收益标准差为 0 或无效，无法计算夏普比率。")
+
+sharpe_annual = (mean_excess / std_excess) * np.sqrt(TRADING_DAYS)
+
+# ===== 3. Brinson 业绩归因 =====
+w_p = np.array([0.45, 0.35, 0.20], dtype=float)
+r_p = np.array([0.083, 0.021, -0.014], dtype=float)
+w_b = np.array([0.40, 0.40, 0.20], dtype=float)
+r_b = np.array([0.067, 0.034, -0.009], dtype=float)
+
+assert np.isclose(w_p.sum(), 1.0), "组合权重和不为 1"
+assert np.isclose(w_b.sum(), 1.0), "基准权重和不为 1"
+
+R_p = float(np.dot(w_p, r_p))
+R_b = float(np.dot(w_b, r_b))
+
+allocation_effect = float(np.sum((w_p - w_b) * r_b))
+selection_effect = float(np.sum(w_b * (r_p - r_b)))
+interaction_effect = float(np.sum((w_p - w_b) * (r_p - r_b)))
+
+# 校验：三效应之和应等于主动收益
+active_return = R_p - R_b
+assert np.isclose(allocation_effect + selection_effect + interaction_effect, active_return)
+
+# ===== 4. 填充 result =====
+result = {
+    "sharpe_annual": float(sharpe_annual),
+    "allocation_effect": allocation_effect,
+    "selection_effect": selection_effect,
+    "interaction_effect": interaction_effect,
+}
+
+print(result)
+```

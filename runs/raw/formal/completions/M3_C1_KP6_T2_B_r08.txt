@@ -1,0 +1,99 @@
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import glob
+import os
+
+# ──────────────────────────────────────────────
+# 1. 寻找并加载数据
+# ──────────────────────────────────────────────
+candidates = glob.glob("*.csv") + glob.glob("*.xlsx") + glob.glob("*.xls")
+if not candidates:
+    raise FileNotFoundError("当前目录下未找到 csv/xlsx 文件，请确认数据文件位置")
+
+filepath = candidates[0]
+print(f"读取文件: {filepath}")
+
+if filepath.endswith(".csv"):
+    df = pd.read_csv(filepath)
+elif filepath.endswith((".xlsx", ".xls")):
+    df = pd.read_excel(filepath)
+
+print(f"列名: {df.columns.tolist()}")
+print(df.head())
+
+# ──────────────────────────────────────────────
+# 2. 参数设置（窗口可调）
+# ──────────────────────────────────────────────
+WINDOW = 60           # ← 滚动窗口天数，可调
+RF_ANNUAL = 0.021     # 无风险年化利率 2.1%
+TRADING_DAYS = 252
+
+# 日度无风险利率
+rf_daily = (1 + RF_ANNUAL) ** (1 / TRADING_DAYS) - 1
+
+# ──────────────────────────────────────────────
+# 3. 计算滚动夏普
+# ──────────────────────────────────────────────
+# 取 fund 列的日收益率
+fund_returns = df["fund"].pct_change().dropna()
+
+# 滚动均值 & 滚动标准差
+rolling_mean = fund_returns.rolling(window=WINDOW).mean()
+rolling_std  = fund_returns.rolling(window=WINDOW).std()
+
+# 滚动夏普（年化）：(日均收益 - 日无风险) / 日标准差 × sqrt(252)
+rolling_sharpe = (rolling_mean - rf_daily) / rolling_std * np.sqrt(TRADING_DAYS)
+
+# 最后一个窗口值
+last_sharpe = rolling_sharpe.iloc[-1]
+print(f"\n最后一个 {WINDOW} 天滚动夏普值: {last_sharpe:.6f}")
+
+# ──────────────────────────────────────────────
+# 4. 绘图
+# ──────────────────────────────────────────────
+fig, ax = plt.subplots(figsize=(14, 6))
+ax.plot(rolling_sharpe.index, rolling_sharpe.values,
+        color="#1f77b4", linewidth=1.2, label=f"{WINDOW}-Day Rolling Sharpe")
+ax.axhline(y=0, color="gray", linestyle="--", linewidth=0.8)
+ax.axhline(y=last_sharpe, color="red", linestyle=":", linewidth=0.8,
+           label=f"Last value = {last_sharpe:.4f}")
+ax.set_title(f"{WINDOW}-Day Rolling Sharpe Ratio  (RF={RF_ANNUAL*100:.1f}%)",
+             fontsize=14, fontweight="bold")
+ax.set_xlabel("Date / Index")
+ax.set_ylabel("Annualized Sharpe Ratio")
+ax.legend()
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+
+fig_path = os.path.abspath("rolling_sharpe.png")
+fig.savefig(fig_path, dpi=150)
+plt.close()
+print(f"图已保存: {fig_path}")
+
+# ──────────────────────────────────────────────
+# 5. 输出契约
+# ──────────────────────────────────────────────
+result = {
+    "rolling_sharpe_last": last_sharpe,
+    "figure_path": fig_path
+}
+
+print(f"\nresult = {result}")
+```
+
+---
+
+### 代码说明
+
+| 步骤 | 内容 |
+|------|------|
+| **数据加载** | 自动扫描当前目录下的 csv/xlsx 文件并读取，取 `fund` 列 |
+| **参数** | `WINDOW = 60`（可随意调整）、`RF_ANNUAL = 0.021`、交易日 252 天 |
+| **日 rf** | $r_f^{daily} = (1+0.021)^{1/252}-1$ |
+| **滚动夏普** | $\text{Sharpe}_{\text{roll}} = \frac{\bar{r}_{daily} - r_f^{daily}}{\sigma_{daily}} \times \sqrt{252}$ |
+| **最后值** | `rolling_sharpe.iloc[-1]` |
+| **输出** | `result` 字典含 `rolling_sharpe_last`（float）和 `figure_path`（绝对路径） |
+
+> **调整窗口**：只需修改 `WINDOW = 60` 这一行的值即可，其余逻辑自动适配。

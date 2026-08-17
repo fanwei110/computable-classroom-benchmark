@@ -1,0 +1,105 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ---- 参数设置 ----
+mu1 = 0.071      # 资产1期望年收益
+mu2 = 0.124      # 资产2期望年收益
+sigma1 = 0.163   # 资产1年化波动率
+sigma2 = 0.289   # 资产2年化波动率
+
+rhos = [0.15, 0.45, 0.75]
+target_return = 0.10   # 目标期望收益 10%
+
+# ---- 准备画布 ----
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# ---- 扫描权重范围，用于画出前沿 ----
+# 允许卖空，权重和始终为1，因此 w2 = 1 - w1
+# 宽范围以保证前沿曲线完整展示
+w1_values = np.linspace(-2.5, 3.5, 6000)
+
+# 存储计算结果
+results_for_rho = {}
+
+for rho in rhos:
+    # 协方差矩阵元素
+    cov11 = sigma1 ** 2
+    cov22 = sigma2 ** 2
+    cov12 = rho * sigma1 * sigma2
+
+    # 扫描组合收益与波动率
+    w1_arr = w1_values
+    w2_arr = 1 - w1_arr
+
+    mu_p = w1_arr * mu1 + w2_arr * mu2
+    var_p = (w1_arr ** 2) * cov11 + (w2_arr ** 2) * cov22 + 2 * w1_arr * w2_arr * cov12
+    # 避免浮点误差导致负值
+    var_p = np.maximum(var_p, 0)
+    sigma_p = np.sqrt(var_p)
+
+    # 画前沿曲线
+    ax.plot(sigma_p, mu_p, linewidth=2, label=f'ρ = {rho}')
+
+    # ---- 计算最小方差组合 (MVP) ----
+    # 解析解: w1_mvp = (cov22 - cov12) / (cov11 + cov22 - 2*cov12)
+    w1_mvp = (cov22 - cov12) / (cov11 + cov22 - 2 * cov12)
+    w2_mvp = 1 - w1_mvp
+
+    mu_mvp = w1_mvp * mu1 + w2_mvp * mu2
+    var_mvp = (w1_mvp ** 2) * cov11 + (w2_mvp ** 2) * cov22 + 2 * w1_mvp * w2_mvp * cov12
+    sigma_mvp = np.sqrt(max(var_mvp, 0))
+
+    # 标出MVP点 (使用与曲线同色的星号)
+    # 获取当前曲线的颜色
+    color = ax.lines[-1].get_color()
+    ax.scatter(sigma_mvp, mu_mvp, color=color, marker='*', s=150, zorder=5)
+
+    # 记录 rho=0.45 时的结果
+    if rho == 0.45:
+        mvp_vol_rho45 = sigma_mvp
+
+        # 目标期望收益 10% 下的最小波动率
+        # 因两只资产，给定期望收益时权重唯一确定
+        w1_target = (target_return - mu2) / (mu1 - mu2)
+        w2_target = 1 - w1_target
+        var_target = (w1_target ** 2) * cov11 + (w2_target ** 2) * cov22 + 2 * w1_target * w2_target * cov12
+        sigma_target = np.sqrt(max(var_target, 0))
+        frontier_vol_at_target = sigma_target
+
+# ---- 图例与修饰 ----
+# 额外添加一个统一的MVP图例句柄
+from matplotlib.lines import Line2D
+mvp_legend = Line2D([0], [0], marker='*', color='w', markerfacecolor='gray',
+                    markersize=12, label='Minimum Variance Portfolio')
+handles, labels = ax.get_legend_handles_labels()
+handles.append(mvp_legend)
+ax.legend(handles=handles, loc='upper left')
+
+ax.set_xlabel('Annualized Volatility (Standard Deviation)')
+ax.set_ylabel('Annualized Expected Return')
+ax.set_title('Mean-Variance Frontier of Two Risky Assets')
+ax.grid(True, linestyle='--', alpha=0.6)
+
+# 保存图片
+fig_path = 'mean_variance_frontier.png'
+plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+plt.close(fig)
+
+# 获取绝对路径（便于教师在任何运行环境下定位文件）
+figure_path = os.path.abspath(fig_path)
+
+# ---- 输出结果 ----
+result = {
+    'mvp_vol_at_rho45': mvp_vol_rho45,
+    'frontier_vol_at_target': frontier_vol_at_target,
+    'figure_path': figure_path
+}
+
+# 打印结果供课堂核对
+print("⚡ 字典 result：")
+for k, v in result.items():
+    if k != 'figure_path':
+        print(f"   {k}: {v:.6f}  ({v*100:.4f}%)")
+    else:
+        print(f"   {k}: {v}")

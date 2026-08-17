@@ -1,0 +1,26 @@
+import numpy as np
+
+# 给定参数
+beta = 1.42
+market_return_monthly = -0.058          # 市场月收益率（-5.8%）
+risk_free_annual = 0.047               # 年化无风险利率（4.7%）
+
+# 1. 将年无风险利率折算为月利率
+# 采用几何平均折算，保证跨期复利一致性
+risk_free_monthly = (1 + risk_free_annual) ** (1 / 12) - 1
+
+# 2. 根据CAPM计算该股票的月度期望收益
+# E(R_i) = R_f + beta * (E(R_m) - R_f)
+capm_return_monthly = risk_free_monthly + beta * (market_return_monthly - risk_free_monthly)
+
+# 3. 存入结果字典
+result = {
+    'capm_return_monthly': capm_return_monthly
+}
+
+# 输出以供查看
+if __name__ == "__main__":
+    print("月无风险利率: {:.6f} ({:.4f}%)".format(risk_free_monthly, risk_free_monthly * 100))
+    print("股票预期月收益率 (CAPM): {:.6f} ({:.4f}%)".format(capm_return_monthly, capm_return_monthly * 100))
+    print("\n结果字典 result:")
+    print(result)

@@ -1,0 +1,16 @@
+import math
+
+# 已知参数
+position = 2700000  # 头寸270万
+annual_vol = 0.24   # 年化波动率24%
+z_95 = 1.645        # 95%置信水平下的正态分布分位数
+trading_days = 252  # 假设一年有252个交易日（金融市场标准惯例）
+
+# 计算日波动率
+daily_vol = annual_vol / math.sqrt(trading_days)
+
+# 计算95%一日VaR (参数法)
+var_95_1d = position * z_95 * daily_vol
+
+# 按照输出契约要求存入字典
+result = {'var_95_1d': round(var_95_1d, 2)}

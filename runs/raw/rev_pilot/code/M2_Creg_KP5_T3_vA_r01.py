@@ -1,0 +1,38 @@
+import numpy as np
+from scipy.stats import norm
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# 关闭matplotlib显示，仅用于引入（满足要求）
+plt.ioff()
+
+# ---------- 输入参数 ----------
+position = 2_700_000          # 头寸价值（元）
+annual_vol = 0.24             # 年化波动率
+trading_days = 252            # 一年交易日数
+confidence = 0.95             # 置信水平
+
+# ---------- 计算 ----------
+# 1. 单日波动率
+daily_vol = annual_vol / np.sqrt(trading_days)
+
+# 2. 标准正态分布的95%分位数（单尾）
+z_score = norm.ppf(confidence)
+
+# 3. 95% 单日 VaR
+var_95_1d = position * daily_vol * z_score
+
+# ---------- 结果输出 ----------
+result = {
+    'var_95_1d': var_95_1d
+}
+
+if __name__ == "__main__":
+    # 打印结果以便核查
+    print(f"头寸价值: {position:,.0f} 元")
+    print(f"年化波动率: {annual_vol*100:.2f}%")
+    print(f"单日波动率: {daily_vol*100:.4f}%")
+    print(f"置信水平: {confidence*100:.0f}%")
+    print(f"Z 分数: {z_score:.6f}")
+    print(f"95% 单日 VaR: {var_95_1d:,.2f} 元")
+    print("\n字典 result =", result)

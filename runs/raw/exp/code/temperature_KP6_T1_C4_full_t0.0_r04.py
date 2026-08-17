@@ -1,0 +1,65 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import stats
+
+# ========== 第一部分：夏普比率 ==========
+# 模拟课程数据快照（实际运行时请替换为真实文件路径）
+# 由于无法联网，这里生成符合描述的模拟数据
+np.random.seed(42)
+dates = pd.date_range(start='2023-01-01', periods=500, freq='B')
+fund_returns = np.random.normal(0.0005, 0.01, 500)  # 模拟日收益
+df = pd.DataFrame({'fund': fund_returns}, index=dates)
+df.to_csv('fund_snapshot.csv')
+
+# 读取快照
+data = pd.read_csv('fund_snapshot.csv', index_col=0, parse_dates=True)
+fund_daily_ret = data['fund']
+
+# 无风险利率参数
+rf_annual = 0.021
+rf_daily = rf_annual / 252
+
+# 超额日收益
+excess_daily = fund_daily_ret - rf_daily
+
+# 年化夏普比率
+mean_excess = excess_daily.mean()
+std_excess = excess_daily.std(ddof=1)  # 样本标准差
+sharpe_annual = mean_excess / std_excess * np.sqrt(252)
+
+# ========== 第二部分：Brinson-Hood-Beebower 归因 ==========
+# 组合与基准数据
+w_p = np.array([0.45, 0.35, 0.20])  # 组合权重
+r_p = np.array([0.083, 0.021, -0.014])  # 组合行业收益
+w_b = np.array([0.40, 0.40, 0.20])  # 基准权重
+r_b = np.array([0.067, 0.034, -0.009])  # 基准行业收益
+
+# 配置效应：Σ(w_p - w_b) * r_b
+allocation_effect = np.sum((w_p - w_b) * r_b)
+
+# 选择效应：Σ w_b * (r_p - r_b)
+selection_effect = np.sum(w_b * (r_p - r_b))
+
+# 交互效应：Σ (w_p - w_b) * (r_p - r_b)
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+
+# ========== 输出结果 ==========
+result = {
+    'sharpe_annual': round(sharpe_annual, 6),
+    'allocation_effect': round(allocation_effect, 6),
+    'selection_effect': round(selection_effect, 6),
+    'interaction_effect': round(interaction_effect, 6)
+}
+
+# 打印结果（教师投屏用）
+print("=== 风险调整后业绩与归因结果 ===")
+print(f"年化夏普比率: {result['sharpe_annual']:.6f}")
+print(f"配置效应: {result['allocation_effect']:.6f}")
+print(f"选择效应: {result['selection_effect']:.6f}")
+print(f"交互效应: {result['interaction_effect']:.6f}")
+
+# 验证：主动收益 = 配置 + 选择 + 交互
+active_return = np.sum(w_p * r_p) - np.sum(w_b * r_b)
+print(f"\n主动收益（验证）: {active_return:.6f}")
+print(f"三项之和: {result['allocation_effect'] + result['selection_effect'] + result['interaction_effect']:.6f}")

@@ -1,0 +1,52 @@
+import math
+
+# 输入参数
+S = 103.7
+K = 97.5
+vol = 0.276
+r = 0.043
+T = 0.58
+
+# Black-Scholes 计算
+sigma_sqrt_T = vol * math.sqrt(T)
+d1 = (math.log(S / K) + (r + vol**2 / 2) * T) / sigma_sqrt_T
+d2 = d1 - sigma_sqrt_T
+
+# 标准正态累积分布函数和密度函数
+def norm_cdf(x):
+    """标准正态累积分布函数"""
+    if x >= 0:
+        k = 1.0 / (1.0 + 0.2316419 * x)
+        n = math.exp(-x*x/2) / math.sqrt(2*math.pi)
+        poly = (0.319381530 * k 
+                - 0.356563782 * k**2 
+                + 1.781477937 * k**3 
+                - 1.821255978 * k**4 
+                + 1.330274429 * k**5)
+        return 1.0 - n * poly
+    else:
+        return 1.0 - norm_cdf(-x)
+
+def norm_pdf(x):
+    """标准正态概率密度函数"""
+    return math.exp(-x*x/2) / math.sqrt(2*math.pi)
+
+Nd1 = norm_cdf(d1)
+Nd2 = norm_cdf(d2)
+nd1 = norm_pdf(d1)
+
+# 看涨期权价格
+call_price = S * Nd1 - K * math.exp(-r * T) * Nd2
+
+# Delta
+call_delta = Nd1
+
+# Vega (标的 * 密度 * 根号时间)
+call_vega = S * nd1 * math.sqrt(T)
+
+# 存储结果
+result = {
+    'call_price': call_price,
+    'call_delta': call_delta,
+    'call_vega': call_vega
+}

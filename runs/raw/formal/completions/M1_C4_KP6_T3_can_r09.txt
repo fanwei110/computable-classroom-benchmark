@@ -1,0 +1,44 @@
+以下是自包含的Python脚本，按照课程要求计算年化夏普比率：
+
+```python
+import pandas as pd
+import numpy as np
+
+# 读取数据
+data_path = 'data/market_snapshot_v1.csv'
+df = pd.read_csv(data_path)
+
+# 提取fund列的日收益率
+daily_returns = df['fund'].dropna().values  # 转为numpy数组并去除缺失值
+
+# 计算日无风险利率（年利率2.1%）
+annual_rf_rate = 0.021
+daily_rf_rate = annual_rf_rate / 252
+
+# 计算超额收益（日收益率 - 日无风险利率）
+excess_returns = daily_returns - daily_rf_rate
+
+# 计算样本标准差（ddof=1）
+daily_volatility = np.std(excess_returns, ddof=1)
+
+# 计算年化夏普比率
+annualized_sharpe = np.mean(excess_returns) / daily_volatility * np.sqrt(252)
+
+# 存储结果
+result = {
+    'sharpe_annual': annualized_sharpe
+}
+
+# 输出结果（可选，方便调试）
+print(result)
+```
+
+这个脚本：
+1. 读取CSV文件中的fund列数据
+2. 计算日无风险利率（2.1%年化利率除以252）
+3. 计算每日超额收益（fund日收益率减去日无风险利率）
+4. 使用样本标准差（ddof=1）计算波动率
+5. 按照√252的系数年化夏普比率
+6. 将结果存入result字典中，键名严格为'sharpe_annual'
+
+注意：脚本假设数据文件位于'data/market_snapshot_v1.csv'路径下，且fund列存在。如果实际路径不同，需要相应调整。

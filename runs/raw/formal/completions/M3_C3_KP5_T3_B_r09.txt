@@ -1,0 +1,42 @@
+根据题目要求，我们需要计算给定头寸在95%置信水平下的1日VaR。
+
+**已知条件：**
+- 年化波动率 $\sigma_{annual} = 24\% = 0.24$
+- 头寸价值 $V = 2,700,000$
+- 置信水平为 95%
+- 交易日天数 $N = 252$
+
+**计算步骤：**
+1. **计算日波动率**：
+   根据平方根法则，将年化波动率转换为日波动率：
+   $$\sigma_{daily} = \frac{\sigma_{annual}}{\sqrt{N}} = \frac{0.24}{\sqrt{252}} \approx 0.0151186$$
+
+2. **确定95%置信水平下的Z分数**：
+   正态分布下，95%的单尾置信区间对应的Z分数（分位数）为：
+   $$Z_{95\%} \approx 1.6448536$$
+
+3. **计算1日VaR**：
+   $$VaR_{95\%, 1d} = V \times Z_{95\%} \times \sigma_{daily}$$
+   $$VaR_{95\%, 1d} = 2,700,000 \times 1.6448536 \times \frac{0.24}{\sqrt{252}}$$
+   $$VaR_{95\%, 1d} \approx 2,700,000 \times 0.02486935 \approx 67147.27$$
+
+按照输出契约，将结果存入字典 `result` 中。
+
+```python
+import math
+
+# 已知参数
+sigma_annual = 0.24
+position_value = 2700000
+trading_days = 252
+z_95 = 1.644853626951  # norm.ppf(0.95)
+
+# 计算日波动率
+sigma_daily = sigma_annual / math.sqrt(trading_days)
+
+# 计算 95% 1日 VaR
+var_95_1d = position_value * z_95 * sigma_daily
+
+# 输出结果
+result = {'var_95_1d': round(var_95_1d, 2)}
+```

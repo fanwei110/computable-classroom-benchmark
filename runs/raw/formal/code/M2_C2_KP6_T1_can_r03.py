@@ -1,0 +1,62 @@
+import pandas as pd
+import numpy as np
+
+def main():
+    # ---------------------------
+    # 1. 读取数据并计算年化夏普比率
+    # ---------------------------
+    # 读取CSV快照
+    df = pd.read_csv('data/market_snapshot_v1.csv')
+    fund_returns = df['fund'].dropna().values  # 日收益序列
+
+    # 基础参数
+    rf_annual = 0.021          # 年化无风险利率
+    trading_days = 252         # 假设一年252个交易日
+    rf_daily = rf_annual / trading_days
+
+    # 每日超额收益
+    excess_returns = fund_returns - rf_daily
+
+    # 年化平均超额收益与年化波动率
+    annualized_excess_return = np.mean(excess_returns) * trading_days
+    annualized_volatility = np.std(excess_returns, ddof=1) * np.sqrt(trading_days)
+
+    # 年化夏普比率
+    sharpe_annual = annualized_excess_return / annualized_volatility
+
+    # ---------------------------
+    # 2. 业绩归因：配置、选择、交互效应
+    # ---------------------------
+    # 组合权重与行业收益
+    w_p = np.array([0.45, 0.35, 0.20])
+    R_p = np.array([0.083, 0.021, -0.014])
+
+    # 基准权重与行业收益
+    w_b = np.array([0.40, 0.40, 0.20])
+    R_b = np.array([0.067, 0.034, -0.009])
+
+    # 配置效应: (w_p - w_b) * R_b
+    allocation_effect = np.sum((w_p - w_b) * R_b)
+
+    # 选择效应: w_b * (R_p - R_b)
+    selection_effect = np.sum(w_b * (R_p - R_b))
+
+    # 交互效应: (w_p - w_b) * (R_p - R_b)
+    interaction_effect = np.sum((w_p - w_b) * (R_p - R_b))
+
+    # ---------------------------
+    # 3. 填充结果字典
+    # ---------------------------
+    result = {
+        'sharpe_annual': round(sharpe_annual, 10),
+        'allocation_effect': round(allocation_effect, 10),
+        'selection_effect': round(selection_effect, 10),
+        'interaction_effect': round(interaction_effect, 10)
+    }
+
+    # 输出结果供课堂展示
+    print(result)
+    return result
+
+if __name__ == "__main__":
+    main()

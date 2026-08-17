@@ -1,0 +1,56 @@
+```python
+import numpy as np
+import pandas as pd
+
+# 1. 第一部分：模拟课程数据快照，计算年化夏普比率
+np.random.seed(42)
+n_days = 252  # 一年交易日
+# 生成模拟日收益，均值为0.0005，标准差为0.01
+daily_returns = np.random.normal(loc=0.0005, scale=0.01, size=n_days)
+
+# 年无风险利率 2.1%，转换为日无风险利率
+rf_annual = 0.021
+rf_daily = rf_annual / 252
+
+# 超额日收益
+excess_daily = daily_returns - rf_daily
+
+# 年化夏普比率
+mean_excess = np.mean(excess_daily)
+std_excess = np.std(excess_daily, ddof=1)  # 样本标准差
+sharpe_annual = np.sqrt(252) * mean_excess / std_excess
+
+# 2. 第二部分：Brinson 业绩归因
+# 组合数据
+port_weights = np.array([0.45, 0.35, 0.20])
+port_returns = np.array([0.083, 0.021, -0.014])
+
+# 基准数据
+bench_weights = np.array([0.40, 0.40, 0.20])
+bench_returns = np.array([0.067, 0.034, -0.009])
+
+# 基准总收益
+R_b = np.dot(bench_weights, bench_returns)
+
+# 配置效应：Σ (w_p,i - w_b,i) * (r_b,i - R_b)
+allocation_effect = np.sum((port_weights - bench_weights) * (bench_returns - R_b))
+
+# 选择效应：Σ w_b,i * (r_p,i - r_b,i)
+selection_effect = np.sum(bench_weights * (port_returns - bench_returns))
+
+# 交互效应：Σ (w_p,i - w_b,i) * (r_p,i - r_b,i)
+interaction_effect = np.sum((port_weights - bench_weights) * (port_returns - bench_returns))
+
+# 输出字典
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+# 可选的打印验证
+if __name__ == "__main__":
+    for k, v in result.items():
+        print(f"{k}: {v:.6f}")
+```

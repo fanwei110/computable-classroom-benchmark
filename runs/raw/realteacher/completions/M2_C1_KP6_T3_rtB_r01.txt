@@ -1,0 +1,11 @@
+我需要访问课程数据文件才能计算。请上传或提供包含 `fund` 列日收益数据的内容（例如 CSV 文件的前几行或完整数据）。  
+一旦有了数据，我会按以下步骤计算年化 Sharpe ratio：
+
+1. 计算基金日收益的平均值 \( \bar{r}_{\text{daily}} \)  
+2. 计算日收益的标准差 \( \sigma_{\text{daily}} \)  
+3. 年化收益率 = \( \bar{r}_{\text{daily}} \times 252 \)  
+4. 年化波动率 = \( \sigma_{\text{daily}} \times \sqrt{252} \)  
+5. 年化 Sharpe ratio = \(\frac{\text{年化收益率} - 2.1\%}{\text{年化波动率}}\)  
+6. 结果存入字典：`result = {'sharpe_annual': 数值}`  
+
+请提供数据，我立即给出精确结果。

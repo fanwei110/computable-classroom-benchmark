@@ -1,0 +1,31 @@
+import pandas as pd
+import numpy as np
+
+# è¯»åè¯¾ç¨æ°æ®å¿«ç
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# æååºéåå¼åºåå¹¶è®¡ç®æ¥æ¶ççï¼åè®¾ fund åä¸ºä»·æ ¼ï¼
+if 'fund' not in df.columns:
+    raise KeyError("æ°æ®æä»¶ç¼ºå° 'fund' å")
+price = df['fund']
+daily_return = price.pct_change().dropna()   # æ¥ç®åæ¶çç
+
+# æ é£é©å©çè®¾å®
+rf_annual = 0.021            # 2.1%
+rf_daily = rf_annual / 252   # å¹´åå©çæäº¤ææ¥ç®åæç®ä¸ºæ¥å©ç
+
+# è¶æ¶ç
+excess_return = daily_return - rf_daily
+
+# æ ·æ¬æ åå·®ï¼ddof=1ï¼å¹´åå¤æ®æ¯ç
+mean_excess = excess_return.mean()
+std_excess = excess_return.std(ddof=1)
+sharpe_annual = (mean_excess / std_excess) * np.sqrt(252)
+
+# ç»æå­åå­å
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+if __name__ == '__main__':
+    print(result)

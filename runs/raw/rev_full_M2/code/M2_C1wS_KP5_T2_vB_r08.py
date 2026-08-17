@@ -1,0 +1,137 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import stats
+import os
+
+# 设置中文字体支持
+plt.rcParams['font.sans-serif'] = ['SimHei', 'DejaVu Sans']
+plt.rcParams['axes.unicode_minus'] = False
+
+# ==================== 1. 读取数据并计算日损益 ====================
+# 读取CSV文件
+data_path = 'data/market_snapshot_v1.csv'
+df = pd.read_csv(data_path)
+
+# 提取fund列的日收益率
+fund_returns = df['fund'].values
+print(f"数据点数量: {len(fund_returns)}")
+print(f"收益率范围: [{fund_returns.min():.4f}, {fund_returns.max():.4f}]")
+
+# 头寸规模（人民币）
+position_value = 1_000_000.0  # 100万
+
+# 计算日损益（人民币）
+daily_pnl = fund_returns * position_value
+print(f"日损益范围: [{daily_pnl.min():.2f}, {daily_pnl.max():.2f}]")
+
+# ==================== 2. 计算历史VaR ====================
+# 置信水平（可参数化）
+confidence_level = 0.95
+
+# 历史法VaR：损失分位数（取左侧尾部）
+# VaR定义为给定置信水平下可能的最大损失
+# 对于95%置信度，我们取收益率的5%分位数（最差的5%）
+var_percentile = 100 * (1 - confidence_level)
+hist_var_value = np.percentile(daily_pnl, var_percentile)
+
+print(f"\n=== 历史VaR计算结果 ===")
+print(f"置信水平: {confidence_level*100:.0f}%")
+print(f"历史VaR (1日, 95%): {hist_var_value:.2f} 人民币")
+print(f"VaR占头寸比例: {abs(hist_var_value)/position_value*100:.4f}%")
+
+# ==================== 3. 绘制直方图并标注VaR线 ====================
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 绘制直方图
+n_bins = 50
+counts, bins, patches = ax.hist(daily_pnl, bins=n_bins, 
+                                 color='steelblue', 
+                                 edgecolor='black',
+                                 alpha=0.7,
+                                 density=True,
+                                 label='日损益分布')
+
+# 添加核密度估计曲线
+kde_x = np.linspace(daily_pnl.min(), daily_pnl.max(), 1000)
+kde = stats.gaussian_kde(daily_pnl)
+ax.plot(kde_x, kde(kde_x), 'r-', linewidth=2, label='核密度估计')
+
+# 标注VaR线
+ax.axvline(x=hist_var_value, 
+           color='red', 
+           linestyle='--', 
+           linewidth=2,
+           label=f'历史VaR ({confidence_level*100:.0f}%置信度)')
+
+# 添加VaR数值标注
+y_max = ax.get_ylim()[1]
+ax.annotate(f'VaR = {hist_var_value:.2f} 元\n({confidence_level*100:.0f}%置信度)',
+            xy=(hist_var_value, y_max * 0.8),
+            xytext=(hist_var_value + (daily_pnl.max() - daily_pnl.min())*0.15, 
+                   y_max * 0.9),
+            arrowprops=dict(arrowstyle='->', color='red', lw=1.5),
+            fontsize=11,
+            color='red',
+            fontweight='bold',
+            bbox=dict(boxstyle='round,pad=0.5', facecolor='white', alpha=0.8))
+
+# 设置图形标签和标题
+ax.set_xlabel('日损益（人民币）', fontsize=12)
+ax.set_ylabel('概率密度', fontsize=12)
+ax.set_title(f'历史VaR分析 - 日损益分布\n头寸: {position_value:,.0f}元 | 置信水平: {confidence_level*100:.0f}% | 数据点: {len(daily_pnl)}',
+             fontsize=14, fontweight='bold')
+
+# 添加网格
+ax.grid(True, alpha=0.3, linestyle='--')
+
+# 添加图例
+ax.legend(loc='upper left', fontsize=10)
+
+# 添加统计信息文本框
+stats_text = f'统计信息:\n均值: {daily_pnl.mean():.2f}\n标准差: {daily_pnl.std():.2f}\n偏度: {stats.skew(daily_pnl):.3f}\n峰度: {stats.kurtosis(daily_pnl):.3f}'
+ax.text(0.02, 0.98, stats_text, 
+        transform=ax.transAxes,
+        fontsize=9,
+        verticalalignment='top',
+        bbox=dict(boxstyle='round', facecolor='lightyellow', alpha=0.8))
+
+plt.tight_layout()
+
+# ==================== 4. 保存图形 ====================
+# 确保输出目录存在
+output_dir = 'output'
+if not os.path.exists(output_dir):
+    os.makedirs(output_dir)
+
+figure_path = os.path.join(output_dir, 'historical_var_histogram.png')
+plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+plt.show()
+
+print(f"\n图形已保存至: {figure_path}")
+
+# ==================== 5. 填充result字典 ====================
+result = {
+    'hist_var_95_1d': float(hist_var_value),
+    'figure_path': figure_path
+}
+
+# 打印最终结果以供验证
+print("\n=== 最终结果 ===")
+print(f"result['hist_var_95_1d']: {result['hist_var_95_1d']:.2f} 人民币")
+print(f"result['figure_path']: {result['figure_path']}")
+
+# 额外的验证和分析
+print("\n=== 补充分析 ===")
+print(f"超过VaR的样本数: {np.sum(daily_pnl <= hist_var_value)}")
+print(f"超过VaR的样本比例: {np.sum(daily_pnl <= hist_var_value)/len(daily_pnl)*100:.2f}%")
+print(f"期望超过比例: {var_percentile:.2f}%")
+
+# 返回result供外部使用
+if __name__ == "__main__":
+    # 验证result字典的完整性
+    required_keys = ['hist_var_95_1d', 'figure_path']
+    for key in required_keys:
+        assert key in result, f"缺少必要键: {key}"
+    print("\n✅ result字典包含所有必要键值")
+    print(f"✅ 图形文件存在: {os.path.exists(result['figure_path'])}")

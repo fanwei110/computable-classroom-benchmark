@@ -1,0 +1,39 @@
+由于我无法直接访问你提到的“课程数据”，无法为你算出具体的数值结果。但我可以为你提供计算年化夏普比率的Python代码。你只需要在本地运行这段代码（确保你的数据框中包含名为 `fund` 的日度收益率列），即可得到符合契约要求的 `result` 字典。
+
+在金融计算中，年化夏普比率的计算逻辑如下：
+1. **日度超额收益** = 日度收益率 - 日度无风险利率
+2. **日度夏普比率** = 日度超额收益的均值 / 日度收益率的标准差
+3. **年化夏普比率** = 日度夏普比率 × $\sqrt{252}$
+
+以下是生成符合输出契约要求的Python代码：
+
+```python
+import numpy as np
+import pandas as pd
+
+# 假设 df 是包含课程数据的 DataFrame，'fund' 列为日度收益率数据
+# rf_annual 为年化无风险利率 2.1%
+rf_annual = 0.021
+rf_daily = rf_annual / 252  # 将年化无风险利率转换为日度
+
+# 提取 fund 列的日度收益率数据
+returns = df['fund']
+
+# 计算日度平均超额收益
+mean_excess_daily = returns.mean() - rf_daily
+
+# 计算日度收益率的标准差（使用样本标准差，ddof=1）
+std_daily = returns.std(ddof=1)
+
+# 计算年化夏普比率
+sharpe_annual = (mean_excess_daily / std_daily) * np.sqrt(252)
+
+# 按照输出契约存入名为 result 的字典
+result = {'sharpe_annual': sharpe_annual}
+
+print(result)
+```
+
+**注意事项**：
+- 如果 `fund` 列是**净值**而非收益率，需要先将其转换为日度收益率：`returns = df['fund'].pct_change().dropna()`。
+- 上述代码使用 `ddof=1` 计算样本标准差，这也是金融计算中的默认惯例（与 Pandas 的 `.std()` 默认行为一致）。

@@ -1,0 +1,106 @@
+=== B0445  任务 KP6_T3 (T3) ===
+
+--- 任务要求的输出键 ---
+sharpe_annual
+
+--- 判分失败明细 ---
+reason: silent alternative convention
+matched: rf_geometric
+evidence: {'alt_250': False, 'rf_geometric': False, 'ddof_0': False}
+harness声明探测: {'alt_250': False, 'rf_geometric': False, 'ddof_0': False}
+
+--- 提取出的代码 ---
+import pandas as pd
+import numpy as np
+
+# 1. 读取数据并设定无风险利率
+file_path = 'data/market_snapshot_v1.csv'
+data = pd.read_csv(file_path)
+
+# 提取fund列（假设fund列代表基金的日收益率）
+daily_returns = data['fund'].dropna()  # 去除缺失值
+
+# 无风险利率（年化2.1%，转换为日利率）
+risk_free_rate_annual = 0.021
+risk_free_rate_daily = (1 + risk_free_rate_annual) ** (1/252) - 1
+
+# 2. 计算超额收益率
+excess_returns = daily_returns - risk_free_rate_daily
+
+# 计算年化夏普比率
+# 夏普比率 = 年化超额收益均值 / 年化超额收益标准差
+mean_excess_return_daily = excess_returns.mean()
+std_excess_return_daily = excess_returns.std()
+
+# 年化处理
+trading_days_per_year = 252
+annualized_mean_excess = mean_excess_return_daily * trading_days_per_year
+annualized_std_excess = std_excess_return_daily * np.sqrt(trading_days_per_year)
+
+sharpe_ratio_annual = annualized_mean_excess / annualized_std_excess
+
+# 3. 存储结果
+result = {
+    'sharpe_annual': sharpe_ratio_annual
+}
+
+# 输出结果（可选，用于验证）
+print(result)
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+以下是自包含的Python脚本，按照要求计算全样本年化夏普比率：
+
+```python
+import pandas as pd
+import numpy as np
+
+# 1. 读取数据并设定无风险利率
+file_path = 'data/market_snapshot_v1.csv'
+data = pd.read_csv(file_path)
+
+# 提取fund列（假设fund列代表基金的日收益率）
+daily_returns = data['fund'].dropna()  # 去除缺失值
+
+# 无风险利率（年化2.1%，转换为日利率）
+risk_free_rate_annual = 0.021
+risk_free_rate_daily = (1 + risk_free_rate_annual) ** (1/252) - 1
+
+# 2. 计算超额收益率
+excess_returns = daily_returns - risk_free_rate_daily
+
+# 计算年化夏普比率
+# 夏普比率 = 年化超额收益均值 / 年化超额收益标准差
+mean_excess_return_daily = excess_returns.mean()
+std_excess_return_daily = excess_returns.std()
+
+# 年化处理
+trading_days_per_year = 252
+annualized_mean_excess = mean_excess_return_daily * trading_days_per_year
+annualized_std_excess = std_excess_return_daily * np.sqrt(trading_days_per_year)
+
+sharpe_ratio_annual = annualized_mean_excess / annualized_std_excess
+
+# 3. 存储结果
+result = {
+    'sharpe_annual': sharpe_ratio_annual
+}
+
+# 输出结果（可选，用于验证）
+print(result)
+```
+
+### 说明：
+1. **数据读取**：从CSV文件中读取`fund`列，假设其代表基金的日收益率。
+2. **无风险利率**：年化2.1%转换为日利率（假设一年有252个交易日）。
+3. **超额收益率**：计算每日收益率减去无风险利率。
+4. **夏普比率**：
+   - 日均超额收益率乘以252得到年化均值。
+   - 日超额收益率标准差乘以√252得到年化标准差。
+   - 夏普比率 = 年化均值 / 年化标准差。
+5. **结果存储**：将年化夏普比率存入`result`字典，键名为`'sharpe_annual'`。
+
+### 注意事项：
+- 脚本假设`fund`列为日收益率（例如0.01代表1%），若实际数据为价格序列，需先计算收益率。
+- 若数据包含缺失值，脚本会自动去除（`dropna()`）。
+- 输出结果可复现，无占位值或联网操作。

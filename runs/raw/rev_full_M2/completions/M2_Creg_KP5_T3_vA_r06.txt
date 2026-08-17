@@ -1,0 +1,30 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+def calculate_var():
+    # 输入参数
+    position = 2_700_000          # 头寸价值（元）
+    annual_vol = 0.24             # 年化波动率
+    confidence_level = 0.95       # 置信水平
+    trading_days_per_year = 252   # 年交易日数
+    
+    # 计算日波动率
+    daily_vol = annual_vol / np.sqrt(trading_days_per_year)
+    
+    # 计算95%置信水平对应的z值（正态分布假设，均值为0）
+    z_score = norm.ppf(confidence_level)
+    
+    # 计算95%单日VaR
+    var_95_1d = position * daily_vol * z_score
+    
+    # 结果存入字典
+    result = {
+        'var_95_1d': var_95_1d
+    }
+    return result
+
+if __name__ == "__main__":
+    result = calculate_var()
+    print(result)
+```

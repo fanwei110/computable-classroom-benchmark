@@ -1,0 +1,26 @@
+根据CAPM模型，股票的预期收益计算公式为：
+\[
+E(R_i) = R_f + \beta_i \times (E(R_m) - R_f)
+\]
+其中，\(R_f\) 为月度无风险利率，\(\beta_i = 1.42\)，\(E(R_m) = -0.058\)（市场下跌5.8%）。
+
+无风险利率年化4.7%，按年复利报价。由于所有年化与去年化按每年252个交易日计算，月度无风险利率为：
+\[
+R_f = (1 + 0.047)^{1/12} - 1 \approx 0.003834
+\]
+代入CAPM公式：
+\[
+E(R_i) = 0.003834 + 1.42 \times (-0.058 - 0.003834) \approx -0.08397
+\]
+即上个月按CAPM预期收益约为 -8.40%。
+
+```python
+# 计算过程
+r_f_annual = 0.047
+r_f_monthly = (1 + r_f_annual)**(1/12) - 1
+beta = 1.42
+r_m = -0.058
+capm_return_monthly = r_f_monthly + beta * (r_m - r_f_monthly)
+
+result = {'capm_return_monthly': capm_return_monthly}
+```

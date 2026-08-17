@@ -1,0 +1,206 @@
+=== B0486  任务 KP2_T2 (T2) ===
+
+--- 任务要求的输出键 ---
+sml_slope, er_at_beta_127
+
+--- 判分失败明细 ---
+er_at_beta_127: 提交值 0.1132  |  参考值 0.11317000000000002
+
+--- 提取出的代码 ---
+import matplotlib.pyplot as plt
+import numpy as np
+
+# ==================== 可调参数 ====================
+rf = 0.023          # 无风险利率
+E_Rm = 0.094        # 市场期望收益
+# =================================================
+
+# 计算SML斜率和指定beta的期望收益
+sml_slope = E_Rm - rf
+er_at_beta_127 = rf + 1.27 * sml_slope
+
+# 构造SML线 (beta从0到2)
+beta_line = np.linspace(0, 2, 300)
+er_line = rf + beta_line * sml_slope
+
+# 三个标的点
+points = {
+    'X': (0.62, 0.081),
+    'Y': (1.18, 0.131),
+    'Z': (1.51, 0.099),
+}
+
+# ---------- 绘图 ----------
+fig, ax = plt.subplots(figsize=(10, 7))
+
+# SML线
+ax.plot(beta_line, er_line, color='royalblue', linewidth=2.5, label='SML')
+
+# 标注rf和E(Rm)
+ax.scatter(0, rf, color='green', s=80, zorder=5)
+ax.annotate(f'r_f = {rf:.1%}', xy=(0, rf), xytext=(0.08, rf - 0.012),
+            fontsize=11, color='green',
+            arrowprops=dict(arrowstyle='->', color='green'))
+
+ax.scatter(1, E_Rm, color='darkorange', s=80, zorder=5)
+ax.annotate(f'E(R_m) = {E_Rm:.1%}\n(β=1)', xy=(1, E_Rm), xytext=(1.12, E_Rm - 0.015),
+            fontsize=11, color='darkorange',
+            arrowprops=dict(arrowstyle='->', color='darkorange'))
+
+# 标注三个点
+colors_pt = {'X': 'red', 'Y': 'purple', 'Z': 'teal'}
+for name, (b, er) in points.items():
+    ax.scatter(b, er, color=colors_pt[name], s=100, zorder=5, edgecolors='black', linewidths=0.8)
+    # 判断点在SML上方还是下方来调整标注位置
+    er_sml = rf + b * sml_slope
+    offset_y = 0.008 if er >= er_sml else -0.015
+    ax.annotate(f'{name} (β={b}, E(R)={er:.1%})',
+                xy=(b, er), xytext=(b + 0.06, er + offset_y),
+                fontsize=10, color=colors_pt[name], fontweight='bold')
+
+# 标注beta=1.27对应的期望收益
+ax.scatter(1.27, er_at_beta_127, color='grey', s=60, zorder=5, marker='D')
+ax.annotate(f'β=1.27 → E(R)={er_at_beta_127:.2%}',
+            xy=(1.27, er_at_beta_127), xytext=(1.35, er_at_beta_127 - 0.018),
+            fontsize=10, color='grey',
+            arrowprops=dict(arrowstyle='->', color='grey'))
+
+# 在图上显示斜率信息
+ax.text(1.55, rf + 1.55 * sml_slope + 0.005,
+        f'SML斜率 = E(R_m) − r_f = {sml_slope:.1%}',
+        fontsize=11, color='royalblue', fontstyle='italic')
+
+# 坐标轴与美化
+ax.set_xlabel('Beta (β)', fontsize=13)
+ax.set_ylabel('Expected Return E(R)', fontsize=13)
+ax.set_title('Security Market Line (SML)', fontsize=15, fontweight='bold')
+ax.set_xlim(0, 2)
+ax.set_ylim(0, 0.18)
+ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y:.0%}'))
+ax.axhline(y=0, color='grey', linewidth=0.5)
+ax.grid(True, alpha=0.3)
+ax.legend(fontsize=12, loc='upper left')
+
+plt.tight_layout()
+
+# 保存图片
+figure_path = 'sml_plot.png'
+fig.savefig(figure_path, dpi=150)
+plt.close()
+
+# ==================== 输出契约 ====================
+result = {
+    'sml_slope': round(sml_slope, 4),          # 0.071
+    'er_at_beta_127': round(er_at_beta_127, 4), # 0.1132
+    'figure_path': figure_path
+}
+
+print(result)
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+# ==================== 可调参数 ====================
+rf = 0.023          # 无风险利率
+E_Rm = 0.094        # 市场期望收益
+# =================================================
+
+# 计算SML斜率和指定beta的期望收益
+sml_slope = E_Rm - rf
+er_at_beta_127 = rf + 1.27 * sml_slope
+
+# 构造SML线 (beta从0到2)
+beta_line = np.linspace(0, 2, 300)
+er_line = rf + beta_line * sml_slope
+
+# 三个标的点
+points = {
+    'X': (0.62, 0.081),
+    'Y': (1.18, 0.131),
+    'Z': (1.51, 0.099),
+}
+
+# ---------- 绘图 ----------
+fig, ax = plt.subplots(figsize=(10, 7))
+
+# SML线
+ax.plot(beta_line, er_line, color='royalblue', linewidth=2.5, label='SML')
+
+# 标注rf和E(Rm)
+ax.scatter(0, rf, color='green', s=80, zorder=5)
+ax.annotate(f'r_f = {rf:.1%}', xy=(0, rf), xytext=(0.08, rf - 0.012),
+            fontsize=11, color='green',
+            arrowprops=dict(arrowstyle='->', color='green'))
+
+ax.scatter(1, E_Rm, color='darkorange', s=80, zorder=5)
+ax.annotate(f'E(R_m) = {E_Rm:.1%}\n(β=1)', xy=(1, E_Rm), xytext=(1.12, E_Rm - 0.015),
+            fontsize=11, color='darkorange',
+            arrowprops=dict(arrowstyle='->', color='darkorange'))
+
+# 标注三个点
+colors_pt = {'X': 'red', 'Y': 'purple', 'Z': 'teal'}
+for name, (b, er) in points.items():
+    ax.scatter(b, er, color=colors_pt[name], s=100, zorder=5, edgecolors='black', linewidths=0.8)
+    # 判断点在SML上方还是下方来调整标注位置
+    er_sml = rf + b * sml_slope
+    offset_y = 0.008 if er >= er_sml else -0.015
+    ax.annotate(f'{name} (β={b}, E(R)={er:.1%})',
+                xy=(b, er), xytext=(b + 0.06, er + offset_y),
+                fontsize=10, color=colors_pt[name], fontweight='bold')
+
+# 标注beta=1.27对应的期望收益
+ax.scatter(1.27, er_at_beta_127, color='grey', s=60, zorder=5, marker='D')
+ax.annotate(f'β=1.27 → E(R)={er_at_beta_127:.2%}',
+            xy=(1.27, er_at_beta_127), xytext=(1.35, er_at_beta_127 - 0.018),
+            fontsize=10, color='grey',
+            arrowprops=dict(arrowstyle='->', color='grey'))
+
+# 在图上显示斜率信息
+ax.text(1.55, rf + 1.55 * sml_slope + 0.005,
+        f'SML斜率 = E(R_m) − r_f = {sml_slope:.1%}',
+        fontsize=11, color='royalblue', fontstyle='italic')
+
+# 坐标轴与美化
+ax.set_xlabel('Beta (β)', fontsize=13)
+ax.set_ylabel('Expected Return E(R)', fontsize=13)
+ax.set_title('Security Market Line (SML)', fontsize=15, fontweight='bold')
+ax.set_xlim(0, 2)
+ax.set_ylim(0, 0.18)
+ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y:.0%}'))
+ax.axhline(y=0, color='grey', linewidth=0.5)
+ax.grid(True, alpha=0.3)
+ax.legend(fontsize=12, loc='upper left')
+
+plt.tight_layout()
+
+# 保存图片
+figure_path = 'sml_plot.png'
+fig.savefig(figure_path, dpi=150)
+plt.close()
+
+# ==================== 输出契约 ====================
+result = {
+    'sml_slope': round(sml_slope, 4),          # 0.071
+    'er_at_beta_127': round(er_at_beta_127, 4), # 0.1132
+    'figure_path': figure_path
+}
+
+print(result)
+```
+
+**关键计算说明：**
+
+| 指标 | 计算过程 | 结果 |
+|------|---------|------|
+| **SML斜率** | E(R_m) − r_f = 9.4% − 2.3% | **7.1%** (0.071) |
+| **β=1.27的期望收益** | 2.3% + 1.27 × 7.1% = 2.3% + 9.017% | **11.317%** (0.1132) |
+
+**图上三个点的位置解读：**
+- **X (β=0.62, 8.1%)**：位于SML**上方** → 被低估（α > 0），值得买入
+- **Y (β=1.18, 13.1%)**：位于SML**上方** → 被低估（α > 0），值得买入
+- **Z (β=1.51, 9.9%)**：位于SML**下方** → 被高估（α < 0），应考虑卖出
+
+上课调参时只需修改代码顶部的 `rf` 和 `E_Rm` 两个变量，图和所有计算结果会自动更新。

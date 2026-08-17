@@ -1,0 +1,70 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+
+# ==================== 可调参数 ====================
+rf = 0.023          # 无风险利率 (2.3%)
+market_return = 0.094  # 市场期望收益 (9.4%)
+# =================================================
+
+# 计算斜率与特定 beta 下的期望收益
+slope = market_return - rf                # SML 斜率
+beta_target = 1.27
+er_target = rf + beta_target * slope      # beta=1.27 时的期望收益
+
+# 生成 SML 数据点
+beta_vals = np.linspace(0, 2, 100)
+sml_vals = rf + beta_vals * slope
+
+# 给定的三个点
+points = {
+    'X': (0.62, 0.081),
+    'Y': (1.18, 0.131),
+    'Z': (1.51, 0.099)
+}
+
+# 创建图形
+fig, ax = plt.subplots(figsize=(8, 6))
+ax.plot(beta_vals, sml_vals, 'b-', linewidth=2, label='Security Market Line')
+ax.scatter(1, market_return, color='green', s=100, zorder=5, label='Market Portfolio')
+ax.axhline(y=rf, color='gray', linestyle='--', linewidth=1, label=f'Risk-Free Rate ({rf:.1%})')
+
+# 标出 X, Y, Z 三点
+colors = {'X': 'red', 'Y': 'orange', 'Z': 'purple'}
+for name, (b, er) in points.items():
+    ax.scatter(b, er, color=colors[name], s=80, zorder=5)
+    ax.annotate(f'{name}\n(β={b}, E(R)={er:.1%})', 
+                (b, er), textcoords="offset points", xytext=(10, -15),
+                fontsize=9, arrowprops=dict(arrowstyle='->', color=colors[name]))
+
+# 标注 beta=1.27 的点
+ax.scatter(beta_target, er_target, color='black', s=60, zorder=5)
+ax.annotate(f'β=1.27\nE(R)={er_target:.2%}', 
+            (beta_target, er_target), textcoords="offset points", xytext=(-10, -20),
+            fontsize=9, arrowprops=dict(arrowstyle='->', color='black'))
+
+# 坐标轴与标题
+ax.set_xlabel('Beta (β)', fontsize=12)
+ax.set_ylabel('Expected Return', fontsize=12)
+ax.set_title(f'Security Market Line (SML)\nrf={rf:.1%}, E(Rm)={market_return:.1%}', fontsize=14)
+ax.set_xlim(0, 2)
+ax.legend(loc='lower right')
+ax.grid(alpha=0.3)
+ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y:.1%}'))
+
+plt.tight_layout()
+
+# 保存图片
+figure_path = os.path.join(os.getcwd(), 'sml.png')
+plt.savefig(figure_path, dpi=150)
+plt.close()
+
+# 按要求存入 result 字典
+result = {
+    'sml_slope': round(slope, 6),            # 例如 0.071
+    'er_at_beta_127': round(er_target, 6),   # 例如 0.11317
+    'figure_path': figure_path
+}
+
+# 输出结果（用于检查）
+print(result)

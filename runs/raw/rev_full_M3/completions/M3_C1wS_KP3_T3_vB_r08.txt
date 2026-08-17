@@ -1,0 +1,75 @@
+```python
+import numpy as np
+
+# ==========================================
+# 债券参数设定 (基于题目：7年/100面值/4.6%票息/5.3%收益率)
+# ==========================================
+face_value = 100.0          # 面值
+coupon_rate = 0.046         # 票息率 4.6%
+ytm = 0.053                # 当前到期收益率 5.3%
+T = 7                      # 期限 7年
+delta_y = 0.008             # 收益率上升 80个基点 (80 bps)
+
+# 假设每年付息一次 (标准附息债默认假设)
+cash_flows = np.array([face_value * coupon_rate] * T)
+cash_flows[-1] += face_value  # 最后一期包含本金
+periods = np.arange(1, T + 1)
+
+# ==========================================
+# 1. 计算当前收益率下的价格与利率敏感性 (久期、凸性)
+# ==========================================
+# 价格：现金流贴现之和
+pv_cash_flows = cash_flows / (1 + ytm) ** periods
+price = np.sum(pv_cash_flows)
+
+# 麦考利久期
+mac_duration = np.sum(periods * pv_cash_flows) / price
+
+# 修正久期 - 衡量价格对收益率的线性敏感性
+mod_duration = mac_duration / (1 + ytm)
+
+# 凸性 - 衡量价格对收益率的二阶敏感性
+convexity = np.sum(periods * (periods + 1) * cash_flows / (1 + ytm) ** (periods + 2)) / price
+
+# ==========================================
+# 2. 估算收益率上升 80 个基点的价格影响
+# ==========================================
+# 使用久期与凸性估算价格变动百分比：
+# ΔP/P ≈ -Mod_Dur * Δy + 0.5 * Convexity * (Δy)^2
+est_price_drop_pct = -mod_duration * delta_y + 0.5 * convexity * (delta_y ** 2)
+
+# (对比用) 精确计算真实价格跌幅
+new_ytm = ytm + delta_y
+new_pv_cash_flows = cash_flows / (1 + new_ytm) ** periods
+new_price = np.sum(new_pv_cash_flows)
+actual_price_drop_pct = (new_price - price) / price
+
+# ==========================================
+# 3. 把跌幅存入 result
+# ==========================================
+result = {
+    'price_drop_pct': est_price_drop_pct
+}
+
+# ==========================================
+# 课堂展示打印 (辅助教师投屏讲解)
+# ==========================================
+print("=" * 50)
+print("《证券投资学》- 债券定价与久期、凸性分析")
+print("=" * 50)
+print(f"【债券要素】面值: {face_value}, 票息率: {coupon_rate*100}%, 期限: {T}年, 收益率: {ytm*100}%")
+print(f"【当前价格】 {price:.4f} 元")
+print("-" * 50)
+print(f"【利率敏感性】")
+print(f"  麦考利久期: {mac_duration:.4f} 年")
+print(f"  修正久期:  {mod_duration:.4f}")
+print(f"  凸性:      {convexity:.4f}")
+print("-" * 50)
+print(f"【压力测试】收益率上升 {delta_y*100:.0f} bps 的价格影响")
+print(f"  久期影响 (-D_mod * Δy):        {-mod_duration * delta_y * 100:.4f} %")
+print(f"  凸性影响 (0.5 * C * Δy^2):     {0.5 * convexity * delta_y**2 * 100:.4f} %")
+print(f"  ➡️ 久期+凸性估算跌幅: {est_price_drop_pct*100:.4f} %")
+print(f"  ➡️ 精确重新定价跌幅: {actual_price_drop_pct*100:.4f} % (供参考对比)")
+print("=" * 50)
+print(f"\n已将结果存入字典 result，键名 'price_drop_pct' 的值为: {result['price_drop_pct']}")
+```

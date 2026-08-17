@@ -1,0 +1,100 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+# ===== 可调参数 =====
+WINDOW = 60                  # 滚动窗口长度（交易日）
+RF_ANNUAL = 0.021            # 年化无风险利率
+ANNUALIZATION = 252          # 年交易日数
+DATA_PATH = 'data/market_snapshot_v1.csv'
+FIGURE_PATH = 'rolling_sharpe.png'
+# ===================
+
+def compute_annualized_sharpe(daily_returns: np.ndarray,
+                              rf_daily: float,
+                              ann_factor: int) -> float:
+    """
+    计算年化夏普比率。
+    daily_returns : 日收益率（小数形式）
+    rf_daily      : 日无风险利率
+    ann_factor    : 年化因子（交易日数）
+    """
+    excess = daily_returns - rf_daily
+    std_excess = np.std(excess, ddof=1)   # 样本标准差，业界常用
+    if std_excess == 0:
+        return np.nan
+    mean_excess = np.mean(excess)
+    return np.sqrt(ann_factor) * mean_excess / std_excess
+
+
+def main():
+    # ---------- 1. 读取数据 ----------
+    df = pd.read_csv(DATA_PATH)
+    
+    # 确保 fund 列存在
+    if 'fund' not in df.columns:
+        raise KeyError("数据中缺少 'fund' 列。")
+    
+    fund_series = df['fund'].copy()
+    
+    # 自动检测收益率是否为百分比形式（若绝对值大于1则视为百分比，除以100）
+    if fund_series.abs().max() > 1.0:
+        fund_series = fund_series / 100.0
+    
+    # 尝试将第一列转换为日期索引（如果有类似日期列）
+    # 常见名称：date, trade_date, Date 等
+    date_col = None
+    for col in df.columns:
+        if 'date' in col.lower():
+            date_col = col
+            break
+    if date_col is not None:
+        df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
+        df = df.set_index(date_col)
+        fund_series = df['fund']
+        if fund_series.abs().max() > 1.0:   # 转为索引后需重新处理
+            fund_series = fund_series / 100.0
+    
+    # ---------- 2. 计算日无风险利率 ----------
+    rf_daily = RF_ANNUAL / ANNUALIZATION
+    
+    # ---------- 3. 滚动夏普比率 ----------
+    rolling_sharpe = fund_series.rolling(window=WINDOW).apply(
+        lambda x: compute_annualized_sharpe(x, rf_daily, ANNUALIZATION),
+        raw=True
+    )
+    
+    # 删除由于窗口不足产生的 NaN
+    rolling_sharpe_clean = rolling_sharpe.dropna()
+    
+    # 最后一个窗口的值
+    if len(rolling_sharpe_clean) == 0:
+        raise ValueError("数据长度不足以计算一个完整窗口的夏普比率。")
+    last_sharpe = float(rolling_sharpe_clean.iloc[-1])
+    
+    # ---------- 4. 绘图 ----------
+    plt.figure(figsize=(10, 6))
+    plt.plot(rolling_sharpe_clean.index, rolling_sharpe_clean.values,
+             color='steelblue', linewidth=1.5)
+    plt.title(f'{WINDOW}-Day Rolling Annualized Sharpe Ratio', fontsize=14)
+    plt.xlabel('Date' if date_col else 'Time Steps', fontsize=12)
+    plt.ylabel('Sharpe Ratio', fontsize=12)
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(FIGURE_PATH, dpi=150)
+    plt.close()
+    
+    # ---------- 5. 输出契约 ----------
+    result = {
+        'rolling_sharpe_last': last_sharpe,
+        'figure_path': os.path.abspath(FIGURE_PATH)
+    }
+    return result
+
+
+if __name__ == '__main__':
+    result = main()
+    # 打印结果以供课堂投屏查看
+    print("结果字典：")
+    print(result)

@@ -1,0 +1,39 @@
+要计算债券收益率上升80bp（即0.8%）时的价格下跌幅度，我们可以使用久期（Duration）和凸性（Convexity）的近似公式。对于给定的债券（面值100元，票息4.6%，到期收益率5.3%，剩余期限7年），我们首先计算其久期和凸性，然后估计价格变化。
+
+### 1. 计算债券当前价格
+债券价格公式（年复利）：
+\[ P = \sum_{t=1}^{T} \frac{C}{(1+y)^t} + \frac{F}{(1+y)^T} \]
+其中：
+- \( C = 4.6 \)（年票息）
+- \( F = 100 \)（面值）
+- \( y = 5.3\% \)（到期收益率）
+- \( T = 7 \)（剩余期限）
+
+计算得：
+\[ P \approx 96.05 \]
+
+### 2. 计算修正久期（Modified Duration）
+修正久期公式：
+\[ \text{ModD} = \frac{1}{P} \sum_{t=1}^{T} \frac{t \cdot C}{(1+y)^t} + \frac{T \cdot F}{(1+y)^T} \]
+\[ \text{ModD} \approx \frac{1}{96.05} \left( \sum_{t=1}^{7} \frac{t \cdot 4.6}{(1.053)^t} + \frac{7 \cdot 100}{(1.053)^7} \right) \]
+\[ \text{ModD} \approx 5.7 \]
+
+### 3. 计算凸性（Convexity）
+凸性公式：
+\[ \text{Convexity} = \frac{1}{P} \sum_{t=1}^{T} \frac{t(t+1) \cdot C}{(1+y)^{t+2}} + \frac{T(T+1) \cdot F}{(1+y)^{T+2}} \]
+\[ \text{Convexity} \approx \frac{1}{96.05} \left( \sum_{t=1}^{7} \frac{t(t+1) \cdot 4.6}{(1.053)^{t+2}} + \frac{7 \cdot 8 \cdot 100}{(1.053)^9} \right) \]
+\[ \text{Convexity} \approx 38.5 \]
+
+### 4. 估计价格变化
+收益率变化 \( \Delta y = 0.8\% = 0.008 \)，价格变化近似为：
+\[ \frac{\Delta P}{P} \approx -\text{ModD} \cdot \Delta y + \frac{1}{2} \cdot \text{Convexity} \cdot (\Delta y)^2 \]
+\[ \frac{\Delta P}{P} \approx -5.7 \cdot 0.008 + \frac{1}{2} \cdot 38.5 \cdot (0.008)^2 \]
+\[ \frac{\Delta P}{P} \approx -0.0456 + 0.001232 \approx -0.04437 \]
+即价格下跌约 **4.44%**。
+
+### 输出结果
+```python
+result = {
+    'price_drop_pct': 4.44
+}
+```

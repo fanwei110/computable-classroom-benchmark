@@ -1,0 +1,19 @@
+我来帮您计算60日滚动年化夏普比率，并绘制曲线。由于我没有看到您的数据，我需要您提供fund列的数据，或者我可以创建一个示例来演示完整的流程。
+
+请您提供：
+1. fund列的数据（收益率数据）
+2. 或者确认我使用示例数据进行演示
+
+如果您能提供数据，我会立即计算。以下是如果我有数据时的代码结构：
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# 假设这是您的数据加载方式
+# df = pd.read_csv('your_data.csv')
+# fund_returns = df['fund']
+
+# 示例数据（请您替换为实际

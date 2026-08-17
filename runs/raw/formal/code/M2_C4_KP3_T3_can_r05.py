@@ -1,0 +1,38 @@
+import numpy as np
+
+# 债券参数
+face_value = 100.0       # 面值
+coupon_rate = 0.046      # 票息率（小数）
+yield_rate = 0.053       # 年收益率（小数）
+years = 7                # 期限（年）
+dy = 0.008               # 收益率上升 80 个基点
+
+coupon = face_value * coupon_rate  # 年票息 4.6
+
+# 现金流发生的时间（年）
+t = np.arange(1, years + 1)  # [1, 2, 3, 4, 5, 6, 7]
+
+# 每年现金流：前6年是coupon，第7年是coupon + face_value
+cash_flows = np.full(years, coupon)
+cash_flows[-1] += face_value  # 最后一年加上面值
+
+# 贴现因子
+discount_factors = 1 / (1 + yield_rate) ** t
+pv_cash_flows = cash_flows * discount_factors
+
+# 债券价格
+price = np.sum(pv_cash_flows)
+
+# 麦考利久期
+weights = pv_cash_flows / price
+macaulay_duration = np.sum(t * weights)
+
+# 修正久期
+modified_duration = macaulay_duration / (1 + yield_rate)
+
+# 一阶近似：价格变动百分比（取正值，表示跌幅）
+price_drop_pct = modified_duration * dy
+
+# 输出结果
+result = {'price_drop_pct': price_drop_pct}
+print(result)

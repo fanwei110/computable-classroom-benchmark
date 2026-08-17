@@ -1,0 +1,27 @@
+import math
+
+# 已知参数
+position = 1850000  # 仓位：185万
+vol_annual = 0.218  # 年化波动率：21.8%
+
+# 参数法VaR通常假设收益率服从正态分布
+# 95%对应的Z值约为1.645，99%对应的Z值约为2.326
+z_95 = 1.645
+z_99 = 2.326
+
+# 假设一年有252个交易日，日波动率和10日波动率的转换基于 sqrt(T/252)
+trading_days = 252
+
+# 计算 95% 1天 VaR
+var_95_1d = position * z_95 * vol_annual * math.sqrt(1 / trading_days)
+
+# 计算 99% 10天 VaR
+var_99_10d = position * z_99 * vol_annual * math.sqrt(10 / trading_days)
+
+# 按照输出契约存入字典，保留两位小数
+result = {
+    'var_95_1d': round(var_95_1d, 2),
+    'var_99_10d': round(var_99_10d, 2)
+}
+
+result

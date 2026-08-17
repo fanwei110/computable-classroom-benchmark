@@ -1,0 +1,63 @@
+import pandas as pd
+import numpy as np
+
+# 读取数据
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 如果第一列是日期，将其设为索引并转换为DatetimeIndex
+if 'date' in df.columns:
+    df['date'] = pd.to_datetime(df['date'])
+    df.set_index('date', inplace=True)
+elif 'Date' in df.columns:
+    df['Date'] = pd.to_datetime(df['Date'])
+    df.set_index('Date', inplace=True)
+else:
+    # 如果没有日期列，假设数据按交易日顺序排列，索引为整数
+    pass
+
+# 提取 fund 列
+fund_prices = df['fund']
+
+# 计算简单日收益率
+returns = fund_prices.pct_change().dropna()
+
+# 确定年化因子：根据数据频率自动判断
+if isinstance(df.index, pd.DatetimeIndex):
+    # 计算日期间隔的中位数（天数）
+    delta = df.index.to_series().diff().median()
+    if delta <= pd.Timedelta(days=1):
+        freq = 'daily'
+        annual_factor = 252
+    elif delta <= pd.Timedelta(days=7):
+        freq = 'weekly'
+        annual_factor = 52
+    elif delta <= pd.Timedelta(days=31):
+        freq = 'monthly'
+        annual_factor = 12
+    else:
+        freq = 'yearly'
+        annual_factor = 1
+else:
+    # 默认假设为日频
+    freq = 'daily'
+    annual_factor = 252
+
+# 年化无风险利率
+rf_annual = 0.021
+
+# 计算日（或相应频率）无风险利率：简单比例
+rf_period = rf_annual / annual_factor
+
+# 超额收益
+excess_returns = returns - rf_period
+
+# 年化夏普比率
+sharpe_annual = np.sqrt(annual_factor) * excess_returns.mean() / excess_returns.std()
+
+# 存储结果
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+# 打印结果以供查看（可选）
+print(result)

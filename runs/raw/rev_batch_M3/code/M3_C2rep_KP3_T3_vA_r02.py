@@ -1,0 +1,58 @@
+import numpy as np
+
+# ================== 债券基础参数 ==================
+face_value = 100          # 面值
+coupon_rate = 0.046       # 票息率 4.6%
+years = 7                 # 期限 7年
+y = 0.053                 # 当前收益率 5.3%
+delta_y = 0.008           # 收益率变动：上升 80 个基点 (0.8%)
+
+# ================== 1. 计算当前收益率下的债券价格与利率敏感性 ==================
+# 生成各期时间序列
+t = np.arange(1, years + 1)
+
+# 构建各期现金流（前6期为票息，第7期为票息+面值）
+cash_flows = np.full(years, face_value * coupon_rate)
+cash_flows[-1] += face_value
+
+# 计算贴现因子
+discount_factors = (1 + y) ** t
+
+# 计算债券当前价格 P
+price = np.sum(cash_flows / discount_factors)
+
+# 计算麦考利久期 (Macaulay Duration)
+mac_duration = np.sum(t * cash_flows / discount_factors) / price
+
+# 计算修正久期 (Modified Duration)
+mod_duration = mac_duration / (1 + y)
+
+# 计算凸性 (Convexity)
+# 严格依据二阶泰勒展开公式：ΔP/P ≈ -ModD * Δy + 0.5 * Conv * (Δy)^2
+# 对应凸性计算公式：C = (1/P) * Σ [ t(t+1) * CF_t / (1+y)^(t+2) ]
+convexity = np.sum(t * (t + 1) * cash_flows / ((1 + y) ** (t + 2))) / price
+
+# ================== 2. 估算收益率上升 80 个基点的价格影响 ==================
+# 使用久期和凸性进行二阶近似估算价格变动率
+price_change_pct = -mod_duration * delta_y + 0.5 * convexity * (delta_y ** 2)
+
+# 题目要求计算"跌多少"，取变动率的绝对值作为跌幅百分比（小数形式）
+price_drop_pct = abs(price_change_pct)
+
+# ================== 3. 把跌幅存入 result ==================
+result = {
+    'price_drop_pct': price_drop_pct
+}
+
+# ================== 课堂投屏辅助展示 ==================
+print(f"===== 债券定价与久期、凸性计算 =====")
+print(f"当前债券价格 (P):       {price:.4f}")
+print(f"麦考利久期 (MacD):      {mac_duration:.4f} 年")
+print(f"修正久期 (ModD):        {mod_duration:.4f}")
+print(f"凸性 (Convexity):       {convexity:.4f}")
+print(f"-" * 40)
+print(f"收益率变动 (Δy):        +{delta_y*100:.1f} bps")
+print(f"价格变动率估算 (ΔP/P):  {price_change_pct:.4%}")
+print(f"估算跌幅 (绝对值):      {price_drop_pct:.4%}")
+print(f"-" * 40)
+print(f"最终输出 result 字典: {result}")

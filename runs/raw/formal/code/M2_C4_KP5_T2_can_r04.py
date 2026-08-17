@@ -1,0 +1,84 @@
+#!/usr/bin/env python3
+# -*- coding: utf-8 -*-
+"""
+证券投资学 课堂实时编程：历史 VaR 计算与可视化
+读取 data/market_snapshot_v1.csv，对 1,000,000 元头寸计算 95% 单日历史 VaR，
+绘制损益分布直方图并标记 VaR 线，结果存入 result 字典。
+"""
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ----------------------------- 参数设置（可调） -----------------------------
+CONFIDENCE_LEVEL = 0.95          # 置信水平 (95%)
+POSITION_VALUE  = 1_000_000.0    # 头寸规模（人民币）
+DATA_PATH       = "data/market_snapshot_v1.csv"
+FIGURE_PATH     = "var_histogram.png"
+# --------------------------------------------------------------------------
+
+# 1. 读取数据，构造日损益序列
+try:
+    df = pd.read_csv(DATA_PATH)
+except FileNotFoundError:
+    raise FileNotFoundError(f"课程数据快照 {DATA_PATH} 未找到，请检查路径。")
+
+# 使用 fund 列，强制转为数值，剔除缺失值
+returns = pd.to_numeric(df["fund"], errors="coerce").dropna().values
+if len(returns) == 0:
+    raise ValueError("fund 列无有效数据，无法计算。")
+
+profit_loss = POSITION_VALUE * returns   # 每日损益金额（元）
+
+# 2. 计算 95% 历史 VaR（线性插值经验分位数，numpy 默认）
+#    损益分布的左尾 (1-CONFIDENCE_LEVEL)% 分位数，即 5% 分位数
+var_threshold = np.percentile(profit_loss, 100 * (1 - CONFIDENCE_LEVEL))
+#    按课程约定，VaR 报告为正的损失金额
+var_amount = -var_threshold if var_threshold < 0 else 0.0
+
+# 3. 绘制直方图并标注 VaR 线
+plt.figure(figsize=(10, 6))
+n, bins, patches = plt.hist(
+    profit_loss,
+    bins=60,
+    color="dodgerblue",
+    edgecolor="black",
+    alpha=0.7,
+    label="Daily P&L"
+)
+
+# 绘制 VaR 分界线（在损益数值位置）
+plt.axvline(
+    x=var_threshold,
+    color="red",
+    linestyle="--",
+    linewidth=2,
+    label=f"{CONFIDENCE_LEVEL*100:.0f}% Historical VaR: ¥{var_amount:,.2f}"
+)
+
+# 添加标签和标题
+plt.xlabel("Daily Profit / Loss (¥)", fontsize=12)
+plt.ylabel("Frequency", fontsize=12)
+plt.title(
+    f"Daily P&L Distribution and Historical VaR (Confidence = {CONFIDENCE_LEVEL*100:.0f}%)",
+    fontsize=14
+)
+plt.legend(fontsize=11)
+plt.grid(axis="y", linestyle=":", alpha=0.6)
+plt.tight_layout()
+
+# 保存图形
+plt.savefig(FIGURE_PATH, dpi=150)
+plt.close()
+
+# 4. 填充结果字典（键名严格）
+result = {
+    "hist_var_95_1d": var_amount,
+    "figure_path": FIGURE_PATH
+}
+
+# （可选）控制台输出以方便课堂投屏查看
+print(f"95% 一日历史 VaR (历史模拟法): ¥{var_amount:,.2f}")
+print(f"图形已保存至: {FIGURE_PATH}")
+
+# 脚本执行完毕后，result 变量即为要求的输出

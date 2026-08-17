@@ -1,0 +1,123 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 1. 定义资产参数
+# ==========================================
+mu = np.array([0.071, 0.124])      # 期望年收益 (7.1%, 12.4%)
+sigma = np.array([0.163, 0.289])   # 年化波动率 (16.3%, 28.9%)
+rhos = [0.15, 0.45, 0.75]         # 给定的相关系数
+target_ret = 0.10                  # 目标期望收益 10%
+
+# ==========================================
+# 2. 初始化结果字典与图表
+# ==========================================
+result = {}
+fig, ax = plt.subplots(figsize=(10, 7))
+
+# 定义每条曲线对应的颜色
+colors = ['blue', 'orange', 'green']
+
+# ==========================================
+# 3. 对每个相关系数扫描权重，计算并画图
+# ==========================================
+for i, rho in enumerate(rhos):
+    # 构造协方差矩阵
+    cov = rho * sigma[0] * sigma[1]
+    Sigma = np.array([[sigma[0]**2, cov],
+                      [cov, sigma[1]**2]])
+    
+    # --- 步骤1：在组合权重上扫描画出前沿 ---
+    # 满仓约束: w1 + w2 = 1, 允许卖空所以 w1 可取任意实数
+    w1_scan = np.linspace(-1.0, 2.0, 1000)
+    w2_scan = 1 - w1_scan
+    
+    mu_p = w1_scan * mu[0] + w2_scan * mu[1]
+    var_p = (w1_scan**2 * Sigma[0, 0] + 
+             w2_scan**2 * Sigma[1, 1] + 
+             2 * w1_scan * w2_scan * Sigma[0, 1])
+    vol_p = np.sqrt(var_p)
+    
+    # --- 步骤2：计算并标出最小方差组合 (MVP) ---
+    # 利用解析式精确计算 MVP 权重
+    w1_mvp = (Sigma[1, 1] - Sigma[0, 1]) / (Sigma[0, 0] + Sigma[1, 1] - 2 * Sigma[0, 1])
+    w2_mvp = 1 - w1_mvp
+    
+    mu_mvp = w1_mvp * mu[0] + w2_mvp * mu[1]
+    var_mvp = (w1_mvp**2 * Sigma[0, 0] + 
+               w2_mvp**2 * Sigma[1, 1] + 
+               2 * w1_mvp * w2_mvp * Sigma[0, 1])
+    vol_mvp = np.sqrt(var_mvp)
+    
+    # 区分有效前沿(上界)与无效前沿(下界)
+    upper_mask = mu_p >= mu_mvp
+    lower_mask = mu_p < mu_mvp
+    
+    color = colors[i]
+    # 绘制有效前沿 (实线)
+    ax.plot(vol_p[upper_mask], mu_p[upper_mask], 
+            label=f'rho = {rho:.2f}', color=color, linewidth=2.5)
+    # 绘制无效前沿 (虚线)
+    ax.plot(vol_p[lower_mask], mu_p[lower_mask], 
+            linestyle='--', color=color, alpha=0.4, linewidth=1.5)
+    
+    # 标出 MVP 点
+    ax.scatter(vol_mvp, mu_mvp, color=color, marker='*', s=300, 
+               zorder=5, edgecolor='black', linewidth=1)
+    ax.annotate(f'MVP(rho={rho:.2f})\nvol={vol_mvp:.4f}', 
+                xy=(vol_mvp, mu_mvp), 
+                xytext=(15, 10 - i*20), 
+                textcoords='offset points',
+                arrowprops=dict(arrowstyle='->', color=color),
+                fontsize=9, color=color, weight='bold')
+
+    # --- 步骤3：对相关系数 0.45 计算要求的波动率 ---
+    if rho == 0.45:
+        # 1) rho=0.45 时最小方差组合的年化波动率
+        result['mvp_vol_at_rho45'] = vol_mvp
+        
+        # 2) 目标期望收益 10% 下可达到的最小年化波动率
+        # 给定期望收益，权重有解析唯一解 (两资产情形)
+        w1_target = (target_ret - mu[1]) / (mu[0] - mu[1])
+        w2_target = 1 - w1_target
+        
+        var_target = (w1_target**2 * Sigma[0, 0] + 
+                      w2_target**2 * Sigma[1, 1] + 
+                      2 * w1_target * w2_target * Sigma[0, 1])
+        vol_target = np.sqrt(var_target)
+        result['frontier_vol_at_target'] = vol_target
+        
+        # 在图上标出目标收益对应的点
+        ax.scatter(vol_target, target_ret, color='red', marker='D', s=100, 
+                   zorder=5, edgecolor='black', linewidth=1, label=f'Target 10% (rho=0.45)')
+
+# ==========================================
+# 4. 图形修饰与保存
+# ==========================================
+ax.set_xlabel('Annualized Volatility (Standard Deviation)', fontsize=12)
+ax.set_ylabel('Expected Annual Return', fontsize=12)
+ax.set_title('Markowitz Mean-Variance Frontier (Two Risky Assets, Short Selling Allowed)', fontsize=14)
+ax.legend(loc='upper left', fontsize=10)
+ax.grid(True, linestyle='--', alpha=0.6)
+ax.set_xlim(0, 0.55)
+ax.set_ylim(0.0, 0.18)
+
+# 添加 MVP 图例通用标志
+ax.scatter([], [], marker='*', s=200, color='gray', edgecolor='black', label='Minimum Variance Portfolio')
+
+# 重新排列图例以防遮挡
+handles, labels = ax.get_legend_handles_labels()
+ax.legend(handles, labels, loc='upper left', fontsize=10)
+
+figure_path = 'markowitz_frontier.png'
+plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+result['figure_path'] = figure_path
+
+# ==========================================
+# 5. 输出结果验证
+# ==========================================
+print("Result Dictionary:")
+for k, v in result.items():
+    print(f"{k}: {v:.6f}" if isinstance(v, float) else f"{k}: {v}")
+```

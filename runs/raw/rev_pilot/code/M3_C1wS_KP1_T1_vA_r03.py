@@ -1,0 +1,50 @@
+import numpy as np
+
+# ========================
+# 1. 输入参数设定
+# ========================
+# 三只资产的年化波动率
+vols = np.array([0.187, 0.243, 0.312])
+
+# 相关系数矩阵
+rhos = np.array([
+    [1.0,  0.21, -0.13],
+    [0.21, 1.0,   0.37],
+    [-0.13, 0.37, 1.0 ]
+])
+
+# ========================
+# 2. 构造协方差矩阵
+# ========================
+# 协方差公式：Cov(i,j) = rho_ij * sigma_i * sigma_j
+cov_matrix = np.outer(vols, vols) * rhos
+
+# ========================
+# 3. 求最小方差组合权重
+# ========================
+# 满仓约束下(权重和为1)的最小方差组合闭式解为：w = (Σ^-1 * 1) / (1^T * Σ^-1 * 1)
+ones = np.ones(3)
+inv_cov_matrix = np.linalg.inv(cov_matrix)
+
+# 计算闭式解
+w_mvp = (inv_cov_matrix @ ones) / (ones @ inv_cov_matrix @ ones)
+
+# ========================
+# 4. 计算组合的年化波动率
+# ========================
+# 组合方差为 w'Σw，波动率取其平方根
+var_mvp = w_mvp.T @ cov_matrix @ w_mvp
+vol_mvp_annual = np.sqrt(var_mvp)
+
+# ========================
+# 5. 按契约填充结果
+# ========================
+result = {
+    'mvp_weights': w_mvp.tolist(),
+    'mvp_vol_annual': vol_mvp_annual
+}
+
+# 打印结果以便课堂投屏展示
+print("马科维茨最小方差组合计算结果：")
+print(f"资产权重: {result['mvp_weights']}")
+print(f"组合年化波动率: {result['mvp_vol_annual']:.4%}")

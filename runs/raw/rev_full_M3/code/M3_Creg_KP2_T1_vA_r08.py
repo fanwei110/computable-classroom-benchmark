@@ -1,0 +1,29 @@
+# 定义已知参数
+rf = 2.3        # 无风险利率 (%)
+rm = 9.4        # 市场期望收益 (%)
+beta_x = 0.62   # 股票 X 的 beta
+beta_y = 1.18   # 股票 Y 的 beta
+beta_z = 1.51   # 股票 Z 的 beta
+actual_return_y = 13.1  # 股票 Y 的实际收益 (%)
+
+# 计算市场风险溢价
+market_risk_premium = rm - rf
+
+# 使用 CAPM 公式计算各股票的期望收益: E(Ri) = Rf + Beta_i * (Rm - Rf)
+er_x = rf + beta_x * market_risk_premium
+er_y = rf + beta_y * market_risk_premium
+er_z = rf + beta_z * market_risk_premium
+
+# 计算股票 Y 的 Alpha: Alpha_y = 实际收益 - 期望收益
+alpha_y = actual_return_y - er_y
+
+# 将结果存入符合契约的字典中
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+
+# 打印结果以供验证
+print(result)

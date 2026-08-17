@@ -1,0 +1,24 @@
+```python
+import math
+
+# 给定参数
+sigma_annual = 0.24        # 年化波动率
+position = 2_700_000       # 头寸价值
+confidence = 0.95          # 置信水平
+trading_days = 252         # 每年交易日
+
+# 计算日波动率
+sigma_daily = sigma_annual / math.sqrt(trading_days)
+
+# 95% 置信水平对应的标准正态分布分位数
+z_95 = 1.6448536269514722  # scipy.stats.norm.ppf(0.95)
+
+# 一日 VaR（损失金额为正）
+var_95_1d = z_95 * position * sigma_daily
+
+result = {
+    'var_95_1d': round(var_95_1d, 2)  # 保留两位小数
+}
+
+result
+```

@@ -1,0 +1,29 @@
+import math
+
+# 输入参数
+sigma_A = 0.184
+sigma_B = 0.297
+w_A = 0.6
+w_B = 0.4
+rho_before = 0.3
+rho_after = 0.8
+
+# 方差计算函数
+def portfolio_variance(w_a, w_b, s_a, s_b, rho):
+    return (w_a**2 * s_a**2) + (w_b**2 * s_b**2) + (2 * w_a * w_b * rho * s_a * s_b)
+
+# 之前
+var_before = portfolio_variance(w_A, w_B, sigma_A, sigma_B, rho_before)
+vol_before = math.sqrt(var_before)
+
+# 之后
+var_after = portfolio_variance(w_A, w_B, sigma_A, sigma_B, rho_after)
+vol_after = math.sqrt(var_after)
+
+# 存储结果
+result = {
+    'vol_before_annual': round(vol_before, 6),
+    'vol_after_annual': round(vol_after, 6)
+}
+
+result

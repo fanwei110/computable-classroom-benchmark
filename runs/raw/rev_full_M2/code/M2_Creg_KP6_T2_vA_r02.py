@@ -1,0 +1,98 @@
+import numpy as np
+import pandas as pd
+import matplotlib
+matplotlib.use('Agg')
+import matplotlib.pyplot as plt
+import os
+
+# =============================================================================
+# 自包含数据加载：先尝试读取外部文件，若不存在则生成确定性的示例数据
+# =============================================================================
+def load_data():
+    """加载含有'fund'日收益列的DataFrame，要求索引为日期。"""
+    data_path = 'fund_returns.csv'  # 预期的课程数据快照文件名
+    if os.path.exists(data_path):
+        df = pd.read_csv(data_path, parse_dates=True, index_col=0)
+        if 'fund' not in df.columns:
+            raise ValueError("数据集必须包含 'fund' 列")
+        return df['fund']
+
+    # 若外部文件不存在，生成确定可复现的模拟数据
+    np.random.seed(42)  # 固定随机种子，确保每次运行结果一致
+    dates = pd.bdate_range('2018-01-02', '2023-12-29')  # 交易日序列
+    n = len(dates)
+    # 模拟日收益率：均值约0.0003（年化约7.5%），波动约0.012
+    daily_returns = np.random.normal(loc=0.0003, scale=0.012, size=n)
+    return pd.Series(data=daily_returns, index=pd.DatetimeIndex(dates), name='fund')
+
+# =============================================================================
+# 参数设置
+# =============================================================================
+RISK_FREE_RATE_ANNUAL = 0.021         # 年化无风险利率
+TRADING_DAYS_PER_YEAR = 252           # 年交易日数
+WINDOW_DAYS = 60                      # 滚动窗口长度（可调）
+
+# =============================================================================
+# 计算滚动年化夏普比率
+# =============================================================================
+def compute_rolling_annual_sharpe(fund_returns, rf_annual, window, periods_per_year=252):
+    """
+    fund_returns: 日收益序列（小数形式，例如0.001表示0.1%）
+    rf_annual: 年化无风险利率（小数）
+    window: 滚动窗口交易日数
+    periods_per_year: 年化系数
+    """
+    rf_daily = rf_annual / periods_per_year
+    excess = fund_returns - rf_daily
+
+    # 滚动窗口内的年化超额收益
+    rolling_mean_excess = excess.rolling(window=window).mean() * periods_per_year
+    # 滚动窗口内的年化波动率（使用样本标准差，ddof=1）
+    rolling_std = fund_returns.rolling(window=window).std(ddof=1) * np.sqrt(periods_per_year)
+
+    rolling_sharpe = rolling_mean_excess / rolling_std
+    rolling_sharpe.name = 'rolling_sharpe'
+    return rolling_sharpe
+
+# =============================================================================
+# 主流程
+# =============================================================================
+# 1. 加载数据
+fund_ret = load_data()   # pandas Series，日期索引
+
+# 2. 计算滚动夏普
+sharpe_series = compute_rolling_annual_sharpe(
+    fund_returns=fund_ret,
+    rf_annual=RISK_FREE_RATE_ANNUAL,
+    window=WINDOW_DAYS,
+    periods_per_year=TRADING_DAYS_PER_YEAR
+)
+# 删除前(window-1)个NaN，得到有效窗口
+valid_sharpe = sharpe_series.dropna()
+
+# 3. 获取最近一个窗口的夏普值
+last_sharpe_value = valid_sharpe.iloc[-1]
+
+# 4. 画图并保存
+plt.figure(figsize=(12, 6))
+plt.plot(valid_sharpe.index, valid_sharpe.values, color='navy', linewidth=0.8)
+plt.title(f'{WINDOW_DAYS}-Day Rolling Annualized Sharpe Ratio', fontsize=14)
+plt.xlabel('Date')
+plt.ylabel('Sharpe Ratio')
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+
+figure_filename = 'rolling_sharpe.png'
+plt.savefig(figure_filename, dpi=150)
+plt.close()
+
+# =============================================================================
+# 存储结果到字典
+# =============================================================================
+result = {
+    'rolling_sharpe_last': round(float(last_sharpe_value), 6),
+    'figure_path': os.path.abspath(figure_filename)
+}
+
+# 输出结果以供查验
+print(result)

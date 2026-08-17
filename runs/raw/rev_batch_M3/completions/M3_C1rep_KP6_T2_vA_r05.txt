@@ -1,0 +1,81 @@
+为了计算60日滚动年化夏普比率并满足你的输出契约，我们需要先计算基金的日度收益率，然后基于给定的无风险利率计算滚动窗口内的年化夏普值。
+
+由于你没有提供具体的数据源，我将使用模拟的基金净值数据来演示完整的计算流程。你可以将模拟数据部分替换为你真实的`fund`列数据。
+
+以下是完整的Python代码实现：
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ================= 1. 模拟数据 (如果你的环境已有df，请替换此部分) =================
+np.random.seed(42)
+dates = pd.date_range(start='2022-01-01', end='2024-01-01', freq='D')
+# 模拟一个基金净值序列
+fund_prices = np.cumprod(1 + np.random.normal(0.0005, 0.012, len(dates))) 
+df = pd.DataFrame({'date': dates, 'fund': fund_prices})
+# =================================================================================
+
+def calculate_rolling_sharpe(df, window=60, rf=0.021):
+    """
+    计算滚动年化夏普比率
+    :param df: 包含基金数据的DataFrame，需含有'fund'列
+    :param window: 滚动窗口大小，默认60
+    :param rf: 年化无风险利率，默认2.1%
+    :return: result字典
+    """
+    # 计算日度收益率
+    df['daily_return'] = df['fund'].pct_change()
+    
+    # 将年化无风险利率转换为日度无风险利率
+    rf_daily = rf / 252
+    
+    # 计算滚动日度平均收益率与滚动日度标准差
+    rolling_mean = df['daily_return'].rolling(window=window).mean()
+    rolling_std = df['daily_return'].rolling(window=window).std()
+    
+    # 计算滚动年化夏普比率：(日均收益 - 日无风险) / 日标准差 * sqrt(252)
+    df['rolling_sharpe'] = (rolling_mean - rf_daily) / rolling_std * np.sqrt(252)
+    
+    # 获取最后一个有效窗口的数值（去除因窗口期产生的NaN）
+    last_valid_sharpe = df['rolling_sharpe'].dropna().iloc[-1]
+    
+    # 绘制曲线
+    plt.figure(figsize=(12, 6))
+    plt.plot(df['date'], df['rolling_sharpe'], label=f'{window}-Day Rolling Annualized Sharpe (rf={rf*100}%)', color='blue')
+    plt.axhline(0, color='red', linestyle='--', linewidth=1, alpha=0.8)
+    plt.title(f'{window}-Day Rolling Annualized Sharpe Ratio')
+    plt.xlabel('Date')
+    plt.ylabel('Sharpe Ratio')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+    
+    # 保存图片
+    fig_path = 'rolling_sharpe_curve.png'
+    plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    
+    # 构建输出契约字典
+    result = {
+        'rolling_sharpe_last': last_valid_sharpe,
+        'figure_path': os.path.abspath(fig_path)
+    }
+    
+    return result
+
+# 执行计算（窗口可调，此处按要求设为60）
+result = calculate_rolling_sharpe(df, window=60, rf=0.021)
+
+# 打印结果验证
+print(result)
+```
+
+### 代码逻辑说明：
+1. **日度收益率**：使用 `pct_change()` 计算基金净值的日涨跌幅。
+2. **日度无风险利率**：将年化 `rf=2.1%` 拆解为日度 `rf_daily = 0.021 / 252`。
+3. **滚动年化夏普公式**：`Sharpe = (Mean_daily - Rf_daily) / Std_daily * sqrt(252)`，其中标准差采用总收益率标准差（业界通用做法，相较于超额收益率标准差，此算法更普遍）。
+4. **窗口可调**：通过封装成 `calculate_rolling_sharpe` 函数，`window` 参数可以随时修改为120日、240日等。
+5. **最后一个窗口数值**：使用 `.dropna().iloc[-1]` 确保取到最后一个已经完成完整窗口期计算的夏普值。
+6. **输出契约**：严格将结果打包进 `result` 字典，键名分别为 `rolling_sharpe_last` 和 `figure_path`，并将图片存为本地文件，将绝对路径写入字典。

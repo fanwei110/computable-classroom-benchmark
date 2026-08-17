@@ -1,0 +1,52 @@
+要计算收益率上升80个基点（即从5.3%上升到6.1%）时7年期债券价格的下跌幅度，我们可以使用债券久期的近似公式：
+
+1. **久期（Duration）**：对于票息债券，修正久期（Modified Duration）可以近似计算为：
+   \[
+   \text{Modified Duration} \approx \frac{\text{Macaulay Duration}}{1 + \frac{y}{m}}
+   \]
+   其中，\( y \) 是收益率，\( m \) 是每年的付息次数（这里假设每年付息一次，\( m = 1 \)）。对于7年期、票息4.6%、收益率5.3%的债券，Macaulay Duration可以近似为：
+   \[
+   \text{Macaulay Duration} \approx \frac{1 + y}{y} - \frac{(1 + y) + T \cdot (c - y)}{c \cdot [(1 + y)^T - 1] + y}
+   \]
+   其中，\( c = 4.6\% \)，\( y = 5.3\% \)，\( T = 7 \)。计算得Macaulay Duration约为6.1年，修正久期约为：
+   \[
+   \text{Modified Duration} \approx \frac{6.1}{1 + 0.053} \approx 5.8
+   \]
+
+2. **价格变化**：收益率变化导致的价格变化可以近似为：
+   \[
+   \Delta P \approx -\text{Modified Duration} \times \Delta y \times P
+   \]
+   其中，\( \Delta y = 0.8\% \)（80个基点），\( P \) 是初始价格。初始价格可以通过贴现现金流计算：
+   \[
+   P = \sum_{t=1}^{7} \frac{4.6}{(1 + 0.053)^t} + \frac{100}{(1 + 0.053)^7} \approx 95.5
+   \]
+   因此，价格变化为：
+   \[
+   \Delta P \approx -5.8 \times 0.008 \times 95.5 \approx -4.44
+   \]
+   价格下跌百分比为：
+   \[
+   \text{price\_drop\_pct} = \frac{4.44}{95.5} \approx 4.65\%
+   \]
+
+更精确的计算（使用现金流贴现法）：
+- 初始价格（收益率5.3%）：
+  \[
+  P_0 = \sum_{t=1}^{7} \frac{4.6}{(1 + 0.053)^t} + \frac{100}{(1 + 0.053)^7} \approx 95.5
+  \]
+- 新价格（收益率6.1%）：
+  \[
+  P_1 = \sum_{t=1}^{7} \frac{4.6}{(1 + 0.061)^t} + \frac{100}{(1 + 0.061)^7} \approx 91.1
+  \]
+- 价格下跌百分比：
+  \[
+  \text{price\_drop\_pct} = \frac{95.5 - 91.1}{95.5} \approx 4.61\%
+  \]
+
+最终结果存入字典：
+```python
+result = {
+    'price_drop_pct': 4.61
+}
+```

@@ -1,0 +1,71 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 资产参数
+r1 = 0.071
+r2 = 0.124
+sigma1 = 0.163
+sigma2 = 0.289
+var1 = sigma1 ** 2
+var2 = sigma2 ** 2
+
+# 相关系数
+rhos = [0.15, 0.45, 0.75]
+# 目标收益
+target_return = 0.10
+
+# 存储结果
+result = {}
+
+# 画图
+plt.figure(figsize=(10, 6))
+colors = ['blue', 'orange', 'green']
+rho_labels = [f'ρ = {rho}' for rho in rhos]
+
+# 生成权重用于绘制前沿曲线 (从0到1，步长较小)
+ws = np.linspace(0, 1, 200)
+
+for rho, color, label in zip(rhos, colors, rho_labels):
+    cov = rho * sigma1 * sigma2
+    # 计算组合收益和风险
+    ret = ws * r1 + (1 - ws) * r2
+    vol = np.sqrt(ws**2 * var1 + (1 - ws)**2 * var2 + 2 * ws * (1 - ws) * cov)
+    plt.plot(vol, ret, color=color, label=label, linewidth=1.5)
+
+    # 最小方差组合 (MVP)
+    # 权重公式
+    w1_mvp = (var2 - cov) / (var1 + var2 - 2 * cov)
+    w2_mvp = 1 - w1_mvp
+    ret_mvp = w1_mvp * r1 + w2_mvp * r2
+    vol_mvp = np.sqrt(w1_mvp**2 * var1 + w2_mvp**2 * var2 + 2 * w1_mvp * w2_mvp * cov)
+    plt.scatter(vol_mvp, ret_mvp, color=color, marker='*', s=100, zorder=5)
+
+    # 对于 rho = 0.45 记录 mvp 波动率
+    if rho == 0.45:
+        result['mvp_vol_at_rho45'] = round(vol_mvp, 4)
+
+    # 对于 rho = 0.45 计算目标收益10%时的最小波动率
+    if rho == 0.45:
+        # 直接解权重
+        w1_target = (target_return - r2) / (r1 - r2)
+        w2_target = 1 - w1_target
+        vol_target = np.sqrt(w1_target**2 * var1 + w2_target**2 * var2 + 2 * w1_target * w2_target * cov)
+        result['frontier_vol_at_target'] = round(vol_target, 4)
+        # 在图上标出目标收益点
+        plt.scatter(vol_target, target_return, color='red', marker='o', s=100, zorder=6, label=f'Target 10% (ρ=0.45)')
+
+# 图形设置
+plt.xlabel('Volatility (Standard Deviation)')
+plt.ylabel('Expected Return')
+plt.title('Efficient Frontier with Two Assets')
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.7)
+
+# 保存图片
+fig_path = 'frontier.png'
+plt.savefig(fig_path, dpi=150)
+result['figure_path'] = fig_path
+plt.show()
+
+# 输出最终结果字典
+print(result)

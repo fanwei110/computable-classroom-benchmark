@@ -1,0 +1,74 @@
+```python
+import numpy as np
+
+# ==========================================
+# 债券定价与久期、凸性计算
+# ==========================================
+# 假设处理：
+# 1. 题目未指明付息频率，按照中国债券市场常见惯例及教学惯例，默认采用【年付息频率】(Annual Coupon)。
+# 2. 遵循连续复利与离散复利的常规教学区分，贴现采用离散复利公式 1/(1+y)^t。
+# 3. 凸性采用标准定义公式：Conv = (1/P) * Σ [ t(t+1) * CF_t / (1+y)^(t+2) ]。
+
+def calculate_bond_metrics(face_value, coupon_rate, years_to_maturity, ytm):
+    """
+    计算固定利率附息债券的价格、麦考利久期、修正久期与凸性
+    """
+    # 基础参数
+    c = face_value * coupon_rate  # 每年票息
+    
+    # 生成时间序列与现金流序列
+    t = np.arange(1, years_to_maturity + 1)
+    cash_flows = np.full(years_to_maturity, c)
+    cash_flows[-1] += face_value  # 最后一期加上本金
+    
+    # 贴现因子
+    discount_factors = (1 + ytm) ** t
+    
+    # 1. 计算价格 (现金流贴现之和)
+    pv_cash_flows = cash_flows / discount_factors
+    price = np.sum(pv_cash_flows)
+    
+    # 2. 计算麦考利久期与修正久期
+    # 麦考利久期 = (时间 * 现金流现值)之和 / 价格
+    macaulay_duration = np.sum(t * pv_cash_flows) / price
+    
+    # 修正久期 = 麦考利久期 / (1 + 到期收益率)
+    modified_duration = macaulay_duration / (1 + ytm)
+    
+    # 3. 计算凸性
+    # 凸性 = (1/P) * Σ [ t(t+1) * CF_t / (1+y)^(t+2) ]
+    convexity_numerator = np.sum(t * (t + 1) * pv_cash_flows)
+    convexity = convexity_numerator / (price * (1 + ytm) ** 2)
+    
+    return price, macaulay_duration, modified_duration, convexity
+
+if __name__ == '__main__':
+    # 题目给定参数
+    F = 100.0        # 面值
+    c_rate = 0.046    # 票息率 4.6%
+    n = 7            # 7年期
+    y = 0.053        # 到期收益率 5.3%
+    
+    # 执行计算
+    p, mac_d, mod_d, conv = calculate_bond_metrics(F, c_rate, n, y)
+    
+    # 按输出契约填充 result 字典
+    result = {
+        'price': p,
+        'macaulay_duration_years': mac_d,
+        'modified_duration_years': mod_d,
+        'convexity': conv
+    }
+    
+    # 课堂投屏友好输出
+    print("="*45)
+    print("《证券投资学》- 债券定价与久期、凸性计算结果")
+    print("="*45)
+    print(f"面值: {F} | 票息率: {c_rate*100}% | 期限: {n}年 | YTM: {y*100}%")
+    print("-" * 45)
+    print(f"债券价格 (Price):                  {result['price']:.4f}")
+    print(f"麦考利久期 (Macaulay Duration):     {result['macaulay_duration_years']:.4f} 年")
+    print(f"修正久期 (Modified Duration):      {result['modified_duration_years']:.4f} 年")
+    print(f"凸性 (Convexity):                  {result['convexity']:.4f}")
+    print("="*45)
+```

@@ -1,0 +1,130 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# =====================================================
+# 债券参数（均可按需调整）
+# =====================================================
+FACE = 100.0                 # 面值
+COUPON_RATE = 0.046          # 票息率（年化）
+MATURITY = 7                 # 剩余期限（年）
+YIELD_INITIAL = 0.053        # 当前到期收益率
+
+# 画图与计算范围
+YIELD_START = 0.02           # 精确曲线起始收益率
+YIELD_END = 0.09             # 精确曲线结束收益率
+SHOCK_BP = 100               # 计算冲击的基点（此处为 +100 bp）
+SHOCK = SHOCK_BP / 10000.0   # 转换为小数
+
+# 久期近似线在图上展示的收益率变动幅度（可调）
+APPROX_DISPLAY_RANGE = 0.02  # 在 y0 附近 ± 此值范围内绘制近似直线
+
+# =====================================================
+# 定价与久期函数
+# =====================================================
+def bond_price(ytm, face, coupon_rate, maturity):
+    """计算债券价格（年付息一次）"""
+    coupon = face * coupon_rate
+    t = np.arange(1, maturity + 1)
+    cashflows = np.full(maturity, coupon)
+    cashflows[-1] += face
+    pv = np.sum(cashflows / (1 + ytm) ** t)
+    return pv
+
+def bond_price_vector(ytm_array, face, coupon_rate, maturity):
+    """向量化债券定价，支持数组输入"""
+    # ytm_array: array of yields
+    coupon = face * coupon_rate
+    t = np.arange(1, maturity + 1)   # shape (maturity,)
+    # 构造现金流矩阵 (len(ytm_array), maturity)
+    ytm = np.asarray(ytm_array).reshape(-1, 1)
+    t_matrix = t.reshape(1, -1)
+    cashflows = np.full((1, maturity), coupon)
+    cashflows[0, -1] += face
+    pv = cashflows / (1 + ytm) ** t_matrix
+    return np.sum(pv, axis=1)
+
+def modified_duration(ytm, face, coupon_rate, maturity):
+    """计算修正久期与价格"""
+    coupon = face * coupon_rate
+    t = np.arange(1, maturity + 1)
+    cashflows = np.full(maturity, coupon)
+    cashflows[-1] += face
+    pv_cf = cashflows / (1 + ytm) ** t
+    price = np.sum(pv_cf)
+    mac_dur = np.sum(t * pv_cf) / price
+    mod_dur = mac_dur / (1 + ytm)
+    return mod_dur, price
+
+# =====================================================
+# 1. 计算基础值：初始价格、修正久期
+# =====================================================
+mod_dur0, price0 = modified_duration(YIELD_INITIAL, FACE, COUPON_RATE, MATURITY)
+
+# =====================================================
+# 2. 计算上升 100 bp 后的精确价格和久期估计的相对变化
+# =====================================================
+yield_up = YIELD_INITIAL + SHOCK
+price_up = bond_price(yield_up, FACE, COUPON_RATE, MATURITY)
+dur_approx_change = -mod_dur0 * SHOCK   # ΔP/P 的相对变化
+
+# =====================================================
+# 3. 在 2% 到 9% 收益率网格上为精确曲线定价
+# =====================================================
+yields_grid = np.linspace(YIELD_START, YIELD_END, 500)
+prices_exact = bond_price_vector(yields_grid, FACE, COUPON_RATE, MATURITY)
+
+# 久期近似直线： P(y) ≈ P0 - P0 * ModD * (y - y0)
+prices_approx = price0 - price0 * mod_dur0 * (yields_grid - YIELD_INITIAL)
+
+# =====================================================
+# 4. 绘图并保存
+# =====================================================
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.plot(yields_grid * 100, prices_exact, label='Exact price', linewidth=2)
+
+# 久期近似在指定幅度内绘制，以突出“附近”含义
+mask_approx = np.abs(yields_grid - YIELD_INITIAL) <= APPROX_DISPLAY_RANGE
+ax.plot(yields_grid[mask_approx] * 100, prices_approx[mask_approx],
+        '--', color='orange', linewidth=2, label='Duration approximation')
+
+# 标注当前收益率和冲击位置
+ax.axvline(YIELD_INITIAL * 100, color='gray', linestyle=':', alpha=0.7)
+ax.axvline(yield_up * 100, color='red', linestyle=':', alpha=0.7)
+ax.annotate(f'Current yield = {YIELD_INITIAL*100:.2f}%', xy=(YIELD_INITIAL*100, price0),
+            xytext=(YIELD_INITIAL*100 + 0.5, price0 + 2),
+            arrowprops=dict(arrowstyle='->', color='gray'), color='gray')
+ax.annotate(f'+{SHOCK_BP} bp → {yield_up*100:.2f}%', xy=(yield_up*100, price_up),
+            xytext=(yield_up*100 + 0.5, price_up + 2),
+            arrowprops=dict(arrowstyle='->', color='red'), color='red')
+
+ax.set_xlabel('Yield (%)')
+ax.set_ylabel('Bond price')
+ax.set_title('Bond price vs. yield (exact & duration approximation)')
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+figure_path = 'bond_price_duration.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close(fig)
+
+# =====================================================
+# 5. 填充结果字典
+# =====================================================
+result = {
+    'price_at_up100bp': price_up,
+    'dur_approx_change_up100bp': dur_approx_change,
+    'figure_path': figure_path
+}
+
+# 打印输出，便于教师课堂查看
+print('========== 计算结果 ==========')
+print(f'初始收益率: {YIELD_INITIAL*100:.2f}%')
+print(f'初始价格: {price0:.4f}')
+print(f'修正久期: {mod_dur0:.4f}')
+print(f'收益率上升 {SHOCK_BP} bp 后的精确价格: {price_up:.4f}')
+print(f'久期法估计的相对价格变化 (ΔP/P): {dur_approx_change:.6f}  ({dur_approx_change*100:.4f}%)')
+print(f'图形已保存至: {figure_path}')
+print('result 字典内容:')
+print(result)
+```

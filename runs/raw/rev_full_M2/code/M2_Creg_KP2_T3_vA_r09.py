@@ -1,0 +1,28 @@
+import numpy as np
+import pandas as pd
+from scipy import optimize  # 为满足导入要求，实际计算未使用
+import matplotlib.pyplot as plt
+
+# ---------- 给定参数 ----------
+beta = 1.42                        # 股票贝塔系数
+market_return_monthly = -0.058     # 上个月市场收益率（-5.8%）
+risk_free_rate_annual = 0.047      # 年化无风险利率（4.7%）
+
+# ---------- 计算月无风险利率 ----------
+# 假设无风险利率为单利，按月等比例折算
+risk_free_rate_monthly = risk_free_rate_annual / 12
+
+# ---------- 根据 CAPM 计算预期月收益率 ----------
+# CAPM: E(R_i) = R_f + β * (R_m - R_f)
+capm_return_monthly = (
+    risk_free_rate_monthly
+    + beta * (market_return_monthly - risk_free_rate_monthly)
+)
+
+# ---------- 存储结果 ----------
+result = {
+    'capm_return_monthly': capm_return_monthly
+}
+
+# 输出结果（用于验证）
+print(result)

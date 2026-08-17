@@ -1,0 +1,145 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+
+# ============================================================
+# 可调参数的初始值（通过滑块可在运行时调整）
+# ============================================================
+R_f_init = 0.023      # 无风险利率 2.3%
+E_R_m_init = 0.094    # 市场期望收益 9.4%
+
+# ============================================================
+# 股票数据：beta 与 期望收益
+# ============================================================
+stocks = {
+    'X': {'beta': 0.62, 'er': 0.081},
+    'Y': {'beta': 1.18, 'er': 0.131},
+    'Z': {'beta': 1.51, 'er': 0.099}
+}
+
+# ============================================================
+# CAPM 期望收益函数（证券市场线）
+# ============================================================
+def sml(beta, R_f, E_R_m):
+    return R_f + beta * (E_R_m - R_f)
+
+# ============================================================
+# 创建图形与坐标轴
+# ============================================================
+fig, ax = plt.subplots(figsize=(10, 6))
+plt.subplots_adjust(bottom=0.25)  # 为滑块预留空间
+
+# 绘制 SML 线 (beta 0~2)
+beta_range = np.linspace(0, 2, 200)
+sml_line, = ax.plot(beta_range, sml(beta_range, R_f_init, E_R_m_init),
+                    'b-', linewidth=2, label='Security Market Line')
+
+# 无风险资产与市场组合点
+rf_point, = ax.plot(0, R_f_init, 'ko', markersize=8, label='Risk-free (β=0)')
+mkt_point, = ax.plot(1, E_R_m_init, 'ko', markersize=8, label='Market (β=1)')
+
+# 绘制三只股票及其 alpha 虚线
+stock_scatters = []
+stock_annotations = []
+alpha_lines = []
+for name, s in stocks.items():
+    beta_val = s['beta']
+    er_val = s['er']
+    sml_val = sml(beta_val, R_f_init, E_R_m_init)
+    # 股票散点
+    sc = ax.scatter(beta_val, er_val, color='red', s=100, zorder=5)
+    stock_scatters.append(sc)
+    # 文本标注
+    ann = ax.annotate(name, (beta_val, er_val),
+                      textcoords="offset points", xytext=(0, 12),
+                      ha='center', fontsize=11, fontweight='bold')
+    stock_annotations.append(ann)
+    # 表示 alpha 的垂直虚线
+    line_seg, = ax.plot([beta_val, beta_val],
+                        [min(er_val, sml_val), max(er_val, sml_val)],
+                        'r--', alpha=0.7, linewidth=1.2)
+    alpha_lines.append(line_seg)
+
+# 坐标轴与图例
+ax.set_xlabel('Beta (β)', fontsize=13)
+ax.set_ylabel('Expected Return', fontsize=13)
+ax.set_title('Security Market Line (SML)', fontsize=15, fontweight='bold')
+ax.grid(True, linestyle=':', alpha=0.6)
+ax.legend(loc='upper left')
+ax.set_xlim(0, 2)
+ax.set_ylim(0, 0.18)  # 预留足够空间
+
+# ============================================================
+# 滑块控件（无风险利率与市场收益）
+# ============================================================
+axcolor = 'lightgoldenrodyellow'
+ax_rf = plt.axes([0.2, 0.12, 0.6, 0.03], facecolor=axcolor)
+ax_erm = plt.axes([0.2, 0.06, 0.6, 0.03], facecolor=axcolor)
+
+slider_rf = Slider(ax_rf, 'Risk-free rate (Rf)', 0.0, 0.1,
+                   valinit=R_f_init, valstep=0.0005)
+slider_erm = Slider(ax_erm, 'Market return E(Rm)', 0.04, 0.20,
+                    valinit=E_R_m_init, valstep=0.0005)
+
+# ============================================================
+# 滑块更新回调
+# ============================================================
+def update(val):
+    R_f = slider_rf.val
+    E_R_m = slider_erm.val
+
+    # 更新 SML 线
+    sml_line.set_ydata(sml(beta_range, R_f, E_R_m))
+
+    # 更新无风险与市场点
+    rf_point.set_ydata([R_f])
+    mkt_point.set_ydata([E_R_m])
+
+    # 更新 alpha 虚线
+    for (name, s), line_seg in zip(stocks.items(), alpha_lines):
+        beta_val = s['beta']
+        er_val = s['er']
+        sml_val = sml(beta_val, R_f, E_R_m)
+        line_seg.set_ydata([min(er_val, sml_val), max(er_val, sml_val)])
+
+    # 动态调整纵轴范围以包含所有关键点
+    y_vals = [R_f, E_R_m] + [s['er'] for s in stocks.values()]
+    y_min = min(y_vals) - 0.01
+    y_max = max(y_vals) + 0.01
+    ax.set_ylim(y_min, y_max)
+
+    fig.canvas.draw_idle()
+
+slider_rf.on_changed(update)
+slider_erm.on_changed(update)
+
+# ============================================================
+# 保存图形并显示
+# ============================================================
+figure_path = 'sml_capm.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.show()
+
+# ============================================================
+# 报告要求的结果
+# ============================================================
+sml_slope = E_R_m_init - R_f_init
+er_at_beta_127 = sml(1.27, R_f_init, E_R_m_init)
+
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': figure_path
+}
+
+print('========================================')
+print('CAPM 与证券市场线 (SML) 分析结果')
+print('========================================')
+print(f"SML 斜率 (市场风险溢价): {sml_slope:.4f} = {sml_slope*100:.2f}%")
+print(f"β = 1.27 处的 CAPM 期望收益: {er_at_beta_127:.4f} = {er_at_beta_127*100:.2f}%")
+print(f"图形已保存至: {figure_path}")
+print('========================================')
+print('结果字典 result:')
+print(result)
+```

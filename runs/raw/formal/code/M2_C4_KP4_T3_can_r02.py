@@ -1,0 +1,52 @@
+
+import numpy as np
+from scipy.stats import norm
+
+def bs_call_price(S, K, T, r, sigma):
+    """
+    欧式看涨期权的 Black-Scholes 定价（连续复利）。
+
+    参数
+    ----
+    S : 标的现价
+    K : 行权价
+    T : 剩余年限
+    r : 无风险利率（小数）
+    sigma : 波动率（小数）
+
+    返回
+    ----
+    price : 期权理论价格
+    """
+    if T <= 0.0 or sigma <= 0.0:
+        # 到期或波动率为零时的极限情况
+        return max(S - K * np.exp(-r * T), 0.0)
+
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    return price
+
+
+# ---------- 市场参数 ----------
+S0 = 103.7        # 标的现价
+K  = 97.5         # 行权价
+T  = 0.58         # 剩余年限
+r  = 0.043        # 连续复利无风险利率
+sigma1 = 0.276    # 当前隐含波动率 27.6%
+sigma2 = 0.286    # 上升一个百分点后的波动率 28.6%
+
+# ---------- 精确定价 ----------
+price_at_27_6 = bs_call_price(S0, K, T, r, sigma1)
+price_at_28_6 = bs_call_price(S0, K, T, r, sigma2)
+
+# 精确价差：波动率上升 1 个百分点时期权价格的变化
+exact_diff = price_at_28_6 - price_at_27_6
+
+# ---------- 按要求打包结果 ----------
+result = {
+    'price_change': exact_diff
+}
+
+# 课堂演示时可以直接查看字典
+print(result)

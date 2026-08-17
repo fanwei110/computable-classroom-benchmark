@@ -1,0 +1,26 @@
+根据给定的年化波动率24%（0.24）和头寸价值270万元，在正态分布假设下，95%置信水平的一日VaR计算如下：
+
+- 交易日数：252天
+- 日波动率：\(\sigma_{\text{1d}} = \frac{0.24}{\sqrt{252}} \approx 0.015119\)
+- 95%单尾正态分位数（z值）：1.64485
+- VaR = 头寸 × 日波动率 × z值 = 2,700,000 × 0.015119 × 1.64485 ≈ 67,145 元
+
+结果按要求存入字典：
+
+```python
+import math
+
+sigma_annual = 0.24
+position = 2_700_000
+trading_days = 252
+z_95 = 1.6448536269514722  # 标准正态95%分位数
+
+sigma_daily = sigma_annual / math.sqrt(trading_days)
+var_95_1d = position * sigma_daily * z_95
+
+result = {
+    'var_95_1d': round(var_95_1d, 2)  # 以元为单位，保留两位小数
+}
+```
+
+计算得出 `var_95_1d` 约为 **67145.16** 元。

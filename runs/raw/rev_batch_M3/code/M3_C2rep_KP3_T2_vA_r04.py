@@ -1,0 +1,101 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 假设与参数设置
+# ==========================================
+# 假设：债券按年付息，收益率采用年度复利贴现
+FACE_VALUE = 100               # 面值
+COUPON_RATE = 0.046            # 票息率 4.6%
+MATURITY = 7                   # 期限 7 年
+CURRENT_YIELD = 0.053         # 当前收益率 5.3%
+
+# 可调参数：收益率变动幅度（100个基点 = 0.01）
+YIELD_CHANGE_BPS = 0.01       
+
+# 绘图范围
+YIELD_PLOT_MIN = 0.02         # 2%
+YIELD_PLOT_MAX = 0.09         # 9%
+
+# ==========================================
+# 现金流构建
+# ==========================================
+# 每年利息，最后一年加上面值
+cash_flows = np.full(MATURITY, FACE_VALUE * COUPON_RATE)
+cash_flows[-1] += FACE_VALUE
+time_periods = np.arange(1, MATURITY + 1)
+
+# ==========================================
+# 核心计算函数
+# ==========================================
+def calculate_bond_price(y, cf, t):
+    """根据给定的收益率计算债券精确价格"""
+    return np.sum(cf / (1 + y)**t)
+
+# 1. 当前收益率下的精确价格
+P0 = calculate_bond_price(CURRENT_YIELD, cash_flows, time_periods)
+
+# 2. 计算麦考利久期与修正久期
+pv_cash_flows = cash_flows / (1 + CURRENT_YIELD)**time_periods
+D_mac = np.sum(time_periods * pv_cash_flows) / P0       # 麦考利久期
+D_mod = D_mac / (1 + CURRENT_YIELD)                     # 修正久期
+
+# 3. 收益率上升100bp后的精确价格
+y_up = CURRENT_YIELD + YIELD_CHANGE_BPS
+P_up = calculate_bond_price(y_up, cash_flows, time_periods)
+
+# 4. 久期法估计的相对价格变化 (%ΔP ≈ -D_mod * Δy)
+dur_approx_relative_change = -D_mod * YIELD_CHANGE_BPS
+
+# ==========================================
+# 绘图：精确价格-收益率曲线 与 久期近似
+# ==========================================
+# 生成收益率网格
+y_grid = np.linspace(YIELD_PLOT_MIN, YIELD_PLOT_MAX, 500)
+
+# 向量化计算精确价格
+P_exact = np.sum(cash_flows / (1 + y_grid[:, np.newaxis])**time_periods, axis=1)
+
+# 久期法一阶近似：P(y) ≈ P0 * (1 - D_mod * (y - y0))
+P_duration_approx = P0 * (1 - D_mod * (y_grid - CURRENT_YIELD))
+
+# 创建图形
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 绘制精确曲线
+ax.plot(y_grid * 100, P_exact, label='Exact Price-Yield Curve', color='blue', linewidth=2)
+
+# 绘制久期近似直线
+ax.plot(y_grid * 100, P_duration_approx, label='Duration-Based Approximation', 
+        color='red', linestyle='--', linewidth=2)
+
+# 标记当前收益率切点
+ax.axvline(CURRENT_YIELD * 100, color='gray', linestyle=':', linewidth 1.5, 
+           label=f'Current Yield ({CURRENT_YIELD*100:.1f}%)')
+ax.plot(CURRENT_YIELD * 100, P0, 'ko', markersize=6)  # 切点
+
+ax.set_xlabel('Yield (%)', fontsize=12)
+ax.set_ylabel('Bond Price', fontsize=12)
+ax.set_title('Bond Price-Yield Curve and Duration Approximation', fontsize=14)
+ax.legend(fontsize=10)
+ax.grid(True, linestyle='-', alpha=0.5)
+
+# 保存图形
+fig_path = 'bond_price_yield_curve.png'
+fig.savefig(fig_path, dpi=150, bbox_inches='tight')
+plt.close(fig)  # 关闭图形防止显示干扰
+
+# ==========================================
+# 结果输出
+# ==========================================
+result = {
+    'price_at_up100bp': P_up,
+    'dur_approx_change_up100bp': dur_approx_relative_change,
+    'figure_path': fig_path
+}
+
+# 打印结果供课堂投屏查看
+print(f"当前价格 (y={CURRENT_YIELD*100:.1f}%): {P0:.4f}")
+print(f"收益率上升100bp后精确价格 (y={y_up*100:.1f}%): {result['price_at_up100bp']:.4f}")
+print(f"久期法估计的相对价格变化: {result['dur_approx_change_up100bp']:.4%}")
+print(f"图形已保存至: {result['figure_path']}")

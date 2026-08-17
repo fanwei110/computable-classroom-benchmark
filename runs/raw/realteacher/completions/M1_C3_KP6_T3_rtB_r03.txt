@@ -1,0 +1,58 @@
+要计算整个样本期的年化夏普比率（Sharpe ratio），我们按照以下步骤进行：
+
+1. **计算日超额收益**：基金的日收益减去无风险利率的日等价收益（2.1% 年化，按 252 个交易日计算）。
+2. **计算超额收益的均值和标准差**：使用样本估计量（`ddof=1`）。
+3. **年化夏普比率**：将日超额收益的均值和标准差年化（乘以 √252），然后计算夏普比率。
+
+### 计算步骤：
+1. 无风险利率的日等价收益：
+   \[
+   r_f^{\text{daily}} = \frac{0.021}{252}
+   \]
+2. 日超额收益：
+   \[
+   r_{excess} = r_{\text{fund}} - r_f^{\text{daily}}
+   \]
+3. 超额收益的均值和标准差：
+   \[
+   \mu_{\text{excess}} = \text{mean}(r_{excess})
+   \]
+   \[
+   \sigma_{\text{excess}} = \text{std}(r_{excess}, ddof=1)
+   \]
+4. 年化夏普比率：
+   \[
+   \text{Sharpe}_{\text{annual}} = \frac{\mu_{\text{excess}} \times \sqrt{252}}{\sigma_{\text{excess}} \times \sqrt{252}} = \frac{\mu_{\text{excess}}}{\sigma_{\text{excess}}} \times \sqrt{252}
+   \]
+
+### Python 代码实现：
+假设 `fund_returns` 是基金的日收益率列表（小数形式），代码如下：
+
+```python
+import numpy as np
+
+# 示例数据（请替换为实际数据）
+fund_returns = [...]  # 基金的日收益率列表（小数形式）
+
+# 无风险利率（年化）
+rf_annual = 0.021
+rf_daily = rf_annual / 252
+
+# 计算日超额收益
+excess_returns = np.array(fund_returns) - rf_daily
+
+# 计算超额收益的均值和标准差（样本估计量）
+mu_excess = np.mean(excess_returns)
+sigma_excess = np.std(excess_returns, ddof=1)
+
+# 年化夏普比率
+sharpe_annual = (mu_excess / sigma_excess) * np.sqrt(252)
+
+# 存入结果字典
+result = {
+    'sharpe_annual': sharpe_annual
+}
+```
+
+### 输出：
+`result` 字典中的 `'sharpe_annual'` 即为年化夏普比率。请确保 `fund_returns` 是实际的基金日收益率数据。

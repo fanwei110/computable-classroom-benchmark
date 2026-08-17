@@ -1,0 +1,46 @@
+import numpy as np
+from scipy.stats import norm
+
+# ==================== 输入参数 ====================
+S = 103.7       # 股票现价
+K = 97.5        # 行权价
+sigma = 0.276   # 隐含波动率 (年化 27.6%)
+r = 0.043       # 无风险利率 (年化 4.3%)
+T = 0.58        # 剩余期限 (年)
+
+# ==================== 步骤 1: 计算 d1 与 d2 ====================
+d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+d2 = d1 - sigma * np.sqrt(T)
+
+# ==================== 步骤 2: 计算期权价格与 delta ====================
+# 欧式看涨期权价格 C = S * N(d1) - K * exp(-rT) * N(d2)
+call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+
+# 欧式看涨期权 Delta = N(d1)
+call_delta = norm.cdf(d1)
+
+# ==================== 步骤 3: 计算 vega ====================
+# Vega 的闭式解为 dC/dsigma = S * sqrt(T) * N'(d1)
+# 注：此处 Vega 为对波动率的数学偏导数，表示波动率变动 1 (即100%) 时期权价格的变化量。
+# 若需波动率变动 1% (0.01) 时的价格变化，通常需将此结果乘以 0.01。
+call_vega = S * norm.pdf(d1) * np.sqrt(T)
+
+# ==================== 步骤 4: 填充 result ====================
+result = {
+    'call_price': call_price,
+    'call_delta': call_delta,
+    'call_vega': call_vega
+}
+
+# ==================== 课堂展示输出 ====================
+print(f"--- 中间变量 ---")
+print(f"d1 = {d1:.6f}")
+print(f"d2 = {d2:.6f}")
+
+print(f"\n--- 计算结果 ---")
+print(f"看涨期权价格 = {result['call_price']:.6f}")
+print(f"看涨期权 Delta = {result['call_delta']:.6f}")
+print(f"看涨期权 Vega  = {result['call_vega']:.6f}")
+
+print(f"\n--- 要求的字典输出 ---")
+print(result)

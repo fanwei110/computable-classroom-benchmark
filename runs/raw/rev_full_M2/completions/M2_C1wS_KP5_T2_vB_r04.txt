@@ -1,0 +1,70 @@
+以下为自包含的 Python 脚本，完成历史 VaR 计算、直方图绘制及结果保存。所有假设在注释中明确，代码可直接运行。
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ========================
+# 可调参数
+# ========================
+CONFIDENCE_LEVEL = 0.95          # 置信水平（可调）
+POSITION = 1_000_000             # 头寸（人民币）
+DATA_PATH = 'data/market_snapshot_v1.csv'
+FIGURE_PATH = 'var_histogram.png'
+
+# ========================
+# 1. 读取数据并构造日损益
+# ========================
+# 假设 CSV 中包含 'fund' 列，为日简单收益率（小数形式，如 0.01 表示 1%）
+df = pd.read_csv(DATA_PATH)
+returns = df['fund'].dropna().to_numpy()   # 剔除缺失值
+
+# 若实际数据是百分数形式（如 1 表示 1%），可在此取消注释以自动缩放
+# if np.nanmax(np.abs(returns)) > 0.5:   # 经验判断：最大绝对值超过0.5则视为百分数
+#     returns = returns / 100.0
+
+# 日损益 = 头寸 × 日收益率
+pnl = POSITION * returns
+
+# ========================
+# 2. 计算历史 VaR（经验分位数）
+# ========================
+var_cutoff = np.percentile(pnl, 100 * (1 - CONFIDENCE_LEVEL))  # 左尾分位数（负值）
+var_value = -var_cutoff   # VaR 通常以正数表示损失金额
+
+# ========================
+# 3. 绘制损益直方图并标记 VaR
+# ========================
+plt.figure(figsize=(10, 5))
+plt.hist(pnl, bins=50, color='steelblue', edgecolor='white', alpha=0.8)
+plt.axvline(var_cutoff, color='red', linestyle='--', linewidth=2,
+            label=f"VaR {CONFIDENCE_LEVEL*100:.0f}%: ¥{var_value:,.2f}")
+
+plt.title(f"Historical Daily P&L Distribution (Position = ¥{POSITION:,.0f})")
+plt.xlabel("Profit / Loss (CNY)")
+plt.ylabel("Frequency")
+plt.legend()
+plt.grid(axis='y', alpha=0.3)
+plt.tight_layout()
+plt.savefig(FIGURE_PATH, dpi=150)
+plt.close()
+
+# ========================
+# 4. 整理输出
+# ========================
+result = {
+    'hist_var_95_1d': round(var_value, 2),
+    'figure_path': FIGURE_PATH
+}
+
+print("计算完成，结果如下：")
+print(result)
+```
+
+**关键说明（供教师参考）**
+
+- **收益率假设**：脚本默认 `fund` 列存储的是**小数形式的日收益率**（如 `0.01` 代表 1%）。若 CSV 中为百分数（如 `1.0` 代表 1%），代码中已包含可选的自动缩放逻辑（注释块），只需取消注释即可。
+- **损益单位**：头寸 100 万人民币，VaR 结果以人民币元为单位。
+- **置信度可调**：修改变量 `CONFIDENCE_LEVEL` 即可（例如 `0.99` 计算 99% VaR），图形中的标注会自动更新。
+- **输出契约**：`result` 字典包含 `'hist_var_95_1d'`（数值）与 `'figure_path'`（图片路径），符合题目要求。

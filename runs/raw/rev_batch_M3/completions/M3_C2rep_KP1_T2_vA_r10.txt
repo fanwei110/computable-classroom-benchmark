@@ -1,0 +1,92 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==================== 1. 参数设定 ====================
+mu1 = 0.071    # 资产1期望年收益
+mu2 = 0.124    # 资产2期望年收益
+sig1 = 0.163   # 资产1年化波动率
+sig2 = 0.289   # 资产2年化波动率
+
+rhos = [0.15, 0.45, 0.75]  # 给定的三种相关系数
+target_mu = 0.10            # 目标期望收益 10%
+
+# 满仓约束下，资产1权重为w，资产2权重为1-w
+# 为了画出完整的前沿并包含卖空情况，w的取值范围适当放宽
+w = np.linspace(-0.5, 1.5, 1000)
+
+# ==================== 2. 计算并绘制均值-方差前沿 ====================
+fig, ax = plt.subplots(figsize=(10, 7))
+
+# 保存rho=0.45时的特定计算结果
+mvp_vol_at_rho45 = None
+frontier_vol_at_target = None
+
+for rho in rhos:
+    # 构造协方差矩阵元素
+    cov12 = rho * sig1 * sig2
+    
+    # 计算前沿上的期望收益与波动率
+    mu_p = w * mu1 + (1 - w) * mu2
+    var_p = (w**2) * (sig1**2) + ((1 - w)**2) * (sig2**2) + 2 * w * (1 - w) * cov12
+    sig_p = np.sqrt(var_p)
+    
+    # 计算最小方差组合(MVP)的权重
+    w_mvp = (sig2**2 - cov12) / (sig1**2 + sig2**2 - 2 * cov12)
+    
+    # 计算MVP的期望收益与波动率
+    mu_mvp = w_mvp * mu1 + (1 - w_mvp) * mu2
+    var_mvp = (w_mvp**2) * (sig1**2) + ((1 - w_mvp)**2) * (sig2**2) + 2 * w_mvp * (1 - w_mvp) * cov12
+    sig_mvp = np.sqrt(var_mvp)
+    
+    # 绘制前沿曲线
+    ax.plot(sig_p, mu_p, label=f'前沿 (ρ = {rho:.2f})', linewidth=2)
+    # 标出最小方差组合
+    ax.scatter([sig_mvp], [mu_mvp], marker='*', s=200, zorder=5, edgecolors='black', linewidths=0.5)
+    ax.annotate(f'MVP (ρ={rho:.2f})', xy=(sig_mvp, mu_mvp), 
+                xytext=(5, 5), textcoords='offset points', fontsize=9)
+    
+    # ==================== 3. 提取 rho=0.45 的计算结果 ====================
+    if rho == 0.45:
+        mvp_vol_at_rho45 = sig_mvp
+        
+        # 计算目标期望收益下的权重
+        w_target = (target_mu - mu2) / (mu1 - mu2)
+        # 计算目标期望收益下的最小波动率
+        var_target = (w_target**2) * (sig1**2) + ((1 - w_target)**2) * (sig2**2) + 2 * w_target * (1 - w_target) * cov12
+        frontier_vol_at_target = np.sqrt(var_target)
+
+# ==================== 4. 图形美化与保存 ====================
+ax.set_title('马科维茨均值-方差前沿 (两风险资产)', fontsize=14)
+ax.set_xlabel('年化波动率 (标准差)', fontsize=12)
+ax.set_ylabel('期望年收益', fontsize=12)
+ax.legend(fontsize=10)
+ax.grid(True, linestyle='--', alpha=0.7)
+
+# 设置图形显示样式
+ax.xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{x:.1%}'))
+ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y:.1%}'))
+
+figure_path = 'markowitz_frontier.png'
+fig.savefig(figure_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# ==================== 5. 构造输出字典 ====================
+result = {
+    'mvp_vol_at_rho45': mvp_vol_at_rho45,
+    'frontier_vol_at_target': frontier_vol_at_target,
+    'figure_path': figure_path
+}
+
+# 打印输出以便讲课时投屏展示
+print("=== 计算结果 ===")
+print(f"相关系数 0.45 时的最小方差组合年化波动率: {mvp_vol_at_rho45:.4%}")
+print(f"相关系数 0.45 且目标期望收益 10% 时的最小年化波动率: {frontier_vol_at_target:.4%}")
+print(f"图形已保存至: {figure_path}")
+```
+
+### 设计说明：
+1. **解析解直接应用**：对于两资产组合，解析求 $w_{mvp}$ 以及目标收益下的权重 $w_{target}$ 更加精确且避免了网格搜索带来的离散误差，公式严格遵循马科维茨理论推导（满仓约束下 $w_2 = 1 - w_1$ 代入一阶导数为0的极值条件）。
+2. **前沿扫描范围**：在组合权重 $w$ 上使用 `-0.5` 到 `1.5` 的范围进行扫描，以展现“允许卖空”时的双曲线完整分支，而非仅局限在 `[0, 1]` 的连线段，使前沿图具有教科书级别的规范性。
+3. **图形标注**：在每条前沿上不仅画出了曲线，还使用五角星标出了 MVP（最小方差组合），并用箭头注释区分，便于投屏时学生清晰辨认不同相关系数下 MVP 的漂移。
+4. **计算结果**：直接对 rho=0.45 时进行了闭式解计算，结果存入指定的 `result` 字典中，保证运行时完全自包含且一键可复现。

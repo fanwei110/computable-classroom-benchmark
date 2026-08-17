@@ -1,0 +1,7 @@
+```json
+{
+  "price_at_up100bp": 90.603,
+  "dur_approx_change_up100bp": -0.05812,
+  "figure_path": "price_yield_curve.png"
+}
+```

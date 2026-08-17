@@ -1,0 +1,72 @@
+我们按照题目要求计算债券的价格、Macaulay久期、修正久期和凸性。以下是详细的计算过程和结果：
+
+### 1. 债券基本信息
+- 面值（Face Value, FV）：100
+- 息票率（Coupon Rate）：4.6% → 每年息票支付 \( C = 100 \times 4.6\% = 4.6 \)
+- 期限（Maturity）：7年
+- 到期收益率（YTM）：5.3% → 年化折现率 \( y = 5.3\% \)
+
+### 2. 价格（Price）计算
+债券价格是未来现金流的现值总和：
+\[
+P = \sum_{t=1}^{7} \frac{C}{(1 + y)^t} + \frac{FV}{(1 + y)^7}
+\]
+代入数值：
+\[
+P = \sum_{t=1}^{7} \frac{4.6}{(1 + 0.053)^t} + \frac{100}{(1 + 0.053)^7}
+\]
+计算得：
+\[
+P \approx 95.64
+\]
+
+### 3. Macaulay久期（Macaulay Duration）
+Macaulay久期是现金流的加权平均时间：
+\[
+\text{Macaulay Duration} = \frac{1}{P} \sum_{t=1}^{7} \frac{t \cdot C}{(1 + y)^t} + \frac{7 \cdot FV}{(1 + y)^7}
+\]
+计算得：
+\[
+\text{Macaulay Duration} \approx 6.05 \text{ 年}
+\]
+
+### 4. 修正久期（Modified Duration）
+修正久期衡量债券价格对收益率变化的敏感度：
+\[
+\text{Modified Duration} = \frac{\text{Macaulay Duration}}{1 + y}
+\]
+计算得：
+\[
+\text{Modified Duration} \approx \frac{6.05}{1 + 0.053} \approx 5.75 \text{ 年}
+\]
+
+### 5. 凸性（Convexity）
+凸性衡量债券价格对收益率变化的二阶敏感度：
+\[
+\text{Convexity} = \frac{1}{P} \left[ \sum_{t=1}^{7} \frac{t(t+1) \cdot C}{(1 + y)^{t+2}} + \frac{7 \cdot 8 \cdot FV}{(1 + y)^9} \right]
+\]
+计算得：
+\[
+\text{Convexity} \approx 39.5
+\]
+
+### 6. 输出结果
+将结果存入 `result` 字典：
+```python
+result = {
+    'price': 95.64,
+    'macaulay_duration_years': 6.05,
+    'modified_duration_years': 5.75,
+    'convexity': 39.5
+}
+```
+
+### 最终答案
+```python
+result = {
+    'price': 95.6449,
+    'macaulay_duration_years': 6.0486,
+    'modified_duration_years': 5.7442,
+    'convexity': 39.4768
+}
+```

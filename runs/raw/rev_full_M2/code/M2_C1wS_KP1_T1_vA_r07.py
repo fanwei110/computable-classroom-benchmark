@@ -1,0 +1,43 @@
+import numpy as np
+from numpy.linalg import inv
+
+# 1. 构造协方差矩阵
+# 年化波动率
+sigma = np.array([0.187, 0.243, 0.312])
+# 相关系数矩阵
+rho = np.array([
+    [1.0,  0.21, -0.13],
+    [0.21, 1.0,   0.37],
+    [-0.13,0.37,  1.0]
+])
+
+# 协方差矩阵: cov(i,j) = rho(i,j) * sigma_i * sigma_j
+cov_matrix = np.outer(sigma, sigma) * rho
+
+# 2. 最小方差组合（权重和为1，允许卖空）
+ones = np.ones(3)
+inv_cov = inv(cov_matrix)
+
+# 闭式解: w_MVP = (Σ^{-1} * 1) / (1^T Σ^{-1} 1)
+numerator = inv_cov @ ones
+denominator = ones @ numerator
+w_mvp = numerator / denominator
+
+# 3. 组合年化波动率
+var_mvp = w_mvp @ cov_matrix @ w_mvp
+vol_mvp_annual = np.sqrt(var_mvp)
+
+# 4. 按要求输出
+result = {
+    'mvp_weights': w_mvp.tolist(),   # 转为列表，方便查看
+    'mvp_vol_annual': float(vol_mvp_annual)
+}
+
+# 打印结果供课堂投屏展示
+print("最小方差组合（允许卖空，全额投资）")
+print("=" * 40)
+for i, w in enumerate(result['mvp_weights'], start=1):
+    print(f"资产 {i} 权重: {w:.4f}")
+print(f"组合年化波动率: {result['mvp_vol_annual']:.4%}")
+
+# 若需在其他地方使用，直接引用 result 字典即可

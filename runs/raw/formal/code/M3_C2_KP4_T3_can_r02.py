@@ -1,0 +1,46 @@
+import numpy as np
+from scipy.stats import norm
+
+# --- 参数设定 ---
+S = 103.7          # 标的资产现价
+K = 97.5           # 行权价
+sigma = 0.276      # 波动率 (27.6%)
+r = 0.043          # 无风险利率 (4.3%)
+T = 0.58           # 剩余期限 (年)
+delta_sigma = 0.01 # 隐含波动率变化：上升1个百分点 (1%)
+
+# --- 计算Black-Scholes的d1 ---
+d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+
+# --- 计算Vega (闭式解) ---
+# Vega 定义为期权价格对波动率的一阶导数：dC / d_sigma = S * N'(d1) * sqrt(T)
+vega = S * norm.pdf(d1) * np.sqrt(T)
+
+# --- 1. 推算期权价格对这一个百分点波动率变化的响应 ---
+# 根据泰勒展开一阶近似，价格变化 Delta_C ≈ Vega * Delta_Sigma
+price_change = vega * delta_sigma
+
+# --- 2. 把价格变化存入 result ---
+result = {
+    'price_change': price_change
+}
+
+# ====== 辅助教学对比：精确重新定价计算 ======
+# 计算原波动率下的期权价格
+d2 = d1 - sigma * np.sqrt(T)
+price_original = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+
+# 计算波动率上升1%后的期权价格
+sigma_new = sigma + delta_sigma
+d1_new = (np.log(S / K) + (r + 0.5 * sigma_new**2) * T) / (sigma_new * np.sqrt(T))
+d2_new = d1_new - sigma_new * np.sqrt(T)
+price_new = S * norm.cdf(d1_new) - K * np.exp(-r * T) * norm.cdf(d2_new)
+exact_price_change = price_new - price_original
+
+# 打印结果，便于课堂展示
+print(f"【欧式看涨期权希腊字母与价格响应推算】")
+print(f"当前波动率下 Vega: {vega:.4f}")
+print(f"利用 Vega 推算的期权价格变化 (上升1%): {price_change:.4f}")
+print(f"精确重新定价计算的期权价格变化 (上升1%): {exact_price_change:.4f}")
+print("-" * 40)
+print(f"result字典: {result}")

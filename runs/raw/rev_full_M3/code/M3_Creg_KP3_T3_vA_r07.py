@@ -1,0 +1,51 @@
+import numpy as np
+
+# 债券基本参数
+face_value = 100.0          # 面值
+coupon_rate = 0.046         # 票息率 4.6%
+maturity = 7                # 期限 7 年
+initial_yield = 0.053       # 初始收益率 5.3%
+yield_change_bps = 80       # 收益率上升 80 个基点
+yield_change = yield_change_bps / 10000  # 转换为 0.008
+
+# 计算每年票息
+coupon_payment = face_value * coupon_rate
+
+# 定义债券定价函数（假设每年付息一次）
+def calculate_bond_price(face_val, coupon_pmt, yld, mat):
+    """
+    根据面值、票息、收益率和期限计算债券价格
+    """
+    # 产生每一期的期数序列 [1, 2, ..., maturity]
+    periods = np.arange(1, mat + 1)
+    
+    # 计算每一期现金流的折现因子
+    discount_factors = (1 + yld) ** periods
+    
+    # 计算票息的现值总和
+    pv_coupons = np.sum(coupon_pmt / discount_factors)
+    
+    # 计算面值的现值
+    pv_face = face_val / discount_factors[-1]
+    
+    # 债券价格 = 票息现值 + 面值现值
+    price = pv_coupons + pv_face
+    return price
+
+# 计算初始价格
+price_initial = calculate_bond_price(face_value, coupon_payment, initial_yield, maturity)
+
+# 计算收益率上升后的新价格
+new_yield = initial_yield + yield_change
+price_new = calculate_bond_price(face_value, coupon_payment, new_yield, maturity)
+
+# 计算价格下跌百分比
+price_drop_pct = (price_initial - price_new) / price_initial * 100
+
+# 按照输出契约存入字典
+result = {
+    'price_drop_pct': price_drop_pct
+}
+
+# 打印结果验证
+print(result)

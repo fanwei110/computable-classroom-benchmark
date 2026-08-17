@@ -1,0 +1,40 @@
+import numpy as np
+from scipy.stats import norm
+from scipy.optimize import brentq
+
+# ---------- 沿用上一问的参数 ----------
+S0 = 50.0      # 标的现价
+K  = 52.0      # 行权价
+T_days = 20    # 到期天数
+r_ann = 0.02   # 无风险利率（连续复利）
+q_ann = 0.01   # 股息率（连续）
+sigma_ann = 0.30  # 初始波动率
+opt_type = 'call'   # 看涨期权
+
+# 交易天数
+TRADING_DAYS = 252
+T = T_days / TRADING_DAYS
+
+# ---------- 计算初始价格 ----------
+def bs_price(S, K, T, r, q, sigma, opt_type='call'):
+    if T <= 0:
+        return max(0.0, (S - K) if opt_type == 'call' else (K - S))
+    d1 = (np.log(S / K) + (r - q + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    if opt_type == 'call':
+        price = S * np.exp(-q * T) * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    else:
+        price = K * np.exp(-r * T) * norm.cdf(-d2) - S * np.exp(-q * T) * norm.cdf(-d1)
+    return price
+
+price0 = bs_price(S0, K, T, r_ann, q_ann, sigma_ann, opt_type)
+
+# ---------- 隐波涨 1 个点后的价格 ----------
+sigma_new = sigma_ann + 0.01   # 0.30 -> 0.31
+price1 = bs_price(S0, K, T, r_ann, q_ann, sigma_new, opt_type)
+
+price_change = price1 - price0
+
+# ---------- 输出 ----------
+result = {'price_change': round(price_change, 6)}
+print(result)

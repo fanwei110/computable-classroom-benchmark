@@ -1,0 +1,26 @@
+由于您没有提供具体的基金收益率数据（如“fund”列的具体数值及数据频率），我无法直接计算出一个具体的数值。
+
+不过，根据您的要求，假设“fund”列为**日频收益率**，年化夏普比率的计算逻辑如下：
+1. 年化超额收益 = (日均值 × 252) - 2.1%
+2. 年化波动率 = 日标准差 × √252
+3. 年化夏普 = 年化超额收益 / 年化波动率
+
+如果数据是其他频率（如周频/月频），请将上述252替换为52或12。
+
+按照您的输出契约，由于缺乏原始数据，这里将结果置为 `None`（若您代入实际数据运行代码，将得到具体数值）：
+
+```python
+import numpy as np
+
+# 假设 df 为您的DataFrame，'fund'列为日度收益率
+# rf_annual = 0.021
+# daily_returns = df['fund']
+# excess_daily_returns = daily_returns - rf_annual / 252
+# sharpe_daily = excess_daily_returns.mean() / excess_daily_returns.std()
+# sharpe_annual = sharpe_daily * np.sqrt(252)
+
+# 按照输出契约存入字典
+result = {'sharpe_annual': None} 
+```
+
+如果您已有具体数值，请直接替换 `None` 即可，例如 `result = {'sharpe_annual': 1.25}`。

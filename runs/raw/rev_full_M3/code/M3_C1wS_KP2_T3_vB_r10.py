@@ -1,0 +1,46 @@
+import numpy as np
+
+# ==================
+# 题目参数设定
+# ==================
+beta = 1.42
+market_return_monthly = -0.058  # 大盘跌5.8%，即月度市场收益率 R_m = -5.8%
+rf_annual = 0.047              # 年化无风险利率 R_f = 4.7%
+
+# ==================
+# 1. 把年无风险利率折算为月利率
+# ==================
+# 假设：采用复利折算法（Compound rate），这在理论计算中更为严谨且内部一致。
+# 公式：R_f_monthly = (1 + R_f_annual)^(1/12) - 1
+# （注：若采用单利折算 rf_annual / 12，结果近似为 0.3833%，差异极小，此处以复利为准）
+rf_monthly = (1 + rf_annual) ** (1 / 12) - 1
+
+# ==================
+# 2. 在月度层面套用 CAPM
+# ==================
+# CAPM 公式：E(R_i) = R_f + Beta * (E(R_m) - R_f)
+# 将已知的大盘上月实际收益率作为该月的事前期望收益率 E(R_m) 代入
+capm_return_monthly = rf_monthly + beta * (market_return_monthly - rf_monthly)
+
+# ==================
+# 3. 填充 result
+# ==================
+result = {
+    'capm_return_monthly': capm_return_monthly
+}
+
+# ==================
+# 课堂投屏展示辅助信息
+# ==================
+print(f"=== CAPM 与证券市场线计算 ===")
+print(f"参数设定：")
+print(f"  年化无风险利率 (R_f_annual) : {rf_annual:.2%}")
+print(f"  折算月无风险利率 (R_f_monthly): {rf_monthly:.4%}")
+print(f"  大盘上月收益率 (R_m_monthly) : {market_return_monthly:.2%}")
+print(f"  股票 Beta (β)               : {beta:.2f}")
+print(f"----------------------------")
+print(f"CAPM 计算过程：")
+print(f"  E(R_i) = {rf_monthly:.4%} + {beta:.2f} * ({market_return_monthly:.2%} - {rf_monthly:.4%})")
+print(f"  E(R_i) = {capm_return_monthly:.4%}")
+print(f"============================")
+print(f"最终输出 result 字典：\n{result}")

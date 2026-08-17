@@ -1,0 +1,38 @@
+由于我无法直接读取你本地的课程数据文件，我为你提供完整的Python计算代码。你只需将数据读入后，代码将按照金融标准计算方法得出结果，并严格按要求存入字典。
+
+**计算逻辑说明**：
+1. 年化无风险利率为 2.1%，日化无风险利率按一年252个交易日拆解：$R_{f,daily} = 0.021 / 252$。
+2. 日Sharpe ratio = (日收益均值 - 日化无风险利率) / 日收益标准差。
+3. 年化Sharpe ratio = 日Sharpe ratio $\times \sqrt{252}$。
+
+**Python代码实现**：
+
+```python
+import pandas as pd
+import numpy as np
+
+# 1. 读取你的课程数据文件（请根据实际文件格式和路径修改）
+# df = pd.read_csv('你的课程数据文件.csv') 
+
+# 2. 提取基金日收益列
+# daily_returns = df['fund']
+
+# --- 以下为计算核心逻辑（假设 daily_returns 已获取）---
+rf_annual = 0.021
+rf_daily = rf_annual / 252  # 将年化无风险利率转为日度
+
+# 计算日收益的样本均值和样本标准差（ddof=1）
+mean_daily = daily_returns.mean()
+std_daily = daily_returns.std()
+
+# 计算年化 Sharpe Ratio
+# 公式: ((日均值 - 日无风险) / 日标准差) * sqrt(252)
+sharpe_annual = ((mean_daily - rf_daily) / std_daily) * np.sqrt(252)
+
+# 3. 按照输出契约存入字典
+result = {'sharpe_annual': sharpe_annual}
+
+print(result)
+```
+
+运行此代码后，`result` 字典中就会包含键名为 `'sharpe_annual'`、键值为计算得出的年化夏普比率的数值。

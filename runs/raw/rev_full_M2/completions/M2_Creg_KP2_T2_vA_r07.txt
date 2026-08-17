@@ -1,0 +1,70 @@
+```python
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ============================================================
+# 可调参数：无风险利率与市场期望收益
+# 修改以下两个变量即可调整模型
+Rf = 0.023      # 无风险利率 (2.3%)
+Rm = 0.094      # 市场期望收益 (9.4%)
+# ============================================================
+
+# 股票数据
+stocks = {
+    'X': {'beta': 0.62, 'er': 0.081},
+    'Y': {'beta': 1.18, 'er': 0.131},
+    'Z': {'beta': 1.51, 'er': 0.099}
+}
+
+# 1. 计算 SML 斜率（市场风险溢价）
+sml_slope = Rm - Rf
+
+# 2. 计算 beta=1.27 处的 CAPM 期望收益
+beta_target = 1.27
+er_at_beta_127 = Rf + beta_target * sml_slope
+
+# 3. 绘制证券市场线
+beta_vals = np.linspace(0, 2, 200)
+sml_vals = Rf + beta_vals * sml_slope
+
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.plot(beta_vals, sml_vals, 'b-', linewidth=2, label='SML (CAPM)')
+ax.axhline(Rf, color='gray', linestyle='--', label=f'$R_f$ = {Rf:.2%}')
+
+# 绘制股票点
+for name, data in stocks.items():
+    ax.scatter(data['beta'], data['er'], color='red', zorder=5)
+    ax.annotate(name, (data['beta'], data['er']),
+                textcoords="offset points", xytext=(0, 10),
+                ha='center', fontsize=10, fontweight='bold',
+                color='darkred')
+
+ax.set_xlim(0, 2)
+ax.set_ylim(bottom=0)
+ax.set_xlabel('Beta', fontsize=12)
+ax.set_ylabel('Expected Return', fontsize=12)
+ax.set_title('Security Market Line', fontsize=14)
+ax.legend()
+ax.grid(True, linestyle=':', alpha=0.7)
+
+plt.tight_layout()
+
+# 保存图像
+output_dir = os.getcwd()
+figure_path = os.path.join(output_dir, 'sml.png')
+plt.savefig(figure_path, dpi=150)
+plt.close()
+
+# 4. 按要求构造输出字典
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': figure_path
+}
+
+if __name__ == '__main__':
+    print("SML 斜率 (市场风险溢价): {:.4%}".format(result['sml_slope']))
+    print("beta = 1.27 处的期望收益: {:.4%}".format(result['er_at_beta_127']))
+    print("图形已保存至:", result['figure_path'])
+```

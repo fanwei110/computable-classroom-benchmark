@@ -1,0 +1,47 @@
+æ ¹æ® Black-Scholes åï¼æ¬§å¼çæ¶¨ææï¼æ è¡æ¯ï¼å®ä»·å¦ä¸ï¼
+
+- ä»·æ ¼ `call_price` = \(S_0 N(d_1) - K e^{-rT} N(d_2)\)
+- Delta `call_delta` = \(N(d_1)\)
+- Vega `call_vega` = \(S_0 \cdot N'(d_1) \cdot \sqrt{T}\) ï¼æ³¢å¨çæ¯åå 1ï¼å³ 100%ï¼æ¶ä»·æ ¼çååï¼
+
+ä»£ååæ°ï¼\(S_0=103.7\), \(K=97.5\), \(\sigma=0.276\), \(r=0.043\), \(T=0.58\)ï¼è®¡ç®ç»æå¦ä¸ï¼
+
+```python
+import math
+from scipy.stats import norm
+
+S = 103.7
+K = 97.5
+T = 0.58
+r = 0.043
+sigma = 0.276
+
+d1 = (math.log(S / K) + (r + sigma**2 / 2) * T) / (sigma * math.sqrt(T))
+d2 = d1 - sigma * math.sqrt(T)
+
+call_price = S * norm.cdf(d1) - K * math.exp(-r * T) * norm.cdf(d2)
+call_delta = norm.cdf(d1)
+call_vega = S * norm.pdf(d1) * math.sqrt(T)
+
+result = {
+    'call_price': round(call_price, 4),
+    'call_delta': round(call_delta, 4),
+    'call_vega': round(call_vega, 4)
+}
+
+print(result)
+```
+
+**è®¡ç®ç»æï¼**
+- `call_price â 13.3134`
+- `call_delta â 0.6974`
+- `call_vega â 27.5635`
+
+å æ­¤ï¼`result` å­åä¸ºï¼
+```python
+result = {
+    'call_price': 13.3134,
+    'call_delta': 0.6974,
+    'call_vega': 27.5635
+}
+```

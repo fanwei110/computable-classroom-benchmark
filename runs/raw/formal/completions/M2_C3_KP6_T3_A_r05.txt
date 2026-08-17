@@ -1,0 +1,42 @@
+由于您没有提供基金（fund列）的具体收益率数据，我无法计算出确切的数值。  
+不过，我可以明确计算方法，您拿到数据后代入即可得出结果。
+
+### 年化夏普比率计算步骤
+- **数据**：基金的日收益率序列 \( r_t \)（小数形式）
+- **无风险利率**：2.1% 年化（\( r_f = 0.021 \)），按年复利报价，转换为日无风险利率通常用  
+  \( r_{f,daily} = (1 + 0.021)^{1/252} - 1 \)  
+  或者近似 \( r_{f,daily} \approx 0.021 / 252 \)，但按您的设定（债券收益率按年复利报价）建议用精确方法。
+- **年化收益率**：\( \mu_{annual} = \text{mean}(r_t) \times 252 \)
+- **年化波动率**：\( \sigma_{annual} = \text{std}(r_t, ddof=1) \times \sqrt{252} \)
+- **年化夏普比率**：  
+  \[
+  \text{sharpe\_annual} = \frac{\mu_{annual} - r_f}{\sigma_{annual}}
+  \]
+
+### 示例代码（Python）
+```python
+import numpy as np
+import pandas as pd
+
+# 假设 df 是您的数据框，fund 列为日收益率（小数）
+# df = pd.read_csv('your_file.csv')
+# fund_returns = df['fund']
+
+# 参数
+rf_annual = 0.021
+rf_daily = (1 + rf_annual) ** (1/252) - 1
+mean_daily = fund_returns.mean()
+std_daily = fund_returns.std(ddof=1)
+
+# 年化
+mu_annual = mean_daily * 252
+sigma_annual = std_daily * np.sqrt(252)
+
+# 夏普比率
+sharpe_annual = (mu_annual - rf_annual) / sigma_annual
+
+result = {'sharpe_annual': round(sharpe_annual, 4)}
+```
+
+拿到基金收益率序列后用上面的方法计算，把 `sharpe_annual` 四舍五入填入字典即可。  
+如果您能提供数据，我可以帮您直接算出结果。

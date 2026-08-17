@@ -1,0 +1,80 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import PercentFormatter
+
+# Parameters
+face_value = 100
+coupon_rate = 0.046
+years_to_maturity = 7
+current_yield = 0.053
+yield_shift_bp = 100  # 100 basis points for reporting
+yield_shift = yield_shift_bp / 10000  # Convert to decimal
+
+# Step 1: Compute exact prices over yield grid (2% to 9%)
+yield_grid = np.linspace(0.02, 0.09, 100)
+prices_exact = np.zeros_like(yield_grid)
+
+for i, y in enumerate(yield_grid):
+    cash_flows = np.array([face_value * coupon_rate] * (years_to_maturity - 1) + [face_value * (1 + coupon_rate)])
+    discount_factors = (1 + y) ** np.arange(1, years_to_maturity + 1)
+    prices_exact[i] = np.sum(cash_flows / discount_factors)
+
+# Step 2: Compute Macaulay duration, modified duration, and convexity at current yield (5.3%)
+y = current_yield
+cash_flows = np.array([face_value * coupon_rate] * (years_to_maturity - 1) + [face_value * (1 + coupon_rate)])
+times = np.arange(1, years_to_maturity + 1)
+discount_factors = (1 + y) ** times
+price_current = np.sum(cash_flows / discount_factors)
+
+# Macaulay duration
+weighted_cash_flows = cash_flows * times / discount_factors
+macaulay_duration = np.sum(weighted_cash_flows) / price_current
+
+# Modified duration
+modified_duration = macaulay_duration / (1 + y)
+
+# Convexity
+convexity_numerator = cash_flows * times * (times + 1) / ((1 + y) ** (times + 2))
+convexity = np.sum(convexity_numerator) / price_current
+
+# Step 3: Compute first-order and second-order approximations around current yield
+dy = yield_grid - current_yield
+price_approx_dur = price_current * (1 - modified_duration * dy)
+price_approx_dur_convex = price_current * (1 - modified_duration * dy + 0.5 * convexity * dy**2)
+
+# Step 4: Compute exact price and first-order approximation for +100bp
+y_up100bp = current_yield + yield_shift
+discount_factors_up100bp = (1 + y_up100bp) ** times
+price_at_up100bp = np.sum(cash_flows / discount_factors_up100bp)
+dur_approx_change_up100bp = -modified_duration * yield_shift
+
+# Plotting
+plt.figure(figsize=(10, 6))
+plt.plot(yield_grid, prices_exact, label='Exact Price-Yield Curve', color='blue')
+plt.plot(yield_grid, price_approx_dur, '--', label='Duration Approximation', color='red')
+plt.plot(yield_grid, price_approx_dur_convex, ':', label='Duration + Convexity Approximation', color='green')
+plt.scatter(current_yield, price_current, color='black', zorder=5, label=f'Current Yield ({current_yield:.1%})')
+plt.xlabel('Yield (Annual Compounding)')
+plt.ylabel('Bond Price')
+plt.title('Bond Price-Yield Curve with Duration and Convexity Approximations')
+plt.gca().yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{x:.2f}'))
+plt.gca().xaxis.set_major_formatter(PercentFormatter(1.0))
+plt.legend()
+plt.grid(True)
+
+# Save figure
+figure_path = 'bond_price_yield_curve.png'
+plt.savefig(figure_path)
+plt.close()
+
+# Prepare result dictionary
+result = {
+    'price_at_up100bp': price_at_up100bp,
+    'dur_approx_change_up100bp': dur_approx_change_up100bp,
+    'figure_path': figure_path
+}
+
+# Output the result (for verification)
+print(result)
+```

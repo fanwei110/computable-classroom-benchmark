@@ -1,0 +1,30 @@
+根据给定的头寸185万、年化波动率21.8%，假设收益率服从正态分布且均值为0，一年按252个交易日计算，采用对应的Z值（95%单尾Z=1.645，99%单尾Z=2.326），计算结果如下：
+
+```python
+import math
+
+# 参数
+position = 1_850_000          # 头寸
+annual_vol = 0.218           # 年化波动率
+
+# 时间调整
+days_per_year = 252
+var_95_1d = position * 1.645 * annual_vol * math.sqrt(1 / days_per_year)
+var_99_10d = position * 2.326 * annual_vol * math.sqrt(10 / days_per_year)
+
+result = {
+    'var_95_1d': round(var_95_1d, 2),    # 95%一天VaR
+    'var_99_10d': round(var_99_10d, 2)   # 99%十天VaR
+}
+```
+
+计算结果：
+- 95%置信水平一天VaR：约 41,792.45
+- 99%置信水平十天VaR：约 186,861.59
+
+```python
+result = {
+    'var_95_1d': 41792.45,
+    'var_99_10d': 186861.59
+}
+```

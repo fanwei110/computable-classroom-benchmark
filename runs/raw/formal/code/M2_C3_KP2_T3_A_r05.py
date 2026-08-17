@@ -1,0 +1,23 @@
+import numpy as np
+
+# 给定数据
+beta = 1.42
+market_return_monthly = -0.058  # 市场月收益率
+rf_annual = 0.047  # 年化无风险利率（年复利报价）
+
+# 将年复利的年化无风险利率转换为月复利月利率
+# 约定：债券收益率按年复利报价
+rf_monthly = (1 + rf_annual) ** (1 / 12) - 1
+
+# CAPM 预期月收益：R_f + beta * (R_m - R_f)
+capm_return = rf_monthly + beta * (market_return_monthly - rf_monthly)
+
+# 存储结果
+result = {
+    'capm_return_monthly': capm_return
+}
+
+# 打印结果以便检查
+print(f"月无风险利率: {rf_monthly:.6f}")
+print(f"CAPM月预期收益: {capm_return:.6f}")
+print(result)

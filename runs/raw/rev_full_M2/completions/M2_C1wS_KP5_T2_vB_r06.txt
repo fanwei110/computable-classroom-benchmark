@@ -1,0 +1,78 @@
+```python
+import os
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ------------------------------
+# 0. 参数设定（置信水平可调）
+# ------------------------------
+CONFIDENCE_LEVEL = 0.95          # 95% 一日 VaR
+POSITION_VALUE = 1_000_000.0     # 头寸 1,000,000 元
+DATA_PATH = "data/market_snapshot_v1.csv"
+FIGURE_FILENAME = "var_histogram.png"
+
+# ------------------------------
+# 1. 读取 CSV 并构造日损益
+# ------------------------------
+df = pd.read_csv(DATA_PATH)
+
+# 假设日收益率列名为 'fund'
+daily_returns = df['fund'].values
+
+# 损益序列 = 头寸价值 × 日收益率
+profit_loss = POSITION_VALUE * daily_returns   # 人民币
+
+# ------------------------------
+# 2. 计算历史 VaR（损失正数表示）
+# ------------------------------
+# 损失分位数：置信度 95% → 左尾 5% 分位数
+alpha = 1 - CONFIDENCE_LEVEL
+var_loss = np.percentile(profit_loss, alpha * 100)  # 损益的分位数（通常为负）
+
+# VaR 通常以正数报告损失金额
+hist_var_95_1d = abs(var_loss) if var_loss < 0 else 0.0
+
+# ------------------------------
+# 3. 绘制直方图并标注 VaR
+# ------------------------------
+fig, ax = plt.subplots(figsize=(8, 5))
+
+# 直方图
+counts, bins, patches = ax.hist(profit_loss, bins=50, color='steelblue',
+                                edgecolor='white', alpha=0.8, label='日损益分布')
+
+# VaR 线（分位数位置）
+ax.axvline(x=var_loss, color='red', linestyle='--', linewidth=2,
+           label=f'历史VaR ({CONFIDENCE_LEVEL*100:.0f}%置信)')
+
+# 标注数值
+ax.annotate(f'VaR = {hist_var_95_1d:,.0f} 元',
+            xy=(var_loss, ax.get_ylim()[1]*0.85),
+            xytext=(var_loss + ax.get_xlim()[1]*0.15, ax.get_ylim()[1]*0.85),
+            arrowprops=dict(arrowstyle='->', color='red'),
+            fontsize=11, color='red',
+            bbox=dict(boxstyle='round,pad=0.3', facecolor='white', edgecolor='red'))
+
+ax.set_title(f'历史模拟法 VaR (置信水平 {CONFIDENCE_LEVEL*100:.0f}%)')
+ax.set_xlabel('日损益（人民币）')
+ax.set_ylabel('频数')
+ax.legend()
+plt.tight_layout()
+
+# 保存图形
+plt.savefig(FIGURE_FILENAME, dpi=150)
+plt.close()
+
+# ------------------------------
+# 4. 填充输出契约
+# ------------------------------
+result = {
+    'hist_var_95_1d': round(hist_var_95_1d, 2),   # 保留两位小数
+    'figure_path': os.path.abspath(FIGURE_FILENAME)
+}
+
+# 可选：终端输出以便教师查看
+print(f"历史模拟法 95% 1日 VaR: {result['hist_var_95_1d']:,.2f} 元")
+print(f"图形已保存至: {result['figure_path']}")
+```

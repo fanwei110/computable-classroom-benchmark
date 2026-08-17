@@ -1,0 +1,63 @@
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+
+def calculate_call_delta(S, K, T, r, sigma):
+    """
+    计算无分红欧式看涨期权的 Delta
+    S: 标的价格，可以是标量或 numpy 数组
+    K: 行权价
+    T: 剩余期限 (年)
+    r: 无风险利率
+    sigma: 波动率
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    delta = norm.cdf(d1)
+    return delta
+
+# ---------------- 参数设置 ----------------
+K = 97.5          # 行权价
+r = 0.043         # 无风险利率 (每年 4.3%)
+T = 0.58          # 剩余期限 (年)
+q = 0.0           # 标的无分红
+
+# 波动率可调参数，此处取题目要求的三个值
+volatilities = [0.15, 0.276, 0.40]
+
+# 标的价格范围
+S_range = np.linspace(70, 140, 700)
+
+# ---------------- 计算 S=110, sigma=0.276 时的 Delta ----------------
+target_S = 110
+target_sigma = 0.276
+delta_at_s110 = calculate_call_delta(target_S, K, T, r, target_sigma)
+
+# ---------------- 绘图 ----------------
+plt.figure(figsize=(10, 6))
+
+for sigma in volatilities:
+    deltas = calculate_call_delta(S_range, K, T, r, sigma)
+    plt.plot(S_range, deltas, label=f'Vol = {sigma*100:.1f}%')
+
+plt.title('European Call Option Delta vs Underlying Price', fontsize=14)
+plt.xlabel('Underlying Price (S)', fontsize=12)
+plt.ylabel('Delta', fontsize=12)
+plt.axvline(x=K, color='gray', linestyle='--', linewidth=0.8, label=f'Strike K = {K}')
+plt.legend(fontsize=11)
+plt.grid(True, linestyle=':', alpha=0.7)
+
+# 保存图像
+figure_path = 'delta_curve.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ---------------- 构建输出契约 ----------------
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': figure_path
+}
+
+# 打印结果以供验证
+print(f"标的110、波动率27.6%时的Delta: {delta_at_s110:.6f}")
+print(f"图表已保存至: {figure_path}")
+print("Result dictionary:", result)

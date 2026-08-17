@@ -1,0 +1,91 @@
+针对您的两个问题，由于您在问题一中**未提供具体的日收益数据序列**，我无法直接计算出具体的年化夏普比率数值。因此，在该键下我暂存了 `None`，并在下方附上了完整的计算逻辑与代码，您只需将日收益数据代入即可得出结果。
+
+问题二的归因分析已根据 BHB (Brinson-Hood-Beebower) 经典模型为您精确拆解完成。
+
+最终严格按契约要求输出的字典如下：
+
+```python
+result = {
+    'sharpe_annual': None,  # 缺少日收益序列数据，暂为None。计算逻辑见下文
+    'allocation_effect': 0.00165, 
+    'selection_effect': 0.0002, 
+    'interaction_effect': 0.00145
+}
+```
+
+---
+
+### 详细计算过程与代码
+
+#### 一、 年化夏普比率计算逻辑
+假设日收益率为 $R_t$，无风险利率 $r_f = 2.1\%$，一年按 252 个交易日计算：
+1. 计算日收益率的均值 $\mu_d$ 和标准差 $\sigma_d$
+2. 年化收益率 $\mu_y = \mu_d \times 252$
+3. 年化标准差 $\sigma_y = \sigma_d \times \sqrt{252}$
+4. 年化夏普比率 $Sharpe = \frac{\mu_y - r_f}{\sigma_y}$
+
+#### 二、 Brinson归因拆解
+已知数据：
+* 组合权重 $W_p = [0.45, 0.35, 0.2]$，组合收益 $R_p = [8.3\%, 2.1\%, -1.4\%]$
+* 基准权重 $W_b = [0.4, 0.4, 0.2]$，基准收益 $R_b = [6.7\%, 3.4\%, -0.9\%]$
+
+**1. 验证总收益与超额收益：**
+* 组合总收益 = $0.45 \times 8.3\% + 0.35 \times 2.1\% + 0.2 \times (-1.4\%) = 4.19\%$
+* 基准总收益 = $0.4 \times 6.7\% + 0.4 \times 3.4\% + 0.2 \times (-0.9\%) = 3.86\%$
+* 总超额收益 = $4.19\% - 3.86\% = 0.33\%$
+
+**2. 三大效应拆解：**
+* **配置效应** $= \sum (W_p - W_b) \times R_b$ 
+  $= (0.45-0.4)\times 6.7\% + (0.35-0.4)\times 3.4\% + (0.2-0.2)\times (-0.9\%)$
+  $= 0.05 \times 0.067 - 0.05 \times 0.034 + 0 = 0.00335 - 0.0017 = 0.00165$
+* **选择效应** $= \sum W_b \times (R_p - R_b)$
+  $= 0.4\times (8.3\%-6.7\%) + 0.4\times (2.1\%-3.4\%) + 0.2\times (-1.4\%-(-0.9\%))$
+  $= 0.4 \times 0.016 + 0.4 \times (-0.013) + 0.2 \times (-0.005) = 0.0064 - 0.0052 - 0.001 = 0.0002$
+* **交互效应** $= \sum (W_p - W_b) \times (R_p - R_b)$
+  $= 0.05\times 1.6\% + (-0.05)\times (-1.3\%) + 0\times (-0.5\%)$
+  $= 0.0008 + 0.00065 + 0 = 0.00145$
+
+*(验证：0.00165 + 0.0002 + 0.00145 = 0.0033 = 0.33\%，与总超额收益完全吻合)*
+
+---
+
+#### 完整计算代码（可供直接运行替换）
+
+```python
+import numpy as np
+
+# ========== 任务一：年化夏普比率 ==========
+rf_annual = 0.021
+# 请将此处替换为真实的fund日收益率序列
+fund_daily_returns = np.array([])  
+
+if len(fund_daily_returns) > 1:
+    mean_daily = np.mean(fund_daily_returns)
+    std_daily = np.std(fund_daily_returns, ddof=1)
+    mean_annual = mean_daily * 252
+    std_annual = std_daily * np.sqrt(252)
+    sharpe_annual = (mean_annual - rf_annual) / std_annual
+else:
+    sharpe_annual = None
+
+# ========== 任务二：Brinson归因分析 ==========
+W_p = np.array([0.45, 0.35, 0.20])
+R_p = np.array([0.083, 0.021, -0.014])
+
+W_b = np.array([0.40, 0.40, 0.20])
+R_b = np.array([0.067, 0.034, -0.009])
+
+allocation_effect = np.sum((W_p - W_b) * R_b)
+selection_effect = np.sum(W_b * (R_p - R_b))
+interaction_effect = np.sum((W_p - W_b) * (R_p - R_b))
+
+# ========== 输出契约 ==========
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+print(result)
+```

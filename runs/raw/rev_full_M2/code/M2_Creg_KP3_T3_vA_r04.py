@@ -1,0 +1,34 @@
+import numpy as np
+
+# 债券参数
+face_value = 100.0
+coupon_rate = 0.046
+years = 7
+coupon = face_value * coupon_rate
+
+# 初始收益率和新收益率
+yield_initial = 0.053
+yield_new = yield_initial + 0.008  # 上升80个基点
+
+# 计算债券价格的函数：每年付息一次
+def bond_price(ytm, c, f, t):
+    """计算债券价格（年付息）"""
+    times = np.arange(1, t + 1)
+    cash_flows = np.full(t, c)
+    cash_flows[-1] += f  # 本金在最后一次
+    discounts = (1 + ytm) ** times
+    return np.sum(cash_flows / discounts)
+
+price_initial = bond_price(yield_initial, coupon, face_value, years)
+price_new = bond_price(yield_new, coupon, face_value, years)
+
+# 价格跌幅百分比（正数表示下跌）
+price_drop_pct = (price_initial - price_new) / price_initial * 100
+
+# 按要求存入字典
+result = {
+    'price_drop_pct': price_drop_pct
+}
+
+if __name__ == "__main__":
+    print(result)

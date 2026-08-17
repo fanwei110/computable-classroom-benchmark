@@ -1,0 +1,65 @@
+import numpy as np
+from scipy.optimize import newton
+
+# 债券参数
+face_value = 100
+coupon_rate = 0.046
+yield_initial = 0.053  # 初始收益率
+maturity_years = 7
+frequency = 2  # 半年付息一次
+yield_change_bps = 80  # 收益率变化（基点）
+yield_change = yield_change_bps / 10000  # 转换为小数
+
+# 计算每期票息
+coupon_payment = face_value * coupon_rate / frequency
+
+# 定义债券定价函数（现金流贴现）
+def bond_price(yield_to_maturity, face_value, coupon_payment, maturity_periods):
+    periods = np.arange(1, maturity_periods + 1)
+    cash_flows = np.full(maturity_periods, coupon_payment)
+    cash_flows[-1] += face_value  # 最后一期加上面值
+    discount_factors = (1 + yield_to_maturity / frequency) ** -periods
+    return np.sum(cash_flows * discount_factors)
+
+# 计算初始价格
+maturity_periods = maturity_years * frequency
+initial_price = bond_price(yield_initial, face_value, coupon_payment, maturity_periods)
+
+# 计算久期和凸性
+def bond_duration_convexity(yield_to_maturity, face_value, coupon_payment, maturity_periods):
+    periods = np.arange(1, maturity_periods + 1)
+    cash_flows = np.full(maturity_periods, coupon_payment)
+    cash_flows[-1] += face_value
+    discount_factors = (1 + yield_to_maturity / frequency) ** -periods
+    present_values = cash_flows * discount_factors
+
+    # 麦考利久期
+    macaulay_duration = np.sum(periods * present_values) / np.sum(present_values)
+    modified_duration = macaulay_duration / (1 + yield_to_maturity / frequency)
+
+    # 凸性
+    convexity = np.sum(periods * (periods + 1) * present_values) / (np.sum(present_values) * (1 + yield_to_maturity / frequency)**2)
+
+    return modified_duration, convexity
+
+modified_duration, convexity = bond_duration_convexity(yield_initial, face_value, coupon_payment, maturity_periods)
+
+# 估算价格变化（使用久期和凸性近似）
+price_change_pct = (-modified_duration * yield_change + 0.5 * convexity * yield_change**2) * 100
+
+# 精确计算新价格
+new_yield = yield_initial + yield_change
+new_price = bond_price(new_yield, face_value, coupon_payment, maturity_periods)
+exact_price_drop_pct = (initial_price - new_price) / initial_price * 100
+
+# 结果存储
+result = {
+    'price_drop_pct': exact_price_drop_pct  # 使用精确计算的跌幅
+}
+
+# 输出结果（可选，便于调试）
+print(f"初始价格: {initial_price:.4f}")
+print(f"新价格: {new_price:.4f}")
+print(f"久期估算跌幅: {price_change_pct:.4f}%")
+print(f"精确跌幅: {exact_price_drop_pct:.4f}%")
+print(f"结果字典: {result}")

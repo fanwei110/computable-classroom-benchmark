@@ -1,0 +1,45 @@
+我们按照题目要求计算 **95% 的一日 VaR** 和 **99% 的十日 VaR**，并将结果存入字典 `result`。
+
+---
+
+### 计算步骤：
+
+#### 1. 基本参数
+- 头寸规模（Portfolio Value）：$ V = 1,850,000 $ 元
+- 年化波动率（Annualized Volatility）：$ \sigma_{\text{annual}} = 21.8\% = 0.218 $
+- 交易日数：每年 252 天
+- 置信水平：
+  - 95% VaR → $ z_{0.95} = 1.644854 $（标准正态分位数）
+  - 99% VaR → $ z_{0.99} = 2.326348 $
+
+#### 2. 日波动率
+$$
+\sigma_{\text{daily}} = \frac{\sigma_{\text{annual}}}{\sqrt{252}} = \frac{0.218}{\sqrt{252}} \approx 0.01371
+$$
+
+#### 3. 95% 一日 VaR
+$$
+\text{VaR}_{95\%,1d} = V \times z_{0.95} \times \sigma_{\text{daily}} = 1,850,000 \times 1.644854 \times 0.01371 \approx 41,700 \text{ 元}
+$$
+
+#### 4. 99% 十日 VaR
+十日波动率：
+$$
+\sigma_{10d} = \sigma_{\text{daily}} \times \sqrt{10} = 0.01371 \times \sqrt{10} \approx 0.04335
+$$
+
+$$
+\text{VaR}_{99\%,10d} = V \times z_{0.99} \times \sigma_{10d} = 1,850,000 \times 2.326348 \times 0.04335 \approx 187,000 \text{ 元}
+$$
+
+---
+
+### 最终结果
+```python
+result = {
+    'var_95_1d': 41700,
+    'var_99_10d': 187000
+}
+```
+
+> 注：计算结果四舍五入至千元级别，符合金融实务中的常见精度。

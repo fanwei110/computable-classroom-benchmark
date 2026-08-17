@@ -1,0 +1,30 @@
+```python
+# 已知条件
+rf = 2.3
+rm = 9.4
+market_premium = rm - rf  # 7.1
+
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+
+actual_return_y = 13.1
+
+# CAPM 预期收益计算
+er_x = rf + beta_x * market_premium
+er_y = rf + beta_y * market_premium
+er_z = rf + beta_z * market_premium
+
+# Alpha 计算
+alpha_y = actual_return_y - er_y
+
+# 按要求整理结果（保留合理的小数位数，这里以浮点数存储）
+result = {
+    'er_x': round(er_x, 3),    # 6.702
+    'er_y': round(er_y, 3),    # 10.678
+    'er_z': round(er_z, 3),    # 13.021
+    'alpha_y': round(alpha_y, 3) # 2.422
+}
+
+result
+```

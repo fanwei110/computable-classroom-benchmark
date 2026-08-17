@@ -1,0 +1,68 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 配置参数
+# ==========================================
+file_path = 'data/market_snapshot_v1.csv'
+rf_annual = 0.021              # 年化无风险利率 2.1%
+trading_days = 252             # 每年交易日数
+window_size = 60               # 滚动窗口大小（可调）
+figure_path = 'rolling_sharpe_ratio.png'
+
+# ==========================================
+# 1. 读取快照 CSV；日无风险利率取年利率/252
+# ==========================================
+df = pd.read_csv(file_path)
+rf_daily = rf_annual / trading_days
+
+# ==========================================
+# 2. 计算 60 日滚动夏普（ddof=1），按 sqrt(252) 年化
+# ==========================================
+# 计算每日超额收益
+excess_returns = df['fund'] - rf_daily
+
+# 计算滚动均值与滚动标准差（样本标准差 ddof=1）
+rolling_mean = excess_returns.rolling(window=window_size).mean()
+rolling_std = excess_returns.rolling(window=window_size).std(ddof=1)
+
+# 计算日度滚动夏普比率并年化
+rolling_sharpe_daily = rolling_mean / rolling_std
+rolling_sharpe_annualized = rolling_sharpe_daily * np.sqrt(trading_days)
+
+# ==========================================
+# 3. 报告最后一个窗口的值（小数）
+# ==========================================
+rolling_sharpe_last = rolling_sharpe_annualized.iloc[-1]
+
+# ==========================================
+# 4. 画出时间序列并保存图形
+# ==========================================
+fig, ax = plt.subplots(figsize=(12, 6))
+ax.plot(rolling_sharpe_annualized.values, 
+        label=f'{window_size}-Day Rolling Annualized Sharpe', 
+        color='tab:blue')
+
+ax.set_title(f'{window_size}-Day Rolling Annualized Sharpe Ratio (Fund)', fontsize=14)
+ax.set_xlabel('Trading Days', fontsize=12)
+ax.set_ylabel('Annualized Sharpe Ratio', fontsize=12)
+ax.axhline(0, color='tab:red', linestyle='--', linewidth=1, alpha=0.7)
+ax.grid(True, linestyle=':', alpha=0.6)
+ax.legend(fontsize=12)
+fig.tight_layout()
+
+fig.savefig(figure_path, dpi=150)
+plt.close(fig)
+
+# ==========================================
+# 输出契约
+# ==========================================
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': figure_path
+}
+
+# 可供课堂投屏即时展示的打印信息
+print(f"最后 {window_size} 日窗口的年化夏普比率: {rolling_sharpe_last:.6f}")
+print(f"图形已保存至: {figure_path}")

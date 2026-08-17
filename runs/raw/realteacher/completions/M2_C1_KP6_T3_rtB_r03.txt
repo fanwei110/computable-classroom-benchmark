@@ -1,0 +1,130 @@
+我先读取数据文件，计算基金列（fund）的日收益率，再用年化无风险利率2.1%折算，算出全样本期的年化夏普比率，并按你要求的字典格式输出。
+
+文件里看起来有日期和fund列，我将直接使用fund列的全部数据进行计算。   
+只给出年化夏普比率数值，保留足够精度。   
+最终字典键名只包含 `'sharpe_annual'`。  
+
+先用代码读取并计算，确认结果后存入 `result`。  先执行计算，不输出过程文字，最后只显示 `result`。  
+
+结果会是一个字典，例如：`{'sharpe_annual': 数值}`。  
+```python
+import pandas as pd
+import numpy as np
+
+# 读取数据
+file_path = "课程数据文件"  # 请替换为实际文件名
+df = pd.read_csv(file_path)
+
+# 计算日收益率（假设fund是价格，如果已经是收益率则直接使用）
+# 这里先按价格处理：日收益率 = (当日价格 / 前一日价格) - 1
+# 如果fund列已经是收益率，则直接使用，但通常数据是净值价格
+# 检查列名：可能是'日期'和'fund'
+df = df.sort_values('日期')
+fund_prices = df['fund'].values
+daily_returns = fund_prices[1:] / fund_prices[:-1] - 1
+
+# 年化无风险利率
+rf_annual = 0.021
+# 日化无风险利率（假设252个交易日）
+rf_daily = (1 + rf_annual)**(1/252) - 1
+
+# 超额日收益率
+excess_daily = daily_returns - rf_daily
+
+# 年化夏普比率
+mean_excess_daily = np.mean(excess_daily)
+std_excess_daily = np.std(excess_daily, ddof=1)  # 样本标准差
+sharpe_annual = (mean_excess_daily / std_excess_daily) * np.sqrt(252)
+
+# 存入结果字典
+result = {'sharpe_annual': sharpe_annual}
+```
+```python
+import pandas as pd
+import numpy as np
+
+# 实际读取文件名（这里用你提供的文件名示例，如果不同请修改）
+file_path = "课程数据文件.csv"   # 假设就是这个名字，如果不同自行替换
+df = pd.read_csv(file_path)
+
+# 按日期排序
+df = df.sort_values('日期')
+
+# 日收益率计算（假设fund是净值或价格）
+prices = df['fund'].values
+daily_returns = prices[1:] / prices[:-1] - 1
+
+# 年化无风险利率
+rf_annual = 0.021
+# 日化无风险利率（252交易日）
+rf_daily = (1 + rf_annual)**(1/252) - 1
+
+# 超额收益
+excess_returns = daily_returns - rf_daily
+
+# 年化夏普比率
+mean_excess = np.mean(excess_returns)
+std_excess = np.std(excess_returns, ddof=1)   # 样本标准差
+sharpe_annual = (mean_excess / std_excess) * np.sqrt(252)
+
+result = {'sharpe_annual': sharpe_annual}
+result
+```
+```python
+import os
+import pandas as pd
+import numpy as np
+
+# 列出当前工作目录的文件，找到可能的课程数据文件
+files = os.listdir('.')
+print("文件列表：", files)
+```
+```python
+# 从文件列表中读取，假设文件名包含"课程数据文件"
+file_name = None
+for f in files:
+    if '课程数据文件' in f:
+        file_name = f
+        break
+if file_name is None:
+    raise FileNotFoundError("未找到课程数据文件")
+
+df = pd.read_csv(file_name)
+print(df.head())
+print(df.columns)
+```
+```python
+# 检查日期和fund列名，可能需要调整
+# 如果列名有空格或不同，做相应调整
+if '日期' not in df.columns:
+    # 尝试找到日期列（可能是'date','Date'等）
+    date_col = [col for col in df.columns if '日期' in col or 'date' in col.lower()][0]
+else:
+    date_col = '日期'
+
+if 'fund' not in df.columns:
+    # 尝试找到基金列
+    fund_col = [col for col in df.columns if 'fund' in col.lower()][0]
+else:
+    fund_col = 'fund'
+
+df = df.sort_values(date_col)
+prices = df[fund_col].values
+daily_returns = prices[1:] / prices[:-1] - 1
+
+rf_annual = 0.021
+rf_daily = (1 + rf_annual) ** (1/252) - 1
+
+excess_returns = daily_returns - rf_daily
+
+mean_excess = np.mean(excess_returns)
+std_excess = np.std(excess_returns, ddof=1)
+sharpe_annual = (mean_excess / std_excess) * np.sqrt(252)
+
+result = {'sharpe_annual': sharpe_annual}
+print(result)
+```
+```python
+# 最终输出结果
+result
+```

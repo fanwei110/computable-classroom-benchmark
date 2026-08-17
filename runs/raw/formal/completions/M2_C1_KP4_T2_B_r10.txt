@@ -1,0 +1,51 @@
+```python
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+import os
+
+# 参数设定
+K = 97.5          # 行权价
+r = 0.043         # 无风险利率
+T = 0.58          # 到期时间（年）
+S_range = (70, 140)
+vols = [0.15, 0.276, 0.40]
+S_target = 110
+vol_target = 0.276
+
+# 计算看涨期权 Delta 的函数 (Black-Scholes)
+def call_delta(S, K, T, r, sigma):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# 计算特定点 delta (S=110, vol=27.6%)
+delta_at_s110 = call_delta(S_target, K, T, r, vol_target)
+
+# 生成标的物价格序列
+S = np.linspace(*S_range, 300)
+
+# 绘制 Delta 曲线
+plt.figure(figsize=(10, 6))
+for vol in vols:
+    delta = call_delta(S, K, T, r, vol)
+    plt.plot(S, delta, label=f'$\\sigma$ = {vol*100:.1f}%')
+
+plt.xlabel('标的物价格 S')
+plt.ylabel('Delta')
+plt.title('欧式看涨期权 Delta 曲线 (行权价=97.5, r=4.3%, T=0.58)')
+plt.legend()
+plt.grid(True)
+
+# 保存图片
+figure_path = 'delta_curve.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# 输出结果字典
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+print(result)
+```

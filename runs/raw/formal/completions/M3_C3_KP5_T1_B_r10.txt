@@ -1,0 +1,54 @@
+根据参数法（方差-协方差法）计算VaR的步骤如下：
+
+1. **基本参数设定**：
+   - 仓位 $V = 1,850,000$
+   - 年化波动率 $\sigma_{ann} = 0.218$
+   - 交易日 $N = 252$
+
+2. **计算日波动率与十天波动率**：
+   - 日波动率 $\sigma_{day} = \frac{\sigma_{ann}}{\sqrt{N}} = \frac{0.218}{\sqrt{252}} \approx 0.0137347$
+   - 十天波动率 $\sigma_{10d} = \sigma_{day} \times \sqrt{10} \approx 0.0434267$
+
+3. **计算分位数（Z-score）**：
+   - 95%置信度对应的Z值 $Z_{95\%} \approx 1.6449$
+   - 99%置信度对应的Z值 $Z_{99\%} \approx 2.3263$
+
+4. **计算VaR（假设期望收益为0，报告为正数损失）**：
+   - 95% 1天 VaR $= V \times Z_{95\%} \times \sigma_{day} = 1,850,000 \times 1.6449 \times 0.0137347 \approx 41,792.18$
+   - 99% 10天 VaR $= V \times Z_{99\%} \times \sigma_{10d} = 1,850,000 \times 2.3263 \times 0.0434267 \approx 186,892.30$
+
+```python
+import math
+from scipy.stats import norm
+
+# 参数设定
+V = 1850000
+vol_annual = 0.218
+trading_days = 252
+
+# 计算波动率
+vol_daily = vol_annual / math.sqrt(trading_days)
+vol_10d = vol_daily * math.sqrt(10)
+
+# 计算Z分位数
+z_95 = norm.ppf(0.95)
+z_99 = norm.ppf(0.99)
+
+# 计算VaR
+var_95_1d = V * z_95 * vol_daily
+var_99_10d = V * z_99 * vol_10d
+
+# 按照输出契约格式输出，保留两位小数符合金额习惯
+result = {
+    'var_95_1d': round(var_95_1d, 2),
+    'var_99_10d': round(var_99_10d, 2)
+}
+```
+
+最终结果字典为：
+```python
+result = {
+    'var_95_1d': 41792.18, 
+    'var_99_10d': 186892.30
+}
+```

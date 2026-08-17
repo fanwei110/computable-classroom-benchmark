@@ -1,0 +1,52 @@
+要计算整个样本期的年化夏普比率（Sharpe Ratio），我们按照以下步骤进行：
+
+1. **计算日超额收益**：日收益减去无风险收益的日等价值。无风险年化利率为2.1%，按每年252个交易日计算，日无风险收益率为：
+   \[
+   r_f^{daily} = (1 + 0.021)^{1/252} - 1 \approx \frac{0.021}{252}
+   \]
+   由于无风险利率较小，可以近似为 \( r_f^{daily} \approx 0.021 / 252 \)。
+
+2. **计算日超额收益的均值和标准差**：
+   - 均值：\( \mu_{excess} = \text{mean}(r_t - r_f^{daily}) \)
+   - 标准差：\( \sigma_{excess} = \text{std}(r_t - r_f^{daily}, ddof=1) \)
+
+3. **年化夏普比率**：
+   \[
+   \text{Sharpe}_{annual} = \frac{\mu_{excess} \times \sqrt{252}}{\sigma_{excess}}
+   \]
+
+假设 `fund` 列的日收益数据存储在变量 `daily_returns` 中，以下是Python代码实现：
+
+```python
+import numpy as np
+
+# 假设 daily_returns 是 fund 列的日收益数据（Series 或 array-like）
+daily_returns = ...  # 请替换为实际数据
+
+# 无风险利率参数
+risk_free_rate_annual = 0.021
+trading_days = 252
+
+# 计算日无风险收益率（近似）
+risk_free_rate_daily = risk_free_rate_annual / trading_days
+
+# 计算日超额收益
+excess_returns = daily_returns - risk_free_rate_daily
+
+# 计算日超额收益的均值和标准差（样本标准差，ddof=1）
+mean_excess = np.mean(excess_returns)
+std_excess = np.std(excess_returns, ddof=1)
+
+# 年化夏普比率
+sharpe_annual = (mean_excess * np.sqrt(trading_days)) / std_excess
+
+# 存入结果字典
+result = {
+    'sharpe_annual': sharpe_annual
+}
+```
+
+### 注意事项：
+1. 确保 `daily_returns` 是 `fund` 列的日收益数据（例如 `pandas.Series` 或 `numpy.array`）。
+2. 如果 `daily_returns` 包含缺失值（`NaN`），需要先处理（如 `daily_returns.dropna()`）。
+3. 夏普比率的计算基于样本标准差（`ddof=1`），符合题目要求。

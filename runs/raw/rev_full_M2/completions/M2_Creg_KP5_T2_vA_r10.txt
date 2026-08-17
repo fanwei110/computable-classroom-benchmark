@@ -1,0 +1,84 @@
+```python
+import argparse
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+import sys
+
+# ==================== 可调参数 ====================
+CONFIDENCE = 0.95              # VaR 置信水平，可在此处修改
+CAPITAL = 1_000_000.0          # 头寸金额（人民币）
+BINS = 50                      # 直方图分箱数
+# =================================================
+
+def load_data(path: str) -> np.ndarray:
+    """读取 CSV 并返回清洗后的 fund 日收益序列。"""
+    df = pd.read_csv(path)
+    if 'fund' not in df.columns:
+        raise KeyError("CSV 文件中缺少 'fund' 列，请检查数据。")
+    returns = df['fund'].dropna().values.astype(float)
+    if len(returns) == 0:
+        raise ValueError("fund 列无有效数据。")
+    return returns
+
+def compute_var(pnl: np.ndarray, confidence: float) -> float:
+    """计算历史 VaR（正数表示损失金额）。"""
+    percentile = (1 - confidence) * 100
+    threshold = np.percentile(pnl, percentile)
+    return -threshold   # 损失取正
+
+def make_plot(pnl: np.ndarray, var_threshold: float, var_amount: float,
+              confidence: float, capital: float, save_path: str) -> str:
+    """绘制日损益直方图并标注 VaR，返回保存路径（绝对路径）。"""
+    fig, ax = plt.subplots(figsize=(10, 5))
+    ax.hist(pnl, bins=BINS, edgecolor='white', alpha=0.75, color='steelblue')
+    ax.axvline(var_threshold, color='crimson', linestyle='dashed', linewidth=2,
+               label=f'{confidence*100:.0f}% 一日历史 VaR: ¥{var_amount:,.2f}')
+    ax.set_xlabel('日损益 (¥)', fontsize=12)
+    ax.set_ylabel('频数', fontsize=12)
+    ax.set_title(f'日损益分布 (头寸 ¥{capital:,.0f})\n'
+                 f'{confidence*100:.0f}% 置信水平历史 VaR', fontsize=14)
+    ax.legend(fontsize=10)
+    plt.tight_layout()
+
+    abs_path = os.path.abspath(save_path)
+    fig.savefig(abs_path, dpi=150)
+    plt.close(fig)
+    return abs_path
+
+def main() -> dict:
+    parser = argparse.ArgumentParser(description='历史 VaR 计算与可视化')
+    parser.add_argument('--data', type=str, default='data.csv',
+                        help='包含 fund 列的 CSV 数据文件路径')
+    parser.add_argument('--output', type=str, default='var_hist_plot.png',
+                        help='输出图表文件名')
+    args = parser.parse_args()
+
+    # 读取收益
+    returns = load_data(args.data)
+
+    # 计算损益序列
+    pnl = CAPITAL * returns
+
+    # 计算 VaR
+    var_percentile = (1 - CONFIDENCE) * 100
+    var_threshold = np.percentile(pnl, var_percentile)
+    var_value = compute_var(pnl, CONFIDENCE)   # 正数损失
+
+    # 生成图表
+    figure_path = make_plot(pnl, var_threshold, var_value,
+                            CONFIDENCE, CAPITAL, args.output)
+
+    result = {
+        'hist_var_95_1d': var_value,   # 默认 95%；若修改 CONFIDENCE 请自行注意键名含义
+        'figure_path': figure_path
+    }
+    return result
+
+if __name__ == '__main__':
+    result = main()
+    # 输出到 stdout，供调用方捕获
+    print(f"hist_var_95_1d: ¥{result['hist_var_95_1d']:,.2f}")
+    print(f"figure_path: {result['figure_path']}")
+```

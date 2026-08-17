@@ -1,0 +1,83 @@
+由于我无法直接读取您本地的 `data/market_snapshot_v1.csv` 文件，我为您提供一段完整的 Python 代码，您只需在文件所在目录下运行即可完成计算并将结果存入 `result` 字典。
+
+### 实现步骤
+
+1. **加载数据**：读取 CSV，提取 `fund` 列的日收益率（假设该列已是小数形式的日收益，如 0.01 代表 1%）。
+2. **计算损益**：头寸 100 万元，每日损益 = 1,000,000 × 日收益率。
+3. **历史 VaR**：使用 `np.percentile` 计算 95% 置信水平下的历史 VaR（取损益分布的 5% 分位数，并转为正数损失）。
+4. **绘图**：绘制日损益直方图，标注 95% 历史 VaR 垂直线，并将图片保存为文件。
+5. **输出**：构建字典 `result`，包含 `'hist_var_95_1d'` 和 `'figure_path'`。
+
+### Python 代码（可调节置信水平）
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# -------------------- 加载与计算 --------------------
+file_path = 'data/market_snapshot_v1.csv'
+df = pd.read_csv(file_path)
+
+# 提取 fund 列日收益（小数形式）
+returns = df['fund'].dropna().values
+
+# 头寸
+position = 1_000_000  # 100万元
+
+# 每日损益序列
+pnl = position * returns
+
+# 可调节的置信水平（此处设定为 95%）
+confidence = 0.95
+percentile = (1 - confidence) * 100  # 5% 分位数
+
+# 历史 VaR（正数损失，按样本分位数计算）
+var_cutoff = np.percentile(pnl, percentile)   # 损益的分位数（负数或正数）
+var_amount = -var_cutoff   # 损失报告为正数
+
+# 将 VaR 值保留两位小数
+var_95_1d = round(var_amount, 2)
+
+# -------------------- 绘图 --------------------
+plt.figure(figsize=(10, 6))
+plt.hist(pnl, bins=50, color='skyblue', edgecolor='white', alpha=0.7, density=True)
+plt.axvline(var_cutoff, color='red', linestyle='--', linewidth=2,
+            label=f'{int(confidence*100)}% 1‑Day Historical VaR: ¥{var_95_1d:,.2f}')
+plt.xlabel('Daily P&L (¥)')
+plt.ylabel('Frequency')
+plt.title(f'Daily P&L Distribution (100万元 Fund) - Historical VaR')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 保存图像
+figure_dir = 'output'
+os.makedirs(figure_dir, exist_ok=True)
+fig_path = os.path.join(figure_dir, 'historical_var_fund.png')
+plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# -------------------- 结果字典 --------------------
+result = {
+    'hist_var_95_1d': var_95_1d,    # 例如 12345.67
+    'figure_path': fig_path         # 'output/historical_var_fund.png'
+}
+
+print(result)
+```
+
+### 运行说明
+
+- 确保 `data/market_snapshot_v1.csv` 存在于当前工作目录的 `data` 子文件夹下。
+- 确保 CSV 中包含列名为 `fund` 的日收益数据（小数，如 0.002 表示 0.2%）。如果列名不同，请修改 `df['fund']` 为正确的列名。
+- 运行脚本后，控制台将打印类似 `{'hist_var_95_1d': 12345.67, 'figure_path': 'output/historical_var_fund.png'}` 的字典。
+- 置信水平可通过修改代码中的 `confidence` 变量调节（例如 0.99 对应 99% VaR）。
+
+### 输出契约
+
+最终变量 `result` 严格包含两个键：
+- `'hist_var_95_1d'`：95% 一日历史 VaR 的正损失金额（数值）。
+- `'figure_path'`：直方图文件的保存路径（字符串）。
+
+您可以将此字典用于后续报告或接口。

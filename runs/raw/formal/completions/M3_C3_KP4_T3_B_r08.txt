@@ -1,0 +1,53 @@
+为了计算隐含波动率（IV）上涨1个点（1%，即0.01）时期权价格的变化量，我们需要计算该期权的 Vega 值。Vega 表示隐含波动率变化1个单位（即100%，或1个小数）时，期权价格的变化量。由于 Call 和 Put 的 Vega 值相同，无需知道期权类型。
+
+根据 Black-Scholes 模型，Vega 的公式为：
+$$ \text{Vega} = S \cdot \phi(d_1) \cdot \sqrt{T} $$
+其中：
+$$ d_1 = \frac{\ln(S/K) + (r + \frac{\sigma^2}{2})T}{\sigma \sqrt{T}} $$
+$$ \phi(d_1) = \frac{1}{\sqrt{2\pi}} e^{-\frac{d_1^2}{2}} $$
+
+**已知参数：**
+*   标的资产价格 $S = 103.7$
+*   行权价 $K = 97.5$
+*   隐含波动率 $\sigma = 27.6\% = 0.276$
+*   无风险利率 $r = 4.3\% = 0.043$（连续复利）
+*   到期时间 $T = 0.58$ 年
+*   IV变化量 $\Delta \sigma = 1\% = 0.01$
+
+**计算步骤：**
+1. 计算 $\ln(S/K)$：
+   $$ \ln(103.7 / 97.5) \approx 0.061725 $$
+2. 计算 $r + \frac{\sigma^2}{2}$：
+   $$ 0.043 + 0.5 \times 0.276^2 = 0.043 + 0.5 \times 0.076176 = 0.081088 $$
+3. 计算 $d_1$ 的分子：
+   $$ 0.061725 + 0.081088 \times 0.58 \approx 0.108756 $$
+4. 计算 $d_1$ 的分母：
+   $$ 0.276 \times \sqrt{0.58} \approx 0.210195 $$
+5. 计算 $d_1$：
+   $$ d_1 = 0.108756 / 0.210195 \approx 0.51738 $$
+6. 计算标准正态分布概率密度 $\phi(d_1)$：
+   $$ \phi(0.51738) = \frac{1}{\sqrt{2\pi}} e^{-0.51738^2 / 2} \approx 0.39894 \times e^{-0.13384} \approx 0.34901 $$
+7. 计算 Vega：
+   $$ \text{Vega} = 103.7 \times 0.34901 \times \sqrt{0.58} \approx 27.5526 $$
+8. 计算价格变化量 $\Delta P$：
+   $$ \Delta P = \text{Vega} \times \Delta \sigma = 27.5526 \times 0.01 = 0.275526 $$
+
+保留4位小数，价格能涨约 0.2755。
+
+```python
+import math
+
+S = 103.7
+K = 97.5
+iv = 0.276
+r = 0.043
+T = 0.58
+delta_iv = 0.01
+
+d1 = (math.log(S / K) + (r + 0.5 * iv**2) * T) / (iv * math.sqrt(T))
+vega = S * math.exp(-0.5 * d1**2) / math.sqrt(2 * math.pi) * math.sqrt(T)
+
+price_change = vega * delta_iv
+
+result = {'price_change': round(price_change, 4)}
+```

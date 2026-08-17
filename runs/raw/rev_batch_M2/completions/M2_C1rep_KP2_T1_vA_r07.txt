@@ -1,0 +1,28 @@
+```python
+# 给定数据
+rf = 2.3      # 无风险利率（%）
+rm = 9.4      # 市场期望收益（%）
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+actual_y = 13.1  # Y实际年收益（%）
+
+# 市场风险溢价
+mrp = rm - rf  # 7.1%
+
+# CAPM期望收益
+er_x = rf + beta_x * mrp
+er_y = rf + beta_y * mrp
+er_z = rf + beta_z * mrp
+
+# Y的alpha
+alpha_y = actual_y - er_y
+
+# 构建结果字典
+result = {
+    'er_x': er_x,     # 6.702
+    'er_y': er_y,     # 10.678
+    'er_z': er_z,     # 13.021
+    'alpha_y': alpha_y  # 2.422
+}
+```

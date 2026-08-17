@@ -1,0 +1,76 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 参数设置 (置信度可调)
+# ==========================================
+POSITION = 1_000_000          # 头寸：100万人民币
+CONFIDENCE_LEVEL = 0.95       # 置信度：95%
+
+# ==========================================
+# 1. 读取快照 CSV，构造头寸的日损益
+# ==========================================
+# 读取数据
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 提取基金日收益率并构造头寸的日损益 (PnL)
+daily_returns = df['fund']
+daily_pnl = POSITION * daily_returns
+
+# ==========================================
+# 2. 由经验分布计算 95% 历史 VaR（人民币）
+# ==========================================
+alpha = 1 - CONFIDENCE_LEVEL
+# 历史法VaR：取损益分布的左尾分位数
+pnl_quantile = np.quantile(daily_pnl, alpha)
+# VaR通常以正数报告最大可能损失
+hist_var_95_1d = -pnl_quantile
+
+# ==========================================
+# 3. 画直方图并加带标注的 VaR 线
+# ==========================================
+# 设置绘图样式与字体（不依赖中文字体，使用英文确保跨平台投屏不乱码）
+plt.style.use('seaborn-v0_8-whitegrid')
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 绘制损益直方图 (自动分箱)
+num_bins = int(np.sqrt(len(daily_pnl)))
+ax.hist(daily_pnl, bins=num_bins, color='steelblue', edgecolor='white', alpha=0.8)
+
+# 绘制 VaR 红色垂直虚线，并在图例中直接标注VaR数值
+ax.axvline(x=pnl_quantile, color='red', linestyle='--', linewidth=2,
+           label=f'{CONFIDENCE_LEVEL*100:.0f}% 1-Day VaR: {hist_var_95_1d:,.2f} RMB')
+
+# 增加辅助说明标注
+ax.annotate(f'VaR = {hist_var_95_1d:,.2f} RMB\n(Position: {POSITION:,})',
+            xy=(pnl_quantile, ax.get_ylim()[1]*0.8),
+            xytext=(pnl_quantile + (daily_pnl.max() - pnl_quantile)*0.3, ax.get_ylim()[1]*0.8),
+            arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=6),
+            fontsize=11, bbox=dict(boxstyle="round,pad=0.3", fc="yellow", alpha=0.8))
+
+ax.set_title('Daily PnL Distribution & Historical VaR', fontsize=15)
+ax.set_xlabel('Daily Profit and Loss (RMB)', fontsize=12)
+ax.set_ylabel('Frequency', fontsize=12)
+ax.legend(fontsize=12, loc='upper left')
+
+plt.tight_layout()
+
+# ==========================================
+# 4. 保存图形并填充 result
+# ==========================================
+figure_path = 'hist_var_pnl_distribution.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close(fig)
+
+# 按照输出契约组装 result 字典
+result = {
+    'hist_var_95_1d': float(hist_var_95_1d),
+    'figure_path': figure_path
+}
+
+# 供课堂演示打印
+if __name__ == '__main__':
+    print(f"95% 1-Day Historical VaR: {result['hist_var_95_1d']:,.2f} RMB")
+    print(f"Figure saved to: {result['figure_path']}")

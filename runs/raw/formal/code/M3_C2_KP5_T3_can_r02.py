@@ -1,0 +1,36 @@
+import numpy as np
+from scipy.stats import norm
+
+# ===== 已知参数 =====
+sigma_annual = 0.24          # 年化波动率 24%
+position_value = 2700000     # 头寸金额 2,700,000 元
+confidence_level = 0.95      # 95% 置信水平
+
+# ===== 假设处理 =====
+# 题目未指明交易日数量，采用金融市场参数法计算VaR最常用的内部一致假设：一年包含252个交易日
+trading_days_per_year = 252
+
+# ===== 步骤 1：把 24% 年化波动率换算到一日期限 =====
+# 根据时间平方根法则：sigma_daily = sigma_annual / sqrt(T)
+sigma_daily = sigma_annual / np.sqrt(trading_days_per_year)
+
+# ===== 步骤 2：套用 95% 正态分位数 =====
+# 在标准正态分布下，95% 的分位数（单尾）
+z_score_95 = norm.ppf(confidence_level)
+
+# ===== 步骤 3：计算 95% 一日 VaR 金额 =====
+# Delta-Normal法公式：VaR = Z_score * sigma_daily * Position
+var_95_1d = z_score_95 * sigma_daily * position_value
+
+# ===== 输出结果 =====
+# 按照输出契约，将结果存入 result 字典
+result = {
+    'var_95_1d': var_95_1d
+}
+
+# 课堂投屏辅助打印（方便教师展示中间过程和最终结果）
+print(f"假设一年包含 {trading_days_per_year} 个交易日")
+print(f"步骤1 - 日波动率: {sigma_daily:.6%}")
+print(f"步骤2 - 95%正态分位数: {z_score_95:.4f}")
+print(f"步骤3 - 95%一日VaR金额: {var_95_1d:,.2f} 元")
+print(f"\n最终输出字典 result: {result}")

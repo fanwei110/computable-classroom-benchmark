@@ -1,0 +1,67 @@
+以下是自包含的 Python 脚本，用于计算欧式看涨期权在隐含波动率上升一个百分点时的价格变化。脚本使用 Black-Scholes 模型计算期权价格、vega，并通过 vega 推算价格变化。
+
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+S = 103.7          # 标的资产现价
+K = 97.5           # 行权价
+sigma = 0.276      # 波动率 (27.6%)
+r = 0.043          # 无风险利率 (4.3%)
+T = 0.58           # 剩余期限 (年)
+
+# Black-Scholes 欧式看涨期权定价函数
+def black_scholes_call(S, K, T, r, sigma):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    return call_price
+
+# 计算 vega (期权价格对波动率的敏感度)
+def vega(S, K, T, r, sigma):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    vega_value = S * norm.pdf(d1) * np.sqrt(T)
+    return vega_value
+
+# 计算初始期权价格
+initial_price = black_scholes_call(S, K, T, r, sigma)
+
+# 计算初始 vega
+initial_vega = vega(S, K, T, r, sigma)
+
+# 波动率上升 1 个百分点 (0.01)
+sigma_increased = sigma + 0.01
+
+# 计算新的期权价格
+new_price = black_scholes_call(S, K, T, r, sigma_increased)
+
+# 通过 vega 近似计算价格变化 (vega * Δsigma)
+price_change_approx = initial_vega * 0.01
+
+# 精确计算价格变化 (新价格 - 初始价格)
+price_change_exact = new_price - initial_price
+
+# 结果存储 (使用精确计算的价格变化)
+result = {
+    'price_change': price_change_exact
+}
+
+# 输出结果 (可选，便于调试)
+print("Initial option price:", initial_price)
+print("New option price after volatility increase:", new_price)
+print("Price change (exact):", price_change_exact)
+print("Price change (vega approximation):", price_change_approx)
+print("Result dictionary:", result)
+```
+
+### 说明：
+1. **Black-Scholes 模型**：计算欧式看涨期权的闭式解。
+2. **Vega**：衡量期权价格对波动率变化的敏感度，单位是每 1% 波动率变化的价格变化。
+3. **价格变化计算**：
+   - 精确计算：直接计算波动率上升后的期权价格，并与初始价格相减。
+   - 近似计算：通过 vega 乘以波动率变化（0.01）得到近似值（用于验证）。
+4. **结果**：`result` 字典存储精确计算的价格变化（`price_change`）。
+
+### 输出契约：
+- `result['price_change']` 存储的是波动率上升 1% 时的期权价格变化（精确值）。

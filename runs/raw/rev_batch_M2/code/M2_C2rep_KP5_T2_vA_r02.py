@@ -1,0 +1,57 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ========================
+# 可调参数
+# ========================
+confidence_level = 0.95         # 置信水平（95%）
+position_value = 1_000_000.0    # 头寸金额（人民币）
+data_path = "data/market_snapshot_v1.csv"
+figure_path = "var_histogram.png"
+
+# ------------------------
+# 1. 读取数据，构造日损益
+# ------------------------
+df = pd.read_csv(data_path)
+returns = df["fund"].dropna().values  # 假设 CSV 中“fund”列为日收益率（小数形式）
+pnl = position_value * returns        # 日损益（元）
+
+# ------------------------
+# 2. 计算历史 VaR（经验分位数）
+# ------------------------
+alpha = 1 - confidence_level
+percentile_loss = np.percentile(pnl, alpha * 100)   # 左尾分位数（通常为负）
+var_value = -percentile_loss                        # VaR 损失金额（正数）
+
+# ------------------------
+# 3. 画直方图并标注 VaR
+# ------------------------
+plt.figure(figsize=(10, 6))
+plt.hist(pnl, bins=50, edgecolor="black", alpha=0.7, color="steelblue")
+plt.axvline(percentile_loss, color="red", linestyle="dashed", linewidth=2,
+            label=f"{confidence_level*100:.0f}% VaR: ¥{var_value:,.2f}")
+plt.xlabel("Daily Profit/Loss (¥)")
+plt.ylabel("Frequency")
+plt.title(f"Distribution of Daily P&L for ¥{position_value:,.0f} Position")
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 在竖线旁添加文字说明
+ymax = plt.ylim()[1]
+plt.text(percentile_loss, ymax * 0.9, f"VaR = ¥{var_value:,.2f}",
+         color="red", fontweight="bold", ha="right")
+
+plt.tight_layout()
+plt.savefig(figure_path)
+plt.close()
+
+# ------------------------
+# 4. 输出契约
+# ------------------------
+result = {
+    "hist_var_95_1d": var_value,
+    "figure_path": figure_path,
+}
+
+print(result)

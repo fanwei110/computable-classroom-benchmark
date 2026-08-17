@@ -1,0 +1,80 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================
+# 可调参数（只需修改这里）
+# ==========================
+Rf = 0.023       # 无风险利率 (2.3%)
+E_Rm = 0.094     # 市场期望收益 (9.4%)
+
+# ==========================
+# 股票数据： (beta, 期望收益, 标签)
+# ==========================
+stocks = [
+    (0.62, 0.081, 'X'),
+    (1.18, 0.131, 'Y'),
+    (1.51, 0.099, 'Z')
+]
+
+# ==========================
+# 1. 构造 SML 并画图
+# ==========================
+beta_range = np.linspace(0, 2, 200)
+er_sml = Rf + beta_range * (E_Rm - Rf)          # CAPM 方程
+
+plt.figure(figsize=(10, 7))
+plt.plot(beta_range, er_sml, 'b-', linewidth=2, label='Security Market Line')
+
+# 无风险资产与市场组合
+plt.scatter(0, Rf, color='green', s=80, zorder=5, label='Risk-free asset')
+plt.scatter(1, E_Rm, color='red', s=80, zorder=5, label='Market portfolio')
+
+# 标注三只股票
+for beta, er, name in stocks:
+    plt.scatter(beta, er, color='darkorange', s=100, zorder=5)
+    plt.annotate(f'{name}  (β={beta}, E(R)={er*100:.1f}%)',
+                 xy=(beta, er), xytext=(15, 15), textcoords='offset points',
+                 fontsize=9, color='darkorange',
+                 arrowprops=dict(arrowstyle='->', color='darkorange', lw=0.8),
+                 bbox=dict(boxstyle='round,pad=0.3', fc='lightyellow', alpha=0.8))
+
+# 图形装饰
+plt.xlabel('Beta (β)', fontsize=13)
+plt.ylabel('Expected Return', fontsize=13)
+plt.title('Security Market Line (SML)', fontsize=15)
+plt.xlim(0, 2)
+plt.ylim(0, 0.22)
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.legend(fontsize=11, loc='lower right')
+
+# 在图上直接写出 Rf 和 E(Rm) 的数值
+plt.text(0.02, Rf + 0.005, f'$R_f$ = {Rf*100:.1f}%', fontsize=10, color='green')
+plt.text(0.95, E_Rm + 0.005, f'$E(R_m)$ = {E_Rm*100:.1f}%', fontsize=10, color='red')
+
+plt.tight_layout()
+
+# 保存图形
+fig_path = 'sml_plot.png'
+plt.savefig(fig_path, dpi=150)
+plt.close()
+print(f"图形已保存至: {fig_path}")
+
+# ==========================
+# 2. 报告所需计算结果
+# ==========================
+sml_slope = E_Rm - Rf                     # 证券市场线斜率
+beta_target = 1.27
+er_at_beta_127 = Rf + beta_target * sml_slope   # CAPM 期望收益
+
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': fig_path
+}
+
+# 课堂展示：打印结果字典
+print("\n=== 结果输出 ===")
+print(f"SML 斜率 (市场风险溢价): {sml_slope:.4f} ({sml_slope*100:.2f}%)")
+print(f"β = 1.27 处的 CAPM 期望收益: {er_at_beta_127:.4f} ({er_at_beta_127*100:.2f}%)")
+print("\nresult 字典:")
+print(result)

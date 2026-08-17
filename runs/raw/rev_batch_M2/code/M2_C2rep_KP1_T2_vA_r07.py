@@ -1,0 +1,89 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def main():
+    # 资产参数（年化）
+    mu = np.array([0.071, 0.124])
+    sigma = np.array([0.163, 0.289])
+    rhos = [0.15, 0.45, 0.75]
+
+    # 生成权重扫描（允许卖空，满仓：w + (1-w) = 1）
+    w_range = np.linspace(-2.0, 3.0, 5001)
+
+    # 用于存储要求的结果
+    mvp_vol_rho45 = None
+    frontier_vol_target = None
+
+    # 绘制前沿
+    fig, ax = plt.subplots(figsize=(10, 6))
+
+    for rho in rhos:
+        s1, s2 = sigma
+        cov = rho * s1 * s2
+
+        # 组合方差与期望收益
+        var_p = (w_range**2 * s1**2 +
+                 (1 - w_range)**2 * s2**2 +
+                 2 * w_range * (1 - w_range) * cov)
+        vol_p = np.sqrt(var_p)
+        mu_p = w_range * mu[0] + (1 - w_range) * mu[1]
+
+        # 绘制曲线
+        ax.plot(vol_p, mu_p, label=f'ρ = {rho}')
+
+        # 全局最小方差组合（MVP）——解析解
+        w_mvp = (s2**2 - rho * s1 * s2) / (s1**2 + s2**2 - 2 * rho * s1 * s2)
+        vol_mvp = np.sqrt(w_mvp**2 * s1**2 +
+                          (1 - w_mvp)**2 * s2**2 +
+                          2 * w_mvp * (1 - w_mvp) * rho * s1 * s2)
+        mu_mvp = w_mvp * mu[0] + (1 - w_mvp) * mu[1]
+
+        # 在曲线上标出 MVP（颜色与对应曲线相同，不加图例避免混乱）
+        ax.scatter(vol_mvp, mu_mvp, color=ax.get_lines()[-1].get_color(),
+                   s=60, zorder=6, edgecolors='k', linewidth=0.5)
+
+        # 对要求特别计算的 ρ=0.45
+        if rho == 0.45:
+            mvp_vol_rho45 = vol_mvp
+
+            # 目标期望收益 10%
+            mu_target = 0.10
+            w_target = (mu_target - mu[1]) / (mu[0] - mu[1])
+            vol_target = np.sqrt(w_target**2 * s1**2 +
+                                 (1 - w_target)**2 * s2**2 +
+                                 2 * w_target * (1 - w_target) * rho * s1 * s2)
+            frontier_vol_target = vol_target
+
+            # 在图上标注目标收益点
+            ax.scatter(vol_target, mu_target, marker='*', color='red',
+                       s=150, zorder=7, label=f'Target return 10%')
+            ax.legend()
+
+    # 图形属性
+    ax.set_xlabel('Annualized Volatility (Standard Deviation)')
+    ax.set_ylabel('Expected Annual Return')
+    ax.set_title('Mean–Variance Frontier for Two Risky Assets')
+    ax.grid(True, linestyle='--', alpha=0.7)
+    ax.legend(title='Correlation')
+
+    # 保存图形
+    figure_path = 'frontier.png'
+    plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+    plt.close()
+
+    # 构造输出字典
+    result = {
+        'mvp_vol_at_rho45': mvp_vol_rho45,
+        'frontier_vol_at_target': frontier_vol_target,
+        'figure_path': figure_path
+    }
+
+    # 打印以便教师查看
+    print("结果字典：")
+    for k, v in result.items():
+        print(f"  {k}: {v}")
+
+    return result
+
+if __name__ == '__main__':
+    main()

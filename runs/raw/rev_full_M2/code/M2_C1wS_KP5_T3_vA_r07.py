@@ -1,0 +1,30 @@
+import numpy as np
+from scipy.stats import norm
+
+# 题目参数
+annual_volatility = 0.24  # 年化波动率 24%
+position_value = 2_700_000  # 头寸 270 万元
+confidence_level = 0.95  # 95% 置信水平
+trading_days = 252  # 年交易日数假设
+
+# 1. 年化波动率换算为一日波动率
+daily_volatility = annual_volatility / np.sqrt(trading_days)
+
+# 2. 95% 置信水平下的正态分位数（标准正态分布的 5% 分位点）
+z_score = norm.ppf(1 - confidence_level)  # 对于 95% 置信水平，左尾分位点为 -1.6449
+
+# 3. 计算一日 VaR（参数法/delta-normal法，此处为相对 VaR，均值为 0 的假设）
+var_95_1d = position_value * daily_volatility * abs(z_score)
+
+# 输出结果
+result = {
+    'var_95_1d': round(var_95_1d, 2)
+}
+
+# 打印以供课堂展示
+print(f"年化波动率: {annual_volatility*100}%")
+print(f"日波动率 (假设 {trading_days} 个交易日): {daily_volatility*100:.4f}%")
+print(f"95% 正态分位数 (z-score): {z_score:.4f}")
+print(f"头寸价值: ¥{position_value:,.0f}")
+print(f"\n95% 一日 VaR: ¥{var_95_1d:,.2f}")
+print(f"\n结果字典: {result}")

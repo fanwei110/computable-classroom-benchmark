@@ -1,0 +1,77 @@
+要计算该债券在收益率上行80bp（即0.8%）时的价格跌幅，我们可以使用久期近似法。以下是详细的计算步骤：
+
+### 债券基本信息
+- 面值（FV）：100
+- 票面利率（Coupon Rate）：4.6% = 0.046
+- 当前到期收益率（YTM）：5.3% = 0.053
+- 剩余期限：7年
+- 付息频率：假设为每年付息一次（题目未明确说明，但通常如此）
+
+### 1. 计算当前债券价格
+债券价格公式为：
+\[
+P = \sum_{t=1}^{T} \frac{C}{(1 + y)^t} + \frac{FV}{(1 + y)^T}
+\]
+其中：
+- \( C = FV \times \text{Coupon Rate} = 100 \times 0.046 = 4.6 \)
+- \( y = 0.053 \)（当前YTM）
+- \( T = 7 \)
+
+计算过程：
+\[
+P = \sum_{t=1}^{7} \frac{4.6}{(1 + 0.053)^t} + \frac{100}{(1 + 0.053)^7}
+\]
+逐项计算：
+\[
+P = \frac{4.6}{1.053} + \frac{4.6}{1.053^2} + \frac{4.6}{1.053^3} + \frac{4.6}{1.053^4} + \frac{4.6}{1.053^5} + \frac{4.6}{1.053^6} + \frac{104.6}{1.053^7}
+\]
+计算结果：
+\[
+P \approx 4.368 + 4.148 + 3.939 + 3.741 + 3.553 + 3.374 + 73.879 \approx 97.002
+\]
+即当前价格约为 **97.002**。
+
+### 2. 计算修正久期（Modified Duration）
+修正久期公式为：
+\[
+\text{ModDur} = \frac{\text{Macaulay Duration}}{1 + y}
+\]
+其中，Macaulay Duration为：
+\[
+\text{Macaulay Duration} = \frac{1}{P} \sum_{t=1}^{T} \frac{t \cdot C}{(1 + y)^t} + \frac{T \cdot FV}{(1 + y)^T}
+\]
+计算过程：
+\[
+\text{Macaulay Duration} = \frac{1}{97.002} \left( \sum_{t=1}^{7} \frac{t \cdot 4.6}{1.053^t} + \frac{7 \cdot 100}{1.053^7} \right)
+\]
+逐项计算：
+\[
+\sum_{t=1}^{7} \frac{t \cdot 4.6}{1.053^t} \approx 4.368 + 8.296 + 11.817 + 14.964 + 17.765 + 20.244 + 517.153 \approx 594.607
+\]
+\[
+\text{Macaulay Duration} = \frac{594.607 + 517.153}{97.002} \approx \frac{1111.76}{97.002} \approx 11.461
+\]
+修正久期：
+\[
+\text{ModDur} = \frac{11.461}{1 + 0.053} \approx 10.884
+\]
+
+### 3. 计算价格跌幅
+收益率上行80bp（即0.008），价格变化近似为：
+\[
+\Delta P \approx -\text{ModDur} \times \Delta y \times P
+\]
+\[
+\Delta P \approx -10.884 \times 0.008 \times 97.002 \approx -8.416
+\]
+价格跌幅百分比：
+\[
+\text{price\_drop\_pct} = \frac{\Delta P}{P} \times 100\% \approx \frac{-8.416}{97.002} \times 100\% \approx -8.68\%
+\]
+
+### 结果
+```python
+result = {
+    'price_drop_pct': -8.68  # 价格跌幅百分比（负号表示下跌）
+}
+```

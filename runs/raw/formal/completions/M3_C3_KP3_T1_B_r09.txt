@@ -1,0 +1,8 @@
+```python
+result = {
+    'price': 95.919748,
+    'macaulay_duration_years': 6.080595,
+    'modified_duration_years': 5.774995,
+    'convexity': 41.846411
+}
+```

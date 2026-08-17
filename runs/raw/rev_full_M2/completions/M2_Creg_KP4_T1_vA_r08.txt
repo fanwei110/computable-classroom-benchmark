@@ -1,0 +1,65 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+def black_scholes_call(S, K, T, r, sigma):
+    """
+    计算欧式看涨期权的价格、Delta 和 Vega（无分红）。
+
+    参数
+    ----
+    S : float
+        标的资产现价
+    K : float
+        行权价
+    T : float
+        剩余期限（年）
+    r : float
+        无风险利率（年化，连续复利）
+    sigma : float
+        波动率（年化）
+
+    返回
+    ----
+    price : float
+    delta : float
+    vega  : float   （价格对 sigma 的偏导数，sigma 以小数表示）
+    """
+    if T <= 0:
+        # 到期时价格即为内在价值，但这里 T > 0，保留安全处理
+        price = max(S - K, 0.0)
+        delta = 1.0 if S > K else 0.0
+        vega = 0.0
+        return price, delta, vega
+
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+
+    price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    delta = norm.cdf(d1)
+    vega = S * norm.pdf(d1) * np.sqrt(T)  # 标准BS Vega，不乘以0.01
+
+    return price, delta, vega
+
+# -------- 给定参数 ----------
+S0    = 103.7
+K     = 97.5
+sigma = 0.276   # 27.6% 年化
+r     = 0.043   # 4.3% 年化
+T     = 0.58    # 剩余期限
+
+# 计算
+call_price, call_delta, call_vega = black_scholes_call(S0, K, T, r, sigma)
+
+# 按要求存入字典
+result = {
+    'call_price': call_price,
+    'call_delta': call_delta,
+    'call_vega': call_vega
+}
+
+# 输出以供检查（实际使用时只需字典 result）
+if __name__ == "__main__":
+    for k, v in result.items():
+        print(f"{k}: {v:.6f}")
+```

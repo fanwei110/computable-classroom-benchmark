@@ -1,0 +1,46 @@
+=== GEE logit (task clusters) ===
+                               GEE Regression Results                              
+===================================================================================
+Dep. Variable:                     correct   No. Observations:                 2160
+Model:                                 GEE   No. clusters:                       18
+Method:                        Generalized   Min. cluster size:                 120
+                      Estimating Equations   Max. cluster size:                 120
+Family:                           Binomial   Mean cluster size:               120.0
+Dependence structure:         Exchangeable   Num. iterations:                    11
+Date:                     Thu, 02 Jul 2026   Scale:                           1.000
+Covariance type:                    robust   Time:                         17:36:44
+==================================================================================
+                     coef    std err          z      P>|z|      [0.025      0.975]
+----------------------------------------------------------------------------------
+Intercept         -0.8584      0.365     -2.349      0.019      -1.575      -0.142
+C(model)[T.M2]     0.6992      0.207      3.378      0.001       0.293       1.105
+C(model)[T.M3]     0.6200      0.219      2.834      0.005       0.191       1.049
+conv               0.0642      0.220      0.291      0.771      -0.368       0.496
+struct             1.2484      0.282      4.429      0.000       0.696       1.801
+conv:struct        1.5120      0.444      3.402      0.001       0.641       2.383
+==============================================================================
+Skew:                         -0.0745   Kurtosis:                      -1.1346
+Centered skew:                -0.2550   Centered kurtosis:             -0.6404
+==============================================================================
+
+Odds ratios:
+  conv: OR = 1.066
+  struct: OR = 3.485
+  conv:struct: OR = 4.536
+
+=== Mixed-effects logistic (variational Bayes) ===
+                 Binomial Mixed GLM Results
+=============================================================
+               Type Post. Mean Post. SD   SD  SD (LB) SD (UB)
+-------------------------------------------------------------
+Intercept         M    -1.3469   0.0543                      
+C(model)[T.M2]    M     0.8628   0.0942                      
+C(model)[T.M3]    M     0.7645   0.0939                      
+conv              M     0.0846   0.0828                      
+struct            M     1.5899   0.0823                      
+conv:struct       M     1.6690   0.1419                      
+task              V     0.1752   0.1636 1.192   0.859   1.653
+=============================================================
+Parameter types are mean structure (M) and variance structure
+(V)
+Variance parameters are modeled as log standard deviations

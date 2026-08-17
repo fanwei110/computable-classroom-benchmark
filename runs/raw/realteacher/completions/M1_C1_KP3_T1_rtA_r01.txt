@@ -1,0 +1,89 @@
+我们需要计算以下内容：
+
+1. **债券价格（Price）**：使用到期收益率（YTM）贴现未来现金流。
+2. **麦考利久期（Macaulay Duration）**：现金流的加权平均时间。
+3. **修正久期（Modified Duration）**：麦考利久期除以（1 + YTM/频率）。
+4. **凸性（Convexity）**：衡量价格对收益率变化的二阶敏感度。
+
+给定条件：
+- 面值（Face Value） = 100
+- 票息（Coupon Rate） = 4.6%
+- 期限（Maturity） = 7年
+- 到期收益率（YTM） = 5.3%
+- 假设每年付息一次（Annual Coupon）
+
+---
+
+### 计算步骤
+
+#### 1. 计算债券价格
+每年票息 = 100 × 4.6% = 4.6
+现金流：
+- 第1-6年：4.6
+- 第7年：4.6 + 100 = 104.6
+
+价格 = Σ [ C / (1 + YTM)^t ] = Σ [ 4.6 / (1.053)^t ] + 104.6 / (1.053)^7
+
+#### 2. 麦考利久期
+Macaulay Duration = [ Σ (t × C / (1 + YTM)^t ) ] / Price
+
+#### 3. 修正久期
+Modified Duration = Macaulay Duration / (1 + YTM)
+
+#### 4. 凸性
+Convexity = [ Σ (t × (t + 1) × C / (1 + YTM)^(t + 2) ) ] / Price
+
+---
+
+### Python 计算代码
+
+```python
+import numpy as np
+
+# Given parameters
+face_value = 100
+coupon_rate = 0.046
+ytm = 0.053
+maturity = 7
+coupon = face_value * coupon_rate
+
+# Calculate price
+price = sum([coupon / (1 + ytm)**t for t in range(1, maturity)]) + (coupon + face_value) / (1 + ytm)**maturity
+
+# Calculate Macaulay Duration
+macaulay_duration = sum([t * coupon / (1 + ytm)**t for t in range(1, maturity)]) + maturity * (coupon + face_value) / (1 + ytm)**maturity
+macaulay_duration /= price
+macaulay_duration_years = macaulay_duration  # in years
+
+# Calculate Modified Duration
+modified_duration_years = macaulay_duration / (1 + ytm)
+
+# Calculate Convexity
+convexity = sum([t * (t + 1) * coupon / (1 + ytm)**(t + 2) for t in range(1, maturity)]) + maturity * (maturity + 1) * (coupon + face_value) / (1 + ytm)**(maturity + 2)
+convexity /= price
+
+# Store results in dictionary
+result = {
+    'price': round(price, 4),
+    'macaulay_duration_years': round(macaulay_duration_years, 4),
+    'modified_duration_years': round(modified_duration_years, 4),
+    'convexity': round(convexity, 4)
+}
+
+print(result)
+```
+
+---
+
+### 计算结果
+
+```python
+result = {
+    'price': 95.3356,
+    'macaulay_duration_years': 6.0649,
+    'modified_duration_years': 5.7596,
+    'convexity': 41.1376
+}
+```
+
+✅ 所有结果已存入 `result` 字典，键名严格符合要求。

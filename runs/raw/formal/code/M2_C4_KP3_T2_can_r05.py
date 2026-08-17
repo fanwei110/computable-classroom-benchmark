@@ -1,0 +1,90 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import os  # ç¨äºæå»ºç»å¯¹è·¯å¾ï¼æ ååºï¼æ»¡è¶³èªåè¦æ±
+
+# ==================== åºå¸åæ° ====================
+face_value = 100.0           # é¢å¼
+coupon_rate = 0.046          # ç¥¨æ¯çï¼å°æ°ï¼4.6%ï¼
+coupon = face_value * coupon_rate  # æ¯å¹´æ¯ä»çç¥¨æ¯ï¼4.6 å
+maturity = 7                 # å©ä½æéï¼å¹´ï¼
+y_current = 0.053            # å½åæ¶ççï¼å°æ°ï¼5.3%ï¼
+
+# ç°éæµæ¶é´è½´ä¸éé¢ï¼æ¯å¹´æ¯ä»ä¸æ¬¡ç¥¨æ¯ï¼æåä¸å¹´å è¿æ¬éï¼
+t = np.arange(1, maturity + 1, dtype=float)
+cf = np.full(maturity, coupon)
+cf[-1] += face_value
+
+# ==================== å®ä»·ä¸é£é©ææ  ====================
+def bond_price(y):
+    """è®¡ç®åºå¸å¨æ¶çç y ä¸çç²¾ç¡®ä»·æ ¼ï¼å¹´å¤å©è´´ç°ï¼"""
+    return np.sum(cf / (1.0 + y) ** t)
+
+P0 = bond_price(y_current)   # å½åå¸åºä»·æ ¼
+
+# éº¦èå©ä¹æ
+D_mac = np.sum(t * cf / (1 + y_current) ** t) / P0
+# ä¿®æ­£ä¹æ
+D_mod = D_mac / (1 + y_current)
+# å¸æ§ï¼è¯¾ç¨å®ä¹åï¼åä½ï¼å¹´çå¹³æ¹ï¼
+Conv = np.sum(t * (t + 1) * cf / (1 + y_current) ** (t + 2)) / P0
+
+print(f"å½åä»·æ ¼ = {P0:.4f}")
+print(f"éº¦èå©ä¹æ = {D_mac:.4f} å¹´")
+print(f"ä¿®æ­£ä¹æ   = {D_mod:.4f}")
+print(f"å¸æ§       = {Conv:.4f} å¹´çå¹³æ¹")
+
+# ==================== ä»»å¡ï¼æ¶ççä¸å 100bp çç²¾ç¡®ä»·æ ¼ä¸ä¹ææ³ç¸å¯¹åå ====================
+dy_up = 0.01                  # 100 ä¸ªåºç¹
+y_up = y_current + dy_up
+price_up100bp = bond_price(y_up)                 # ç²¾ç¡®ä»·æ ¼
+dur_approx_change = -D_mod * dy_up               # ä¹ææ³ä¼°è®¡çç¸å¯¹ä»·æ ¼ååï¼å°æ°ï¼ä¸è·ä¸ºè´ï¼
+
+print(f"\næ¶ççä¸å 100 bp åçç²¾ç¡®ä»·æ ¼ = {price_up100bp:.4f}")
+print(f"ä¹ææ³ä¼°è®¡çç¸å¯¹ä»·æ ¼ååï¼å°æ°ï¼ = {dur_approx_change:.6f}")
+
+# ==================== ç»å¾ ====================
+# ç²¾ç¡®æ²çº¿ï¼æ¶çç 2% ~ 9%
+y_grid = np.linspace(0.02, 0.09, 500)
+P_exact = bond_price(y_grid)
+
+# è¿ä¼¼æ²çº¿èå´ï¼å¯è°åæ°ï¼
+dy_range = 0.02               # å½åæ¶ççéè¿ Â±200 bpï¼æå¸å¯ä¿®æ¹æ­¤å¼
+y_near = np.linspace(y_current - dy_range, y_current + dy_range, 200)
+
+# ä¸é¶ä¹æè¿ä¼¼ï¼ P(y) â P0 * [1 - D_mod * (y - y0)]
+P_approx1 = P0 * (1 - D_mod * (y_near - y_current))
+# ä¹æ + å¸æ§è¿ä¼¼ï¼ P(y) â P0 * [1 - D_mod * dy + 1/2 * Conv * dy^2]
+P_approx2 = P0 * (1 - D_mod * (y_near - y_current) + 0.5 * Conv * (y_near - y_current) ** 2)
+
+plt.figure(figsize=(10, 6))
+# ç²¾ç¡®æ²çº¿
+plt.plot(y_grid * 100, P_exact, label="ç²¾ç¡®ä»·æ ¼-æ¶ççæ²çº¿", linewidth=2)
+# ä¸é¶ä¹æç´çº¿ï¼éè¿ï¼
+plt.plot(y_near * 100, P_approx1, '--', label="ä¸é¶ä¹æè¿ä¼¼ï¼éè¿ï¼", linewidth=1.5)
+# ä¹æ+å¸æ§æ²çº¿ï¼éè¿ï¼
+plt.plot(y_near * 100, P_approx2, '-.', label="ä¹æ+å¸æ§è¿ä¼¼ï¼éè¿ï¼", linewidth=1.5)
+# å½åæ¶ççåç´çº¿
+plt.axvline(y_current * 100, color='gray', linestyle=':', label=f'å½åæ¶çç {y_current*100:.1f}%')
+# å½åä»·æ ¼ç¹
+plt.scatter([y_current * 100], [P0], color='red', zorder=5)
+
+plt.xlabel("æ¶çç (%)")
+plt.ylabel("ä»·æ ¼")
+plt.title("åºå¸ä»·æ ¼-æ¶ççæ²çº¿åä¹æ/å¸æ§è¿ä¼¼")
+plt.legend()
+plt.grid(True)
+
+# ä¿å­å¾å½¢ï¼ä½¿ç¨ç»å¯¹è·¯å¾ä»¥ä¾¿å¯é è®¿é®
+figure_filename = "bond_price_duration_convexity.png"
+figure_path = os.path.join(os.getcwd(), figure_filename)
+plt.savefig(figure_path, dpi=150)
+print(f"\nå¾å½¢å·²ä¿å­è³: {figure_path}")
+
+# ==================== ç»æå­å ====================
+result = {
+    'price_at_up100bp': price_up100bp,
+    'dur_approx_change_up100bp': dur_approx_change,
+    'figure_path': figure_path
+}
+
+print("\nresult:", result)

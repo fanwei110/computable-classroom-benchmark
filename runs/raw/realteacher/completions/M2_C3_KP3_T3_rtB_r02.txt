@@ -1,0 +1,24 @@
+根据债券信息（面值100，票面利率4.6%，到期收益率5.3%，期限7年，按年付息，年复利报价），收益率上行80个基点（从5.3%升至6.1%）时，精确计算债券价格下跌幅度约为4.5185%。
+
+```python
+# 计算过程
+face_value = 100
+coupon_rate = 0.046
+yield_initial = 0.053
+yield_new = 0.061
+years = 7
+
+def bond_price(ytm):
+    pv = sum([face_value * coupon_rate / (1 + ytm)**t for t in range(1, years+1)])
+    pv += face_value / (1 + ytm)**years
+    return pv
+
+price_initial = bond_price(yield_initial)
+price_new = bond_price(yield_new)
+price_drop_pct = (price_initial - price_new) / price_initial * 100
+# price_initial ≈ 95.9944，price_new ≈ 91.6571，price_drop_pct ≈ 4.5185
+```
+
+```python
+result = {'price_drop_pct': 4.5185}
+```

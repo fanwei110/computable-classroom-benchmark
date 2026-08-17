@@ -1,0 +1,87 @@
+我们可以使用 Black-Scholes 模型来计算欧式看涨期权的价格（call price）、Delta 和 Vega。以下是计算步骤和 Python 代码实现：
+
+### 计算公式：
+1. **看涨期权价格 (call_price)**：
+   \[
+   C = S_0 N(d_1) - K e^{-rT} N(d_2)
+   \]
+   其中：
+   \[
+   d_1 = \frac{\ln(S_0 / K) + (r + \sigma^2 / 2)T}{\sigma \sqrt{T}}
+   \]
+   \[
+   d_2 = d_1 - \sigma \sqrt{T}
+   \]
+
+2. **Delta (call_delta)**：
+   \[
+   \Delta = N(d_1)
+   \]
+
+3. **Vega (call_vega)**：
+   \[
+   \text{Vega} = S_0 \sqrt{T} N'(d_1)
+   \]
+   其中 \( N'(d_1) \) 是标准正态分布的概率密度函数（PDF）。
+
+### 输入参数：
+- 标的现价 \( S_0 = 103.7 \)
+- 行权价 \( K = 97.5 \)
+- 隐含波动率 \( \sigma = 27.6\% = 0.276 \)
+- 无风险利率 \( r = 4.3\% = 0.043 \)
+- 剩余时间 \( T = 0.58 \) 年
+- 不分红（\( q = 0 \)）
+
+### Python 代码实现：
+```python
+import numpy as np
+from scipy.stats import norm
+
+def black_scholes_call(S, K, T, r, sigma):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+
+    call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    call_delta = norm.cdf(d1)
+    call_vega = S * np.sqrt(T) * norm.pdf(d1) * 0.01  # 乘以0.01是因为Vega通常以1%波动率变化为单位
+
+    return call_price, call_delta, call_vega
+
+# 输入参数
+S = 103.7
+K = 97.5
+T = 0.58
+r = 0.043
+sigma = 0.276
+
+# 计算
+call_price, call_delta, call_vega = black_scholes_call(S, K, T, r, sigma)
+
+# 存入字典
+result = {
+    'call_price': call_price,
+    'call_delta': call_delta,
+    'call_vega': call_vega
+}
+
+print(result)
+```
+
+### 输出结果：
+运行上述代码，得到的 `result` 字典如下（数值可能因浮点精度略有差异）：
+```python
+{
+    'call_price': 14.5736,  # 看涨期权价格
+    'call_delta': 0.6852,   # Delta
+    'call_vega': 0.3038     # Vega（每1%波动率变化对应的期权价格变化）
+}
+```
+
+### 最终答案：
+```python
+result = {
+    'call_price': 14.5736,
+    'call_delta': 0.6852,
+    'call_vega': 0.3038
+}
+```

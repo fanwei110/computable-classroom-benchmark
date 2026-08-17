@@ -1,0 +1,105 @@
+```python
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ------------------------ 参数设置 ------------------------
+r1, r2 = 0.071, 0.124      # 期望收益
+s1, s2 = 0.163, 0.289      # 年化波动率
+rhos = [0.15, 0.45, 0.75]  # 要考察的相关系数
+
+# ------------------------ 准备画布 ------------------------
+fig, ax = plt.subplots(figsize=(10, 7))
+
+# 扫描权重（允许卖空，范围大一些以展示完整前沿）
+w1_range = np.linspace(-2, 3, 2000)
+
+# 用于存放结果
+mvp_vol_at_rho45 = None
+frontier_vol_at_target = None  # 目标收益10%下的最小年化波动率
+
+# ------------------------ 主循环：不同相关系数 ------------------------
+for idx, rho in enumerate(rhos):
+    # 协方差矩阵元素
+    cov11 = s1 ** 2
+    cov22 = s2 ** 2
+    cov12 = rho * s1 * s2
+
+    w2_range = 1.0 - w1_range
+
+    # 组合收益与方差（向量化计算）
+    ret = w1_range * r1 + w2_range * r2
+    var = (w1_range ** 2 * cov11 +
+           w2_range ** 2 * cov22 +
+           2.0 * w1_range * w2_range * cov12)
+    vol = np.sqrt(var)
+
+    # 按收益排序后绘图，避免曲线回环
+    df = pd.DataFrame({'ret': ret, 'vol': vol})
+    df_sorted = df.sort_values('ret')
+
+    line, = ax.plot(df_sorted['vol'], df_sorted['ret'],
+                    label=f'ρ = {rho}')
+
+    # ---------- 最小方差组合 (MVP) ----------
+    denom = cov11 + cov22 - 2.0 * cov12
+    w1_mvp = (cov22 - cov12) / denom
+    w2_mvp = 1.0 - w1_mvp
+
+    ret_mvp = w1_mvp * r1 + w2_mvp * r2
+    var_mvp = (w1_mvp ** 2 * cov11 +
+               w2_mvp ** 2 * cov22 +
+               2.0 * w1_mvp * w2_mvp * cov12)
+    vol_mvp = np.sqrt(var_mvp)
+
+    # 在曲线上标出 MVP（星号，颜色与曲线相同）
+    ax.scatter(vol_mvp, ret_mvp,
+               color=line.get_color(), marker='*', s=150,
+               zorder=5)
+
+    # ---------- 单独记录 rho=0.45 时的结果 ----------
+    if rho == 0.45:
+        mvp_vol_at_rho45 = vol_mvp
+
+        # 目标期望收益 10% 下的组合（唯一权重）
+        r_target = 0.10
+        w1_target = (r_target - r2) / (r1 - r2)
+        w2_target = 1.0 - w1_target
+
+        var_target = (w1_target ** 2 * cov11 +
+                      w2_target ** 2 * cov22 +
+                      2.0 * w1_target * w2_target * cov12)
+        vol_target = np.sqrt(var_target)
+        frontier_vol_at_target = vol_target
+
+        # 可选：在图上标出目标收益点（透明展示）
+        ax.scatter(vol_target, r_target,
+                   color=line.get_color(), marker='o', s=80,
+                   zorder=5)
+        ax.annotate(f'Target 10%\nvol={vol_target:.4f}',
+                    (vol_target, r_target),
+                    textcoords="offset points", xytext=(10, 10),
+                    fontsize=9)
+
+# ------------------------ 图形修饰 ------------------------
+ax.set_xlabel('Volatility (σ)')
+ax.set_ylabel('Expected Return')
+ax.set_title('Mean-Variance Frontiers for Different Correlations')
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+# 保存图形
+figure_path = 'frontier.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()   # 避免在非交互环境下重复显示
+
+# ------------------------ 输出契约 ------------------------
+result = {
+    'mvp_vol_at_rho45': mvp_vol_at_rho45,
+    'frontier_vol_at_target': frontier_vol_at_target,
+    'figure_path': figure_path
+}
+
+print(result)
+```

@@ -1,0 +1,58 @@
+import numpy as np
+
+def bond_price_macaulay_modified_convexity(face_value, coupon_rate, maturity, ytm, freq=1):
+    """
+    计算债券价格、麦考利久期、修正久期和凸性。
+    假设：票息按年支付，到期一次还本；每年付息 freq 次（此处 freq=1）。
+    """
+    # 现金流发生时间（年）
+    t = np.arange(1, maturity + 1) / freq  # 实际年数，freq=1 时 t = 1,2,...,maturity
+    # 每期票息
+    coupon = face_value * coupon_rate / freq
+    # 构造现金流序列
+    cashflows = np.full(maturity * freq, coupon)
+    # 最后一期加上本金
+    cashflows[-1] += face_value
+    # 调整时间点以匹配现金流期数
+    t = np.arange(1, len(cashflows) + 1) / freq  # 实际年数
+
+    # 贴现因子
+    discount = (1 + ytm / freq) ** (-t * freq)
+    pv = cashflows * discount
+    price = np.sum(pv)
+
+    # 权重
+    weights = pv / price
+    # 麦考利久期（年）
+    macaulay_duration = np.sum(t * weights)
+
+    # 修正久期
+    modified_duration = macaulay_duration / (1 + ytm / freq)
+
+    # 凸性：sum( t*(t+1/freq) * PV ) / (P * (1+y/freq)^2 )   (freq=1 时简化为 t*(t+1))
+    convexity = np.sum(t * (t + 1/freq) * pv) / (price * (1 + ytm / freq)**2)
+
+    return price, macaulay_duration, modified_duration, convexity
+
+
+# 债券参数
+face_value = 100.0
+coupon_rate = 0.046        # 票息 4.6%
+maturity = 7               # 7 年期
+ytm = 0.053                # 到期收益率 5.3%
+
+price, mac_dur, mod_dur, conv = bond_price_macaulay_modified_convexity(
+    face_value, coupon_rate, maturity, ytm
+)
+
+# 输出契约
+result = {
+    'price': price,
+    'macaulay_duration_years': mac_dur,
+    'modified_duration_years': mod_dur,
+    'convexity': conv
+}
+
+if __name__ == "__main__":
+    for key, val in result.items():
+        print(f"{key}: {val:.6f}")

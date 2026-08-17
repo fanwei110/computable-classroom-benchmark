@@ -1,0 +1,78 @@
+```python
+import pandas as pd
+import numpy as np
+
+# ==========================================
+# 1. 生成并读取快照 CSV (保证脚本自包含)
+# ==========================================
+# 假设计算周期为252个交易日，模拟一个年化收益约8%、年化波动率约15%的基金日收益率序列
+np.random.seed(42)
+trading_days = 252
+daily_returns = np.random.normal(loc=0.08/252, scale=0.15/np.sqrt(252), size=trading_days)
+df_mock = pd.DataFrame({'fund': daily_returns})
+df_mock.to_csv('snapshot.csv', index=False)
+
+# 读取快照CSV
+df = pd.read_csv('snapshot.csv')
+
+# ==========================================
+# 2. 计算年化夏普比率
+# ==========================================
+rf_annual = 0.021
+# 假设：日度无风险利率采用单利折算（业内常用简化处理）
+rf_daily = rf_annual / 252
+
+# "在基金收益中计入无风险利率"：从基金总收益中扣除无风险利率，得到超额收益
+excess_daily = df['fund'] - rf_daily
+
+# 日度夏普比率 = 日均超额收益 / 日度总风险(标准差)
+sharpe_daily = excess_daily.mean() / df['fund'].std()
+
+# 年化夏普比率 = 日度夏普比率 * sqrt(252)
+sharpe_annual = sharpe_daily * np.sqrt(252)
+
+# ==========================================
+# 3. Brinson业绩归因分解
+# ==========================================
+# 组合权重与组合行业收益
+wp = np.array([0.45, 0.35, 0.20])
+rp = np.array([0.083, 0.021, -0.014])
+
+# 基准权重与基准行业收益
+wb = np.array([0.40, 0.40, 0.20])
+rb = np.array([0.067, 0.034, -0.009])
+
+# 配置效应 (Allocation Effect): Σ (组合权重 - 基准权重) * 基准收益
+allocation_effect = np.sum((wp - wb) * rb)
+
+# 选择效应 (Selection Effect): Σ 基准权重 * (组合收益 - 基准收益)
+selection_effect = np.sum(wb * (rp - rb))
+
+# 交互效应 (Interaction Effect): Σ (组合权重 - 基准权重) * (组合收益 - 基准收益)
+interaction_effect = np.sum((wp - wb) * (rp - rb))
+
+# ==========================================
+# 4. 填充 result 字典
+# ==========================================
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+# 课堂投屏验证输出
+if __name__ == '__main__':
+    print("--- 运行结果 ---")
+    for k, v in result.items():
+        if k == 'sharpe_annual':
+            print(f"{k}: {v:.4f}")
+        else:
+            print(f"{k}: {v:.4f} ({v*100:.2f}%)")
+    
+    # 逻辑自校验：主动收益应等于三种效应之和
+    active_return = np.sum(wp * rp) - np.sum(wb * rb)
+    brinson_sum = allocation_effect + selection_effect + interaction_effect
+    assert np.isclose(active_return, brinson_sum), "Brinson归因分解校验失败！"
+    print(f"\n[校验通过] 主动收益 = {active_return:.4f}, 归因三项之和 = {brinson_sum:.4f}")
+```

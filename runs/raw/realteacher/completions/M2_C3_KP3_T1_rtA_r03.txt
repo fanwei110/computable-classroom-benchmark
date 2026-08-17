@@ -1,0 +1,36 @@
+**计算过程遵循给定约定：**
+- 票息率 \(c = 4.6\% = 0.046\)，面值 \(F = 100\)，年限 \(n = 7\)
+- 到期收益率 \(y = 5.3\% = 0.053\)，按年复利报价，因此每年付息一次
+- 现金流：每年票息 \(4.6\)，第7年另加本金 \(100\)
+- 折现因子：\(v = 1/(1+y) = 1/1.053\)
+
+**1. 价格**
+\[
+P = \sum_{t=1}^{7} \frac{4.6}{(1+y)^t} + \frac{100}{(1+y)^7} = 4.6 \times \frac{1-(1+y)^{-7}}{y} + 100 \times (1+y)^{-7}
+\]
+精确计算得 \(P \approx 95.9932\)
+
+**2. 麦考利久期**
+\[
+D_{\text{Mac}} = \frac{\sum_{t=1}^{7} t \cdot PV(CF_t)}{P} \approx 6.1205 \text{ 年}
+\]
+
+**3. 修正久期**
+\[
+D_{\text{Mod}} = \frac{D_{\text{Mac}}}{1+y} \approx 5.8125 \text{ 年}
+\]
+
+**4. 凸性**
+\[
+\text{Convexity} = \frac{1}{P \cdot (1+y)^2} \sum_{t=1}^{7} t(t+1) \cdot PV(CF_t) \approx 42.1334
+\]
+
+**结果字典：**
+```python
+result = {
+    'price': 95.9932,
+    'macaulay_duration_years': 6.1205,
+    'modified_duration_years': 5.8125,
+    'convexity': 42.1334
+}
+```

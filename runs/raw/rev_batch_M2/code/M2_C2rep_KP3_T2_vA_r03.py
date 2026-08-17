@@ -1,0 +1,83 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ========== 可调参数 ==========
+FACE = 100.0            # 面值
+COUPON_RATE = 0.046     # 票息率
+MATURITY = 7            # 年限
+YTM_CURRENT = 0.053     # 当前收益率
+YIELD_RANGE = (0.02, 0.09)   # 精确曲线的收益率范围
+APPROX_RANGE = 0.0125   # 久期近似叠加的附近范围（±125 bp，可在代码中调整）
+SHOCK = 0.01            # 收益率变动幅度（+100 bp）
+FIGURE_NAME = 'price_yield_curve.png'
+# ================================
+
+def bond_price(face, coupon, maturity, ytm, freq=1):
+    """计算债券价格（年付息，freq=1）"""
+    t = np.arange(1, maturity * freq + 1)
+    c = face * coupon / freq
+    cf = np.full_like(t, c, dtype=float)
+    cf[-1] += face
+    discount = (1 + ytm / freq) ** t
+    return np.sum(cf / discount)
+
+def macaulay_duration(face, coupon, maturity, ytm, freq=1):
+    """计算麦考利久期（年）"""
+    t = np.arange(1, maturity * freq + 1)
+    c = face * coupon / freq
+    cf = np.full_like(t, c, dtype=float)
+    cf[-1] += face
+    discount = (1 + ytm / freq) ** t
+    pv = cf / discount
+    price = np.sum(pv)
+    return np.sum(pv * t) / (price * freq)
+
+# 1. 当前价格与久期
+P0 = bond_price(FACE, COUPON_RATE, MATURITY, YTM_CURRENT)
+macD = macaulay_duration(FACE, COUPON_RATE, MATURITY, YTM_CURRENT)
+modD = macD / (1 + YTM_CURRENT)   # 修正久期（年复利）
+
+# 2. +100bp 冲击后的精确价格
+YTM_UP = YTM_CURRENT + SHOCK
+P_up = bond_price(FACE, COUPON_RATE, MATURITY, YTM_UP)
+exact_change = (P_up - P0) / P0
+
+# 3. 久期法估计的相对变化
+dur_approx_change = -modD * SHOCK
+
+# 4. 绘制价格-收益率曲线
+ytm_grid = np.linspace(YIELD_RANGE[0], YIELD_RANGE[1], 500)
+prices_exact = np.array([bond_price(FACE, COUPON_RATE, MATURITY, y) for y in ytm_grid])
+
+# 久期近似只在当前收益率附近绘制
+approx_mask = (ytm_grid >= YTM_CURRENT - APPROX_RANGE) & (ytm_grid <= YTM_CURRENT + APPROX_RANGE)
+ytm_approx = ytm_grid[approx_mask]
+prices_approx = P0 * (1 - modD * (ytm_approx - YTM_CURRENT))
+
+plt.figure(figsize=(8, 5))
+plt.plot(ytm_grid, prices_exact, label='精确价格', linewidth=2)
+plt.plot(ytm_approx, prices_approx, '--', label='久期近似（切线）', linewidth=2)
+plt.axvline(YTM_CURRENT, color='gray', linestyle=':', alpha=0.5, label='当前收益率 5.3%')
+plt.axvline(YTM_UP, color='red', linestyle=':', alpha=0.5, label=f'冲击后收益率 {YTM_UP:.1%}')
+plt.xlabel('收益率')
+plt.ylabel('价格')
+plt.title('债券价格-收益率曲线 (久期近似)')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+fig_path = os.path.abspath(FIGURE_NAME)
+plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# 5. 输出结果字典
+result = {
+    'price_at_up100bp': round(P_up, 6),
+    'dur_approx_change_up100bp': round(dur_approx_change, 6),
+    'figure_path': fig_path
+}
+
+# 教师运行后可以直接查看 result
+if __name__ == "__main__":
+    for k, v in result.items():
+        print(f"{k}: {v}")

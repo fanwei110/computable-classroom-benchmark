@@ -1,0 +1,84 @@
+我将使用Python的`matplotlib`和`numpy`库来绘制Delta随标的价格变化的图，并计算在标的价格为110、波动率为27.6%时的Delta值。以下是完整的代码实现：
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+import os
+
+def black_scholes_delta(S, K, T, r, sigma, option_type='call'):
+    """
+    计算Black-Scholes模型下的Delta值
+    :param S: 标的价格
+    :param K: 行权价
+    :param T: 剩余期限（年）
+    :param r: 无风险利率
+    :param sigma: 波动率
+    :param option_type: 期权类型（'call'或'put'）
+    :return: Delta值
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    if option_type == 'call':
+        delta = norm.cdf(d1)
+    else:
+        delta = norm.cdf(d1) - 1
+    return delta
+
+# 参数设置
+K = 97.5  # 行权价
+r = 0.043  # 无风险利率
+T = 0.58  # 剩余期限（年）
+S_range = np.linspace(70, 140, 100)  # 标的价格范围
+volatilities = [0.15, 0.276, 0.40]  # 波动率列表
+
+# 计算不同波动率下的Delta值
+deltas = {}
+for sigma in volatilities:
+    deltas[sigma] = [black_scholes_delta(S, K, T, r, sigma) for S in S_range]
+
+# 绘制图形
+plt.figure(figsize=(10, 6))
+for sigma in volatilities:
+    plt.plot(S_range, deltas[sigma], label=f'Volatility = {sigma * 100:.1f}%')
+
+plt.axvline(x=K, color='gray', linestyle='--', label='Strike Price')
+plt.title('Delta vs Underlying Price')
+plt.xlabel('Underlying Price')
+plt.ylabel('Delta')
+plt.legend()
+plt.grid(True)
+
+# 保存图形
+figure_path = 'delta_vs_underlying.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 计算S=110, sigma=27.6%时的Delta
+S_110 = 110
+sigma_276 = 0.276
+delta_at_s110 = black_scholes_delta(S_110, K, T, r, sigma_276)
+
+# 存储结果
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+print(result)
+```
+
+### 输出说明：
+1. **`delta_at_s110`**：在标的价格为110、波动率为27.6%时的Delta值（约为0.78左右，具体值会根据计算结果精确输出）。
+2. **`figure_path`**：保存的图形文件路径（`delta_vs_underlying.png`），图中包含三条不同波动率（15%、27.6%、40%）下的Delta曲线，以及行权价（97.5）的垂直参考线。
+
+### 图形示例（示意）：
+![Delta vs Underlying Price](https://i.imgur.com/示例图.png)
+（实际图形会保存为本地文件，路径存储在`result['figure_path']`中）
+
+### 结果字典示例：
+```python
+result = {
+    'delta_at_s110': 0.78123456789,  # 具体值根据计算结果
+    'figure_path': '/path/to/delta_vs_underlying.png'
+}
+```

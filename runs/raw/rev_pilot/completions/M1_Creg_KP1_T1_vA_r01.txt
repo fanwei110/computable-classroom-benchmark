@@ -1,0 +1,57 @@
+以下是一个自包含的 Python 脚本，计算全局最小方差组合（MVP）的权重及其年化波动率：
+
+```python
+import numpy as np
+from scipy.optimize import minimize
+
+# 输入数据
+volatilities = np.array([0.187, 0.243, 0.312])  # 年化波动率
+correlations = np.array([
+    [1.0, 0.21, -0.13],
+    [0.21, 1.0, 0.37],
+    [-0.13, 0.37, 1.0]
+])
+
+# 计算协方差矩阵
+cov_matrix = np.outer(volatilities, volatilities) * correlations
+
+def portfolio_variance(weights, cov_matrix):
+    """计算组合方差"""
+    return weights.T @ cov_matrix @ weights
+
+# 约束条件：权重之和为1
+constraints = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1})
+
+# 优化求解最小方差组合
+initial_weights = np.array([1/3, 1/3, 1/3])  # 初始权重
+bounds = [(-1, 1) for _ in range(len(volatilities))]  # 允许卖空，权重范围[-1,1]
+
+result_optimization = minimize(
+    portfolio_variance,
+    initial_weights,
+    args=(cov_matrix,),
+    method='SLSQP',
+    bounds=bounds,
+    constraints=constraints
+)
+
+mvp_weights = result_optimization.x
+mvp_variance = result_optimization.fun
+mvp_vol_annual = np.sqrt(mvp_variance)  # 年化波动率
+
+# 存储结果
+result = {
+    'mvp_weights': mvp_weights,
+    'mvp_vol_annual': mvp_vol_annual
+}
+
+# 输出结果（可选，用于验证）
+print("全局最小方差组合权重:", result['mvp_weights'])
+print("全局最小方差组合年化波动率:", result['mvp_vol_annual'])
+```
+
+输出契约：
+- `result['mvp_weights']`：numpy数组，表示三只资产在全局最小方差组合中的权重
+- `result['mvp_vol_annual']`：浮点数，表示全局最小方差组合的年化波动率
+
+注意：由于优化过程可能存在微小数值差异，结果可能在小数点后几位有所不同，但整体结果是确定可复现的。

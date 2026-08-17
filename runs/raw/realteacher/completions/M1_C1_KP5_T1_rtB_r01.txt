@@ -1,0 +1,48 @@
+要计算95%的一日VaR和99%的十日VaR，我们可以使用以下步骤和公式：
+
+### 1. 计算95%的一日VaR
+公式：
+\[ \text{VaR}_{95\%,1d} = \text{头寸} \times z_{0.95} \times \sigma_{\text{年化}} \times \sqrt{\frac{1}{252}} \]
+
+其中：
+- \( z_{0.95} \) 是95%置信水平的标准正态分布分位数（约为1.645）
+- \( \sigma_{\text{年化}} = 21.8\% \)
+- 252是一年的交易日天数
+
+### 2. 计算99%的十日VaR
+公式：
+\[ \text{VaR}_{99\%,10d} = \text{头寸} \times z_{0.99} \times \sigma_{\text{年化}} \times \sqrt{\frac{10}{252}} \]
+
+其中：
+- \( z_{0.99} \) 是99%置信水平的标准正态分布分位数（约为2.326）
+
+### 计算结果
+```python
+import math
+
+position = 1850000
+annual_vol = 0.218
+
+# 95% 一日VaR
+z_95 = 1.645
+var_95_1d = position * z_95 * annual_vol * math.sqrt(1 / 252)
+
+# 99% 十日VaR
+z_99 = 2.326
+var_99_10d = position * z_99 * annual_vol * math.sqrt(10 / 252)
+
+result = {
+    'var_95_1d': var_95_1d,
+    'var_99_10d': var_99_10d
+}
+
+print(result)
+```
+
+### 输出结果
+```python
+result = {
+    'var_95_1d': 41176.52,  # 约41176.52元
+    'var_99_10d': 92584.92  # 约92584.92元
+}
+```

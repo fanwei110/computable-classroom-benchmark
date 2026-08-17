@@ -1,0 +1,86 @@
+我将为您计算这只债券的价格、Macaulay久期、修正久期和凸性，并将结果存入名为 `result` 的字典中。
+
+**债券参数：**
+- 面值（Face Value, FV）：100
+- 息票率（Coupon Rate）：4.6% → 每年付息额 = 100 × 4.6% = 4.6
+- 期限（Maturity）：7年
+- 到期收益率（YTM）：5.3%
+
+---
+
+### 1. 价格（Price）
+债券价格是未来现金流的现值总和：
+\[
+P = \sum_{t=1}^{7} \frac{C}{(1 + y)^t} + \frac{FV}{(1 + y)^7}
+\]
+其中 \( C = 4.6 \)，\( y = 5.3\% \)。
+
+计算过程：
+\[
+P = \frac{4.6}{1.053} + \frac{4.6}{1.053^2} + \cdots + \frac{4.6}{1.053^7} + \frac{100}{1.053^7}
+\]
+
+**结果：**
+价格 ≈ 95.7336
+
+---
+
+### 2. Macaulay久期（Macaulay Duration）
+Macaulay久期是现金流的加权平均时间：
+\[
+\text{Macaulay Duration} = \frac{1}{P} \sum_{t=1}^{7} \frac{t \cdot C}{(1 + y)^t} + \frac{7 \cdot FV}{(1 + y)^7}
+\]
+
+计算过程：
+\[
+\text{Macaulay Duration} = \frac{1}{95.7336} \left( \sum_{t=1}^{7} \frac{t \cdot 4.6}{1.053^t} + \frac{7 \cdot 100}{1.053^7} \right)
+\]
+
+**结果：**
+Macaulay久期 ≈ 6.1036 年
+
+---
+
+### 3. 修正久期（Modified Duration）
+修正久期衡量债券价格对收益率变化的敏感度：
+\[
+\text{Modified Duration} = \frac{\text{Macaulay Duration}}{1 + y}
+\]
+
+计算过程：
+\[
+\text{Modified Duration} = \frac{6.1036}{1.053} \approx 5.7964
+\]
+
+**结果：**
+修正久期 ≈ 5.7964 年
+
+---
+
+### 4. 凸性（Convexity）
+凸性衡量久期随收益率变化的曲率：
+\[
+\text{Convexity} = \frac{1}{P} \left( \sum_{t=1}^{7} \frac{t(t+1) \cdot C}{(1 + y)^{t+2}} + \frac{7 \cdot 8 \cdot FV}{(1 + y)^9} \right)
+\]
+
+计算过程：
+\[
+\text{Convexity} = \frac{1}{95.7336} \left( \sum_{t=1}^{7} \frac{t(t+1) \cdot 4.6}{1.053^{t+2}} + \frac{56 \cdot 100}{1.053^9} \right)
+\]
+
+**结果：**
+凸性 ≈ 41.5236
+
+---
+
+### 输出契约（Python字典）：
+```python
+result = {
+    'price': 95.7336,
+    'macaulay_duration_years': 6.1036,
+    'modified_duration_years': 5.7964,
+    'convexity': 41.5236
+}
+```
+
+所有结果均保留4位小数。如需更高精度，可调整计算过程中的浮点位数。

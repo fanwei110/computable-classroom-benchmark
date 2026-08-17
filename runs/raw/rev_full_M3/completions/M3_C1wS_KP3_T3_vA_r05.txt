@@ -1,0 +1,69 @@
+```python
+import numpy as np
+
+# ==================== 债券参数设定 ====================
+F = 100          # 面值 (Face Value)
+c = 0.046        # 票息率 (Coupon Rate)，4.6%
+y = 0.053        # 当前收益率 (Yield to Maturity)，5.3%
+T = 7            # 期限 (Maturity)，7年 (假设按年付息)
+dy = 0.008       # 收益率变动 (Delta Yield)，上升80个基点 = 0.80%
+
+# ==================== 1. 计算当前收益率下的利率敏感性 ====================
+# 生成现金流时间序列与现金流
+t = np.arange(1, T + 1)
+cf = np.full(T, F * c)  # 票息现金流
+cf[-1] += F             # 最后一期加入面值
+
+# 贴现因子与现值
+discount_factors = (1 + y) ** t
+pv = cf / discount_factors
+
+# 债券当前价格
+P = np.sum(pv)
+
+# 麦考利久期
+# MacD = sum(t * PV(CF_t)) / P
+mac_duration = np.sum(t * pv) / P
+
+# 修正久期
+# ModD = MacD / (1 + y)
+mod_duration = mac_duration / (1 + y)
+
+# 凸性
+# Conv = sum(t * (t+1) * PV(CF_t)) / (P * (1+y)^2)
+convexity = np.sum(t * (t + 1) * pv) / (P * (1 + y)**2)
+
+# ==================== 2. 估算收益率上升80个基点的价格影响 ====================
+# 使用久期和凸性估算价格变动百分比 (泰勒展开式)
+# ΔP/P ≈ -ModD * Δy + 0.5 * Conv * (Δy)^2
+price_change_pct = -mod_duration * dy + 0.5 * convexity * (dy ** 2)
+
+# "跌幅"通常以正数表示下降的幅度，因此取估算结果的相反数
+price_drop_pct = -price_change_pct
+
+# ==================== 3. 存入结果 ====================
+result = {
+    'price_drop_pct': price_drop_pct
+}
+
+# -------------------- 课堂投屏展示区 --------------------
+print("="*50)
+print(f"债券当前价格 (Price)          : {P:.4f}")
+print(f"麦考利久期    : {mac_duration:.4f} 年")
+print(f"修正久期      : {mod_duration:.4f}")
+print(f"凸性          : {convexity:.4f}")
+print("="*50)
+print(f"收益率上升 (基点)             : {dy * 10000:.0f} bp")
+print(f"久期效应导致的价格变动        : {-mod_duration * dy:.4%}")
+print(f"凸性效应导致的价格变动        : {0.5 * convexity * (dy ** 2):.4%}")
+print(f"综合价格变动估算              : {price_change_pct:.4%}")
+print(f"预计跌幅幅度                  : {price_drop_pct:.4%}")
+print("="*50)
+print(f"最终结果 result: {result}")
+```
+
+### 设计说明：
+1. **假设处理**：题目未指明付息频率，遵循国内《证券投资学》教学惯例，默认**按年付息**，计算内部一致。
+2. **公式选择**：采用严格的麦考利久期与修正久期转换公式 $ModD = \frac{MacD}{1+y}$，以及标准凸性公式 $Conv = \frac{1}{P(1+y)^2}\sum\frac{t(t+1)CF_t}{(1+y)^t}$。
+3. **跌幅表述**：金融习惯中“跌幅”通常指绝对幅度（如跌了4.5%，而非-4.5%），故 `price_drop_pct` 存入的是 `price_change_pct` 的相反数（正数），便于直观理解。
+4. **投屏友好**：代码加入了格式化打印区，教师在运行时不仅得到最终字典，还能在控制台清晰展示中间计算步骤（久期效应与凸性效应的拆解），便于课堂逐步推演讲解。

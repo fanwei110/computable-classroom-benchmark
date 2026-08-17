@@ -1,0 +1,93 @@
+```python
+import pandas as pd
+import numpy as np
+import matplotlib
+matplotlib.use('Agg') # 使用非交互式后端，防止弹窗阻塞并增强环境兼容性
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 假设与参数配置
+# ==========================================
+# 假设1：一年按252个交易日计算（学术界与业界计算年化夏普的通行标准）
+# 假设2：日无风险利率采用复利折算方式：r_daily = (1 + r_annual)^(1/252) - 1
+# 假设3：标准差采用样本标准差（ddof=1，pandas默认行为），与统计学无偏估计一致
+# 假设4：收益率数据已调整为小数格式（如0.01代表1%）
+
+RF_ANNUAL = 0.021                 # 年化无风险利率 2.1%
+TRADING_DAYS_PER_YEAR = 252       # 一年交易日
+WINDOW_SIZE = 60                  # 滚动窗口长度（可调参数）
+DATA_PATH = 'data/market_snapshot_v1.csv'
+FIGURE_PATH = 'rolling_sharpe_ratio.png'
+
+# ==========================================
+# 步骤 1: 读取快照 CSV；计入无风险利率
+# ==========================================
+df = pd.read_csv(DATA_PATH)
+
+# 智能识别日期列并设为索引，以保障时间序列图表的横轴正确
+date_col = None
+for col in df.columns:
+    if 'date' in col.lower() or 'time' in col.lower():
+        date_col = col
+        break
+
+if date_col:
+    df[date_col] = pd.to_datetime(df[date_col])
+    df = df.set_index(date_col).sort_index()
+
+# 计算日频无风险利率
+rf_daily = (1 + RF_ANNUAL) ** (1 / TRADING_DAYS_PER_YEAR) - 1
+
+# 提取基金日收益率
+fund_returns = df['fund']
+
+# ==========================================
+# 步骤 2: 计算 60 日滚动年化夏普，窗口可调
+# ==========================================
+# 计算每日超额收益
+excess_returns = fund_returns - rf_daily
+
+# 计算滚动均值与滚动标准差
+rolling_mean = excess_returns.rolling(window=WINDOW_SIZE).mean()
+rolling_std = excess_returns.rolling(window=WINDOW_SIZE).std()
+
+# 计算滚动年化夏普比率
+# 年化夏普 = (日均值 / 日标准差) * sqrt(252)
+rolling_sharpe_annual = (rolling_mean / rolling_std) * np.sqrt(TRADING_DAYS_PER_YEAR)
+
+# ==========================================
+# 步骤 3: 报告最后一个窗口的值；画出时间序列
+# ==========================================
+# 提取最后一个窗口的夏普值
+rolling_sharpe_last = rolling_sharpe_annual.iloc[-1]
+
+# 绘图
+plt.figure(figsize=(12, 6))
+plt.plot(rolling_sharpe_annual.index, rolling_sharpe_annual, 
+         label=f'{WINDOW_SIZE}-Day Rolling Annualized Sharpe', 
+         color='tab:blue', linewidth=1.2)
+
+plt.title(f'{WINDOW_SIZE}-Day Rolling Annualized Sharpe Ratio (Rf = {RF_ANNUAL*100}%)', fontsize=14)
+plt.xlabel('Date', fontsize=12)
+plt.ylabel('Annualized Sharpe Ratio', fontsize=12)
+plt.axhline(0, color='black', linewidth=0.8, linestyle='--') # 零轴参考线
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.legend(fontsize=12)
+plt.tight_layout()
+
+# ==========================================
+# 步骤 4: 保存图形并填充 result
+# ==========================================
+plt.savefig(FIGURE_PATH, dpi=150)
+plt.close()
+
+# 按照输出契约构建结果字典
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': FIGURE_PATH
+}
+
+# 课堂投屏展示辅助打印
+print(f"最后{WINDOW_SIZE}日窗口的年化夏普比率: {rolling_sharpe_last:.4f}")
+print(f"图表已保存至: {FIGURE_PATH}")
+```

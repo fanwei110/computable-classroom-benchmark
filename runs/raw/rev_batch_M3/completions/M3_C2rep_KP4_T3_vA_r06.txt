@@ -1,0 +1,46 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 已知参数
+S = 103.7      # 标的资产现价
+K = 97.5       # 行权价
+r = 0.043      # 无风险利率
+T = 0.58       # 剩余期限（年）
+sigma = 0.276  # 原波动率（27.6%）
+delta_sigma = 0.01  # 隐含波动率上升一个百分点（1%）
+
+# Black-Scholes 欧式看涨期权定价闭式解
+def bs_call_price(S, K, r, T, sigma):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    return price
+
+# 1. 推算期权价格对这一个百分点波动率变化的响应
+# 计算原波动率下的期权价格
+price_original = bs_call_price(S, K, r, T, sigma)
+
+# 计算波动率上升1个百分点后的期权价格
+price_new = bs_call_price(S, K, r, T, sigma + delta_sigma)
+
+# 精确的期权价格变化量
+price_change = price_new - price_original
+
+# 注：也可通过希腊字母 Vega 闭式解近似推算响应
+# d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+# vega = S * np.sqrt(T) * norm.pdf(d1)
+# price_change_approx = vega * delta_sigma
+# 精确变化与一阶近似非常接近，此处采用精确的闭式解差值作为最终响应
+
+# 2. 把价格变化存入 result
+result = {
+    'price_change': price_change
+}
+
+# 课堂投屏展示辅助信息
+print(f"原期权价格: {price_original:.4f}")
+print(f"波动率上升1%后的期权价格: {price_new:.4f}")
+print(f"期权价格变化量 (price_change): {price_change:.4f}")
+print(f"\n最终结果字典 result: {result}")
+```

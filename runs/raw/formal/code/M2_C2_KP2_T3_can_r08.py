@@ -1,0 +1,38 @@
+"""
+CAPM 预期收益计算脚本
+概念：证券市场线 (SML)，E(R_i) = R_f + beta_i * (E(R_m) - R_f)
+任务：给定股票 beta、市场月收益、年无风险利率，求月度 CAPM 预期收益。
+假设：年无风险利率采用单利方式折算为月利率（即除以12），
+     收益率均以小数表示。
+"""
+
+import numpy as np
+
+# -------- 给定参数 --------
+beta = 1.42                 # 股票贝塔
+market_return_monthly = -0.058  # 上个月市场收益率（-5.8%）
+risk_free_annual = 0.047        # 年无风险利率（4.7%）
+
+# -------- 1. 年无风险利率折算为月利率 --------
+# 假设年利率为名义年利率，按月单利折算
+risk_free_monthly = risk_free_annual / 12.0
+
+# -------- 2. 月度层面套用 CAPM --------
+# CAPM 公式：E(R_i) = R_f + beta * (R_m - R_f)
+market_excess_return = market_return_monthly - risk_free_monthly
+capm_return_monthly = risk_free_monthly + beta * market_excess_return
+
+# -------- 3. 填充结果字典 --------
+result = {
+    'capm_return_monthly': capm_return_monthly
+}
+
+# 输出结果（投屏用）
+print("===== CAPM 预期收益计算 =====")
+print(f"年无风险利率       : {risk_free_annual:.4f} ({risk_free_annual*100:.2f}%)")
+print(f"折算月无风险利率   : {risk_free_monthly:.6f} ({risk_free_monthly*100:.4f}%)")
+print(f"市场月收益率       : {market_return_monthly:.4f} ({market_return_monthly*100:.2f}%)")
+print(f"股票 Beta          : {beta}")
+print(f"市场超额收益       : {market_excess_return:.6f} ({market_excess_return*100:.4f}%)")
+print(f"CAPM 预期月收益    : {capm_return_monthly:.6f} ({capm_return_monthly*100:.4f}%)")
+print("\n>>> 输出字典 result:", result)

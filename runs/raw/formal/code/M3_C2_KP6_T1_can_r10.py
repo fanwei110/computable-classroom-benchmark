@@ -1,0 +1,75 @@
+import pandas as pd
+import numpy as np
+
+# ==============================
+# 第一部分：年化夏普比率计算
+# ==============================
+
+# 1. 读取课程数据快照
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 提取基金日收益率，并剔除可能的缺失值以保证计算鲁棒性
+daily_returns = df['fund'].dropna().values
+
+# 假设处理：一年按252个交易日计算；日无风险利率采用单利折算（业界通用且与收益率加总逻辑一致）
+rf_annual = 0.021
+trading_days = 252
+rf_daily = rf_annual / trading_days
+
+# 计算日超额收益的均值与标准差 (使用样本标准差 ddof=1)
+mean_daily = np.mean(daily_returns)
+std_daily = np.std(daily_returns, ddof=1)
+
+# 日夏普比率与年化夏普比率
+# 年化公式：SR_annual = SR_daily * sqrt(252)
+sharpe_daily = (mean_daily - rf_daily) / std_daily
+sharpe_annual = sharpe_daily * np.sqrt(trading_days)
+
+
+# ==============================
+# 第二部分：Brinson业绩归因计算
+# ==============================
+
+# 组合与基准的权重与收益
+wp = np.array([0.45, 0.35, 0.20])  # 组合权重
+rp = np.array([0.083, 0.021, -0.014]) # 组合行业收益
+
+wb = np.array([0.40, 0.40, 0.20])  # 基准权重
+rb = np.array([0.067, 0.034, -0.009]) # 基准行业收益
+
+# 基准总收益
+R_b = np.dot(wb, rb)
+
+# 配置效应 (Allocation Effect): SUM[(组合权重 - 基准权重) * (基准行业收益 - 基准总收益)]
+allocation_effect = np.sum((wp - wb) * (rb - R_b))
+
+# 选择效应 (Selection Effect): SUM[基准权重 * (组合行业收益 - 基准行业收益)]
+selection_effect = np.sum(wb * (rp - rb))
+
+# 交互效应 (Interaction Effect): SUM[(组合权重 - 基准权重) * (组合行业收益 - 基准行业收益)]
+interaction_effect = np.sum((wp - wb) * (rp - rb))
+
+
+# ==============================
+# 填充结果字典
+# ==============================
+
+result = {
+    'sharpe_annual': float(sharpe_annual),
+    'allocation_effect': float(allocation_effect),
+    'selection_effect': float(selection_effect),
+    'interaction_effect': float(interaction_effect)
+}
+
+# 课堂投屏展示运行结果
+if __name__ == '__main__':
+    print("="*50)
+    print("《证券投资学》课堂实时计算结果")
+    print("="*50)
+    print(f"年化夏普比率: {result['sharpe_annual']:.6f}")
+    print("-" * 50)
+    print(f"配置效应:     {result['allocation_effect']:.6f}")
+    print(f"选择效应:     {result['selection_effect']:.6f}")
+    print(f"交互效应:     {result['interaction_effect']:.6f}")
+    print(f"归因总效应:   {result['allocation_effect'] + result['selection_effect'] + result['interaction_effect']:.6f}")
+    print("="*50)

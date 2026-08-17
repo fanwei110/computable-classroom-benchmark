@@ -1,0 +1,23 @@
+import math
+
+# ç»å®åæ°
+annual_vol = 0.24
+position = 2_700_000  # å
+confidence = 0.95
+trading_days = 252
+
+# è®¡ç®æ¥æ³¢å¨ç
+daily_vol = annual_vol / math.sqrt(trading_days)
+
+# 95% ç½®ä¿¡åº¦å¯¹åºçæ åæ­£æåä½æ°
+z_score = 1.6448536269514722  # scipy.stats.norm.ppf(0.95)
+
+# ä¸æ¥ VaRï¼æ­£æå¤±éé¢ï¼
+var_95_1d = z_score * daily_vol * position
+
+# å­åç»æå­å
+result = {
+    'var_95_1d': round(var_95_1d, 2)  # ä¿çä¸¤ä½å°æ°ï¼ç¬¦åéèæ¯ä¾
+}
+
+result

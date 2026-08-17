@@ -1,0 +1,39 @@
+由于我无法直接访问你本地的“课程数据”文件，我为你提供计算该指标的 Python 代码。你只需在本地环境运行这段代码，即可得到符合输出契约要求的 `result` 字典。
+
+假设你的数据存储在名为 `df` 的 DataFrame 中，且 `fund` 列为基金净值数据（如果是日收益率数据，请按代码中的注释调整），无风险利率按 2.1% 计算，一年按 252 个交易日年化：
+
+```python
+import numpy as np
+import pandas as pd
+
+# 假设课程数据已加载为 df，列名为 'fund'
+# 如果 'fund' 列是净值数据，需先计算日收益率：
+returns = df['fund'].pct_change().dropna()
+
+# 如果 'fund' 列已经是日收益率，则直接使用：
+# returns = df['fund']
+
+# 无风险利率设定
+rf_annual = 0.021
+rf_daily = rf_annual / 252
+
+# 计算日超额收益
+excess_returns = returns - rf_daily
+
+# 计算日夏普比率（均值除以标准差）
+sharpe_daily = excess_returns.mean() / excess_returns.std()
+
+# 年化夏普比率 = 日夏普比率 * sqrt(252)
+sharpe_annual = sharpe_daily * np.sqrt(252)
+
+# 按照输出契约存入字典
+result = {'sharpe_annual': sharpe_annual}
+
+print(result)
+```
+
+**关键逻辑说明：**
+1. **收益率处理**：一般课程提供的 `fund` 列为净值序列，需要用 `pct_change()` 转换为日收益率。如果原数据已是日收益率则无需此步。
+2. **超额收益**：日超额收益 = 日收益率 - 日无风险利率（2.1% / 252）。
+3. **年化处理**：整个样本的年化夏普比率 = (日超额收益均值 / 日超额收益标准差) × $\sqrt{252}$。
+4. **输出契约**：最终结果已严格存入键名为 `'sharpe_annual'` 的字典 `result` 中。

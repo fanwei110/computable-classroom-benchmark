@@ -1,0 +1,125 @@
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+import numpy as np
+import os
+
+# ===================== 参数设定 =====================
+rf_init = 2.3       # 无风险利率 (%)
+erm_init = 9.4      # 市场期望收益 (%)
+
+# 三个资产点
+points = {
+    'X': (0.62, 8.1),
+    'Y': (1.18, 13.1),
+    'Z': (1.51, 9.9),
+}
+
+# ===================== 计算部分 =====================
+def calc_slope(rf, erm):
+    return erm - rf
+
+def calc_er(rf, erm, beta):
+    return rf + beta * (erm - rf)
+
+sml_slope = calc_slope(rf_init, erm_init)
+er_at_beta_127 = calc_er(rf_init, erm_init, 1.27)
+
+print(f"SML 斜率 (市场风险溢价) = {sml_slope:.1f}%")
+print(f"Beta=1.27 对应期望收益 = {er_at_beta_127:.3f}%")
+
+# ===================== 绘图部分 =====================
+fig, ax = plt.subplots(figsize=(10, 7))
+plt.subplots_adjust(bottom=0.25)
+
+beta_range = np.linspace(0, 2, 300)
+
+# SML 线
+sml_line, = ax.plot(beta_range,
+                     rf_init + beta_range * (erm_init - rf_init),
+                     'b-', linewidth=2.5, label='SML')
+
+# 市场组合点 M
+erm_dot, = ax.plot(1, erm_init, 'ro', markersize=10, zorder=5, label='M (β=1)')
+
+# 无风险利率点
+rf_dot, = ax.plot(0, rf_init, 'go', markersize=10, zorder=5, label=f'Rf (β=0)')
+
+# 三个资产点
+colors = {'X': '#E74C3C', 'Y': '#2ECC71', 'Z': '#F39C12'}
+markers_artists = {}
+for name, (b, er) in points.items():
+    m, = ax.plot(b, er, 's', color=colors[name], markersize=10, zorder=5,
+                 label=f'{name} (β={b}, E(R)={er}%)')
+    markers_artists[name] = m
+
+# 从各点到 SML 的垂直虚线（显示定价偏差）
+vlines = {}
+for name, (b, er) in points.items():
+    er_on_sml = calc_er(rf_init, erm_init, b)
+    vl, = ax.plot([b, b], [er_on_sml, er], '--', color=colors[name],
+                  linewidth=1.2, alpha=0.7)
+    vlines[name] = vl
+
+# 坐标轴设置
+ax.set_xlim(-0.05, 2.1)
+ax.set_ylim(-1, 20)
+ax.set_xlabel('Beta (β)', fontsize=13)
+ax.set_ylabel('Expected Return E(R) (%)', fontsize=13)
+ax.set_title('Security Market Line (SML)', fontsize=15, fontweight='bold')
+ax.axhline(y=0, color='grey', linewidth=0.5)
+ax.axvline(x=0, color='grey', linewidth=0.5)
+ax.legend(loc='upper left', fontsize=10)
+ax.grid(True, alpha=0.3)
+
+# 斜率注释
+slope_text = ax.text(1.5, rf_init + 1.5 * (erm_init - rf_init) - 1.5,
+                      f'Slope = {sml_slope:.1f}%',
+                      fontsize=12, color='blue',
+                      bbox=dict(boxstyle='round,pad=0.3', facecolor='lightyellow', alpha=0.8))
+
+# ===================== 滑块 =====================
+ax_rf = plt.axes([0.2, 0.12, 0.6, 0.03])
+ax_erm = plt.axes([0.2, 0.06, 0.6, 0.03])
+
+slider_rf = Slider(ax_rf, 'Rf (%)', 0.0, 8.0, valinit=rf_init, valstep=0.1, color='skyblue')
+slider_erm = Slider(ax_erm, 'E(Rm) (%)', 5.0, 20.0, valinit=erm_init, valstep=0.1, color='salmon')
+
+def update(val):
+    rf = slider_rf.val
+    erm = slider_erm.val
+
+    # 更新 SML 线
+    sml_line.set_ydata(rf + beta_range * (erm - rf))
+
+    # 更新 M 点和 Rf 点
+    erm_dot.set_ydata([erm])
+    rf_dot.set_ydata([rf])
+
+    # 更新垂直虚线
+    for name, (b, er) in points.items():
+        er_on_sml = calc_er(rf, erm, b)
+        vlines[name].set_ydata([er_on_sml, er])
+
+    # 更新斜率文本
+    new_slope = calc_slope(rf, erm)
+    slope_text.set_position((1.5, rf + 1.5 * (erm - rf) - 1.5))
+    slope_text.set_text(f'Slope = {new_slope:.1f}%')
+
+    fig.canvas.draw_idle()
+
+slider_rf.on_changed(update)
+slider_erm.on_changed(update)
+
+# ===================== 保存图片 =====================
+save_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'sml_plot.png') if '__file__' in dir() else 'sml_plot.png'
+fig.savefig(save_path, dpi=150, bbox_inches='tight')
+print(f"图片已保存至: {save_path}")
+
+plt.show()
+
+# ===================== 输出契约 =====================
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': save_path
+}

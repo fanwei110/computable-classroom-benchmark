@@ -1,0 +1,53 @@
+=== B0005  任务 KP4_T1 (T1) ===
+
+--- 任务要求的输出键 ---
+call_price, call_delta, call_vega
+
+--- 判分失败明细 ---
+call_price: 提交值 13.3025  |  参考值 13.313704651787951
+call_vega: 提交值 27.5477  |  参考值 27.56457460271352
+
+--- 提取出的代码 ---
+result = {
+    'call_price': 13.3025,
+    'call_delta': 0.6974,
+    'call_vega': 27.5477
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+根据Black-Scholes-Merton期权定价模型，对于无分红的欧式看涨期权，相关计算公式如下：
+
+1. **参数设定**
+   * 标的现价 $S = 103.7$
+   * 行权价 $K = 97.5$
+   * 隐含波动率 $\sigma = 0.276$
+   * 无风险利率 $r = 0.043$ （连续复利）
+   * 剩余时间 $T = 0.58$ （年）
+   * 分红率 $q = 0$
+
+2. **计算中间变量**
+   * $d_1 = \frac{\ln(S/K) + (r + \sigma^2/2)T}{\sigma\sqrt{T}}$
+     $d_1 = \frac{\ln(103.7/97.5) + (0.043 + 0.276^2/2) \times 0.58}{0.276 \times \sqrt{0.58}} \approx \frac{0.06168 + 0.04703}{0.21020} \approx 0.517044$
+   * $d_2 = d_1 - \sigma\sqrt{T}$
+     $d_2 = 0.517044 - 0.21020 \approx 0.306849$
+   * 标准正态分布累积概率：$N(d_1) \approx 0.697377$ ， $N(d_2) \approx 0.620527$
+   * 标准正态分布概率密度：$\phi(d_1) = \frac{1}{\sqrt{2\pi}} e^{-d_1^2/2} \approx 0.348989$
+
+3. **计算期权价格与希腊字母**
+   * **Call Price** = $S \cdot N(d_1) - K \cdot e^{-rT} \cdot N(d_2)$
+     $= 103.7 \times 0.697377 - 97.5 \times e^{-0.043 \times 0.58} \times 0.620527$
+     $= 72.3128 - 95.0983 \times 0.620527 \approx 13.3025$
+   * **Call Delta** = $N(d_1) \approx 0.6974$
+   * **Call Vega** = $S \cdot \phi(d_1) \cdot \sqrt{T}$ （对波动率求偏导）
+     $= 103.7 \times 0.348989 \times \sqrt{0.58} \approx 27.5477$
+
+最终将结果保留合适有效数字存入字典：
+
+```python
+result = {
+    'call_price': 13.3025,
+    'call_delta': 0.6974,
+    'call_vega': 27.5477
+}
+```

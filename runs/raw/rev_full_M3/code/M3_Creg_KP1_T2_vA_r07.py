@@ -1,0 +1,111 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+
+# ==========================================
+# 1. 定义资产参数与目标
+# ==========================================
+E1 = 0.071      # 资产1期望收益
+E2 = 0.124      # 资产2期望收益
+vol1 = 0.163    # 资产1年化波动率
+vol2 = 0.289    # 资产2年化波动率
+
+V1 = vol1**2    # 资产1方差
+V2 = vol2**2    # 资产2方差
+
+rhos = [0.15, 0.45, 0.75]   # 相关系数列表
+target_ret = 0.10           # 目标期望收益
+
+# ==========================================
+# 2. 初始化结果字典
+# ==========================================
+result = {
+    'mvp_vol_at_rho45': None,
+    'frontier_vol_at_target': None,
+    'figure_path': 'mean_variance_frontier.png'
+}
+
+# ==========================================
+# 3. 绘图准备
+# ==========================================
+fig, ax = plt.subplots(figsize=(10, 7))
+
+# 满仓条件：w1 + w2 = 1，允许卖空，故 w1 范围适当外扩
+w1_arr = np.linspace(-0.5, 1.5, 1000)
+w2_arr = 1 - w1_arr
+
+# ==========================================
+# 4. 遍历相关系数，计算前沿并绘图
+# ==========================================
+for rho in rhos:
+    # 协方差
+    Cov = rho * vol1 * vol2
+    
+    # --- 计算最小方差组合 (MVP) ---
+    w1_mvp = (V2 - Cov) / (V1 + V2 - 2 * Cov)
+    w2_mvp = 1 - w1_mvp
+    
+    E_mvp = w1_mvp * E1 + w2_mvp * E2
+    vol_mvp = np.sqrt(w1_mvp**2 * V1 + w2_mvp**2 * V2 + 2 * w1_mvp * w2_mvp * Cov)
+    
+    # --- 记录相关系数为 0.45 时的特定数值 ---
+    if np.isclose(rho, 0.45):
+        result['mvp_vol_at_rho45'] = vol_mvp
+        
+        # 目标期望收益下的最小波动率组合
+        # E_p = w1 * E1 + (1 - w1) * E2 => w1 = (E_p - E2) / (E1 - E2)
+        w1_target = (target_ret - E2) / (E1 - E2)
+        w2_target = 1 - w1_target
+        vol_target = np.sqrt(w1_target**2 * V1 + w2_target**2 * V2 + 2 * w1_target * w2_target * Cov)
+        result['frontier_vol_at_target'] = vol_target
+
+    # --- 生成前沿曲线数据 ---
+    E_arr = w1_arr * E1 + w2_arr * E2
+    vol_arr = np.sqrt(w1_arr**2 * V1 + w2_arr**2 * V2 + 2 * w1_arr * w2_arr * Cov)
+    
+    # --- 绘制曲线 ---
+    ax.plot(vol_arr, E_arr, label=f'ρ = {rho:.2f}', linewidth=2)
+    
+    # --- 标出最小方差组合 ---
+    ax.scatter(vol_mvp, E_mvp, marker='D', s=60, zorder=5, edgecolors='black')
+    
+    # 调整标注位置，防止遮挡
+    if np.isclose(rho, 0.15):
+        xytext_offset = (15, 15)
+    elif np.isclose(rho, 0.45):
+        xytext_offset = (-130, 20)
+    else: # 0.75
+        xytext_offset = (-130, -30)
+        
+    ax.annotate(f'MVP (ρ={rho})\n({vol_mvp:.2%}, {E_mvp:.2%})', 
+                xy=(vol_mvp, E_mvp), 
+                xytext=xytext_offset, 
+                textcoords='offset points',
+                fontsize=9,
+                arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0'))
+
+# ==========================================
+# 5. 标出原始资产点及美化图像
+# ==========================================
+# 标出资产1和资产2
+ax.scatter(vol1, E1, marker='o', color='black', s=80, zorder=6)
+ax.annotate('Asset 1', xy=(vol1, E1), xytext=(10, -15), textcoords='offset points', fontsize=10)
+
+ax.scatter(vol2, E2, marker='o', color='black', s=80, zorder=6)
+ax.annotate('Asset 2', xy=(vol2, E2), xytext=(10, 5), textcoords='offset points', fontsize=10)
+
+# 坐标轴格式化为百分比
+ax.xaxis.set_major_formatter(mticker.PercentFormatter(1.0, decimals=1))
+ax.yaxis.set_major_formatter(mticker.PercentFormatter(1.0, decimals=1))
+
+ax.set_xlabel('Volatility (Annualized)', fontsize=12)
+ax.set_ylabel('Expected Return (Annualized)', fontsize=12)
+ax.set_title('Mean-Variance Frontiers for Different Correlations', fontsize=14)
+ax.legend(fontsize=11)
+ax.grid(True, linestyle='--', alpha=0.7)
+
+# ==========================================
+# 6. 保存图像
+# ==========================================
+plt.savefig(result['figure_path'], dpi=150, bbox_inches='tight')
+plt.close()

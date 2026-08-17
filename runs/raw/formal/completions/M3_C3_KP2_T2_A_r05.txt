@@ -1,0 +1,98 @@
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+# ================= 可调参数 (上课修改此处即可) =================
+rf = 0.023          # 无风险利率
+rm = 0.094          # 市场期望收益
+# ============================================================
+
+# 1. 计算 SML 斜率和 Beta=1.27 时的期望收益
+sml_slope = rm - rf
+er_at_beta_127 = rf + 1.27 * sml_slope
+
+# 2. 生成 SML 数据
+betas = np.linspace(0, 2, 100)
+expected_returns = rf + betas * sml_slope
+
+# 3. 绘制图形
+plt.figure(figsize=(10, 6))
+plt.plot(betas, expected_returns, label='SML', color='blue', linewidth=2)
+
+# 标出三个点 (按小数传入)
+points = {
+    'X': (0.62, 0.081),
+    'Y': (1.18, 0.131),
+    'Z': (1.51, 0.099)
+}
+
+for name, (b, e) in points.items():
+    plt.scatter(b, e, color='red', zorder=5)
+    plt.annotate(f'{name} ({b}, {e*100:.1f}%)', 
+                 xy=(b, e), 
+                 xytext=(10, 10), 
+                 textcoords='offset points',
+                 fontsize=11,
+                 arrowprops=dict(arrowstyle='->', color='black'))
+
+# 标出 Beta=1.27 的点以作参考
+plt.scatter(1.27, er_at_beta_127, color='green', marker='D', zorder=5)
+plt.annotate(f'β=1.27 ({er_at_beta_127*100:.2f}%)', 
+             xy=(1.27, er_at_beta_127), 
+             xytext=(-80, -20), 
+             textcoords='offset points',
+             fontsize=10,
+             arrowprops=dict(arrowstyle='->', color='green'))
+
+# 增加参数文本框，方便上课展示当前设定
+textstr = f'$r_f$ = {rf*100:.1f}%\n$E(R_m)$ = {rm*100:.1f}%\nSML Slope = {sml_slope:.4f}'
+props = dict(boxstyle='round', facecolor='wheat', alpha=0.8)
+plt.text(0.05, 0.95, textstr, transform=plt.gca().transAxes, fontsize=12,
+         verticalalignment='top', bbox=props)
+
+# 格式化图表
+plt.title('Security Market Line (SML)', fontsize=14)
+plt.xlabel('Beta (β)', fontsize=12)
+plt.ylabel('Expected Return', fontsize=12)
+plt.axhline(0, color='black', linewidth=0.8)
+plt.axvline(0, color='black', linewidth=0.8)
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.xlim(0, 2)
+plt.ylim(0, 0.16)
+
+# 保存图表
+figure_path = 'sml_plot.png'
+plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# 4. 构建输出契约字典
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': figure_path
+}
+
+print(result)
+```
+
+### 计算结果与说明
+
+1. **SML的斜率**：
+   SML斜率即为市场风险溢价，计算公式为 $E(R_m) - r_f$。
+   斜率 = $0.094 - 0.023 = 0.071$
+
+2. **Beta = 1.27 对应的期望收益**：
+   根据CAPM公式：$E(R) = r_f + \beta \times (E(R_m) - r_f)$
+   $E(R) = 0.023 + 1.27 \times 0.071 = 0.023 + 0.09017 = 0.11317$ （即 11.317%）
+
+3. **关于调参**：
+   代码段最上方将 `rf` 和 `rm` 单独提取为了全局变量，上课时只需修改这两个变量的值并重新运行单元格，SML直线、斜率、特定Beta的期望收益以及图上的参数文本框都会自动更新。
+
+4. **字典输出结果**：
+   ```python
+   {
+       'sml_slope': 0.071, 
+       'er_at_beta_127': 0.11317, 
+       'figure_path': 'sml_plot.png'
+   }
+   ```

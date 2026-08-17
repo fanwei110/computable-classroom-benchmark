@@ -1,0 +1,18 @@
+import math
+
+# 输入参数
+annual_vol = 0.24
+position = 2700000
+z_score_95 = 1.645  # 95%置信区间对应的正态分布分位数
+trading_days = 252  # 一年交易日标准假设
+
+# 计算日波动率
+daily_vol = annual_vol / math.sqrt(trading_days)
+
+# 计算95%一日VaR
+var_95_1d = position * z_score_95 * daily_vol
+
+# 按照输出契约要求封装结果
+result = {
+    'var_95_1d': round(var_95_1d, 2)
+}

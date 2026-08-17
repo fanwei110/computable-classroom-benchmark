@@ -1,0 +1,102 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# =========================
+# 1. 参数设定
+# =========================
+r1 = 0.071        # 资产1期望年收益
+r2 = 0.124        # 资产2期望年收益
+sigma1 = 0.163    # 资产1年化波动率
+sigma2 = 0.289    # 资产2年化波动率
+var1 = sigma1**2
+var2 = sigma2**2
+
+# 三种相关系数
+rhos = [0.15, 0.45, 0.75]
+
+# 组合权重扫描范围（允许卖空，满仓意味着 w2 = 1 - w1）
+w1_range = np.linspace(-1.5, 2.5, 2000)
+
+# =========================
+# 2. 绘图准备
+# =========================
+fig, ax = plt.subplots(figsize=(10, 7))
+ax.set_xlabel('Annualized Volatility', fontsize=12)
+ax.set_ylabel('Annualized Expected Return', fontsize=12)
+ax.set_title('Mean-Variance Frontier for Two Risky Assets (full investment, short selling allowed)', fontsize=14)
+ax.grid(True, alpha=0.3)
+
+# 用于存储rho=0.45的相关结果
+mvp_vol_at_rho45 = None
+frontier_vol_at_target = None
+
+# =========================
+# 3. 对每个相关系数计算并绘图
+# =========================
+for rho in rhos:
+    cov12 = rho * sigma1 * sigma2
+
+    # 扫描全部组合（w1, w2 = 1-w1）
+    ret_port = w1_range * r1 + (1 - w1_range) * r2
+    var_port = w1_range**2 * var1 + (1 - w1_range)**2 * var2 + 2 * w1_range * (1 - w1_range) * cov12
+    vol_port = np.sqrt(var_port)
+
+    # 绘制均值-方差前沿（横轴波动率，纵轴期望收益）
+    ax.plot(vol_port, ret_port, label=f'ρ = {rho}')
+
+    # 计算最小方差组合 (MVP)
+    # 权重解析解：最小化 var_port 对 w1 求导，并令 w2 = 1-w1
+    w1_mvp = (var2 - cov12) / (var1 + var2 - 2 * cov12)
+    w2_mvp = 1 - w1_mvp
+    ret_mvp = w1_mvp * r1 + w2_mvp * r2
+    var_mvp = w1_mvp**2 * var1 + w2_mvp**2 * var2 + 2 * w1_mvp * w2_mvp * cov12
+    vol_mvp = np.sqrt(var_mvp)
+
+    # 在曲线上标出最小方差组合（颜色与曲线相同）
+    # 获取当前曲线的颜色
+    line_color = ax.get_lines()[-1].get_color()
+    ax.scatter(vol_mvp, ret_mvp, color=line_color, marker='o', s=80,
+               zorder=5, edgecolors='k', linewidths=0.5,
+               label=f'MVP ρ={rho}')
+
+    # 保存 ρ=0.45 时的 MVP 波动率
+    if rho == 0.45:
+        mvp_vol_at_rho45 = vol_mvp
+
+        # 计算目标收益 10% 时的最小波动率
+        # 给定满仓约束，目标收益唯一确定组合权重
+        w1_target = (0.10 - r2) / (r1 - r2)
+        w2_target = 1 - w1_target
+        ret_target = w1_target * r1 + w2_target * r2   # 应为 0.10
+        var_target = (w1_target**2 * var1 +
+                      w2_target**2 * var2 +
+                      2 * w1_target * w2_target * cov12)
+        vol_target = np.sqrt(var_target)
+        frontier_vol_at_target = vol_target
+
+# =========================
+# 4. 图形修饰与保存
+# =========================
+ax.legend(loc='upper left', fontsize=9)
+fig.tight_layout()
+figure_path = 'mean_variance_frontier.png'
+fig.savefig(figure_path, dpi=150)
+plt.close(fig)   # 避免在某些环境中重复显示
+
+# =========================
+# 5. 填充结果字典并打印
+# =========================
+result = {
+    'mvp_vol_at_rho45': mvp_vol_at_rho45,
+    'frontier_vol_at_target': frontier_vol_at_target,
+    'figure_path': figure_path
+}
+
+if __name__ == '__main__':
+    # 输出结果供检查
+    print("计算结果：")
+    print(f"相关系数为0.45时最小方差组合的年化波动率: {mvp_vol_at_rho45:.6f} ({mvp_vol_at_rho45*100:.4f}%)")
+    print(f"目标收益10%下可达到的最小年化波动率:  {frontier_vol_at_target:.6f} ({frontier_vol_at_target*100:.4f}%)")
+    print(f"图形保存至: {figure_path}")
+    print("\n结果字典：")
+    print(result)

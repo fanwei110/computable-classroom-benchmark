@@ -1,0 +1,28 @@
+根据 Black-Scholes 期权定价模型，针对不分红的欧式看涨期权，计算过程如下：
+
+**参数设定：**
+*   标的现价 ($S$) = 103.7
+*   行权价 ($K$) = 97.5
+*   隐含波动率 ($\sigma$) = 0.276
+*   无风险利率 ($r$) = 0.043
+*   剩余期限 ($T$) = 0.58
+*   股息率 ($q$) = 0
+
+**中间变量计算：**
+*   $d_1 = \frac{\ln(S/K) + (r + \sigma^2/2)T}{\sigma\sqrt{T}} = \frac{\ln(103.7/97.5) + (0.043 + 0.276^2/2) \times 0.58}{0.276 \times \sqrt{0.58}} \approx 0.5147$
+*   $d_2 = d_1 - \sigma\sqrt{T} \approx 0.3042$
+
+**各项指标计算：**
+*   **Call Price**: $C = S \cdot N(d_1) - K \cdot e^{-rT} \cdot N(d_2) \approx 103.7 \times 0.6965 - 95.1087 \times 0.6197 \approx 13.29$
+*   **Call Delta**: $\Delta = N(d_1) \approx 0.6965$
+*   **Call Vega**: $\mathcal{V} = S \sqrt{T} \cdot N'(d_1) \approx 103.7 \times 0.7616 \times 0.3502 \approx 27.63$ *(注：此为波动率变动1单位即100%时的绝对变化值，若习惯看波动率变动1%的Vega，则为0.2763)*
+
+按照您的输出契约，结果如下：
+
+```python
+result = {
+    'call_price': 13.29,
+    'call_delta': 0.6965,
+    'call_vega': 27.63
+}
+```

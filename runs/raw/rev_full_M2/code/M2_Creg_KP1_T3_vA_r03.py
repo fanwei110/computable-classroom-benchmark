@@ -1,0 +1,29 @@
+import numpy as np
+
+def main():
+    # 给定数据
+    vol_A = 0.184
+    vol_B = 0.297
+    w_A = 0.6
+    w_B = 0.4
+    rho_before = 0.3
+    rho_after = 0.8
+
+    # 组合波动率计算公式
+    def portfolio_vol(w1, w2, s1, s2, rho):
+        var = w1**2 * s1**2 + w2**2 * s2**2 + 2 * w1 * w2 * rho * s1 * s2
+        return np.sqrt(var)
+
+    vol_before = portfolio_vol(w_A, w_B, vol_A, vol_B, rho_before)
+    vol_after = portfolio_vol(w_A, w_B, vol_A, vol_B, rho_after)
+
+    # 输出契约
+    result = {
+        'vol_before_annual': vol_before,
+        'vol_after_annual': vol_after
+    }
+    return result
+
+if __name__ == "__main__":
+    result = main()
+    print(result)

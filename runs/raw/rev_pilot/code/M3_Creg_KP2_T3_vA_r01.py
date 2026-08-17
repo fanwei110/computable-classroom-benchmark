@@ -1,0 +1,22 @@
+import numpy as np
+
+# Given values
+beta = 1.42
+market_return_monthly = -0.058  # -5.8%
+risk_free_rate_annual = 0.047   # 4.7% per year
+
+# Convert annual risk-free rate to monthly risk-free rate
+# Using discrete compounding: (1 + R_annual)^(1/12) - 1
+risk_free_rate_monthly = (1 + risk_free_rate_annual) ** (1 / 12) - 1
+
+# Calculate expected return using CAPM
+# E(R_i) = R_f + beta * (E(R_m) - R_f)
+capm_return_monthly = risk_free_rate_monthly + beta * (market_return_monthly - risk_free_rate_monthly)
+
+# Store the result in the required dictionary format
+result = {
+    'capm_return_monthly': capm_return_monthly
+}
+
+# Optional: print to verify
+print(f"Expected monthly return: {capm_return_monthly:.6f} or {capm_return_monthly * 100:.4f}%")

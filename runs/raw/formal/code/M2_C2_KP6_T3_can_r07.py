@@ -1,0 +1,75 @@
+import pandas as pd
+import numpy as np
+
+# 读取数据快照
+df = pd.read_csv("data/market_snapshot_v1.csv")
+
+# 识别日期列
+date_col = None
+for col in df.columns:
+    if "date" in col.lower():
+        date_col = col
+        break
+
+if date_col is None:
+    # 如果没有明确的日期列，假设数据是按日期顺序排列，且频率为日频
+    print("警告：未找到日期列，将按日频处理（252个交易日/年）。")
+    freq_daily = True
+    annual_factor = 252
+else:
+    # 解析日期，并按日期排序
+    df[date_col] = pd.to_datetime(df[date_col])
+    df = df.sort_values(by=date_col).reset_index(drop=True)
+    # 推断数据频率：计算相邻日期间隔的中位数（天数）
+    day_diffs = df[date_col].diff().dropna().dt.days
+    median_diff = day_diffs.median()
+    if median_diff <= 3:
+        print(f"推断数据频率为日频（中位间隔 {median_diff:.1f} 天），使用252个交易日年化。")
+        annual_factor = 252
+    elif 25 <= median_diff <= 35:
+        print(f"推断数据频率为月频（中位间隔 {median_diff:.1f} 天），使用12个月年化。")
+        annual_factor = 12
+    else:
+        print(f"中位间隔为 {median_diff:.1f} 天，默认按日频处理，使用252个交易日年化。")
+        annual_factor = 252
+
+# 识别 fund 列
+fund_col = None
+for col in df.columns:
+    if "fund" in col.lower():
+        fund_col = col
+        break
+
+if fund_col is None:
+    raise ValueError("未找到包含 'fund' 的列名，请检查数据。")
+
+fund_series = df[fund_col].dropna()
+
+# 判断 fund 列是价格还是收益率
+# 如果绝对值最大值小于1，则视为收益率序列，否则视为价格序列
+if fund_series.abs().max() < 1:
+    print("检测到 fund 列可能是收益率序列，直接使用。")
+    ret = fund_series
+else:
+    print("检测到 fund 列可能是价格序列，计算简单收益率。")
+    ret = fund_series.pct_change().dropna()
+
+# 无风险利率（年化）
+rf_annual = 0.021
+
+# 将年化无风险利率转换为对应频率的无风险利率（简单除法，符合教学常用假设）
+rf_period = rf_annual / annual_factor
+
+# 计算超额收益
+excess_ret = ret - rf_period
+
+# 年化夏普比率 = sqrt(年化因子) * 超额收益均值 / 超额收益标准差
+sharpe_annual = np.sqrt(annual_factor) * excess_ret.mean() / excess_ret.std()
+
+# 存储结果
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+print(f"全样本年化夏普比率：{sharpe_annual:.4f}")
+print(result)

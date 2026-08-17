@@ -1,0 +1,28 @@
+```python
+# 计算7年期债券（面值100，票息4.6%，收益率5.3%）在收益率上升80个基点后的价格下跌百分比
+# 假设每年付息一次
+
+face_value = 100
+coupon_rate = 0.046
+coupon = face_value * coupon_rate
+y0 = 0.053
+n = 7
+delta_y = 0.008  # 80个基点
+
+# 初始价格 P0
+pv_coupons_0 = coupon * (1 - (1 + y0) ** -n) / y0
+pv_face_0 = face_value / (1 + y0) ** n
+P0 = pv_coupons_0 + pv_face_0
+
+# 新收益率下的价格 P1
+y1 = y0 + delta_y
+pv_coupons_1 = coupon * (1 - (1 + y1) ** -n) / y1
+pv_face_1 = face_value / (1 + y1) ** n
+P1 = pv_coupons_1 + pv_face_1
+
+# 价格下跌百分比
+price_drop_pct = (P0 - P1) / P0 * 100
+
+result = {'price_drop_pct': round(price_drop_pct, 2)}
+result
+```

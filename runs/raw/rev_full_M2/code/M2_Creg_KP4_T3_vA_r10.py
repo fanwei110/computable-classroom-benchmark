@@ -1,0 +1,23 @@
+import numpy as np
+from scipy.stats import norm
+
+# ----- 参数设定 -----
+S = 103.7          # 标的现价
+K = 97.5           # 行权价
+sigma = 0.276      # 隐含波动率 (27.6%)
+r = 0.043          # 无风险利率 (4.3%)
+T = 0.58           # 剩余到期时间 (年)
+
+# ----- 计算 Vega -----
+d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+nd1 = norm.pdf(d1)                      # N'(d1)
+vega = S * nd1 * np.sqrt(T)             # 理论 Vega
+
+# 隐含波动率上升一个百分点（+0.01）对应的期权价格变化
+price_change = vega * 0.01
+
+# ----- 输出契约 -----
+result = {'price_change': price_change}
+
+# 可选：打印结果以供检查
+print(result)

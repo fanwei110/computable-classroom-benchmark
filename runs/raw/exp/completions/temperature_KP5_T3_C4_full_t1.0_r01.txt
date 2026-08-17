@@ -1,0 +1,27 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 给定参数
+annual_vol = 0.24          # 年化波动率 24%
+position = 2_700_000       # 头寸 2,700,000 元
+confidence = 0.95          # 置信水平 95%
+trading_days = 252         # 每年交易日数
+
+# 步骤 1: 去年化得到一日波动率
+daily_vol = annual_vol / np.sqrt(trading_days)
+
+# 步骤 2: 计算单尾 95% 正态分位数（均值取零）
+z_score = norm.ppf(confidence)   # 单尾 95% 对应的分位数
+
+# 步骤 3: VaR = 头寸 × 一日波动率 × z_score（正值损失）
+var_95_1d = position * daily_vol * z_score
+
+# 存入 result 字典
+result = {
+    'var_95_1d': var_95_1d
+}
+
+# 如果需要查看结果，可取消下面注释：
+# print(result)
+```

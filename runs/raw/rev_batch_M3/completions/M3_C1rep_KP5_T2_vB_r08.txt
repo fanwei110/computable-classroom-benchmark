@@ -1,0 +1,72 @@
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# 设置中文字体和负号显示，防止图表中文乱码
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS']
+plt.rcParams['axes.unicode_minus'] = False
+
+def calculate_historical_var(file_path='data/market_snapshot_v1.csv', position=1000000, confidence_level=0.95):
+    """
+    使用历史法计算VaR并绘制损益直方图
+    :param file_path: 数据文件路径
+    :param position: 头寸规模
+    :param confidence_level: 置信度（可调）
+    :return: 包含VaR数值和图表路径的字典
+    """
+    # 1. 读取数据
+    df = pd.read_csv(file_path)
+    
+    # 2. 提取fund列并计算日收益率
+    returns = df['fund'].pct_change().dropna()
+    
+    # 3. 计算损益 (PnL)
+    pnl = returns * position
+    
+    # 4. 历史法计算VaR (取对应分位数并取绝对值转为正数损失)
+    alpha = 1 - confidence_level
+    var_value = -pnl.quantile(alpha)
+    
+    # 报告VaR数值
+    print(f"【报告】置信度 {confidence_level*100:.0f}% 下一日历史法VaR数值为: {var_value:.2f} 元")
+    
+    # 5. 绘制损益直方图
+    plt.figure(figsize=(10, 6))
+    plt.hist(pnl, bins=50, alpha=0.75, edgecolor='black', color='steelblue')
+    
+    # 6. 画出95%一日VaR标根线
+    plt.axvline(x=-var_value, color='red', linestyle='--', linewidth=2, 
+                label=f'{confidence_level*100:.0f}% 1-Day VaR: {var_value:.2f}')
+    
+    plt.title('损益分布直方图及历史法VaR')
+    plt.xlabel('损益金额 (元)')
+    plt.ylabel('频数')
+    plt.legend()
+    plt.grid(axis='y', alpha=0.75)
+    
+    # 7. 保存图表
+    fig_path = 'pnl_var_histogram.png'
+    plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    
+    # 8. 构建输出契约字典
+    result = {
+        'hist_var_95_1d': var_value,
+        'figure_path': fig_path
+    }
+    
+    return result
+
+if __name__ == '__main__':
+    # 执行计算，置信度可通过参数 confidence_level 调整
+    result = calculate_historical_var(
+        file_path='data/market_snapshot_v1.csv', 
+        position=1000000, 
+        confidence_level=0.95
+    )
+    
+    print("\n输出契约字典结果:")
+    print(result)
+```

@@ -1,0 +1,51 @@
+以下是一个自包含的 Python 脚本，使用 `numpy` 和 `scipy` 计算在 delta-normal 模型下的 VaR 值：
+
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+position_value = 1_850_000  # 头寸价值（元）
+annual_volatility = 0.218   # 年化收益波动率（21.8%）
+
+# 常数
+days_in_year = 252         # 交易日天数（通常假设一年有252个交易日）
+
+# 计算每日波动率
+daily_volatility = annual_volatility / np.sqrt(days_in_year)
+
+# (i) 计算95%置信水平下的1日VaR
+confidence_level_95 = 0.95
+z_score_95 = norm.ppf(confidence_level_95)
+var_95_1d = position_value * daily_volatility * z_score_95
+
+# (ii) 计算99%置信水平下的10日VaR
+confidence_level_99 = 0.99
+z_score_99 = norm.ppf(confidence_level_99)
+ten_day_volatility = daily_volatility * np.sqrt(10)  # 10日波动率
+var_99_10d = position_value * ten_day_volatility * z_score_99
+
+# 结果存储
+result = {
+    'var_95_1d': round(var_95_1d, 2),
+    'var_99_10d': round(var_99_10d, 2)
+}
+
+print(result)
+```
+
+### 输出说明：
+- `result` 字典包含两个键：
+  - `'var_95_1d'`：95% 置信水平下的 1 日 VaR（单位：元）。
+  - `'var_99_10d'`：99% 置信水平下的 10 日 VaR（单位：元）。
+- 结果四舍五入到小数点后两位，确保可复现性。
+
+### 计算逻辑：
+1. **每日波动率**：年化波动率除以 √252（交易日天数）。
+2. **1日VaR**：头寸价值 × 每日波动率 × 标准正态分布的分位数（95%对应1.644854）。
+3. **10日VaR**：头寸价值 × 10日波动率（每日波动率 × √10） × 标准正态分布的分位数（99%对应2.326348）。
+
+运行脚本后，`result` 将输出如下格式的字典（具体数值可能略有差异，取决于 `norm.ppf` 的精度）：
+```python
+{'var_95_1d': 40833.52, 'var_99_10d': 94650.67}
+```

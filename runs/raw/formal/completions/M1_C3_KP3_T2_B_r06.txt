@@ -1,0 +1,115 @@
+我将按照您的要求计算并绘制价格-收益率曲线，并输出所需结果。以下是完整的Python代码实现：
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import PercentFormatter
+
+def calculate_bond_price(face_value, coupon_rate, years_to_maturity, ytm, frequency=1):
+    """
+    计算债券精确价格
+    """
+    periods = years_to_maturity * frequency
+    coupon = face_value * coupon_rate / frequency
+    ytm_period = ytm / frequency
+
+    price = sum([coupon / (1 + ytm_period)**t for t in range(1, int(periods) + 1)]) + \
+            face_value / (1 + ytm_period)**periods
+    return price
+
+def calculate_duration(face_value, coupon_rate, years_to_maturity, ytm, frequency=1):
+    """
+    计算麦考利久期
+    """
+    periods = years_to_maturity * frequency
+    coupon = face_value * coupon_rate / frequency
+    ytm_period = ytm / frequency
+
+    cash_flows = [coupon] * int(periods)
+    cash_flows[-1] += face_value  # 最后一期加上面值
+
+    duration = 0
+    bond_price = 0
+    for t in range(1, int(periods) + 1):
+        pv = cash_flows[t-1] / (1 + ytm_period)**t
+        bond_price += pv
+        duration += t * pv
+
+    duration = duration / bond_price / frequency  # 转换为年化久期
+    return duration
+
+def calculate_modified_duration(macaulay_duration, ytm, frequency=1):
+    """
+    计算修正久期
+    """
+    return macaulay_duration / (1 + ytm / frequency)
+
+# 债券参数
+face_value = 100
+coupon_rate = 0.046
+years_to_maturity = 7
+ytm = 0.053
+
+# 收益率范围
+yields = np.linspace(0.02, 0.09, 100)
+
+# 计算精确价格和久期近似价格
+exact_prices = [calculate_bond_price(face_value, coupon_rate, years_to_maturity, y) for y in yields]
+duration = calculate_duration(face_value, coupon_rate, years_to_maturity, ytm)
+modified_duration = calculate_modified_duration(duration, ytm)
+dur_approx_prices = [calculate_bond_price(face_value, coupon_rate, years_to_maturity, ytm) *
+                     (1 - modified_duration * (y - ytm)) for y in yields]
+
+# 计算+100bp后的精确价格和久期近似变化
+ytm_up100bp = ytm + 0.01
+price_at_up100bp = calculate_bond_price(face_value, coupon_rate, years_to_maturity, ytm_up100bp)
+dur_approx_change_up100bp = -modified_duration * 0.01
+
+# 绘图
+plt.figure(figsize=(10, 6))
+plt.plot(yields, exact_prices, label='精确价格', color='blue')
+plt.plot(yields, dur_approx_prices, label='久期近似', color='red', linestyle='--')
+plt.scatter(ytm, calculate_bond_price(face_value, coupon_rate, years_to_maturity, ytm),
+            color='green', zorder=5, label=f'YTM={ytm*100:.1f}%')
+plt.scatter(ytm_up100bp, price_at_up100bp, color='purple', zorder=5, label=f'YTM+100bp={ytm_up100bp*100:.1f}%')
+
+plt.title('债券价格-收益率曲线')
+plt.xlabel('收益率')
+plt.ylabel('价格')
+plt.gca().yaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: f'{x:.2f}'))
+plt.gca().xaxis.set_major_formatter(PercentFormatter(1))
+plt.legend()
+plt.grid(True)
+
+# 保存图片
+figure_path = 'bond_price_yield_curve.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 准备结果
+result = {
+    'price_at_up100bp': price_at_up100bp,
+    'dur_approx_change_up100bp': dur_approx_change_up100bp,
+    'figure_path': figure_path
+}
+
+print(result)
+```
+
+输出结果示例：
+```python
+{
+    'price_at_up100bp': 95.123456789,  # 具体数值会根据计算结果变化
+    'dur_approx_change_up100bp': -0.06123456789,  # 具体数值会根据计算结果变化
+    'figure_path': 'bond_price_yield_curve.png'
+}
+```
+
+计算说明：
+1. 精确价格计算使用了标准债券定价公式
+2. 久期近似使用了修正久期的线性近似公式
+3. +100bp后的精确价格直接使用新的YTM计算
+4. 久期法估计的相对变化为：-修正久期 × 收益率变化(0.01)
+5. 图中展示了精确价格曲线和久期近似曲线，并标注了当前YTM点和+100bp点
+
+注意：实际输出的数值会根据计算精度有所不同，但保留了足够的小数位数。

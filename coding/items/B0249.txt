@@ -1,0 +1,53 @@
+=== B0249  任务 KP3_T3 (T3) ===
+
+--- 任务要求的输出键 ---
+price_drop_pct
+
+--- 判分失败明细 ---
+price_drop_pct: 提交值 -4.64  |  参考值 0.04650015385877284
+
+--- 提取出的代码 ---
+result = {
+    'price_drop_pct': -4.64
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+要计算该债券收益率上升80个基点（bp）后的价格下跌幅度，我们可以使用久期近似法。以下是计算步骤：
+
+1. **债券基本信息**：
+   - 面值：100元
+   - 票面利率：4.6%
+   - 当前到期收益率（YTM）：5.3%
+   - 剩余期限：7年
+   - 收益率变化：+80bp（即YTM从5.3%上升至6.1%）
+
+2. **久期估算**：
+   对于固定利率债券，修正久期（Modified Duration）可以近似为：
+   \[
+   \text{Modified Duration} \approx \frac{\text{Macaulay Duration}}{1 + \frac{YTM}{m}}
+   \]
+   其中，Macaulay Duration可以通过现金流折现计算得到。对于7年期、票面利率4.6%、YTM=5.3%的债券，Macaulay Duration约为6.1年（简化计算），因此修正久期约为：
+   \[
+   \text{Modified Duration} \approx \frac{6.1}{1 + 0.053} \approx 5.8
+   \]
+
+3. **价格变化估算**：
+   价格变化百分比（ΔP/P）与收益率变化（ΔY）的关系为：
+   \[
+   \frac{\Delta P}{P} \approx -\text{Modified Duration} \times \Delta Y
+   \]
+   代入数值：
+   \[
+   \frac{\Delta P}{P} \approx -5.8 \times 0.008 = -0.0464 \quad (\text{即-4.64%})
+   \]
+
+4. **结果**：
+   价格下跌幅度约为4.64%。
+
+将结果存入字典：
+```python
+result = {
+    'price_drop_pct': -4.64
+}
+```

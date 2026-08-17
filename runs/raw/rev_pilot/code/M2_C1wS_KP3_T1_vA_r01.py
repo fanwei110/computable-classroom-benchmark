@@ -1,0 +1,50 @@
+import numpy as np
+
+def bond_price_convexity(face, coupon_rate, maturity, ytm, freq=1):
+    """
+    计算债券价格、麦考利久期、修正久期和凸性。
+    假设：每年付息一次（freq=1）。面值100，票面利率和收益率均为年化。
+    """
+    coupon = face * coupon_rate / freq
+    periods = int(maturity * freq)
+    t = np.arange(1, periods + 1) / freq  # 现金流发生时间（年）
+    
+    # 现金流（除了最后一期加入本金）
+    cf = np.full(periods, coupon)
+    cf[-1] += face
+    
+    # 现金流现值
+    discount = (1 + ytm/freq) ** (-t * freq)
+    pv_cf = cf * discount
+    price = np.sum(pv_cf)
+    
+    # 麦考利久期：加权平均时间，权重为每笔现金流现值/价格
+    mac_dur = np.sum(t * pv_cf) / price
+    
+    # 修正久期：麦考利久期/(1+y/freq)
+    mod_dur = mac_dur / (1 + ytm/freq)
+    
+    # 凸性： [1/(price*(1+y/freq)^2)] * sum(t*(t+1/freq)*pv_cf)
+    convexity = np.sum(t * (t + 1/freq) * pv_cf) / (price * (1 + ytm/freq)**2)
+    
+    return price, mac_dur, mod_dur, convexity
+
+# 给定参数
+face_value = 100.0
+coupon = 0.046  # 4.6%
+years = 7
+ytm = 0.053    # 5.3%
+
+price, mac_dur, mod_dur, conv = bond_price_convexity(face_value, coupon, years, ytm)
+
+# 结果字典
+result = {
+    'price': price,
+    'macaulay_duration_years': mac_dur,
+    'modified_duration_years': mod_dur,
+    'convexity': conv
+}
+
+# 打印输出，以便课堂展示
+for k, v in result.items():
+    print(f"{k}: {v:.6f}")

@@ -1,0 +1,139 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+import os
+
+def bond_price(face_value, coupon_rate, years_to_maturity, ytm, frequency=1):
+    """
+    计算债券精确价格
+    """
+    periods = years_to_maturity * frequency
+    coupon = face_value * coupon_rate / frequency
+    ytm_period = ytm / frequency
+
+    price = sum([coupon / (1 + ytm_period)**t for t in range(1, int(periods) + 1)]) + \
+            face_value / (1 + ytm_period)**periods
+    return price
+
+def duration_macaulay(face_value, coupon_rate, years_to_maturity, ytm, frequency=1):
+    """
+    计算麦考利久期
+    """
+    periods = years_to_maturity * frequency
+    coupon = face_value * coupon_rate / frequency
+    ytm_period = ytm / frequency
+
+    cash_flows = [coupon] * int(periods)
+    cash_flows[-1] += face_value  # 最后一期加上面值
+
+    pv_cash_flows = [cf / (1 + ytm_period)**t for t, cf in enumerate(cash_flows, 1)]
+    price = sum(pv_cash_flows)
+    mac_dur = sum([t * cf / (1 + ytm_period)**t for t, cf in enumerate(cash_flows, 1)]) / price
+
+    return mac_dur / frequency  # 转换为年化久期
+
+def duration_modified(face_value, coupon_rate, years_to_maturity, ytm, frequency=1):
+    """
+    计算修正久期
+    """
+    mac_dur = duration_macaulay(face_value, coupon_rate, years_to_maturity, ytm, frequency)
+    return mac_dur / (1 + ytm / frequency)
+
+# 债券参数
+face_value = 100
+coupon_rate = 0.046
+years_to_maturity = 7
+current_ytm = 0.053
+
+# 计算当前价格和久期
+current_price = bond_price(face_value, coupon_rate, years_to_maturity, current_ytm)
+mod_dur = duration_modified(face_value, coupon_rate, years_to_maturity, current_ytm)
+
+# 计算收益率上升100bp后的精确价格
+ytm_up100bp = current_ytm + 0.01
+price_up100bp = bond_price(face_value, coupon_rate, years_to_maturity, ytm_up100bp)
+
+# 计算久期近似的价格变化
+dur_approx_change = -mod_dur * 0.01 * 100  # 相对变化百分比
+
+# 创建结果字典
+result = {
+    'price_at_up100bp': price_up100bp,
+    'dur_approx_change_up100bp': dur_approx_change,
+    'figure_path': None
+}
+
+# 绘制图形
+fig, ax = plt.subplots(figsize=(10, 6))
+plt.subplots_adjust(bottom=0.25)
+
+# 初始收益率变动范围
+initial_range = 0.03  # ±3%
+ytm_min = current_ytm - initial_range
+ytm_max = current_ytm + initial_range
+
+# 生成收益率序列
+ytm_range = np.linspace(0.02, 0.09, 100)
+prices_exact = [bond_price(face_value, coupon_rate, years_to_maturity, y) for y in ytm_range]
+
+# 计算久期近似线
+ytm_current_idx = np.argmin(np.abs(ytm_range - current_ytm))
+price_current = prices_exact[ytm_current_idx]
+prices_approx = [price_current * (1 - mod_dur * (y - current_ytm)) for y in ytm_range]
+
+# 绘制曲线
+line_exact, = ax.plot(ytm_range, prices_exact, label='精确价格', color='blue')
+line_approx, = ax.plot(ytm_range, prices_approx, label='久期近似', color='red', linestyle='--')
+
+# 标记当前点
+ax.scatter(current_ytm, current_price, color='green', zorder=5)
+ax.annotate(f'当前点\nYTM={current_ytm*100:.1f}%\n价格={current_price:.2f}',
+            xy=(current_ytm, current_price),
+            xytext=(current_ytm+0.005, current_price-5),
+            arrowprops=dict(facecolor='black', shrink=0.05))
+
+ax.set_xlabel('收益率')
+ax.set_ylabel('债券价格')
+ax.set_title('债券价格与收益率关系')
+ax.legend()
+ax.grid(True)
+
+# 添加滑动条
+axcolor = 'lightgoldenrodyellow'
+ax_range = plt.axes([0.2, 0.1, 0.6, 0.03], facecolor=axcolor)
+slider_range = Slider(ax_range, '变动范围(%)', 1, 7, valinit=initial_range*100, valstep=0.1)
+
+def update(val):
+    range_pct = slider_range.val / 100
+    ytm_min = current_ytm - range_pct
+    ytm_max = current_ytm + range_pct
+
+    # 更新x轴范围
+    ax.set_xlim(ytm_min, ytm_max)
+
+    # 重新生成收益率序列
+    ytm_range = np.linspace(max(0.02, ytm_min), min(0.09, ytm_max), 100)
+    prices_exact = [bond_price(face_value, coupon_rate, years_to_maturity, y) for y in ytm_range]
+    ytm_current_idx = np.argmin(np.abs(ytm_range - current_ytm))
+    price_current = prices_exact[ytm_current_idx]
+    prices_approx = [price_current * (1 - mod_dur * (y - current_ytm)) for y in ytm_range]
+
+    # 更新曲线
+    line_exact.set_xdata(ytm_range)
+    line_exact.set_ydata(prices_exact)
+    line_approx.set_xdata(ytm_range)
+    line_approx.set_ydata(prices_approx)
+
+    fig.canvas.draw_idle()
+
+slider_range.on_changed(update)
+
+# 保存图形
+figure_path = 'bond_price_vs_ytm.png'
+plt.savefig(figure_path)
+result['figure_path'] = os.path.abspath(figure_path)
+
+plt.show()
+
+# 输出结果
+print(result)

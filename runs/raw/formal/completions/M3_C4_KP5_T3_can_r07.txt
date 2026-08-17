@@ -1,0 +1,31 @@
+```python
+import numpy as np
+from scipy import stats
+
+# --- 参数设置 ---
+position = 2_700_000          # 头寸金额（元）
+vol_annual = 0.24             # 年化波动率（小数表示）
+trading_days_per_year = 252   # 每年交易日数
+confidence_level = 0.95       # 置信水平（小数表示）
+
+# --- 步骤 1：按每年 252 个交易日把 24% 波动率去年化到一日 ---
+vol_daily = vol_annual / np.sqrt(trading_days_per_year)
+
+# --- 步骤 2：用单尾 95% 正态分位数，均值取零 ---
+z_score = stats.norm.ppf(confidence_level)
+
+# --- 步骤 3：计算 VaR 并作为正的人民币金额存入 result ---
+# VaR = 头寸 * 单尾分位数 * 日波动率 (短期限均值取零)
+var_95_1d = position * z_score * vol_daily
+
+# 按输出契约存入字典
+result = {
+    'var_95_1d': var_95_1d
+}
+
+# 课堂投屏展示辅助信息（可选打印）
+print(f"日波动率: {vol_daily:.6f}")
+print(f"95% 单尾正态分位数 (Z-score): {z_score:.6f}")
+print(f"95% 一日 VaR: {var_95_1d:.2f} 元")
+print(f"\n结果字典: {result}")
+```

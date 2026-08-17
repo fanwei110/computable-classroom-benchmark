@@ -1,0 +1,137 @@
+import os
+import numpy as np
+import scipy  # 按要求导入，未直接调用但不影响运行
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# =========================
+# 可调参数（无风险利率与市场期望收益）
+# =========================
+RISK_FREE_RATE = 0.023      # 2.3%
+MARKET_ER = 0.094           # 9.4%
+
+# =========================
+# 股票数据
+# =========================
+stocks = pd.DataFrame({
+    'Name': ['X', 'Y', 'Z'],
+    'Beta': [0.62, 1.18, 1.51],
+    'ER': [0.081, 0.131, 0.099]   # 年化期望收益（小数）
+})
+
+# =========================
+# 计算 SML 斜率
+# =========================
+sml_slope = MARKET_ER - RISK_FREE_RATE   # E(Rm) - Rf
+
+# =========================
+# CAPM 期望收益函数
+# =========================
+def capm_er(beta, rf=RISK_FREE_RATE, slope=sml_slope):
+    return rf + beta * slope
+
+# =========================
+# 计算 beta = 1.27 处的期望收益
+# =========================
+BETA_TARGET = 1.27
+er_at_beta_127 = capm_er(BETA_TARGET)
+
+# =========================
+# 绘制 SML 与股票点
+# =========================
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 生成 beta 序列
+beta_vals = np.linspace(0, 2.0, 100)
+sml_vals = capm_er(beta_vals)
+
+# 画 SML 直线
+ax.plot(beta_vals, sml_vals, 'b-', linewidth=2, label='SML')
+
+# 标注市场组合点
+market_beta = 1.0
+market_er = MARKET_ER
+ax.scatter(market_beta, market_er, color='green', s=80, zorder=5)
+ax.annotate('Market\n(β=1.0)',
+            (market_beta, market_er),
+            textcoords="offset points",
+            xytext=(10, -15),
+            ha='left',
+            fontsize=9,
+            color='green',
+            arrowprops=dict(arrowstyle='->', color='green'))
+
+# 标注无风险利率点（beta=0）
+ax.scatter(0, RISK_FREE_RATE, color='black', s=80, zorder=5)
+ax.annotate(f'Rf = {RISK_FREE_RATE:.3f}',
+            (0, RISK_FREE_RATE),
+            textcoords="offset points",
+            xytext=(10, 5),
+            ha='left',
+            fontsize=9,
+            color='black')
+
+# 画三只股票
+colors = ['red', 'orange', 'purple']
+for idx, row in stocks.iterrows():
+    ax.scatter(row['Beta'], row['ER'], color=colors[idx], s=100, zorder=6,
+               edgecolors='black', linewidth=0.5)
+    ax.annotate(f"{row['Name']}\nβ={row['Beta']:.2f}, ER={row['ER']:.3f}",
+                (row['Beta'], row['ER']),
+                textcoords="offset points",
+                xytext=(10 if idx != 2 else -60, 5),
+                ha='left',
+                fontsize=9,
+                color=colors[idx],
+                arrowprops=dict(arrowstyle='->', color=colors[idx]))
+
+# 标注 beta=1.27 的点
+ax.scatter(BETA_TARGET, er_at_beta_127, color='darkorange', s=80, zorder=5, marker='D')
+ax.annotate(f'β={BETA_TARGET:.2f}\nER={er_at_beta_127:.4f}',
+            (BETA_TARGET, er_at_beta_127),
+            textcoords="offset points",
+            xytext=(15, -20),
+            ha='left',
+            fontsize=9,
+            color='darkorange',
+            arrowprops=dict(arrowstyle='->', color='darkorange'))
+
+# 显示参数信息框
+param_text = (f'Risk‑free rate = {RISK_FREE_RATE:.3f} ({RISK_FREE_RATE*100:.1f}%)\n'
+              f'Market expected return = {MARKET_ER:.3f} ({MARKET_ER*100:.1f}%)\n'
+              f'SML slope = {sml_slope:.4f} ({sml_slope*100:.2f}%)')
+props = dict(boxstyle='round', facecolor='wheat', alpha=0.5)
+ax.text(0.03, 0.97, param_text, transform=ax.transAxes, fontsize=9,
+        verticalalignment='top', bbox=props)
+
+# 坐标轴与标题
+ax.set_xlim(0, 2.0)
+ax.set_ylim(0, 0.20)
+ax.set_xlabel('Beta (β)', fontsize=12)
+ax.set_ylabel('Expected Return', fontsize=12)
+ax.set_title('Security Market Line (CAPM)', fontsize=14)
+ax.axhline(0, color='gray', linewidth=0.5)
+ax.axvline(0, color='gray', linewidth=0.5)
+ax.grid(True, linestyle='--', alpha=0.6)
+ax.legend(loc='lower right')
+
+plt.tight_layout()
+
+# =========================
+# 保存图像
+# =========================
+figure_path = os.path.abspath('sml_plot.png')
+fig.savefig(figure_path, dpi=150)
+plt.close(fig)  # 释放内存
+
+# =========================
+# 组织输出结果
+# =========================
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': figure_path
+}
+
+# 可选：打印验证
+print(result)

@@ -1,0 +1,8 @@
+```json
+{
+  "price": 95.99355551999054,
+  "macaulay_duration_years": 6.120547207182463,
+  "modified_duration_years": 5.812485476906422,
+  "convexity": 42.13384229187873
+}
+```

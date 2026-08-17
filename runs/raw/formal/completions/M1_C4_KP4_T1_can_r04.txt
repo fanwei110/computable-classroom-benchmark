@@ -1,0 +1,49 @@
+以下是自包含的 Python 脚本，计算欧式看涨期权的价格、delta 和 vega：
+
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+S = 103.7      # 标的资产现价
+K = 97.5       # 行权价
+sigma = 0.276  # 年化波动率（27.6%）
+r = 0.043      # 无风险利率（4.3%，连续复利）
+T = 0.58       # 剩余期限（年）
+
+# 计算 d1 和 d2
+d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+d2 = d1 - sigma * np.sqrt(T)
+
+# 计算期权价格
+call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+
+# 计算 delta (N(d1))
+call_delta = norm.cdf(d1)
+
+# 计算 vega (每单位波动率变化)
+call_vega = S * np.sqrt(T) * norm.pdf(d1) * 0.01  # 乘以0.01将vega转换为每1%波动率变化的值（题目要求小数表示）
+
+# 由于题目要求vega按每单位波动率（即100%变化）报价，因此不需要乘以0.01
+# 修正：题目要求vega按每单位波动率（即1.0变化）报价，因此直接使用公式
+call_vega = S * np.sqrt(T) * norm.pdf(d1)
+
+# 存储结果
+result = {
+    'call_price': call_price,
+    'call_delta': call_delta,
+    'call_vega': call_vega
+}
+
+# 输出结果（可选，用于验证）
+print(result)
+```
+
+### 说明：
+1. **d1 和 d2 的计算**：使用 Black-Scholes 公式中的标准定义。
+2. **期权价格**：使用 `S * N(d1) - K * exp(-rT) * N(d2)` 计算。
+3. **Delta**：等于 `N(d1)`，即标的资产价格变化对期权价格的敏感度。
+4. **Vega**：计算公式为 `S * sqrt(T) * N'(d1)`，其中 `N'(d1)` 是标准正态分布的概率密度函数（PDF）。题目要求按每单位波动率（即 σ 变化 1.0）报价，因此直接使用公式，不需要额外调整。
+
+### 输出：
+脚本将结果存储在 `result` 字典中，键名严格为 `'call_price'`、`'call_delta'` 和 `'call_vega'`。运行后可直接投屏展示。

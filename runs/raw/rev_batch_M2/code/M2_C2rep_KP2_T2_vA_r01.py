@@ -1,0 +1,78 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==================== 可调参数 ====================
+RISK_FREE = 0.023        # 无风险利率 (2.3%)
+MARKET_RETURN = 0.094    # 市场期望收益 (9.4%)
+# =================================================
+
+# ---- SML 计算 ----
+market_premium = MARKET_RETURN - RISK_FREE          # 市场风险溢价，即 SML 斜率
+sml_slope = market_premium                          # 斜率
+
+beta_target = 1.27
+er_at_beta_127 = RISK_FREE + beta_target * market_premium  # CAPM 期望收益
+
+# ---- 绘制 SML ----
+beta_vals = np.linspace(0, 2, 100)
+sml_vals = RISK_FREE + beta_vals * market_premium
+
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.plot(beta_vals, sml_vals, 'b-', linewidth=2, label='SML (Security Market Line)')
+
+# 标出特殊点：无风险资产与市场组合
+ax.scatter(0, RISK_FREE, color='black', zorder=5)
+ax.annotate('Risk-free\n(0, {:.1%})'.format(RISK_FREE),
+            (0, RISK_FREE), textcoords="offset points", xytext=(-10, -15),
+            ha='center', fontsize=9)
+
+ax.scatter(1, MARKET_RETURN, color='black', zorder=5)
+ax.annotate('Market\n(1, {:.1%})'.format(MARKET_RETURN),
+            (1, MARKET_RETURN), textcoords="offset points", xytext=(-10, 10),
+            ha='center', fontsize=9)
+
+# 三只股票的点
+stocks = {
+    'X': (0.62, 0.081),
+    'Y': (1.18, 0.131),
+    'Z': (1.51, 0.099),
+}
+colors = {'X': 'red', 'Y': 'green', 'Z': 'orange'}
+for name, (beta, er) in stocks.items():
+    ax.scatter(beta, er, color=colors[name], s=80, zorder=5)
+    ax.annotate(f'{name}\n(β={beta}, {er:.1%})',
+                (beta, er), textcoords="offset points", xytext=(10, -15),
+                ha='left', fontsize=9, color=colors[name],
+                arrowprops=dict(arrowstyle='->', color=colors[name], lw=1))
+
+# 装饰图形
+ax.set_xlabel('Beta (β)', fontsize=12)
+ax.set_ylabel('Expected Return', fontsize=12)
+ax.set_title('Capital Asset Pricing Model (CAPM) — Security Market Line', fontsize=14)
+ax.set_xlim(0, 2)
+ax.set_ylim(0, 0.20)
+ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: '{:.1%}'.format(y)))
+ax.grid(True, linestyle='--', alpha=0.6)
+ax.legend(loc='lower right')
+plt.tight_layout()
+
+# ---- 保存图形 ----
+figure_path = 'sml.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close(fig)
+
+# ---- 输出结果 ----
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': figure_path
+}
+
+# 打印以便教师在投屏时查看
+print("========== CAPM SML 计算结果 ==========")
+print(f"无风险利率 (Rf)        : {RISK_FREE:.2%}")
+print(f"市场期望收益 (E(Rm))   : {MARKET_RETURN:.2%}")
+print(f"SML 斜率 (市场风险溢价): {sml_slope:.4f}  ({sml_slope:.2%})")
+print(f"Beta = 1.27 的期望收益 : {er_at_beta_127:.4f}  ({er_at_beta_127:.2%})")
+print(f"图形已保存至            : {figure_path}")
+print("=" * 40)

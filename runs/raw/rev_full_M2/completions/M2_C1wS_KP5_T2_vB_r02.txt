@@ -1,0 +1,83 @@
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ====================== 参数 ======================
+POSITION_VALUE = 1_000_000          # 头寸市值（人民币）
+CONFIDENCE = 0.95                   # 置信水平（可调）
+ALPHA = 1 - CONFIDENCE              # 左尾概率
+DATA_PATH = "data/market_snapshot_v1.csv"
+FIGURE_PATH = "var_hist.png"
+# =================================================
+
+def load_returns(path: str) -> pd.Series:
+    """
+    读取快照CSV，提取基金列的日收益率。
+    若列值绝对值普遍大于1.5，则视为价格并计算百分比收益率；
+    否则直接当作日收益率（小数形式）。
+    """
+    df = pd.read_csv(path)
+    fund_col = df["fund"].dropna().astype(float)
+    
+    # 自动推断列的含义：价格 or 收益率
+    if fund_col.abs().max() > 1.5:
+        # 价格序列 -> 计算日简单百分比收益率
+        returns = fund_col.pct_change().dropna()
+    else:
+        # 已经是日收益率
+        returns = fund_col.copy()
+    returns = returns.dropna()
+    return returns.reset_index(drop=True)
+
+def historical_var(pnl: pd.Series, confidence: float) -> float:
+    """
+    历史模拟法计算VaR（损失金额，非负）。
+    pnl: 日损益序列（正为盈利，负为损失）
+    confidence: 置信水平
+    """
+    alpha = 1 - confidence
+    # 损益分布的左尾分位数（通常为负值）
+    quantile_loss = np.quantile(pnl, alpha)
+    # VaR报告为损失的绝对值（如果左尾为负，取相反数即正损失）
+    var_value = -quantile_loss
+    return float(var_value)
+
+def plot_histogram_with_var(pnl: pd.Series, var_value: float, confidence: float, save_path: str):
+    """绘制日损益直方图，并在VaR位置画垂直线。"""
+    plt.figure(figsize=(10, 6))
+    plt.hist(pnl, bins=50, edgecolor='k', alpha=0.7, color='steelblue')
+    plt.axvline(-var_value, color='red', linestyle='--', linewidth=2,
+                label=f"VaR {confidence*100:.0f}%: ¥{var_value:,.2f}")
+    plt.xlabel("Daily P&L (CNY)", fontsize=12)
+    plt.ylabel("Frequency", fontsize=12)
+    plt.title(f"Daily P&L Distribution with Historical VaR (confidence={confidence*100:.0f}%)",
+              fontsize=14)
+    plt.legend(loc='upper left')
+    plt.tight_layout()
+    plt.savefig(save_path, dpi=150)
+    plt.close()
+    print(f"[图] 已保存至: {save_path}")
+
+# ====================== 主程序 ======================
+if __name__ == "__main__":
+    # 1. 加载日收益率，构造头寸损益
+    returns = load_returns(DATA_PATH)
+    daily_pnl = POSITION_VALUE * returns   # 日损益（单位：元）
+
+    # 2. 计算历史VaR（95%，一日）
+    var_95_1d = historical_var(daily_pnl, CONFIDENCE)
+    print(f"历史法VaR (95%, 1天): ¥{var_95_1d:,.2f}")
+
+    # 3. 绘图并保存
+    plot_histogram_with_var(daily_pnl, var_95_1d, CONFIDENCE, FIGURE_PATH)
+
+    # 4. 按要求打包结果
+    result = {
+        "hist_var_95_1d": round(var_95_1d, 2),   # 保留两位小数
+        "figure_path": os.path.abspath(FIGURE_PATH)
+    }
+    print("\n=== 最终输出字典 ===")
+    print(result)
+```

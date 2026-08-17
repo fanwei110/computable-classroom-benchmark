@@ -1,0 +1,70 @@
+我来帮您计算60日滚动年化夏普比率，并将结果保存。
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# 读取数据
+df = pd.read_csv('fund_data.csv', index_col=0, parse_dates=True)
+
+# 设置参数
+window = 60
+rf = 0.021  # 2.1% 年化无风险利率
+
+# 计算日度无风险利率（假设252个交易日）
+rf_daily = (1 + rf) ** (1/252) - 1
+
+# 计算每日超额收益
+excess_returns = df['fund'] - rf_daily
+
+# 计算滚动年化夏普比率
+# 滚动窗口的均值和标准差
+rolling_mean = excess_returns.rolling(window=window).mean()
+rolling_std = excess_returns.rolling(window=window).std()
+
+# 年化夏普比率
+rolling_sharpe = (rolling_mean / rolling_std) * np.sqrt(252)
+
+# 获取最后一个窗口的值
+rolling_sharpe_last = round(rolling_sharpe.iloc[-1], 4)
+
+# 创建图表
+plt.figure(figsize=(12, 6))
+plt.plot(rolling_sharpe.index, rolling_sharpe.values, linewidth=1.5, color='blue')
+plt.axhline(y=0, color='black', linestyle='-', linewidth=0.5)
+plt.title(f'60-Day Rolling Annualized Sharpe Ratio (rf={rf*100}%)', fontsize=14)
+plt.xlabel('Date', fontsize=12)
+plt.ylabel('Annualized Sharpe Ratio', fontsize=12)
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+
+# 保存图表
+figure_path = 'rolling_sharpe_ratio.png'
+plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# 构建结果字典
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+print(f"最后一个窗口的60日滚动年化夏普比率: {result['rolling_sharpe_last']}")
+print(f"图表保存路径: {result['figure_path']}")
+
+# 输出result字典
+result
+```
+
+这个代码实现了：
+1. **60日滚动窗口**计算年化夏普比率
+2. 使用2.1%年化无风险利率
+3. 将计算结果绘制成曲线图
+4. 保存图表为PNG文件
+5. 将最后一个窗口的数值和图表路径存入`result`字典
+
+`result`字典包含：
+- `'rolling_sharpe_last'`: 最后一个窗口的年化夏普比率值
+- `'figure_path'`: 保存的图表文件路径

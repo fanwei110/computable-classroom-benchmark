@@ -1,0 +1,53 @@
+由于我无法直接读取你本地的课程数据文件，下面提供完整的 Python 计算代码。你只需将文件名和格式替换为你实际的文件即可运行。
+
+计算逻辑严格按照你的约定：
+1. 年化无风险利率 2.1% 转为日度：$r_f^{daily} = 0.021 / 252$
+2. 超额收益 = 基金日收益 - 日无风险利率
+3. 标准差使用样本估计量，即 `ddof=1`
+4. 年化 Sharpe ratio = 日 Sharpe ratio $\times \sqrt{252}$
+
+```python
+import pandas as pd
+import numpy as np
+
+# 1. 读取数据（请根据实际文件格式修改，如 pd.read_excel）
+df = pd.read_csv('你的课程数据文件.csv')  
+
+# 2. 提取基金日收益列
+daily_returns = df['fund']
+
+# 3. 设定无风险利率并转为日度
+rf_annual = 0.021
+rf_daily = rf_annual / 252
+
+# 4. 计算日超额收益
+excess_daily_returns = daily_returns - rf_daily
+
+# 5. 计算均值和样本标准差 (ddof=1 符合计算约定)
+mean_excess = excess_daily_returns.mean()
+std_excess = excess_daily_returns.std(ddof=1)
+
+# 6. 计算日夏普比率并年化
+sharpe_daily = mean_excess / std_excess
+sharpe_annual = sharpe_daily * np.sqrt(252)
+
+# 7. 按输出契约存入字典
+result = {'sharpe_annual': sharpe_annual}
+
+# 打印结果查看
+print(result)
+```
+
+如果你是在某些在线评测系统（已预加载DataFrame为`df`）中作答，只需核心计算部分：
+
+```python
+import numpy as np
+
+rf_daily = 0.021 / 252
+excess_daily_returns = df['fund'] - rf_daily
+
+sharpe_daily = excess_daily_returns.mean() / excess_daily_returns.std(ddof=1)
+sharpe_annual = sharpe_daily * np.sqrt(252)
+
+result = {'sharpe_annual': sharpe_annual}
+```

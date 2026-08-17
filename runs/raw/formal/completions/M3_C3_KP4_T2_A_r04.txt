@@ -1,0 +1,77 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+
+# ==================== 可调参数 ====================
+K = 97.5            # 行权价
+r = 0.043           # 无风险利率（连续复利，小数表示）
+T = 0.58            # 剩余期限（年）
+volatilities = [0.15, 0.276, 0.40]  # 可调波动率参数（小数表示）
+# =================================================
+
+# 标的价格范围
+S_range = np.linspace(70, 140, 1000)
+
+# Black-Scholes 欧式看涨期权 Delta
+def bs_call_delta(S, K, r, sigma, T):
+    d1 = (np.log(S / K) + (r + sigma**2 / 2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# 绘图
+fig, ax = plt.subplots(figsize=(10, 6))
+colors = ['#1f77b4', '#2ca02c', '#d62728']
+labels = [f'σ = {sigma*100:.1f}%' for sigma in volatilities]
+
+for sigma, color, label in zip(volatilities, colors, labels):
+    deltas = bs_call_delta(S_range, K, r, sigma, T)
+    ax.plot(S_range, deltas, color=color, linewidth=2, label=label)
+
+ax.axvline(x=K, color='gray', linestyle='--', alpha=0.5, linewidth=1, label=f'K = {K}')
+ax.set_xlabel('Underlying Price', fontsize=13)
+ax.set_ylabel('Delta', fontsize=13)
+ax.set_title('Call Option Delta vs Underlying Price\n'
+             f'K={K}, r={r*100}%, T={T}yr', fontsize=14)
+ax.legend(fontsize=11, loc='upper left')
+ax.grid(True, alpha=0.3)
+ax.set_xlim(70, 140)
+ax.set_ylim(-0.05, 1.05)
+
+figure_path = 'delta_vs_price.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# 计算 S=110, sigma=27.6% 时的 delta
+delta_at_s110 = bs_call_delta(110, K, r, 0.276, T)
+
+# 存入结果字典
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': figure_path
+}
+
+print(f"Delta at S=110, σ=27.6%: {delta_at_s110:.6f}")
+print(f"Figure saved to: {figure_path}")
+```
+
+**执行结果说明：**
+
+当标的价 = 110、波动率 = 27.6% 时，计算过程如下：
+
+- $d_1 = \dfrac{\ln(110/97.5) + (0.043 + 0.276^2/2) \times 0.58}{0.276 \times \sqrt{0.58}} = \dfrac{0.1207 + 0.0470}{0.2102} \approx 0.7979$
+
+- $\Delta = N(d_1) = N(0.7979) \approx 0.7877$
+
+**`result` 字典内容：**
+
+| 键 | 值 |
+|---|---|
+| `'delta_at_s110'` | `0.7877`（约） |
+| `'figure_path'` | `'delta_vs_price.png'` |
+
+图中三条线的特征：
+- **σ = 15%**（蓝线）：delta 在行权价附近变化最陡峭，从接近0迅速跃升至接近1
+- **σ = 27.6%**（绿线）：过渡较为平缓
+- **σ = 40%**（红线）：delta 变化最平缓，在深度实值/虚值区域也更偏离0和1
+
+波动率越低，delta 曲线越接近阶跃函数；波动率越高，delta 曲线越平滑。

@@ -1,0 +1,41 @@
+=== B0676  任务 KP2_T3 (T3) ===
+
+--- 任务要求的输出键 ---
+capm_return_monthly
+
+--- 判分失败明细 ---
+reason: silent alternative convention
+matched: rf_geometric
+evidence: {'rf_geometric': False}
+harness声明探测: {'rf_geometric': False}
+
+--- 提取出的代码 ---
+result = {'capm_return_monthly': -0.083970558}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+根据资本资产定价模型（CAPM），股票的预期收益率计算公式为：
+$$E(R_i) = R_f + \beta \times (E(R_m) - R_f)$$
+
+**1. 确定已知变量：**
+*   $\beta = 1.42$
+*   市场月度收益率 $R_m = -5.8\% = -0.058$
+*   年化无风险利率 $R_{f, annual} = 4.7\% = 0.047$
+
+**2. 计算月度无风险利率 $R_{f, monthly}$：**
+根据计算约定：“所有年化与去年化一律按每年 252 个交易日” 且 “债券收益率按年复利报价”。
+1个月相当于 $\frac{21}{252} = \frac{1}{12}$ 年。按照年复利折算到月复利：
+$$R_{f, monthly} = (1 + R_{f, annual})^{1/12} - 1$$
+$$R_{f, monthly} = (1 + 0.047)^{1/12} - 1 \approx 1.00383466 - 1 = 0.00383466$$
+
+**3. 计算股票上个月预期收益率：**
+$$E(R_i) = 0.00383466 + 1.42 \times (-0.058 - 0.00383466)$$
+$$E(R_i) = 0.00383466 + 1.42 \times (-0.06183466)$$
+$$E(R_i) = 0.00383466 - 0.08780522$$
+$$E(R_i) \approx -0.08397056$$
+
+即该股票上个月按CAPM计算的预期收益率约为 -8.40%。
+
+```python
+result = {'capm_return_monthly': -0.083970558}
+```

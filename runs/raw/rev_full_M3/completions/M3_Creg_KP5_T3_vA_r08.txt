@@ -1,0 +1,27 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+position_value = 2_700_000  # 头寸金额（元）
+annual_vol = 0.24          # 年化波动率
+trading_days = 252          # 一年的交易日数（金融业界标准）
+confidence_level = 0.95     # 置信水平
+
+# 计算日波动率：日波动率 = 年化波动率 / sqrt(交易日数)
+daily_vol = annual_vol / np.sqrt(trading_days)
+
+# 计算95%置信度下的标准正态分布分位点 (单尾)
+z_score = norm.ppf(confidence_level)
+
+# 计算一日 VaR (绝对 VaR)
+# VaR = 头寸价值 * 分位点 * 日波动率
+var_95_1d = position_value * z_score * daily_vol
+
+# 按照输出契约存入字典
+result = {
+    'var_95_1d': var_95_1d
+}
+
+print(result)
+```

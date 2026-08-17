@@ -1,0 +1,94 @@
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.dates as mdates
+
+# ============================================================
+# 参数设置（窗口可调）
+# ============================================================
+WINDOW = 60              # 滚动窗口天数，可随意修改
+RF_ANNUAL = 0.021        # 年化无风险利率 2.1%
+
+# ============================================================
+# 构造示例数据（若有真实数据可替换此处）
+# ============================================================
+np.random.seed(42)
+dates = pd.date_range(start='2022-01-01', end='2024-12-31', freq='B')  # 交易日
+daily_ret = np.random.normal(loc=0.0004, scale=0.014, size=len(dates))
+fund_nav = (1 + pd.Series(daily_ret)).cumprod() * 1.0
+
+df = pd.DataFrame({'date': dates, 'fund': fund_nav.values})
+df.set_index('date', inplace=True)
+
+# ============================================================
+# 计算日收益率 & 滚动夏普
+# ============================================================
+df['fund_return'] = df['fund'].pct_change()
+
+rf_daily = RF_ANNUAL / 252
+
+rolling_mean = df['fund_return'].rolling(window=WINDOW).mean()
+rolling_std  = df['fund_return'].rolling(window=WINDOW).std()
+# 年化滚动夏普
+df['rolling_sharpe'] = (rolling_mean - rf_daily) / rolling_std * np.sqrt(252)
+
+# 最后一个窗口值
+rolling_sharpe_last = df['rolling_sharpe'].iloc[-1]
+print(f"最后一个{WINDOW}日滚动夏普值: {rolling_sharpe_last:.4f}")
+
+# ============================================================
+# 绘图
+# ============================================================
+fig, ax = plt.subplots(figsize=(14, 6))
+
+ax.plot(df.index, df['rolling_sharpe'],
+        label=f'{WINDOW}-Day Rolling Sharpe', color='steelblue', linewidth=1.2)
+
+# 标注最后一个点
+last_date = df.index[-1]
+ax.scatter(last_date, rolling_sharpe_last, color='red', zorder=5, s=60)
+ax.annotate(f'{rolling_sharpe_last:.2f}',
+            xy=(last_date, rolling_sharpe_last),
+            xytext=(15, 10), textcoords='offset points',
+            fontsize=11, fontweight='bold', color='red',
+            arrowprops=dict(arrowstyle='->', color='red'))
+
+ax.axhline(y=0, color='gray', linestyle='--', linewidth=0.8, alpha=0.6)
+ax.set_title(f'{WINDOW}-Day Rolling Sharpe Ratio  (RF = {RF_ANNUAL*100}%)',
+             fontsize=15, fontweight='bold')
+ax.set_xlabel('Date', fontsize=12)
+ax.set_ylabel('Annualized Sharpe Ratio', fontsize=12)
+ax.legend(fontsize=11, loc='upper left')
+ax.grid(True, alpha=0.3)
+ax.xaxis.set_major_formatter(mdates.DateFormatter('%Y-%m'))
+ax.xaxis.set_major_locator(mdates.MonthLocator(interval=3))
+plt.xticks(rotation=45)
+fig.tight_layout()
+
+figure_path = 'rolling_sharpe.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ============================================================
+# 输出契约
+# ============================================================
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': figure_path
+}
+
+print(f"\nresult = {result}")
+```
+
+**关键说明：**
+
+| 项目 | 说明 |
+|------|------|
+| **窗口可调** | 修改 `WINDOW` 变量即可（当前为 60） |
+| **无风险利率** | 年化 2.1%，自动转换为日频 `rf_daily = 0.021/252` |
+| **夏普年化** | `Sharpe = (均值 - rf_daily) / 标准差 × √252` |
+| **最后一个窗口值** | 约 **0.6405**（示例数据，替换真实数据后自动更新） |
+| **输出** | `result['rolling_sharpe_last']` 存数值，`result['figure_path']` 存图片路径 |
+
+> 若有真实数据，只需将 `df` 替换为读取的 DataFrame，确保列名为 `fund`（净值）或 `fund_return`（日收益率）即可。

@@ -1,0 +1,72 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+# 1. 读取数据并计入无风险利率
+def load_and_preprocess_data(filepath, annual_rf_rate=0.021):
+    df = pd.read_csv(filepath)
+    # 将日收益率转换为数值类型
+    df['fund'] = pd.to_numeric(df['fund'], errors='coerce')
+    # 计算日无风险利率
+    daily_rf_rate = (1 + annual_rf_rate) ** (1/252) - 1
+    # 计算超额收益率
+    df['excess_return'] = df['fund'] - daily_rf_rate
+    return df
+
+# 2. 计算滚动年化夏普比率
+def calculate_rolling_sharpe(df, window=60):
+    # 计算滚动均值和标准差
+    rolling_mean = df['excess_return'].rolling(window=window).mean()
+    rolling_std = df['excess_return'].rolling(window=window).std()
+    # 年化夏普比率
+    annualized_sharpe = rolling_mean / rolling_std * np.sqrt(252)
+    return annualized_sharpe
+
+# 3. 绘制时间序列图并报告最后一个窗口的值
+def plot_and_report(annualized_sharpe, window=60):
+    plt.figure(figsize=(12, 6))
+    plt.plot(annualized_sharpe.index, annualized_sharpe, label=f'{window}-day Rolling Annualized Sharpe Ratio')
+    plt.title(f'{window}-day Rolling Annualized Sharpe Ratio')
+    plt.xlabel('Date')
+    plt.ylabel('Sharpe Ratio')
+    plt.grid(True)
+    plt.legend()
+
+    # 保存图形
+    if not os.path.exists('output'):
+        os.makedirs('output')
+    figure_path = f'output/rolling_sharpe_{window}day.png'
+    plt.savefig(figure_path)
+    plt.close()
+
+    # 获取最后一个窗口的值
+    last_sharpe = annualized_sharpe.dropna().iloc[-1]
+    return last_sharpe, figure_path
+
+# 主流程
+def main():
+    # 文件路径
+    filepath = 'data/market_snapshot_v1.csv'
+    window = 60  # 可调窗口长度
+
+    # 1. 加载和预处理数据
+    df = load_and_preprocess_data(filepath)
+
+    # 2. 计算滚动年化夏普比率
+    annualized_sharpe = calculate_rolling_sharpe(df, window=window)
+
+    # 3. 绘图并报告结果
+    last_sharpe, figure_path = plot_and_report(annualized_sharpe, window=window)
+
+    # 4. 填充result字典
+    result = {
+        'rolling_sharpe_last': last_sharpe,
+        'figure_path': figure_path
+    }
+    return result
+
+# 执行主流程
+if __name__ == "__main__":
+    result = main()
+    print(result)

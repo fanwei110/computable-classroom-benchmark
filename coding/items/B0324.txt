@@ -1,0 +1,66 @@
+=== B0324  任务 KP5_T1 (T1) ===
+
+--- 任务要求的输出键 ---
+var_95_1d, var_99_10d
+
+--- 判分失败明细 ---
+var_99_10d: 提交值 186869.17  |  参考值 186897.12026506528
+
+--- 提取出的代码 ---
+import math
+
+# 给定参数
+position = 1_850_000  # 头寸
+annual_vol = 0.218    # 年化波动率
+trading_days = 252    # 年交易日
+
+# 日波动率
+daily_vol = annual_vol / math.sqrt(trading_days)
+
+# 置信水平对应的 z 值（单尾）
+z_95 = 1.645   # 95%
+z_99 = 2.326   # 99%
+
+# 1日 VaR 95%
+var_95_1d = position * z_95 * daily_vol
+
+# 10日 VaR 99%
+var_99_10d = position * z_99 * daily_vol * math.sqrt(10)
+
+result = {
+    'var_95_1d': round(var_95_1d, 2),
+    'var_99_10d': round(var_99_10d, 2)
+}
+
+result
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+```python
+import math
+
+# 给定参数
+position = 1_850_000  # 头寸
+annual_vol = 0.218    # 年化波动率
+trading_days = 252    # 年交易日
+
+# 日波动率
+daily_vol = annual_vol / math.sqrt(trading_days)
+
+# 置信水平对应的 z 值（单尾）
+z_95 = 1.645   # 95%
+z_99 = 2.326   # 99%
+
+# 1日 VaR 95%
+var_95_1d = position * z_95 * daily_vol
+
+# 10日 VaR 99%
+var_99_10d = position * z_99 * daily_vol * math.sqrt(10)
+
+result = {
+    'var_95_1d': round(var_95_1d, 2),
+    'var_99_10d': round(var_99_10d, 2)
+}
+
+result
+```

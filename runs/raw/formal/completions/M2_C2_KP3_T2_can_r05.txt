@@ -1,0 +1,92 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ============================================================
+# 可调参数
+# ============================================================
+face_value = 100.0          # 面值
+coupon_rate = 0.046         # 年票息率
+maturity = 7                # 年
+current_yield = 0.053       # 当前收益率
+yield_shift = 0.01          # 收益率变动幅度（100bp），可根据需要修改
+yield_grid = np.linspace(0.02, 0.09, 500)  # 收益率网格：2% ~ 9%
+
+# ============================================================
+# 函数：计算债券价格（每年付息一次）
+# ============================================================
+def bond_price(ytm, face, coupon, T):
+    """年付息一次债券的定价公式"""
+    t = np.arange(1, T + 1)
+    cf = np.full(T, coupon * face)   # 各期票息
+    cf[-1] += face                   # 最后一期加上面值
+    pv = cf / (1 + ytm) ** t
+    return np.sum(pv)
+
+# ============================================================
+# 精确价格曲线
+# ============================================================
+exact_prices = np.array([bond_price(y, face_value, coupon_rate, maturity)
+                         for y in yield_grid])
+
+# 当前收益率处的精确价格
+P0 = bond_price(current_yield, face_value, coupon_rate, maturity)
+
+# ============================================================
+# 麦考利久期与修正久期
+# ============================================================
+t = np.arange(1, maturity + 1)
+cf = np.full(maturity, coupon_rate * face_value)
+cf[-1] += face_value
+pv_cf = cf / (1 + current_yield) ** t
+D_mac = np.sum(t * pv_cf) / P0
+D_mod = D_mac / (1 + current_yield)
+
+# 基于久期的近似价格曲线（切线）
+approx_prices = P0 - D_mod * P0 * (yield_grid - current_yield)
+
+# ============================================================
+# 图：精确曲线 + 久期近似
+# ============================================================
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.plot(yield_grid * 100, exact_prices, 'b-', linewidth=2, label='Exact Price')
+ax.plot(yield_grid * 100, approx_prices, 'r--', linewidth=2, label='Duration Approx.')
+ax.axvline(current_yield * 100, color='gray', linestyle=':', linewidth=1)
+ax.set_xlabel('Yield to Maturity (%)')
+ax.set_ylabel('Bond Price')
+ax.set_title('Price-Yield Curve: 7yr, 4.6% Coupon Bond')
+ax.legend()
+ax.grid(True, alpha=0.3)
+fig.tight_layout()
+
+figure_filename = 'bond_price_duration.png'
+plt.savefig(figure_filename, dpi=150)
+plt.close(fig)  # 释放内存
+
+# ============================================================
+# 收益率上升100bp（或 yield_shift）后的精确价格
+# ============================================================
+yield_up = current_yield + yield_shift
+price_up_exact = bond_price(yield_up, face_value, coupon_rate, maturity)
+
+# 久期法估计的相对价格变化（ ΔP / P ≈ -D_mod · Δy ）
+dur_approx_relative_change = -D_mod * yield_shift
+
+# ============================================================
+# 输出字典
+# ============================================================
+result = {
+    'price_at_up100bp': price_up_exact,
+    'dur_approx_change_up100bp': dur_approx_relative_change,
+    'figure_path': figure_filename
+}
+
+# 可选：打印结果，方便课堂查看
+print("=== Bond Pricing & Duration Results ===")
+print(f"Current yield: {current_yield*100:.2f}%")
+print(f"Yield shift (up): +{yield_shift*100:.0f} bp → new yield: {yield_up*100:.2f}%")
+print(f"Exact price at new yield: {price_up_exact:.4f}")
+print(f"Duration approx. relative price change: {dur_approx_relative_change:.6f} ({dur_approx_relative_change*100:.4f}%)")
+print(f"Figure saved to: {figure_filename}")
+print("Result dictionary keys:", list(result.keys()))
+```

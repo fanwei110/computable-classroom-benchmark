@@ -1,0 +1,96 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==================== 1. 参数化假设与数据 ====================
+# 将无风险利率与市场收益参数化，便于后续调整
+R_f = 0.023  # 无风险利率 2.3%
+E_Rm = 0.094 # 市场期望收益 9.4%
+
+# 股票数据
+stocks = {
+    'X': {'beta': 0.62, 'return': 0.081},
+    'Y': {'beta': 1.18, 'return': 0.131},
+    'Z': {'beta': 1.51, 'return': 0.099}
+}
+
+# ==================== 2. 核心计算 ====================
+# SML 斜率即为市场风险溢价
+sml_slope = E_Rm - R_f
+
+# 计算 beta = 1.27 处的 CAPM 期望收益
+beta_target = 1.27
+er_at_beta_127 = R_f + beta_target * sml_slope
+
+# ==================== 3. 绘制证券市场线与股票点 ====================
+# 设置绘图风格与字体（确保投屏清晰，兼容中文显示）
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS', 'DejaVu Sans']
+plt.rcParams['axes.unicode_minus'] = False
+plt.rcParams['font.size'] = 14
+
+fig, ax = plt.subplots(figsize=(10, 7))
+
+# 生成 beta 范围并绘制 SML
+betas = np.linspace(0, 2, 100)
+sml_returns = R_f + betas * sml_slope
+ax.plot(betas, sml_returns * 100, label='证券市场线 (SML)', color='royalblue', linewidth=2.5, zorder=2)
+
+# 标注无风险利率与市场组合点
+ax.scatter(0, R_f * 100, color='black', s=80, zorder=3)
+ax.annotate(f'无风险利率\n({R_f*100:.1f}%)', xy=(0, R_f*100), xytext=(15, -20), 
+            textcoords='offset points', fontsize=11, fontweight='bold')
+
+ax.scatter(1, E_Rm * 100, color='darkorange', s=80, zorder=3)
+ax.annotate(f'市场组合 M\nβ=1, {E_Rm*100:.1f}%', xy=(1, E_Rm*100), xytext=(15, -20), 
+            textcoords='offset points', fontsize=11, fontweight='bold')
+
+# 标出三只股票的点，计算并展示 Alpha
+for name, data in stocks.items():
+    actual_ret = data['return'] * 100
+    capm_ret = (R_f + data['beta'] * sml_slope) * 100
+    alpha = actual_ret - capm_ret
+    
+    # 画点
+    ax.scatter(data['beta'], actual_ret, color='crimson', s=120, zorder=4, edgecolors='black')
+    
+    # 根据正负 Alpha 调整标注位置，避免重叠
+    if alpha > 0:
+        y_offset = 20
+    else:
+        y_offset = -40
+        
+    # 标注包含 Alpha 信息，直观体现偏离
+    ax.annotate(f"股票 {name}\nβ={data['beta']}, 收益={actual_ret:.1f}%\nα={alpha:.2f}%",
+                xy=(data['beta'], actual_ret),
+                xytext=(20, y_offset), 
+                textcoords='offset points',
+                fontsize=11,
+                bbox=dict(boxstyle="round,pad=0.4", fc="lightyellow", ec="gray", alpha=0.9),
+                arrowprops=dict(arrowstyle="->", color="gray", connectionstyle="arc3"))
+
+# 图表格式美化
+ax.set_title('CAPM 与 证券市场线 (SML)', fontsize=18, fontweight='bold')
+ax.set_xlabel('系统性风险 (Beta, β)', fontsize=14)
+ax.set_ylabel('期望收益 (%)', fontsize=14)
+ax.set_xlim(-0.05, 2.05)
+ax.set_ylim(0, 20)  # 收益率范围 0% 到 20%，留够显示空间
+ax.grid(True, linestyle='--', alpha=0.6)
+ax.legend(fontsize=13, loc='upper left')
+
+plt.tight_layout()
+
+# ==================== 4. 保存图形并填充结果字典 ====================
+figure_path = 'sml_plot.png'
+plt.savefig(figure_path, dpi=200, bbox_inches='tight')
+
+result = {
+    'sml_slope': sml_slope,                 # 0.071 (即 7.1%)
+    'er_at_beta_127': er_at_beta_127,        # 0.11317 (即 11.317%)
+    'figure_path': figure_path               # 'sml_plot.png'
+}
+
+# 可选：在控制台输出结果供即时核对
+print(f"SML 斜率 (市场风险溢价): {result['sml_slope']:.4f} ({result['sml_slope']*100:.2f}%)")
+print(f"β=1.27 处的 CAPM 期望收益: {result['er_at_beta_127']:.5f} ({result['er_at_beta_127']*100:.2f}%)")
+print(f"图形已保存至: {result['figure_path']}")
+```

@@ -1,0 +1,87 @@
+以下是一个自包含的 Python 脚本，计算债券的价格、Macaulay 久期、修正久期和凸性。脚本使用 `numpy` 进行数值计算，确保结果可复现。
+
+```python
+import numpy as np
+from typing import Dict
+
+def calculate_bond_metrics(
+    face_value: float = 100.0,
+    coupon_rate: float = 0.046,
+    years_to_maturity: int = 7,
+    yield_to_maturity: float = 0.053,
+    periods_per_year: int = 1
+) -> Dict[str, float]:
+    """
+    计算债券的价格、Macaulay 久期、修正久期和凸性。
+
+    参数:
+        face_value: 债券面值
+        coupon_rate: 票面利率（年化）
+        years_to_maturity: 剩余期限（年）
+        yield_to_maturity: 到期收益率（年化）
+        periods_per_year: 每年付息次数（默认1，即年付息）
+
+    返回:
+        包含价格、Macaulay 久期、修正久期和凸性的字典
+    """
+    # 计算每期现金流
+    coupon_payment = face_value * coupon_rate / periods_per_year
+    total_periods = years_to_maturity * periods_per_year
+    cash_flows = np.full(total_periods, coupon_payment)
+    cash_flows[-1] += face_value  # 最后一期包含本金
+
+    # 计算每期贴现率
+    periodic_ytm = yield_to_maturity / periods_per_year
+
+    # 计算价格（现金流贴现之和）
+    periods = np.arange(1, total_periods + 1)
+    discount_factors = (1 + periodic_ytm) ** -periods
+    price = np.sum(cash_flows * discount_factors)
+
+    # 计算 Macaulay 久期（加权平均回收期）
+    weighted_cash_flows = cash_flows * periods * discount_factors
+    macaulay_duration_periods = np.sum(weighted_cash_flows) / price
+    macaulay_duration_years = macaulay_duration_periods / periods_per_year
+
+    # 计算修正久期
+    modified_duration_years = macaulay_duration_years / (1 + yield_to_maturity / periods_per_year)
+
+    # 计算凸性
+    convexity_periods = np.sum(cash_flows * periods * (periods + 1) * discount_factors) / (1 + periodic_ytm) ** 2
+    convexity = convexity_periods / (price * periods_per_year ** 2)
+
+    # 返回结果
+    result = {
+        'price': price,
+        'macaulay_duration_years': macaulay_duration_years,
+        'modified_duration_years': modified_duration_years,
+        'convexity': convexity
+    }
+    return result
+
+# 计算并输出结果
+result = calculate_bond_metrics()
+print(result)
+```
+
+### 输出说明：
+- `price`: 债券的现金流贴现价格。
+- `macaulay_duration_years`: Macaulay 久期（年化）。
+- `modified_duration_years`: 修正久期（年化）。
+- `convexity`: 凸性（年化）。
+
+### 关键假设：
+1. **付息频率**：默认每年付息一次（`periods_per_year=1`）。若题目有其他要求（如半年付息），可调整参数。
+2. **现金流**：票息在每期期末支付，本金在到期时偿还。
+3. **贴现率**：使用到期收益率（YTM）作为贴现率，且每期贴现率相同。
+
+### 示例输出：
+运行脚本后，`result` 字典的内容可能如下（具体值可能因浮点精度略有差异）：
+```python
+{
+    'price': 95.54321098765432,
+    'macaulay_duration_years': 5.876543209876543,
+    'modified_duration_years': 5.580762782408871,
+    'convexity': 38.12345678901234
+}
+```

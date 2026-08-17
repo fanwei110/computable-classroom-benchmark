@@ -1,0 +1,77 @@
+import numpy as np
+
+# 原始数据
+volatilities = np.array([0.187, 0.243, 0.312])  # 年化波动率
+corr_12 = 0.21
+corr_13 = -0.13
+corr_23 = 0.37
+
+# 步骤1: 构造相关系数矩阵和协方差矩阵
+corr_matrix = np.array([
+    [1.0, corr_12, corr_13],
+    [corr_12, 1.0, corr_23],
+    [corr_13, corr_23, 1.0]
+])
+
+# 构造协方差矩阵：σ_ij = ρ_ij * σ_i * σ_j
+cov_matrix = np.zeros((3, 3))
+for i in range(3):
+    for j in range(3):
+        cov_matrix[i, j] = corr_matrix[i, j] * volatilities[i] * volatilities[j]
+
+print("协方差矩阵：")
+print(cov_matrix)
+print("\n")
+
+# 步骤2: 计算全局最小方差组合权重（闭式解）
+# 对于允许卖空、全部资金投入的情况
+# 目标：最小化 portfolio_variance = w'Σw，约束：sum(w_i) = 1
+# 使用拉格朗日乘子法求解
+
+n_assets = 3
+
+# 构造约束矩阵
+A = np.zeros((2, n_assets + 2))  # 2个约束
+A[0, :n_assets] = 1.0  # sum(w_i) = 1
+A[1, :n_assets] = 0.0
+
+# 扩充的协方差矩阵用于求解
+extended_matrix = np.zeros((n_assets + 2, n_assets + 2))
+extended_matrix[:n_assets, :n_assets] = 2 * cov_matrix
+extended_matrix[:n_assets, n_assets] = 1
+extended_matrix[:n_assets, n_assets + 1] = 0
+extended_matrix[n_assets, :n_assets] = 1
+extended_matrix[n_assets+1, :n_assets] = 0
+
+# 右侧向量
+b = np.zeros(n_assets + 2)
+b[n_assets] = 1.0  # 约束 sum(w_i) = 1
+
+# 求解系统：将 extended_matrix 扩展
+# 实际上使用原始方法更直接
+inv_cov = np.linalg.inv(cov_matrix)
+I = np.ones(n_assets)
+denominator = I.T @ inv_cov @ I
+mvp_weights = (inv_cov @ I) / denominator
+
+print("全局最小方差组合权重：")
+print(mvp_weights)
+print(f"权重之和：{np.sum(mvp_weights):.10f}")
+print("\n")
+
+# 步骤3: 计算组合波动率
+portfolio_variance = mvp_weights.T @ cov_matrix @ mvp_weights
+mvp_vol_annual = np.sqrt(portfolio_variance)
+
+print(f"全局最小方差组合年化波动率：{mvp_vol_annual:.6f}")
+print(f"全局最小方差组合年化波动率（百分比）：{mvp_vol_annual*100:.4f}%")
+
+# 存储结果
+result = {
+    'mvp_weights': mvp_weights.tolist(),
+    'mvp_vol_annual': float(mvp_vol_annual)
+}
+
+print("\n结果字典：")
+for key, value in result.items():
+    print(f"{key}: {value}")

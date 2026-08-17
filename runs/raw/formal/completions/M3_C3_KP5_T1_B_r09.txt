@@ -1,0 +1,43 @@
+根据参数法（方差-协方差法）计算VaR，假设收益率服从正态分布：
+
+1. **基本参数**：
+   - 仓位 $V = 1,850,000$
+   - 年化波动率 $\sigma_{ann} = 0.218$
+   - 交易日 $T = 252$
+
+2. **日波动率**：
+   $$\sigma_{daily} = \frac{\sigma_{ann}}{\sqrt{252}} = \frac{0.218}{\sqrt{252}} \approx 0.01373365$$
+
+3. **计算 95% 1天 VaR**：
+   - 正态分布 95% 分位数 $Z_{0.95} = 1.644853627$
+   - $VaR_{95\%, 1d} = V \times Z_{0.95} \times \sigma_{daily} = 1,850,000 \times 1.644853627 \times 0.01373365 \approx 41804.93$
+
+4. **计算 99% 10天 VaR**：
+   - 正态分布 99% 分位数 $Z_{0.99} = 2.326347874$
+   - 10天波动率 $\sigma_{10d} = \sigma_{daily} \times \sqrt{10} = \sigma_{ann} \times \sqrt{\frac{10}{252}} \approx 0.04342660$
+   - $VaR_{99\%, 10d} = V \times Z_{0.99} \times \sigma_{10d} = 1,850,000 \times 2.326347874 \times 0.04342660 \approx 186906.70$
+
+```python
+import scipy.stats as stats
+import math
+
+V = 1850000
+sigma_ann = 0.218
+T = 252
+
+sigma_daily = sigma_ann / math.sqrt(T)
+
+# 95% 1天 VaR
+z_95 = stats.norm.ppf(0.95)
+var_95_1d = V * z_95 * sigma_daily
+
+# 99% 10天 VaR
+z_99 = stats.norm.ppf(0.99)
+sigma_10d = sigma_daily * math.sqrt(10)
+var_99_10d = V * z_99 * sigma_10d
+
+result = {
+    'var_95_1d': var_95_1d,
+    'var_99_10d': var_99_10d
+}
+```

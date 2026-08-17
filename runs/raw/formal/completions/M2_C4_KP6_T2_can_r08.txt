@@ -1,0 +1,107 @@
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ============================================================
+# 1. 读取数据与基本参数设定
+# ============================================================
+# 读取课程快照 CSV
+data_path = 'data/market_snapshot_v1.csv'
+# 若路径不存在则提示错误（教师可自行修改为正确路径）
+df = pd.read_csv(data_path, parse_dates=True)
+# 假设 CSV 中至少包含日期列和 'fund' 列，这里日期列名称未知，先尝试常见命名
+# 若第一列为日期，则将其设为索引
+if 'date' in df.columns:
+    df['date'] = pd.to_datetime(df['date'])
+    df.set_index('date', inplace=True)
+elif 'Date' in df.columns:
+    df['Date'] = pd.to_datetime(df['Date'])
+    df.set_index('Date', inplace=True)
+else:
+    # 若没有明确日期列，假设第一列为日期
+    df.iloc[:, 0] = pd.to_datetime(df.iloc[:, 0])
+    df.set_index(df.columns[0], inplace=True)
+
+# 取出 fund 列的日收益率（小数形式）
+fund_returns = df['fund'].astype(float)
+
+# 无风险年利率 2.1% (0.021)，日化
+rf_annual = 0.021
+rf_daily = rf_annual / 252.0
+
+# 交易日年化参数
+trading_days = 252
+
+# ============================================================
+# 2. 定义可调窗口长度的滚动夏普比率计算函数
+# ============================================================
+def rolling_annualized_sharpe(returns, window, rf_daily, ddof=1):
+    """
+    计算滚动年化夏普比率
+    returns : 日收益率序列
+    window : 滚动窗口大小（交易日数）
+    rf_daily : 日无风险利率
+    ddof : 自由度修正，样本标准差使用 ddof=1
+    """
+    # 超额收益（日）
+    excess = returns - rf_daily
+    # 滚动平均日超额收益
+    roll_mean = excess.rolling(window=window).mean()
+    # 滚动样本标准差（ddof=1 是默认，但明确写出）
+    roll_std = excess.rolling(window=window).std(ddof=ddof)
+    # 年化夏普比率 = (日平均超额收益 * 252) / (日波动率 * sqrt(252))
+    # 等价于 (日平均超额收益 / 日波动率) * sqrt(252) 但小心日波动率为0的情况
+    roll_sharpe = (roll_mean / roll_std) * np.sqrt(trading_days)
+    return roll_sharpe
+
+# 窗口长度设为 60（可调）
+window_length = 60
+sharpe_series = rolling_annualized_sharpe(fund_returns, window_length, rf_daily, ddof=1)
+
+# ============================================================
+# 3. 获取最后一个窗口的夏普比率值
+# ============================================================
+# 去除 NaN
+sharpe_clean = sharpe_series.dropna()
+if len(sharpe_clean) > 0:
+    last_sharpe = sharpe_clean.iloc[-1]
+else:
+    last_sharpe = np.nan
+
+# 保留四位小数用于报告
+last_sharpe_rounded = round(float(last_sharpe), 4)
+
+# ============================================================
+# 4. 绘制时间序列并保存图形
+# ============================================================
+fig, ax = plt.subplots(figsize=(10, 5))
+ax.plot(sharpe_series.index, sharpe_series.values, color='navy', linewidth=1.2, label=f'{window_length}-Day Rolling Annualized Sharpe')
+ax.axhline(y=0, color='gray', linestyle='--', alpha=0.7)
+ax.set_title(f'Rolling {window_length}-Day Annualized Sharpe Ratio (Fund)')
+ax.set_xlabel('Date')
+ax.set_ylabel('Annualized Sharpe Ratio')
+ax.legend()
+ax.grid(True, alpha=0.3)
+fig.tight_layout()
+
+# 确保保存目录存在
+output_dir = 'output'
+os.makedirs(output_dir, exist_ok=True)
+figure_path = os.path.join(output_dir, 'rolling_sharpe_ratio.png')
+fig.savefig(figure_path, dpi=150)
+plt.close(fig)
+
+# ============================================================
+# 5. 封装结果输出
+# ============================================================
+result = {
+    'rolling_sharpe_last': last_sharpe_rounded,
+    'figure_path': figure_path
+}
+
+# 打印结果以供教师查看
+print(f"最后一个{window_length}日滚动年化夏普比率: {last_sharpe_rounded}")
+print(f"图形保存路径: {figure_path}")
+```

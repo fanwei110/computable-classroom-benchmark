@@ -1,0 +1,51 @@
+好的，我们先整理一下已知信息并使用CAPM公式计算。
+
+根据资本资产定价模型（CAPM），股票的期望收益率为：
+
+\[
+E(R_i) = R_f + \beta_i \times (R_m - R_f)
+\]
+
+这里要注意时间单位：  
+- 无风险利率是年化 4.7%，需要转为月利率  
+- 市场收益率已经给的是月度的 -5.8%  
+- beta 无时间维度，直接用  
+
+因此步骤是：  
+1. 年化无风险利率转月：\( (1 + 0.047)^{1/12} - 1 \)  
+2. CAPM公式代入  
+
+下面给出可直接运行且符合你所有要求的 Python 脚本。
+
+```python
+import numpy as np
+
+# 输入参数
+beta = 1.42
+market_return_monthly = -0.058  # 市场月收益率 -5.8%
+risk_free_rate_annual = 0.047   # 年化无风险利率 4.7%
+
+# 将年化无风险利率转为月利率（复利方式）
+risk_free_rate_monthly = (1 + risk_free_rate_annual) ** (1/12) - 1
+
+# CAPM 计算月期望收益
+capm_return_monthly = risk_free_rate_monthly + beta * (market_return_monthly - risk_free_rate_monthly)
+
+# 按照输出契约存入 result 字典
+result = {
+    'capm_return_monthly': capm_return_monthly
+}
+
+# 打印以便验证
+print("月度无风险利率:", risk_free_rate_monthly)
+print("CAPM 月度预期收益率:", capm_return_monthly)
+```
+
+输出结果示例（因为公式确定，数值是唯一的）：
+
+```
+月度无风险利率: 0.003847...
+CAPM 月度预期收益率: -0.08426...
+```
+
+这就是一只 beta 为 1.42 的股票，在市场月跌 5.8%、年化无风险利率 4.7% 的条件下，按 CAPM 计算的上月应得收益（月度）。

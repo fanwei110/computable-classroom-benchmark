@@ -1,0 +1,60 @@
+以下是自包含的 Python 脚本，它从课程数据文件读取 `fund` 列，按无风险利率 2.1% 计算整个样本的年化夏普比率，并将结果存入字典 `result`。
+
+```python
+import pandas as pd
+import numpy as np
+
+# ------------------------------ 配置 ------------------------------
+DATA_PATH = 'data.csv'          # 课程数据文件路径
+RISK_FREE_ANNUAL = 0.021       # 年化无风险利率
+# ------------------------------------------------------------------
+
+# 读取数据
+df = pd.read_csv(DATA_PATH)
+
+# 提取基金收益列（假设列名为 'fund'）
+fund_returns = df['fund'].astype(float)
+
+# ---------- 推断数据频率 ----------
+# 尝试利用日期列推断每年期数，无日期列则默认月度(12)
+if 'date' in df.columns:
+    try:
+        dates = pd.to_datetime(df['date'])
+        # 通过连续日期间隔的中位数推断频率
+        median_delta = dates.diff().median()
+        if median_delta <= pd.Timedelta(days=1):
+            periods_per_year = 252   # 日度
+        elif median_delta <= pd.Timedelta(days=7):
+            periods_per_year = 52    # 周度
+        elif median_delta <= pd.Timedelta(days=31):
+            periods_per_year = 12    # 月度
+        else:
+            periods_per_year = 4     # 季度或更低频率（保守按季度）
+    except Exception:
+        periods_per_year = 12        # 推断失败，回退到月度
+else:
+    # 无日期列，默认月度频率
+    periods_per_year = 12
+
+# ---------- 计算年化夏普比率 ----------
+# 每期无风险利率（简单比例）
+rf_period = RISK_FREE_ANNUAL / periods_per_year
+
+# 每期超额收益
+excess_returns = fund_returns - rf_period
+
+# 年化夏普比率 = (每期均值 / 每期标准差) * sqrt(年化期数)
+sharpe_period = excess_returns.mean() / excess_returns.std()
+sharpe_annual = sharpe_period * np.sqrt(periods_per_year)
+
+# 按契约存储结果
+result = {
+    'sharpe_annual': sharpe_annual
+}
+```
+
+**重要说明**（无需修改脚本，仅供理解）：
+- 脚本默认从当前目录的 `data.csv` 读取数据，要求文件中包含 `fund` 列。
+- 若文件同时包含 `date` 列，脚本会自动推断数据频率（日/周/月/季度）；若无日期列，则假定为**月度频率**（每年12期），这是金融课程中最常见的情形。
+- 无风险利率按年化 2.1% 转化为各期等比例利率（`2.1% / periods_per_year`）。
+- 计算逻辑为：先求每期超额收益的均值与标准差，得到每期夏普比率，再乘以 √期数 进行年化。结果直接存入 `result` 字典，键为 `'sharpe_annual'`。

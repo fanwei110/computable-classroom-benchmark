@@ -1,0 +1,26 @@
+```python
+# 计算7年期债券价格下跌百分比
+face_value = 100
+coupon_rate = 0.046
+coupon = face_value * coupon_rate
+yield_current = 0.053
+yield_new = 0.061  # 上行80bp = 0.053 + 0.008
+n = 7
+
+# 现值计算函数
+def bond_price(face, coupon, y, n):
+    pv_coupons = coupon * (1 - (1 + y)**-n) / y
+    pv_face = face / (1 + y)**n
+    return pv_coupons + pv_face
+
+price_current = bond_price(face_value, coupon, yield_current, n)
+price_new = bond_price(face_value, coupon, yield_new, n)
+
+price_drop_pct = (price_current - price_new) / price_current * 100
+
+result = {
+    'price_drop_pct': round(price_drop_pct, 2)
+}
+
+result
+```

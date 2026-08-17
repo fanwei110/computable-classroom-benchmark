@@ -1,0 +1,22 @@
+=== Reconciliation of the 2,160 formal generations (auditable) ===
+total rows: 2160  (18 tasks x 4 conditions x 3 models x 10 reps)
+
+condition   format_failu    code_error  numeric_wron   vis_failure    defensible       correct  total  exec_ok  correct%
+C1                    49            40           264             0             2           185    540      465     34.3
+C2                    19            36           127             0            13           345    540      496     63.9
+C3                    52            35           249             1            10           193    540      468     35.7
+C4                    19            25            20             0             0           476    540      508     88.1
+
+column definitions: mutually exclusive primary buckets; correct% = correct/total (strict tier). exec_ok = code extracted & no crash.
+
+--- format_failure split (mechanical): no runnable code vs executed-but-no-`result` ---
+C1: format_failure=49  no-code=35  executed-but-no-result=14
+C2: format_failure=19  no-code=8  executed-but-no-result=11
+C3: format_failure=52  no-code=37  executed-but-no-result=15
+C4: format_failure=19  no-code=7  executed-but-no-result=12
+
+--- T3 tiers (strict vs defensible), per condition ---
+C1: n=180  strict=25.0%  defensible-tier-only=2  strict+defensible=26.1%
+C2: n=180  strict=48.3%  defensible-tier-only=13  strict+defensible=55.6%
+C3: n=180  strict=19.4%  defensible-tier-only=10  strict+defensible=25.0%
+C4: n=180  strict=90.0%  defensible-tier-only=0  strict+defensible=90.0%

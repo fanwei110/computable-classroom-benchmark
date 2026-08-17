@@ -1,0 +1,84 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 资产参数
+r1, r2 = 0.071, 0.124
+s1, s2 = 0.163, 0.289
+rhos = [0.15, 0.45, 0.75]
+
+# 权重范围（允许卖空，以展现完整的双曲线前沿）
+w1 = np.linspace(-0.5, 1.5, 1000)
+w2 = 1 - w1
+
+# 初始化需要计算的特定值
+mvp_vol_at_rho45 = None
+frontier_vol_at_target = None
+
+plt.figure(figsize=(10, 7))
+
+for rho in rhos:
+    # 计算组合收益和波动率
+    rp = w1 * r1 + w2 * r2
+    cov12 = rho * s1 * s2
+    sp2 = (w1 * s1)**2 + (w2 * s2)**2 + 2 * w1 * w2 * cov12
+    sp = np.sqrt(sp2)
+    
+    # 绘制有效前沿
+    plt.plot(sp, rp, label=f'ρ = {rho}', lw=2)
+    
+    # 计算并标记最小方差点 (MVP)
+    w_mvp = (s2**2 - cov12) / (s1**2 + s2**2 - 2 * cov12)
+    r_mvp = w_mvp * r1 + (1 - w_mvp) * r2
+    sp_mvp = np.sqrt((w_mvp * s1)**2 + ((1 - w_mvp) * s2)**2 + 2 * w_mvp * (1 - w_mvp) * cov12)
+    
+    plt.scatter(sp_mvp, r_mvp, marker='o', s=60, zorder=5)
+    plt.annotate(f'MVP (ρ={rho})\nVol: {sp_mvp:.2%}', 
+                 xy=(sp_mvp, r_mvp), 
+                 xytext=(15, -20), 
+                 textcoords='offset points',
+                 fontsize=9,
+                 arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=-0.2'))
+
+    # 针对rho=0.45计算要求的具体数值
+    if rho == 0.45:
+        mvp_vol_at_rho45 = sp_mvp
+        
+        # 目标收益10%时的最小波动率
+        target_ret = 0.10
+        w_target = (target_ret - r2) / (r1 - r2)
+        sp_target = np.sqrt((w_target * s1)**2 + ((1 - w_target) * s2)**2 + 2 * w_target * (1 - w_target) * cov12)
+        frontier_vol_at_target = sp_target
+        
+        # 在图上标记目标收益点
+        plt.scatter(sp_target, target_ret, marker='*', s=120, color='red', zorder=5)
+        plt.annotate(f'Target 10% (ρ=0.45)\nMin Vol: {sp_target:.2%}', 
+                     xy=(sp_target, target_ret), 
+                     xytext=(20, 10), 
+                     textcoords='offset points',
+                     fontsize=9, color='red',
+                     arrowprops=dict(arrowstyle='->', color='red'))
+
+# 图表装饰
+plt.title('Two-Asset Efficient Frontier with Different Correlations', fontsize=14)
+plt.xlabel('Volatility (Standard Deviation)', fontsize=12)
+plt.ylabel('Expected Return', fontsize=12)
+plt.legend(fontsize=11)
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.xlim(0.1, 0.45)
+plt.ylim(0.04, 0.16)
+
+# 保存图片
+fig_path = 'efficient_frontier.png'
+plt.savefig(fig_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# 构建结果字典
+result = {
+    'mvp_vol_at_rho45': mvp_vol_at_rho45,
+    'frontier_vol_at_target': frontier_vol_at_target,
+    'figure_path': fig_path
+}
+
+print(result)
+```

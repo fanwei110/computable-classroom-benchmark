@@ -1,0 +1,42 @@
+```python
+import math
+
+def black_scholes_call(S, K, T, r, sigma):
+    """计算欧式看涨期权的价格、Delta和Vega"""
+    # d1和d2
+    d1 = (math.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * math.sqrt(T))
+    d2 = d1 - sigma * math.sqrt(T)
+
+    # 标准正态分布的累积分布函数和概率密度函数
+    def norm_cdf(x):
+        """标准正态累积分布函数"""
+        return 0.5 * math.erfc(-x / math.sqrt(2))
+
+    def norm_pdf(x):
+        """标准正态概率密度函数"""
+        return math.exp(-0.5 * x ** 2) / math.sqrt(2 * math.pi)
+
+    call_price = S * norm_cdf(d1) - K * math.exp(-r * T) * norm_cdf(d2)
+    call_delta = norm_cdf(d1)
+    call_vega = S * norm_pdf(d1) * math.sqrt(T)
+
+    return call_price, call_delta, call_vega
+
+# 给定参数
+S = 103.7
+K = 97.5
+sigma = 0.276
+r = 0.043
+T = 0.58
+
+call_price, call_delta, call_vega = black_scholes_call(S, K, T, r, sigma)
+
+result = {
+    'call_price': round(call_price, 4),
+    'call_delta': round(call_delta, 4),
+    'call_vega': round(call_vega, 4)
+}
+
+# 输出结果
+result
+```

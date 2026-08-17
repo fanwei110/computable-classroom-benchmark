@@ -1,0 +1,33 @@
+根据债券定价及久期、凸性的计算公式，我们基于**年付息**的常规假设进行计算：
+
+**已知参数：**
+*   面值 ($F$) = 100
+*   票息率 ($c$) = 4.6% （年票息 $C = 100 \times 4.6\% = 4.6$）
+*   期限 ($n$) = 7 年
+*   收益率 ($y$) = 5.3%
+
+**1. 债券价格**
+$$P = \sum_{t=1}^{n} \frac{C}{(1+y)^t} + \frac{F}{(1+y)^n} = C \times \frac{1 - (1+y)^{-n}}{y} + F \times (1+y)^{-n}$$
+$$P = 4.6 \times \frac{1 - 1.053^{-7}}{0.053} + 100 \times 1.053^{-7} \approx 95.9864$$
+
+**2. 麦考利久期**
+$$MacD = \frac{1}{P} \sum_{t=1}^{n} \frac{t \cdot C}{(1+y)^t} + \frac{n \cdot F}{(1+y)^n}$$
+$$MacD = \frac{1}{95.9864} \times \left( \sum_{t=1}^{6} \frac{t \times 4.6}{1.053^t} + \frac{7 \times 104.6}{1.053^7} \right) \approx 6.1177 \text{ 年}$$
+
+**3. 修正久期**
+$$ModD = \frac{MacD}{1+y} = \frac{6.1177}{1.053} \approx 5.8104$$
+
+**4. 凸性**
+$$Conv = \frac{1}{P(1+y)^2} \sum_{t=1}^{n} \frac{t(t+1) \cdot CF_t}{(1+y)^t}$$
+$$Conv = \frac{1}{95.9864 \times 1.053^2} \times \left( \sum_{t=1}^{6} \frac{t(t+1) \times 4.6}{1.053^t} + \frac{7 \times 8 \times 104.6}{1.053^7} \right) \approx 42.1221$$
+
+按照输出契约，所有要求的结果已存入字典 `result`：
+
+```python
+result = {
+    'price': 95.9864,
+    'macaulay_duration_years': 6.1177,
+    'modified_duration_years': 5.8104,
+    'convexity': 42.1221
+}
+```

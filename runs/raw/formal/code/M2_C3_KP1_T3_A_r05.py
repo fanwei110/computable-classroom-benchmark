@@ -1,0 +1,20 @@
+# 给定参数
+sigma_A = 0.184   # A 的波动率
+sigma_B = 0.297   # B 的波动率
+w_A = 0.6
+w_B = 0.4
+rho_before = 0.3
+rho_after = 0.8
+
+# 组合方差计算函数
+def portfolio_vol(w1, w2, s1, s2, rho):
+    var = (w1 * s1)**2 + (w2 * s2)**2 + 2 * w1 * w2 * s1 * s2 * rho
+    return var**0.5
+
+vol_before_annual = portfolio_vol(w_A, w_B, sigma_A, sigma_B, rho_before)
+vol_after_annual  = portfolio_vol(w_A, w_B, sigma_A, sigma_B, rho_after)
+
+result = {
+    'vol_before_annual': vol_before_annual,
+    'vol_after_annual': vol_after_annual
+}

@@ -1,0 +1,64 @@
+=== B0281  任务 KP2_T3 (T3) ===
+
+--- 任务要求的输出键 ---
+capm_return_monthly
+
+--- 判分失败明细 ---
+reason: silent alternative convention
+matched: rf_geometric
+evidence: {'rf_geometric': False}
+harness声明探测: {'rf_geometric': False}
+
+--- 提取出的代码 ---
+# è®¡ç®è¿ç¨
+rf_annual = 0.047
+beta = 1.42
+market_monthly = -0.058
+
+# å¹´åæ é£é©å©çè½¬æåº¦ï¼æ252ä¸ªäº¤ææ¥ï¼ä¸ä¸ªæå21ä¸ªäº¤ææ¥ï¼
+rf_monthly = (1 + rf_annual) ** (21/252) - 1
+
+# CAPMé¢ææ¶ç
+capm_return_monthly = rf_monthly + beta * (market_monthly - rf_monthly)
+
+result = {'capm_return_monthly': capm_return_monthly}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+æ ¹æ®CAPMæ¨¡åï¼èµäº§çé¢ææ¶çè®¡ç®åä¸ºï¼
+\[
+E(R_i) = R_f + \beta_i \times (E(R_m) - R_f)
+\]
+åï¼
+- \(\beta_i = 1.42\)
+- å¤§çä¸ææ¶çç \(E(R_m) = -5.8\% = -0.058\)
+- å¹´åæ é£é©å©ç \(R_f = 4.7\% = 0.047\)ï¼ææ¯å¹´252ä¸ªäº¤ææ¥ãå¹´å¤å©æ¥ä»·ï¼å»å¹´åä¸ºæåº¦æ¶ççï¼
+\[
+R_{f,\text{monthly}} = (1 + 0.047)^{\frac{21}{252}} - 1 = (1.047)^{\frac{1}{12}} - 1 \approx 0.003835
+\]
+
+ä»£ååï¼
+\[
+E(R_i) = 0.003835 + 1.42 \times (-0.058 - 0.003835) \approx -0.083971
+\]
+å³ä¸ä¸ªææCAPMè®¡ç®çé¢ææ¶ççº¦ä¸º **-8.40%**ï¼å°æ°è¡¨ç¤ºä¸º -0.083971ï¼ã
+
+```python
+# è®¡ç®è¿ç¨
+rf_annual = 0.047
+beta = 1.42
+market_monthly = -0.058
+
+# å¹´åæ é£é©å©çè½¬æåº¦ï¼æ252ä¸ªäº¤ææ¥ï¼ä¸ä¸ªæå21ä¸ªäº¤ææ¥ï¼
+rf_monthly = (1 + rf_annual) ** (21/252) - 1
+
+# CAPMé¢ææ¶ç
+capm_return_monthly = rf_monthly + beta * (market_monthly - rf_monthly)
+
+result = {'capm_return_monthly': capm_return_monthly}
+```
+
+æç»è¾åºå­åï¼
+```json
+{"capm_return_monthly": -0.0839706}
+```

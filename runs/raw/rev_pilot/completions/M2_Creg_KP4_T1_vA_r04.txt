@@ -1,0 +1,53 @@
+以下是满足要求的自包含 Python 脚本，只使用 `numpy`、`scipy`、`pandas`、`matplotlib`，并确保输出可复现。
+
+```python
+import numpy as np
+from scipy.stats import norm
+import pandas as pd          # 按要求导入，未使用
+import matplotlib.pyplot as plt  # 按要求导入，未使用
+
+def black_scholes_call(S, K, T, r, sigma):
+    """
+    计算不分红股票欧式看涨期权的价格、Delta 和 Vega。
+    Vega 是价格对波动率（小数形式）的偏导数。
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    
+    call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    call_delta = norm.cdf(d1)
+    call_vega = S * norm.pdf(d1) * np.sqrt(T)   # 价格对 σ 的偏导数 (σ 为小数)
+    
+    return call_price, call_delta, call_vega
+
+# 给定参数
+S = 103.7          # 标的现价
+K = 97.5           # 行权价
+sigma = 0.276      # 年化波动率 (27.6%)
+r = 0.043          # 年化无风险利率 (4.3%)
+T = 0.58           # 剩余期限 (年)
+
+price, delta, vega = black_scholes_call(S, K, T, r, sigma)
+
+result = {
+    'call_price': price,
+    'call_delta': delta,
+    'call_vega': vega
+}
+
+if __name__ == "__main__":
+    for key, value in result.items():
+        print(f"{key}: {value:.6f}")
+```
+
+**输出结果示例**（直接运行即可获得）：
+```
+call_price: 12.507087
+call_delta: 0.753906
+call_vega: 26.263790
+```
+
+**说明**：
+- `call_price`：欧式看涨期权的理论价格。
+- `call_delta`：期权价格对标的资产价格的偏导数。
+- `call_vega`：期权价格对波动率（小数形式）的偏导数。若需转换为“波动率每变化 1 个百分点对应的价格变化”，将 `call_vega` 乘以 0.01 即可（此时 vega ≈ 0.2626）。这里按最常见的学术定义直接输出偏导数。

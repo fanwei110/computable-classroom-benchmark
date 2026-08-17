@@ -1,0 +1,84 @@
+我将为您提供一个完整的Python脚本，用于绘制证券市场线（SML），计算斜率和特定Beta下的期望收益，并输出所需字典。您可以直接修改脚本开头的 `rf` 和 `market_return` 变量来调整参数。
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+
+# ================= 可调参数 =================
+rf = 2.3 / 100           # 无风险利率，例如 2.3% -> 0.023
+market_return = 9.4 / 100 # 市场期望收益，例如 9.4% -> 0.094
+# ===========================================
+
+# 给定的三个点 (beta, 期望收益)
+points = {
+    'X': (0.62, 8.1 / 100),
+    'Y': (1.18, 13.1 / 100),
+    'Z': (1.51, 9.9 / 100)
+}
+
+# 计算 SML 斜率（市场风险溢价）
+sml_slope = market_return - rf
+
+# Beta = 1.27 对应的期望收益
+beta_target = 1.27
+er_at_beta_127 = rf + beta_target * sml_slope
+
+# 生成 SML 直线：Beta 从 0 到 2
+beta_vals = np.linspace(0, 2, 100)
+er_vals = rf + beta_vals * sml_slope
+
+# ---- 绘图 ----
+plt.figure(figsize=(8, 6))
+plt.plot(beta_vals, er_vals, 'b-', linewidth=2, label='SML')
+plt.axhline(y=rf, color='gray', linestyle='--', linewidth=0.8, label=f'Rf = {rf*100:.1f}%')
+plt.axvline(x=1, color='black', linestyle=':', linewidth=0.8, label=f'Beta = 1 (Market)')
+
+# 标出 X, Y, Z 点
+for name, (b, er) in points.items():
+    plt.scatter(b, er, color='red', zorder=5)
+    plt.text(b + 0.02, er, f'{name}\n({b:.2f}, {er*100:.1f}%)', fontsize=9, verticalalignment='bottom')
+
+plt.xlabel('Beta (β)')
+plt.ylabel('Expected Return')
+plt.title('Security Market Line (SML)')
+plt.legend()
+plt.grid(alpha=0.3)
+plt.xlim(0, 2)
+plt.ylim(0, 0.2)
+
+# 设置坐标轴为百分比格式
+import matplotlib.ticker as mtick
+ax = plt.gca()
+ax.yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
+ax.xaxis.set_major_formatter(mtick.FormatStrFormatter('%.1f'))
+
+plt.tight_layout()
+
+# 保存图像
+figure_path = 'sml_plot.png'
+plt.savefig(figure_path, dpi=150)
+plt.close()
+
+print(f"SML斜率: {sml_slope*100:.2f}%")
+print(f"Beta=1.27 期望收益: {er_at_beta_127*100:.3f}%")
+print(f"图像已保存至: {os.path.abspath(figure_path)}")
+
+# 按要求构造输出字典
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+# 查看结果
+print(result)
+```
+
+**运行结果（基于当前参数）：**
+- SML斜率：`0.071` (即 7.1%)
+- Beta=1.27时的期望收益：`0.11317` (即 11.317%)
+- 图像文件路径保存在 `result['figure_path']` 中，默认保存为当前目录下的 `sml_plot.png`。
+
+**参数调整说明：**  
+修改脚本顶部 `rf` 和 `market_return` 的数值即可调整无风险利率和市场期望收益，SML直线、斜率及目标期望收益会自动更新。

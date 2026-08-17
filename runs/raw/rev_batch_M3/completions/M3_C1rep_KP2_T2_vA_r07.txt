@@ -1,0 +1,100 @@
+为了满足您上课调参的需求，我使用 `matplotlib` 编写了一个带有交互式滑块的Python脚本。运行该脚本后，您可以直接在弹出的窗口中拖动滑块来调整无风险利率($r_f$)和市场期望收益($E(R_m)$)，SML直线和相关标注会实时更新，而三个资产点X、Y、Z保持不动，这样可以非常直观地看出资产估值偏高还是偏低。
+
+### 核心计算结果
+1. **SML的斜率** = $E(R_m) - r_f = 9.4\% - 2.3\% = 7.1\% = 0.071$
+2. **Beta=1.27时的期望收益** = $r_f + \beta \times (E(R_m) - r_f) = 2.3\% + 1.27 \times 7.1\% = 11.317\% = 0.11317$
+
+### 交互式绘图代码
+
+请在本地Python环境中运行以下代码（需安装 `matplotlib` 和 `numpy`）：
+
+```python
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+import numpy as np
+
+# ---------------- 初始参数 ----------------
+rf_init = 2.3  # 初始无风险利率 %
+erm_init = 9.4 # 初始市场期望收益 %
+beta_range = np.linspace(0, 2, 100)
+
+# 三个资产点
+points = {'X': (0.62, 8.1), 'Y': (1.18, 13.1), 'Z': (1.51, 9.9)}
+
+# ---------------- 绘图设置 ----------------
+fig, ax = plt.subplots(figsize=(10, 7))
+plt.subplots_adjust(bottom=0.25) # 为底部滑块留出空间
+
+# 绘制初始SML线
+sml_line, = ax.plot(beta_range, rf_init + beta_range * (erm_init - rf_init), 'b-', linewidth=2, label='SML')
+
+# 添加动态公式文本
+eq_text = ax.text(1.5, rf_init + 1.5*(erm_init - rf_init) - 1.5, 
+                  f'E(R) = {rf_init:.1f}% + β × {erm_init - rf_init:.1f}%', 
+                  color='blue', fontsize=11, bbox=dict(facecolor='white', alpha=0.8))
+
+# 绘制固定的三个资产点 X, Y, Z
+for name, (b, er) in points.items():
+    ax.scatter(b, er, s=80, zorder=5, color='black')
+    ax.annotate(f'{name} (β={b}, E(R)={er}%)', (b, er), 
+                textcoords="offset points", xytext=(10, 5), ha='left', fontsize=10)
+
+# 绘制动态的 Rf 和 E(Rm) 标记点
+rf_point, = ax.plot(0, rf_init, 'go', markersize=8, label='Risk-free rate ($r_f$)')
+erm_point, = ax.plot(1, erm_init, 'ro', markersize=8, label='Market return ($E(R_m)$)')
+
+# 坐标轴与格式
+ax.set_xlabel('Beta (β)', fontsize=12)
+ax.set_ylabel('Expected Return E(R) (%)', fontsize=12)
+ax.set_title('Security Market Line (SML) - Interactive Class Demo', fontsize=14)
+ax.set_xlim(0, 2)
+ax.set_ylim(-2, 22) # 留足空间以应对滑块调节
+ax.legend(loc='upper left')
+ax.grid(True, linestyle='--', alpha=0.6)
+
+# ---------------- 添加交互滑块 ----------------
+ax_rf = plt.axes([0.25, 0.1, 0.65, 0.03])
+ax_erm = plt.axes([0.25, 0.15, 0.65, 0.03])
+
+s_rf = Slider(ax_rf, 'Risk-free Rate $r_f$ (%)', 0.0, 10.0, valinit=rf_init, valstep=0.1)
+s_erm = Slider(ax_erm, 'Market Return $E(R_m)$ (%)', 0.0, 20.0, valinit=erm_init, valstep=0.1)
+
+# 滑块更新函数
+def update(val):
+    rf = s_rf.val
+    erm = s_erm.val
+    
+    # 更新SML直线
+    sml_line.set_ydata(rf + beta_range * (erm - rf))
+    
+    # 更新标记点
+    rf_point.set_ydata([rf])
+    erm_point.set_ydata([erm])
+    
+    # 更新公式文本位置和内容
+    eq_text.set_position((1.5, rf + 1.5*(erm - rf) - 1.5))
+    eq_text.set_text(f'E(R) = {rf:.1f}% + β × {erm - rf:.1f}%')
+    
+    fig.canvas.draw_idle()
+
+s_rf.on_changed(update)
+s_erm.on_changed(update)
+
+# ---------------- 保存图片 ----------------
+figure_path = 'sml_plot.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+
+plt.show()
+```
+
+### 输出契约结果
+
+按照您的输出契约，所有要求的输出已存入字典 `result` 中（收益率和斜率均采用标准小数格式）：
+
+```python
+result = {
+    'sml_slope': 0.071,
+    'er_at_beta_127': 0.11317,
+    'figure_path': 'sml_plot.png'
+}
+```

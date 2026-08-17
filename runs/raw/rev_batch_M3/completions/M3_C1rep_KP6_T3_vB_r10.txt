@@ -1,0 +1,19 @@
+```python
+import numpy as np
+
+# 假设 fund 为日频收益率序列（若为月频请将252改为12）
+trading_days = 252
+rf_annual = 0.021
+
+# 计算年化平均收益率
+annual_mean = fund.mean() * trading_days
+
+# 计算年化波动率
+annual_std = fund.std() * np.sqrt(trading_days)
+
+# 计算年化夏普比率
+sharpe_annual = (annual_mean - rf_annual) / annual_std
+
+# 按契约输出
+result = {'sharpe_annual': sharpe_annual}
+```

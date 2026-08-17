@@ -1,0 +1,33 @@
+根据题目给定的计算约定，95%一日VaR的计算步骤如下：
+
+1. **将年化波动率转换为日波动率**：
+   按照每年252个交易日的约定，日波动率 $\sigma_{day}$ 与年化波动率 $\sigma_{year}$ 的关系为：
+   $$\sigma_{day} = \frac{\sigma_{year}}{\sqrt{252}}$$
+   代入年化波动率 0.24：
+   $$\sigma_{day} = \frac{0.24}{\sqrt{252}} \approx 0.015119$$
+
+2. **计算95%一日VaR**：
+   在正态分布假设下，95%置信度对应的分位数 $Z_{95\%} \approx 1.64485$。VaR的计算公式为：
+   $$VaR_{95\%, 1d} = Z_{95\%} \times \sigma_{day} \times \text{头寸}$$
+   代入头寸 2,700,000：
+   $$VaR_{95\%, 1d} = 1.64485 \times 0.015119 \times 2,700,000 \approx 67143.61$$
+
+由于VaR报告为正的损失金额，最终结果为 67143.61（保留两位小数）。
+
+```python
+import math
+
+# 已知参数
+vol_annual = 0.24
+position = 2700000
+z_95 = 1.6448536269514777  # 95%正态分布分位数
+
+# 计算日波动率
+vol_daily = vol_annual / math.sqrt(252)
+
+# 计算95%一日VaR
+var_95_1d = z_95 * vol_daily * position
+
+# 存入字典
+result = {'var_95_1d': round(var_95_1d, 2)}
+```

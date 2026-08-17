@@ -1,0 +1,61 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# 设置绘图风格与中文字体显示
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'SimHei', 'DejaVu Sans']
+plt.rcParams['axes.unicode_minus'] = False
+
+# ================= 参数设定 =================
+file_path = 'data/market_snapshot_v1.csv'
+position = 1000000  # 头寸100万
+confidence_level = 0.95  # 置信度可调
+
+# ================= 数据读取与处理 =================
+# 读取数据
+df = pd.read_csv(file_path)
+
+# 计算日收益率 (假设fund列为基金净值，计算百分比变化)
+df['daily_return'] = df['fund'].pct_change()
+df = df.dropna(subset=['daily_return'])
+
+# 计算损益 (PnL)
+pnl = df['daily_return'] * position
+
+# ================= 历史法 VaR 计算 =================
+# 计算对应分位数的损益阈值 (左尾)
+percentile_point = (1 - confidence_level) * 100
+pnl_var_threshold = np.percentile(pnl, percentile_point)
+
+# VaR 通常以正数表示潜在损失金额
+hist_var_95_1d = -pnl_var_threshold
+
+# ================= 绘制损益直方图 =================
+plt.figure(figsize=(10, 6))
+plt.hist(pnl, bins=50, alpha=0.75, edgecolor='black', color='steelblue')
+
+# 标注 VaR 竖线
+plt.axvline(x=pnl_var_threshold, color='red', linestyle='--', linewidth=2, 
+            label=f'{confidence_level*100:.0f}% 1-day VaR: {hist_var_95_1d:,.2f} CNY')
+
+plt.title('损益 (PnL) 直方图与历史法 VaR', fontsize=14)
+plt.xlabel('损益金额 (CNY)', fontsize=12)
+plt.ylabel('频数', fontsize=12)
+plt.legend(fontsize=12)
+plt.grid(axis='y', alpha=0.5)
+
+# 保存图片
+fig_path = 'pnl_hist_var.png'
+plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ================= 输出契约封装 =================
+result = {
+    'hist_var_95_1d': hist_var_95_1d,
+    'figure_path': fig_path
+}
+
+# 打印结果报备
+print(f"95% 一日历史法 VaR: {result['hist_var_95_1d']:,.2f} 元")
+print(f"图表已保存至: {result['figure_path']}")

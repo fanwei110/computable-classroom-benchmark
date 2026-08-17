@@ -1,0 +1,68 @@
+```python
+import numpy as np
+from scipy import stats
+
+# ============================================================
+# 在险价值 (VaR) 计算 —— Delta-Normal（参数法）
+# ============================================================
+
+# ---------- 给定参数 ----------
+V = 1_850_000          # 头寸价值（人民币）
+sigma_annual = 0.218   # 年化收益波动率
+
+# ---------- 假设 ----------
+# 一年按 252 个交易日计算（市场惯例）
+TRADING_DAYS_PER_YEAR = 252
+
+# ---------- 步骤 1：年化波动率换算到一日期限 ----------
+# Delta-normal 模型下，波动率按 sqrt(T) 缩放
+sigma_daily = sigma_annual / np.sqrt(TRADING_DAYS_PER_YEAR)
+
+# ---------- 步骤 2：正态分位数 ----------
+z_95 = stats.norm.ppf(0.95)   # 95% 置信水平对应的分位数 ≈ 1.6449
+z_99 = stats.norm.ppf(0.99)   # 99% 置信水平对应的分位数 ≈ 2.3263
+
+# ---------- 步骤 3：计算 VaR ----------
+# (i) 95% 一日 VaR
+var_95_1d = V * sigma_daily * z_95
+
+# (ii) 99% 十日 VaR：先将日波动率缩放至 10 日，再乘以分位数
+sigma_10d = sigma_daily * np.sqrt(10)
+var_99_10d = V * sigma_10d * z_99
+
+# ---------- 输出契约 ----------
+result = {
+    'var_95_1d': var_95_1d,
+    'var_99_10d': var_99_10d
+}
+
+# 打印结果以便课堂展示
+print("=" * 55)
+print("  在险价值 (VaR) —— Delta-Normal 参数法")
+print("=" * 55)
+print(f"  头寸价值:           {V:>14,.2f} 元")
+print(f"  年化波动率:         {sigma_annual:>14.2%}")
+print(f"  日波动率:           {sigma_daily:>14.6f}")
+print(f"  10日波动率:         {sigma_10d:>14.6f}")
+print("-" * 55)
+print(f"  z(95%):             {z_95:>14.4f}")
+print(f"  z(99%):             {z_99:>14.4f}")
+print("-" * 55)
+print(f"  95% 一日 VaR:      {result['var_95_1d']:>14,.2f} 元")
+print(f"  99% 十日 VaR:      {result['var_99_10d']:>14,.2f} 元")
+print("=" * 55)
+```
+
+**计算逻辑说明：**
+
+| 步骤 | 内容 | 公式 |
+|------|------|------|
+| 1 | 年化→日波动率 | $\sigma_{\text{daily}} = \dfrac{\sigma_{\text{annual}}}{\sqrt{252}}$ |
+| 2 | 正态分位数 | $z_{0.95} \approx 1.6449$，$z_{0.99} \approx 2.3263$ |
+| 3 | 缩放至10日 | $\sigma_{10\text{d}} = \sigma_{\text{daily}} \times \sqrt{10}$ |
+| 4 | VaR | $\text{VaR} = V \times \sigma \times z$ |
+
+**关键假设（题目未指明时的内部一致选择）：**
+- 一年 = 252 个交易日（全球市场惯例）
+- 收益率服从正态分布（delta-normal 核心假设）
+- 波动率按 $\sqrt{T}$ 法则跨期限缩放

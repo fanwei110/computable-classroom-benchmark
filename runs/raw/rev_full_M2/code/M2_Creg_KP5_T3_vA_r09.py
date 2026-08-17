@@ -1,0 +1,30 @@
+import numpy as np
+from scipy.stats import norm
+
+# 给定参数
+annual_volatility = 0.24          # 年化波动率 24%
+position_value = 2_700_000.0      # 头寸价值 2,700,000 元
+confidence_level = 0.95           # 95% 置信水平
+trading_days_per_year = 252       # 通常假设每年 252 个交易日
+
+# 计算日波动率
+daily_volatility = annual_volatility / np.sqrt(trading_days_per_year)
+
+# 正态分布下 95% 置信水平的 z 值（左侧 5% 分位数，VaR 通常以正数表示损失）
+z_score = -norm.ppf(1 - confidence_level)  # 绝对值约为 1.6448536
+
+# 一天的 VaR (绝对值，表示损失)
+var_95_1d = position_value * daily_volatility * z_score
+
+# 存入结果字典
+result = {
+    'var_95_1d': var_95_1d
+}
+
+# 输出结果（用于验证）
+if __name__ == "__main__":
+    print(f"年化波动率: {annual_volatility*100:.1f}%")
+    print(f"头寸价值: {position_value:,.0f} 元")
+    print(f"日波动率: {daily_volatility*100:.4f}%")
+    print(f"95% 一日 VaR: {var_95_1d:,.2f} 元")
+    print(f"result 字典: {result}")

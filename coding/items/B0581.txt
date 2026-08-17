@@ -1,0 +1,50 @@
+=== B0581  任务 KP4_T3 (T3) ===
+
+--- 任务要求的输出键 ---
+price_change
+
+--- 判分失败明细 ---
+price_change: 提交值 0.2756  |  参考值 0.2764091061080478
+
+--- 提取出的代码 ---
+import math
+import numpy as np
+
+S = 103.7
+K = 97.5
+sigma = 0.276
+r = 0.043
+T = 0.58
+
+# d1 calculation
+d1 = (math.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * math.sqrt(T))
+# vega: derivative of option price w.r.t volatility
+vega = S * math.sqrt(T) * math.exp(-0.5 * d1**2) / math.sqrt(2 * math.pi)
+# price change for a 1 percentage point increase in implied volatility (0.01 in decimal)
+price_change = vega * 0.01
+
+result = {'price_change': round(price_change, 4)}
+print(result)
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+```python
+import math
+import numpy as np
+
+S = 103.7
+K = 97.5
+sigma = 0.276
+r = 0.043
+T = 0.58
+
+# d1 calculation
+d1 = (math.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * math.sqrt(T))
+# vega: derivative of option price w.r.t volatility
+vega = S * math.sqrt(T) * math.exp(-0.5 * d1**2) / math.sqrt(2 * math.pi)
+# price change for a 1 percentage point increase in implied volatility (0.01 in decimal)
+price_change = vega * 0.01
+
+result = {'price_change': round(price_change, 4)}
+print(result)
+```

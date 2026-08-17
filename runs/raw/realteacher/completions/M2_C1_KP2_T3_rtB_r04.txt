@@ -1,0 +1,17 @@
+根据CAPM公式，预期收益为 \( E(R_i) = R_f + \beta \times (R_m - R_f) \)。题目中市场收益（-5.8%）为月度数据，而无风险利率4.7%通常为年化利率，需转换为月化利率：\( R_f \text{月} = 4.7\% / 12 \approx 0.3917\% \)。带入计算：
+\( E(R) = 0.3917\% + 1.42 \times (-5.8\% - 0.3917\%) \approx -8.40\% \)。
+
+```python
+# 计算过程
+beta = 1.42
+R_m_monthly = -0.058
+R_f_annual = 0.047
+R_f_monthly = R_f_annual / 12
+
+# CAPM月收益
+result = {
+    'capm_return_monthly': R_f_monthly + beta * (R_m_monthly - R_f_monthly)
+}
+```
+
+结果为 -0.084005，即 -8.40%。

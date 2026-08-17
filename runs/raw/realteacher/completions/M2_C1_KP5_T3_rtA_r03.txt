@@ -1,0 +1,18 @@
+```python
+import scipy.stats as st
+import numpy as np
+
+# 给定参数
+annual_vol = 0.24
+position = 2_700_000
+confidence = 0.95
+trading_days = 252  # 市场惯例
+
+# 计算
+z_score = st.norm.ppf(confidence)  # 95% 单尾分位数
+daily_vol = annual_vol / np.sqrt(trading_days)
+var_95_1d = z_score * daily_vol * position
+
+# 存入字典，保留两位小数
+result = {'var_95_1d': round(var_95_1d, 2)}
+```

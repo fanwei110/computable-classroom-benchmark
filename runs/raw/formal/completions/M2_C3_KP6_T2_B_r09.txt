@@ -1,0 +1,79 @@
+è¦å®æè¿é¡¹ä»»å¡ï¼æä»¬éè¦è®¡ç®åºéæ¥æ¶ççç **60 å¤©æ»å¨å¤æ®æ¯ç**ï¼çªå£å¯è°ï¼ï¼æ é£é©å©çä¸ºå¹´å 2.1%ï¼å¹¶æçæ¯å¹´ 252 ä¸ªäº¤ææ¥è¿è¡å¹´åä¸æ¥åè½¬æ¢ãä¸é¢ç»åºå®æ´ Python ä»£ç ï¼åæ°æ®è¯»åãæ»å¨å¤æ®è®¡ç®ãç»å¾ä¿å­ä»¥åæç»ç»æå­åçè¾åºã  
+
+**ä»£ç ä¸­å·²åä¸æ®µéæºç¤ºä¾æ°æ®**ï¼ç¨äºæ¼ç¤ºï¼ï¼å®éä½¿ç¨æ¶è¯·æ¿æ¢ä¸ºä½ ççå®æ°æ®ï¼å¹¶ç¡®ä¿æ°æ®å `fund` åï¼åºéåå¼æä»·æ ¼ï¼ã
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# =========================
+# åæ°è®¾ç½®ï¼çªå£å¯è°ï¼
+# =========================
+window = 60                # æ»å¨çªå£ï¼å¯æ¹ä¸ºä»»ææ´æ°ï¼
+rf_annual = 0.021          # å¹´åæ é£é©å©ç 2.1%
+trading_days = 252         # æ¯å¹´äº¤ææ¥
+
+# =========================
+# ç¤ºä¾æ°æ®ï¼è¯·æ¿æ¢ä¸ºçå®æ°æ®ï¼
+# =========================
+np.random.seed(42)
+dates = pd.date_range('2020-01-01', periods=500, freq='B')
+returns = np.random.normal(0.0005, 0.01, len(dates))
+fund_prices = 100 * np.exp(np.cumsum(returns))
+df = pd.DataFrame({'fund': fund_prices}, index=dates)
+
+# =========================
+# è®¡ç®æ¥æ¶çç
+# =========================
+df['daily_return'] = df['fund'].pct_change()
+rf_daily = rf_annual / trading_days   # æ¥åæ é£é©å©ç
+
+# =========================
+# æ»å¨å¤æ®æ¯çå½æ°
+# =========================
+def rolling_sharpe(return_series, window, rf_daily):
+    roll_mean = return_series.rolling(window).mean()
+    roll_std  = return_series.rolling(window).std(ddof=1)  # æ ·æ¬æ åå·®
+    sharpe_annualized = (roll_mean - rf_daily) / roll_std * np.sqrt(trading_days)
+    return sharpe_annualized
+
+sharpe_series = rolling_sharpe(df['daily_return'], window, rf_daily)
+
+# æåä¸ä¸ªçªå£çå¤æ®å¼ï¼å»é¤ NaNï¼
+rolling_sharpe_last = sharpe_series.dropna().iloc[-1]
+
+# =========================
+# ç»å¾å¹¶ä¿å­
+# =========================
+fig_path = 'rolling_sharpe.png'
+plt.figure(figsize=(10, 5))
+plt.plot(sharpe_series.index, sharpe_series.values, label=f'{window}-Day Rolling Sharpe')
+plt.axhline(y=0, color='gray', linestyle='--')
+plt.title(f'{window}-Day Rolling Sharpe Ratio (Annualized)')
+plt.xlabel('Date')
+plt.ylabel('Sharpe Ratio')
+plt.legend()
+plt.tight_layout()
+plt.savefig(fig_path)
+plt.show()
+
+# =========================
+# è¾åºç»æå­åå­å
+# =========================
+result = {
+    'rolling_sharpe_last': round(rolling_sharpe_last, 6),
+    'figure_path': fig_path
+}
+
+print(result)
+```
+
+## è¾åºè¯´æ
+- **`rolling_sharpe_last`**ï¼æåä¸ä¸ªå®æ´ 60 å¤©çªå£çï¼å¹´åï¼å¤æ®æ¯çã  
+- **`figure_path`**ï¼ä¿å­çæ»å¨å¤æ®æ²çº¿å¾æä»¶è·¯å¾ï¼`rolling_sharpe.png`ï¼ã  
+
+## çªå£å¯è°
+åªéä¿®æ¹ `window` åéï¼ä¾å¦æ¹ä¸º `90` å³ä¸º 90 å¤©æ»å¨å¤æ®ï¼ï¼éæ°è¿è¡å³å¯è·å¾æ°çç»æã
+
+å¦æå¨ä½ ççå®æ°æ®ä¸è¿è¡ï¼æç»ç `result` å­åå°ç´æ¥ç»åºæéçä¸¤ä¸ªå¼ã

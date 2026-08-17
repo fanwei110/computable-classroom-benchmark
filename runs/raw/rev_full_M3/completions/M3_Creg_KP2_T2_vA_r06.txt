@@ -1,0 +1,202 @@
+下面脚本将无风险利率与市场期望收益设为顶部可调参数，收益率均以小数表示（如 `0.023` 表示 2.3%）。运行后会保存图像并生成 `result` 字典。
+
+```python
+"""
+Self-contained CAPM / Security Market Line (SML) script.
+
+All rate values are stored as decimals:
+  0.023 = 2.3%, 0.094 = 9.4%, etc.
+
+Outputs:
+  result["sml_slope"]      : SML slope = E(R_m) - r_f, decimal
+  result["er_at_beta_127"] : CAPM expected return at beta = 1.27, decimal
+  result["figure_path"]    : saved figure file path
+"""
+
+import matplotlib
+matplotlib.use("Agg")
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# -------------------- adjustable parameters --------------------
+RF_RATE = 0.023                 # annual risk-free rate, decimal
+MARKET_EXPECTED_RETURN = 0.094  # annual market expected return, decimal
+
+BETA_MIN = 0.0
+BETA_MAX = 2.0
+TARGET_BETA = 1.27
+FIGURE_PATH = "sml_plot.png"
+
+# -------------------- observed stocks --------------------
+STOCKS = pd.DataFrame(
+    {
+        "name": ["X", "Y", "Z"],
+        "beta": [0.62, 1.18, 1.51],
+        "return": [0.081, 0.131, 0.099],
+    }
+)
+
+
+def capm_expected_return(beta, rf_rate, market_expected_return):
+    """
+    CAPM formula:
+      E(R_i) = r_f + beta_i * (E(R_m) - r_f)
+    """
+    beta = np.asarray(beta, dtype=float)
+    return rf_rate + beta * (market_expected_return - rf_rate)
+
+
+def run_capm_sml_analysis(
+    rf_rate=RF_RATE,
+    market_expected_return=MARKET_EXPECTED_RETURN,
+    figure_path=FIGURE_PATH,
+):
+    sml_slope = float(market_expected_return - rf_rate)
+    er_at_beta_127 = float(
+        capm_expected_return(TARGET_BETA, rf_rate, market_expected_return)
+    )
+
+    beta_grid = np.linspace(BETA_MIN, BETA_MAX, 401)
+    sml_return_grid = capm_expected_return(beta_grid, rf_rate, market_expected_return)
+
+    fig, ax = plt.subplots(figsize=(8.2, 5.8), dpi=150)
+
+    # SML line
+    ax.plot(
+        beta_grid,
+        sml_return_grid * 100.0,
+        color="navy",
+        linewidth=2.2,
+        label=(
+            f"SML: E(R) = {rf_rate * 100:.2f}% + "
+            f"β × {sml_slope * 100:.2f}%"
+        ),
+    )
+
+    # Market portfolio point, beta = 1
+    ax.scatter(
+        [1.0],
+        [market_expected_return * 100.0],
+        color="navy",
+        marker="o",
+        s=45,
+        zorder=5,
+    )
+    ax.annotate(
+        "Market\nβ = 1",
+        xy=(1.0, market_expected_return * 100.0),
+        xytext=(10, -16),
+        textcoords="offset points",
+        fontsize=9,
+        color="navy",
+        ha="left",
+        va="top",
+    )
+
+    # Target beta point on SML
+    ax.scatter(
+        [TARGET_BETA],
+        [er_at_beta_127 * 100.0],
+        color="green",
+        marker="D",
+        s=55,
+        zorder=5,
+    )
+    ax.annotate(
+        f"β = {TARGET_BETA}\nE(R) = {er_at_beta_127 * 100:.2f}%",
+        xy=(TARGET_BETA, er_at_beta_127 * 100.0),
+        xytext=(-14, 12),
+        textcoords="offset points",
+        fontsize=9,
+        color="green",
+        ha="right",
+        va="bottom",
+        arrowprops=dict(arrowstyle="-", color="green", lw=0.8),
+    )
+
+    # Stock points with labels
+    stock_offsets = {
+        "X": (12, 12),
+        "Y": (12, 8),
+        "Z": (-12, -18),
+    }
+
+    for _, stock in STOCKS.iterrows():
+        beta = float(stock["beta"])
+        return_pct = float(stock["return"]) * 100.0
+        name = stock["name"]
+
+        dx, dy = stock_offsets[name]
+
+        ax.scatter([beta], [return_pct], color="crimson", marker="o", s=55, zorder=6)
+        ax.annotate(
+            f"{name}\nβ = {beta:.2f}\nR = {return_pct:.1f}%",
+            xy=(beta, return_pct),
+            xytext=(dx, dy),
+            textcoords="offset points",
+            fontsize=9,
+            color="crimson",
+            ha="left" if dx >= 0 else "right",
+            va="bottom" if dy >= 0 else "top",
+            arrowprops=dict(arrowstyle="-", color="crimson", lw=0.7),
+        )
+
+    ax.set_title("Security Market Line (CAPM)", fontsize=13, fontweight="bold")
+    ax.set_xlabel("Beta")
+    ax.set_ylabel("Annual Return (%)")
+    ax.set_xlim(BETA_MIN, BETA_MAX)
+
+    all_y_pct = np.concatenate(
+        [
+            sml_return_grid * 100.0,
+            STOCKS["return"].to_numpy(dtype=float) * 100.0,
+            [market_expected_return * 100.0, er_at_beta_127 * 100.0],
+        ]
+    )
+    ax.set_ylim(float(np.min(all_y_pct)) - 1.5, float(np.max(all_y_pct)) + 2.5)
+
+    ax.grid(True, linestyle="--", linewidth=0.5, alpha=0.7)
+    ax.legend(loc="upper left", fontsize=10)
+
+    report_text = (
+        f"SML slope = {sml_slope * 100:.2f}% per beta\n"
+        f"E(R | β = {TARGET_BETA}) = {er_at_beta_127 * 100:.2f}%"
+    )
+    ax.text(
+        0.98,
+        0.04,
+        report_text,
+        transform=ax.transAxes,
+        ha="right",
+        va="bottom",
+        fontsize=10,
+        bbox=dict(boxstyle="round,pad=0.4", facecolor="white", edgecolor="gray"),
+    )
+
+    fig.tight_layout()
+    fig.savefig(figure_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+    result = {
+        "sml_slope": round(sml_slope, 8),
+        "er_at_beta_127": round(er_at_beta_127, 8),
+        "figure_path": figure_path,
+    }
+    return result
+
+
+result = run_capm_sml_analysis()
+print(result)
+```
+
+运行后 `result` 为：
+
+```python
+{
+    "sml_slope": 0.071,
+    "er_at_beta_127": 0.11317,
+    "figure_path": "sml_plot.png"
+}
+```

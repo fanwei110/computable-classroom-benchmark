@@ -1,0 +1,57 @@
+import numpy as np
+from scipy.optimize import minimize
+
+# ==================== 输入数据 ====================
+# 年化波动率
+vol = np.array([0.187, 0.243, 0.312])
+
+# 相关系数矩阵
+rho = np.array([
+    [1.0,  0.21, -0.13],
+    [0.21, 1.0,   0.37],
+    [-0.13, 0.37,  1.0 ]
+])
+
+# ==================== 构造协方差矩阵 ====================
+# Σ[i,j] = sigma[i] * sigma[j] * rho[i,j]
+sigma = np.diag(vol)              # 将波动率向量转换为对角矩阵
+cov_matrix = sigma @ rho @ sigma  # 协方差矩阵
+
+# ==================== 求最小方差权重 ====================
+# 允许卖空，权重之和必须为 1
+# 使用闭式解：w_mvp = (Σ^{-1} 1) / (1^T Σ^{-1} 1)
+inv_cov = np.linalg.inv(cov_matrix)
+ones = np.ones(3)
+
+# 分子：Σ^{-1} * 1
+w_unnormalized = inv_cov @ ones
+# 分母：1^T Σ^{-1} 1
+denom = ones @ w_unnormalized
+
+# 归一化权重，使其和为 1
+mvp_weights = w_unnormalized / denom
+
+# 验证权重之和是否为 1（容差范围内）
+assert np.abs(np.sum(mvp_weights) - 1.0) < 1e-10, "权重之和不为1"
+
+# ==================== 计算组合年化波动率 ====================
+# portfolio_variance = w' Σ w
+portfolio_variance = mvp_weights @ cov_matrix @ mvp_weights
+mvp_vol_annual = np.sqrt(portfolio_variance)
+
+# ==================== 输出结果 ====================
+result = {
+    'mvp_weights': mvp_weights.tolist(),  # 转为列表以便阅读
+    'mvp_vol_annual': mvp_vol_annual
+}
+
+# 打印结果（便于课堂投屏展示）
+print("=" * 50)
+print("最小方差组合 (允许卖空)")
+print("=" * 50)
+print(f"资产1权重: {mvp_weights[0]:.4f}")
+print(f"资产2权重: {mvp_weights[1]:.4f}")
+print(f"资产3权重: {mvp_weights[2]:.4f}")
+print(f"权重之和:  {np.sum(mvp_weights):.4f}")
+print(f"组合年化波动率: {mvp_vol_annual:.4f} ({mvp_vol_annual*100:.2f}%)")
+print("=" * 50)

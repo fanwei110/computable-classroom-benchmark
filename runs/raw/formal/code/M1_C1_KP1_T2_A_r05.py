@@ -1,0 +1,89 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# 资产参数
+mu = np.array([0.071, 0.124])
+vol = np.array([0.163, 0.289])
+
+# 相关系数
+rhos = [0.15, 0.45, 0.75]
+
+# 计算协方差矩阵
+def get_cov(rho):
+    return np.array([
+        [vol[0]**2, vol[0]*vol[1]*rho],
+        [vol[0]*vol[1]*rho, vol[1]**2]
+    ])
+
+# 计算最小方差组合
+def get_mvp(cov):
+    ones = np.ones(2)
+    cov_inv = np.linalg.inv(cov)
+    w = cov_inv @ ones / (ones @ cov_inv @ ones)
+    mvp_vol = np.sqrt(w @ cov @ w)
+    mvp_ret = w @ mu
+    return w, mvp_ret, mvp_vol
+
+# 计算给定收益下的最小波动率
+def get_vol_for_return(target_ret, cov):
+    ones = np.ones(2)
+    cov_inv = np.linalg.inv(cov)
+    A = ones @ cov_inv @ ones
+    B = ones @ cov_inv @ mu
+    C = mu @ cov_inv @ mu
+    D = A*C - B**2
+
+    w = (C - B*target_ret) * cov_inv @ ones / D + (A*target_ret - B) * cov_inv @ mu / D
+    return np.sqrt(w @ cov @ w)
+
+# 绘制有效前沿
+plt.figure(figsize=(10, 6))
+colors = ['blue', 'green', 'red']
+labels = ['ρ=0.15', 'ρ=0.45', 'ρ=0.75']
+
+for rho, color, label in zip(rhos, colors, labels):
+    cov = get_cov(rho)
+    # 生成权重序列
+    w1 = np.linspace(0, 1, 100)
+    w2 = 1 - w1
+    W = np.vstack((w1, w2))
+
+    # 计算组合收益和波动率
+    ret = W.T @ mu
+    vol_port = np.sqrt(np.diag(W.T @ cov @ W))
+
+    # 绘制前沿
+    plt.plot(vol_port, ret, color=color, label=label)
+
+    # 计算并标记MVP
+    w_mvp, mvp_ret, mvp_vol = get_mvp(cov)
+    plt.scatter(mvp_vol, mvp_ret, color=color, marker='o', s=100)
+    plt.text(mvp_vol, mvp_ret, f'MVP {label}', color=color, fontsize=9,
+             verticalalignment='bottom', horizontalalignment='right')
+
+# 计算特定条件下的值
+cov_45 = get_cov(0.45)
+_, _, mvp_vol_45 = get_mvp(cov_45)
+vol_at_target = get_vol_for_return(0.10, cov_45)
+
+# 图形设置
+plt.title('Efficient Frontier with Different Correlations')
+plt.xlabel('Portfolio Volatility')
+plt.ylabel('Portfolio Return')
+plt.legend()
+plt.grid(True)
+
+# 保存图形
+figure_path = 'efficient_frontier.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 存储结果
+result = {
+    'mvp_vol_at_rho45': float(mvp_vol_45),
+    'frontier_vol_at_target': float(vol_at_target),
+    'figure_path': os.path.abspath(figure_path)
+}
+
+print(result)

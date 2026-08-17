@@ -1,0 +1,43 @@
+import numpy as np
+from scipy.stats import norm
+
+# =====================
+# 已知参数与假设
+# =====================
+sigma_annual = 0.24          # 年化波动率 24%
+position = 2_700_000         # 头寸金额 2,700,000 元
+confidence_level = 0.95      # 置信水平 95%
+
+# 假设：一年按 252 个交易日计算（金融市场参数法标准假设）
+trading_days_per_year = 252
+
+# =====================
+# 步骤 1：年化波动率换算到一日期限
+# =====================
+# 根据平方根法则，日波动率 = 年化波动率 / sqrt(一年的交易日数)
+sigma_daily = sigma_annual / np.sqrt(trading_days_per_year)
+
+# =====================
+# 步骤 2：套用 95% 正态分位数
+# =====================
+# 使用 delta-normal 法，计算标准正态分布下 95% 的分位数
+z_score_95 = norm.ppf(confidence_level)
+
+# =====================
+# 步骤 3：计算 VaR 金额
+# =====================
+# 95% 一日 VaR = 头寸金额 × 95%分位数 × 日波动率
+var_95_1d = position * z_score_95 * sigma_daily
+
+# =====================
+# 按输出契约存入字典
+# =====================
+result = {
+    'var_95_1d': var_95_1d
+}
+
+# 课堂展示辅助打印（可选，便于教师投屏讲解）
+print(f"日波动率: {sigma_daily:.6f}")
+print(f"95% 正态分位数 (Z-score): {z_score_95:.6f}")
+print(f"95% 一日 VaR: {var_95_1d:,.2f} 元")
+print(f"\nresult 字组: {result}")

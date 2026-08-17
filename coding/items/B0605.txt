@@ -1,0 +1,74 @@
+=== B0605  任务 KP6_T1 (T1) ===
+
+--- 任务要求的输出键 ---
+sharpe_annual, allocation_effect, selection_effect, interaction_effect
+
+--- 判分失败明细 ---
+sharpe_annual: 提交值 None  |  参考值 0.21202128793473451
+
+--- 提取出的代码 ---
+result = {
+    'sharpe_annual': None,  # 缺少课程数据文件fund列，暂用None占位
+    'allocation_effect': 0.00165,
+    'selection_effect': 0.0002,
+    'interaction_effect': 0.00145
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+由于缺少第一问中的“课程数据文件”，我无法直接读取 fund 列的日收益数据来计算具体的年化夏普比率。因此，`sharpe_annual` 将以 `None` 占位，并在下方提供完整的计算代码供你直接运行。第二问的业绩归因已根据经典 Brinson 模型计算完毕。
+
+### 第二问：业绩归因计算过程
+根据 Brinson-Hood-Beebower (BHB) 模型：
+- **配置效应** = $\sum (组合权重 - 基准权重) \times 基准收益$
+- **选择效应** = $\sum 基准权重 \times (组合收益 - 基准收益)$
+- **交互效应** = $\sum (组合权重 - 基准权重) \times (组合收益 - 基准收益)$
+
+代入数据：
+- **配置效应** = $(0.45-0.40)\times 0.067 + (0.35-0.40)\times 0.034 + (0.20-0.20)\times (-0.009) = 0.00165$ （即 0.165%）
+- **选择效应** = $0.40\times (0.083-0.067) + 0.40\times (0.021-0.034) + 0.20\times (-0.014 - (-0.009)) = 0.0002$ （即 0.020%）
+- **交互效应** = $(0.45-0.40)\times (0.083-0.067) + (0.35-0.40)\times (0.021-0.034) + (0.20-0.20)\times (-0.014 - (-0.009)) = 0.00145$ （即 0.145%）
+
+*(验证：总超额收益 = 组合收益 4.19% - 基准收益 3.86% = 0.33%，配置 + 选择 + 交互 = 0.165% + 0.02% + 0.145% = 0.33%，完美吻合)*
+
+### 输出契约
+
+```python
+result = {
+    'sharpe_annual': None,  # 缺少课程数据文件fund列，暂用None占位
+    'allocation_effect': 0.00165,
+    'selection_effect': 0.0002,
+    'interaction_effect': 0.00145
+}
+```
+
+---
+
+**附：第一问年化夏普比率的计算代码**
+如果你需要在本地补充计算 `sharpe_annual`，可使用以下代码读取你的课程数据文件（假设为 CSV 格式，且日收益率为简单收益率）：
+
+```python
+import pandas as pd
+import numpy as np
+
+# 读取数据（请根据实际文件路径和格式调整）
+df = pd.read_csv('your_course_data.csv')
+daily_returns = df['fund']
+
+# 参数设置
+annual_rf = 0.021
+daily_rf = annual_rf / 252  # 日无风险利率
+
+# 计算日超额收益
+excess_daily_returns = daily_returns - daily_rf
+
+# 计算年化夏普比率
+mean_excess_daily = excess_daily_returns.mean()
+std_daily = daily_returns.std() # 注意：这里使用组合收益率的标准差，而非超额收益的标准差，业界惯例通常如此
+
+sharpe_annual = (mean_excess_daily / std_daily) * np.sqrt(252)
+
+# 更新结果字典
+result['sharpe_annual'] = sharpe_annual
+print(result)
+```

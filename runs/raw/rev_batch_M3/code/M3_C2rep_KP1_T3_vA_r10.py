@@ -1,0 +1,65 @@
+import numpy as np
+
+# ==========================================
+# 1. 自行确定 60/40 权重与两只资产的对应方式
+# ==========================================
+# 约定：资产 A 权重为 60%，资产 B 权重为 40%
+w_A = 0.6
+w_B = 0.4
+weights = np.array([w_A, w_B])
+
+# ==========================================
+# 定义资产的基本参数（波动率）
+# ==========================================
+vol_A = 0.184
+vol_B = 0.297
+vols = np.array([vol_A, vol_B])
+
+# ==========================================
+# 2. 构造相关系数 0.3 与 0.8 两个协方差矩阵
+# ==========================================
+# 协方差公式：Cov(A, B) = rho * vol_A * vol_B
+rho_before = 0.3
+rho_after = 0.8
+
+cov_before_val = rho_before * vol_A * vol_B
+cov_after_val = rho_after * vol_A * vol_B
+
+# 构造对称的协方差矩阵
+cov_matrix_before = np.array([
+    [vol_A**2, cov_before_val],
+    [cov_before_val, vol_B**2]
+])
+
+cov_matrix_after = np.array([
+    [vol_A**2, cov_after_val],
+    [cov_after_val, vol_B**2]
+])
+
+# ==========================================
+# 3. 计算两个组合波动率
+# ==========================================
+# 马科维茨组合方差公式：sigma_p^2 = w' * Sigma * w
+var_before = weights.T @ cov_matrix_before @ weights
+var_after = weights.T @ cov_matrix_after @ weights
+
+# 组合波动率 = 方差的平方根
+vol_before_annual = np.sqrt(var_before)
+vol_after_annual = np.sqrt(var_after)
+
+# ==========================================
+# 4. 填充 result
+# ==========================================
+# 为保证课堂投屏展示友好，保留6位小数消除浮点数精度噪声
+result = {
+    'vol_before_annual': round(float(vol_before_annual), 6),
+    'vol_after_annual': round(float(vol_after_annual), 6)
+}
+
+# 课堂展示：打印最终结果以便投屏查看
+if __name__ == "__main__":
+    print("马科维茨均值-方差组合理论 - 组合波动率计算结果：")
+    print(f"相关系数为 0.3 时，60/40 组合的年化波动率: {result['vol_before_annual']:.4%}")
+    print(f"相关系数为 0.8 时，60/40 组合的年化波动率: {result['vol_after_annual']:.4%}")
+    print("\nresult 字典内容：")
+    print(result)

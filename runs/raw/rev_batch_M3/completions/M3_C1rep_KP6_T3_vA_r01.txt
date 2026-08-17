@@ -1,0 +1,38 @@
+由于无法直接访问你本地的课程数据，我为你提供计算该指标的 Python 代码。只需将代码中的 `df` 替换为你实际加载的课程数据 DataFrame 即可。
+
+以下是严格按照输出契约编写的计算代码：
+
+```python
+import numpy as np
+import pandas as pd
+
+# 假设你的课程数据已加载为名为 df 的 DataFrame
+# 若 df['fund'] 为日收益率序列，则直接使用：
+daily_returns = df['fund']
+
+# （补充说明：若 df['fund'] 是单位净值/累计净值，则需要先计算日收益率，取消下面这行的注释）
+# daily_returns = df['fund'].pct_change().dropna()
+
+# 给定无风险利率
+rf_annual = 0.021
+
+# 计算年化收益率 (假设一年252个交易日)
+annual_return = daily_returns.mean() * 252
+
+# 计算年化波动率
+annual_volatility = daily_returns.std() * np.sqrt(252)
+
+# 计算年化夏普比率
+sharpe_annual = (annual_return - rf_annual) / annual_volatility
+
+# 按照输出契约存入字典
+result = {
+    'sharpe_annual': sharpe_annual
+}
+```
+
+**逻辑说明：**
+1. **年化收益**：通过日收益率的均值乘以 252（常规一年的交易日天数）得到。
+2. **年化波动率**：通过日收益率的标准差乘以 $\sqrt{252}$ 得到。
+3. **夏普比率**：采用经典公式 $(R_p - R_f) / \sigma_p$，即年化收益率减去无风险利率（2.1%），再除以年化波动率。
+4. **输出**：结果已严格按照要求存入字典 `result`，键名为 `'sharpe_annual'`。

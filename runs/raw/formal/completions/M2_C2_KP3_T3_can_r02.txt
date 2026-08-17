@@ -1,0 +1,54 @@
+```python
+import numpy as np
+
+# ==============================================
+# 债券参数设定（年付息一次，面值100，票息率4.6%，收益率5.3%，期限7年）
+# ==============================================
+face_value = 100.0        # 面值
+coupon_rate = 0.046       # 票息率
+yield_rate = 0.053        # 到期收益率
+years = 7                 # 剩余年限
+delta_y = 0.0080          # 收益率上升80个基点 (1 bp = 0.01%)
+
+# 现金流生成
+coupon = face_value * coupon_rate
+t = np.arange(1, years + 1)                     # 现金流发生年份：1, 2, ..., 7
+cash_flows = np.full(years, coupon)             # 前6年为票息
+cash_flows[-1] += face_value                    # 最后一年额外归还本金
+
+# ==============================================
+# 1. 计算当前收益率下的价格与利率敏感性（久期、凸性）
+# ==============================================
+# 各期现金流现值
+discount_factors = (1 + yield_rate) ** t
+pv_cash_flows = cash_flows / discount_factors
+
+# 债券价格
+price = np.sum(pv_cash_flows)
+
+# 麦考利久期 (Macaulay Duration)
+macaulay_duration = np.sum(t * pv_cash_flows) / price
+
+# 修正久期 (Modified Duration)
+modified_duration = macaulay_duration / (1 + yield_rate)
+
+# 凸性 (Convexity)：使用二阶导数定义 Σ [t(t+1) * PV] / [P * (1+y)^2]
+convexity = np.sum(t * (t + 1) * pv_cash_flows) / (price * (1 + yield_rate)**2)
+
+# ==============================================
+# 2. 估算收益率上升80个基点的价格影响（跌幅）
+#    使用久期 + 凸性近似公式：ΔP/P ≈ -D_mod * Δy + 0.5 * Conv * (Δy)^2
+# ==============================================
+delta_p_approx = -modified_duration * delta_y + 0.5 * convexity * (delta_y ** 2)
+price_drop_pct = delta_p_approx * 100   # 转换为百分比形式（负值表示下跌）
+
+# ==============================================
+# 3. 按要求将跌幅存入 result 字典
+# ==============================================
+result = {
+    'price_drop_pct': price_drop_pct
+}
+
+# 课堂投屏输出（直接显示结果）
+print(result)
+```

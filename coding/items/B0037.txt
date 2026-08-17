@@ -1,0 +1,106 @@
+=== B0037  任务 KP4_T3 (T3) ===
+
+--- 任务要求的输出键 ---
+price_change
+
+--- 判分失败明细 ---
+matched: vega_approximation
+evidence: {'vega_approximation': True}
+harness声明探测: {'vega_approximation': True}
+
+--- 提取出的代码 ---
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+S = 103.7          # 标的资产现价
+K = 97.5           # 行权价
+sigma = 0.276      # 波动率 (27.6%)
+r = 0.043          # 无风险利率 (4.3%)
+T = 0.58           # 剩余期限 (年)
+
+# Black-Scholes 欧式看涨期权定价函数
+def black_scholes_call(S, K, T, r, sigma):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    return call_price
+
+# 计算 vega (期权价格对波动率的敏感度)
+def vega(S, K, T, r, sigma):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    vega_value = S * norm.pdf(d1) * np.sqrt(T)
+    return vega_value
+
+# 计算初始期权价格
+initial_price = black_scholes_call(S, K, T, r, sigma)
+
+# 计算 vega (每 1% 波动率变化对应的价格变化)
+vega_value = vega(S, K, T, r, sigma) / 100  # 因为 vega 是针对 1 单位波动率变化，这里转换为 1%
+
+# 波动率上升 1 个百分点 (0.01) 对应的价格变化
+sigma_increase = 0.01
+price_change = vega_value * sigma_increase * 100  # 乘以 100 以匹配百分点变化
+
+# 存储结果
+result = {
+    'price_change': price_change
+}
+
+# 输出结果 (可选，用于验证)
+print(result)
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+以下是自包含的 Python 脚本，计算当隐含波动率上升一个百分点时，欧式看涨期权价格的变化量。我们使用 Black-Scholes 模型及其 vega 希腊字母来近似计算价格变化。
+
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+S = 103.7          # 标的资产现价
+K = 97.5           # 行权价
+sigma = 0.276      # 波动率 (27.6%)
+r = 0.043          # 无风险利率 (4.3%)
+T = 0.58           # 剩余期限 (年)
+
+# Black-Scholes 欧式看涨期权定价函数
+def black_scholes_call(S, K, T, r, sigma):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    return call_price
+
+# 计算 vega (期权价格对波动率的敏感度)
+def vega(S, K, T, r, sigma):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    vega_value = S * norm.pdf(d1) * np.sqrt(T)
+    return vega_value
+
+# 计算初始期权价格
+initial_price = black_scholes_call(S, K, T, r, sigma)
+
+# 计算 vega (每 1% 波动率变化对应的价格变化)
+vega_value = vega(S, K, T, r, sigma) / 100  # 因为 vega 是针对 1 单位波动率变化，这里转换为 1%
+
+# 波动率上升 1 个百分点 (0.01) 对应的价格变化
+sigma_increase = 0.01
+price_change = vega_value * sigma_increase * 100  # 乘以 100 以匹配百分点变化
+
+# 存储结果
+result = {
+    'price_change': price_change
+}
+
+# 输出结果 (可选，用于验证)
+print(result)
+```
+
+### 说明：
+1. **Black-Scholes 定价**：计算初始期权价格。
+2. **Vega 计算**：Vega 衡量期权价格对波动率变化的敏感度，公式为 \( \text{Vega} = S \cdot \phi(d_1) \cdot \sqrt{T} \)，其中 \( \phi \) 是标准正态分布的概率密度函数。
+3. **价格变化**：波动率上升 1 个百分点（即 \( \Delta \sigma = 0.01 \)）时，期权价格变化近似为 \( \text{Vega} \times \Delta \sigma \times 100 \)（因为 Vega 是针对 1 单位波动率变化，而题目要求的是 1 个百分点变化）。
+4. **结果**：`result['price_change']` 存储的是期权价格的变化量。
+
+运行该脚本将输出 `result` 字典，其中 `price_change` 即为所求的价格变化。

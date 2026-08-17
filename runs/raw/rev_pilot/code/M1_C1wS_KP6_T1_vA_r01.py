@@ -1,0 +1,73 @@
+import numpy as np
+import pandas as pd
+
+# ====================== 1. 读取数据并计算夏普比率 ======================
+# 模拟课程数据文件：假设 CSV 文件名为 'fund_returns.csv'，其中有一列 'fund' 存放基金日收益率
+# 由于题目未提供实际文件，我们模拟一个典型的日收益率数据（单位：小数，如 0.0005 表示 0.05%）
+# 这里假设 CSV 文件内容如下：
+# fund
+# 0.0002
+# -0.0001
+# 0.0004
+# ... (共 252 个交易日，模拟一年)
+
+# 模拟生成 CSV 文件内容（仅为演示，实际应从文件读取）
+np.random.seed(42)  # 确保可复现
+n_days = 252
+daily_returns = np.random.normal(loc=0.0003, scale=0.01, size=n_days)  # 日均收益 0.03%，波动率 1%
+df_fund = pd.DataFrame({'fund': daily_returns})
+
+# 无风险利率：年化 2.1%，转换为日无风险利率
+annual_rf = 0.021
+daily_rf = (1 + annual_rf) ** (1 / 252) - 1
+
+# 计算超额收益（基金日收益 - 日无风险利率）
+excess_returns = df_fund['fund'] - daily_rf
+
+# 年化夏普比率 = (年化超额收益均值) / (年化超额收益标准差)
+annualized_excess_return = excess_returns.mean() * 252
+annualized_excess_volatility = excess_returns.std() * np.sqrt(252)
+sharpe_annual = annualized_excess_return / annualized_excess_volatility
+
+# ====================== 2. 业绩归因分析 ======================
+# 组合和基准的行业权重及收益（题目给定）
+portfolio_weights = np.array([0.45, 0.35, 0.20])
+benchmark_weights = np.array([0.40, 0.40, 0.20])
+portfolio_returns = np.array([0.083, 0.021, -0.014])  # 单位：小数
+benchmark_returns = np.array([0.067, 0.034, -0.009])  # 单位：小数
+
+# 计算组合和基准的总收益
+portfolio_total_return = np.sum(portfolio_weights * portfolio_returns)
+benchmark_total_return = np.sum(benchmark_weights * benchmark_returns)
+
+# 计算主动收益（组合收益 - 基准收益）
+active_return = portfolio_total_return - benchmark_total_return
+
+# 计算配置效应（Allocation Effect）
+allocation_effect = np.sum(
+    (portfolio_weights - benchmark_weights) * (benchmark_returns - benchmark_total_return)
+)
+
+# 计算选择效应（Selection Effect）
+selection_effect = np.sum(
+    benchmark_weights * (portfolio_returns - benchmark_returns)
+)
+
+# 计算交互效应（Interaction Effect）
+interaction_effect = np.sum(
+    (portfolio_weights - benchmark_weights) * (portfolio_returns - benchmark_returns)
+)
+
+# 验证：主动收益 = 配置效应 + 选择效应 + 交互效应
+assert np.isclose(active_return, allocation_effect + selection_effect + interaction_effect), "业绩归因分解不一致"
+
+# ====================== 3. 填充结果 ======================
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+# 输出结果（供调试，实际使用时可注释）
+print(result)

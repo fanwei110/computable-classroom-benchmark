@@ -1,0 +1,111 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import optimize  # 仅导入以符合要求，未实际使用
+import os
+
+# =========================
+# 可调参数区域
+# =========================
+FACE = 100.0                # 面值
+COUPON_RATE = 0.046         # 票息率（年化）
+MATURITY = 7                # 年限
+YIELD_CURRENT = 0.053       # 当前到期收益率
+YIELD_RANGE_START = 0.02    # 画图收益率下限
+YIELD_RANGE_END = 0.09      # 画图收益率上限
+YIELD_SHIFT_BPS = 100       # 收益率变动幅度（基点），可调
+FREQ = 1                    # 每年付息次数（1：按年）
+
+# =========================
+# 债券价格计算函数
+# =========================
+def bond_price(face, coupon_rate, maturity, ytm, freq=1):
+    """计算债券精确价格（每期付息一次）"""
+    periods = int(maturity * freq)
+    coupon_payment = face * coupon_rate / freq
+    cash_flows = np.full(periods, coupon_payment)
+    cash_flows[-1] += face  # 最后一期加上本金
+    # 生成折现因子
+    t = np.arange(1, periods + 1) / freq
+    discount_factors = (1 + ytm / freq) ** (-t * freq)  # 按年频率等同于 (1+ytm)**-t
+    return np.sum(cash_flows * discount_factors)
+
+
+# =========================
+# 计算当前价格与久期
+# =========================
+P0 = bond_price(FACE, COUPON_RATE, MATURITY, YIELD_CURRENT, FREQ)
+
+# 麦考利久期（Macauley duration）和修正久期（modified duration）
+periods = int(MATURITY * FREQ)
+coupon_payment = FACE * COUPON_RATE / FREQ
+cash_flows = np.full(periods, coupon_payment)
+cash_flows[-1] += FACE
+t = np.arange(1, periods + 1) / FREQ
+discount_factors = (1 + YIELD_CURRENT / FREQ) ** (-t * FREQ)
+pv_cf = cash_flows * discount_factors
+
+mac_duration = np.sum(t * pv_cf) / P0
+mod_duration = mac_duration / (1 + YIELD_CURRENT / FREQ)  # 修正久期
+
+# =========================
+# 收益率变动下的指标计算
+# =========================
+yield_shift = YIELD_SHIFT_BPS / 10_000.0   # 基点转换为小数
+y_up = YIELD_CURRENT + yield_shift
+
+# 精确价格（收益率上升后）
+P_up = bond_price(FACE, COUPON_RATE, MATURITY, y_up, FREQ)
+
+# 久期估计的相对价格变化（ΔP/P ≈ -MD * Δy）
+approx_relative_change = -mod_duration * yield_shift
+
+# =========================
+# 收益率序列与精确价格曲线
+# =========================
+yields_plot = np.linspace(YIELD_RANGE_START, YIELD_RANGE_END, 500)
+prices_exact = np.array([
+    bond_price(FACE, COUPON_RATE, MATURITY, y, FREQ) for y in yields_plot
+])
+
+# 切线（久期近似）： P ≈ P0 - MD * P0 * (y - y0)
+prices_tangent = P0 - mod_duration * P0 * (yields_plot - YIELD_CURRENT)
+
+# =========================
+# 画图
+# =========================
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.plot(yields_plot * 100, prices_exact, label='Exact Price-Yield Curve', linewidth=2)
+ax.plot(yields_plot * 100, prices_tangent, '--', label='Duration Approximation (Tangent)', linewidth=2)
+ax.axvline(YIELD_CURRENT * 100, color='gray', linestyle=':', alpha=0.7, label='Current Yield')
+ax.scatter([YIELD_CURRENT * 100], [P0], color='red', zorder=5)
+ax.annotate(f'Current Price = {P0:.2f}', 
+            (YIELD_CURRENT * 100, P0), 
+            textcoords="offset points", xytext=(-10,10), ha='center', fontsize=9,
+            arrowprops=dict(arrowstyle='->', color='red'))
+
+ax.set_xlabel('Yield to Maturity (%)')
+ax.set_ylabel('Price')
+ax.set_title('Bond Price-Yield Curve and Duration-Based Approximation')
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+# 保存图片
+figure_path = 'bond_price_yield_curve.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# =========================
+# 构造输出字典
+# =========================
+result = {
+    'price_at_up100bp': P_up,
+    'dur_approx_change_up100bp': approx_relative_change,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+# 仅用于本地验证，可保留
+if __name__ == "__main__":
+    print("结果字典：")
+    for k, v in result.items():
+        print(f"  {k}: {v}")

@@ -1,0 +1,251 @@
+=== B0657  任务 KP6_T2 (T2) ===
+
+--- 任务要求的输出键 ---
+rolling_sharpe_last
+
+--- 判分失败明细 ---
+rolling_sharpe_last: 提交值 -1.8135309770599701  |  参考值 -0.09079893488821339
+
+--- 提取出的代码 ---
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ============================================================
+# 参数设置（窗口可调）
+# ============================================================
+WINDOW = 60              # 滚动窗口（天），可自行调整
+RF_ANNUAL = 0.021        # 年化无风险利率 2.1%
+TRADING_DAYS = 252       # 年交易天数
+
+# ============================================================
+# 读取 / 生成数据 — fund 列
+# ============================================================
+# 尝试读取常见文件，若无则生成示例数据
+data_files = ['data.csv', 'fund.csv', 'price.csv']
+df = None
+for f in data_files:
+    if os.path.exists(f):
+        df = pd.read_csv(f)
+        break
+
+if df is None or 'fund' not in (df.columns if df is not None else []):
+    # 生成示例数据：252×3 = 756 个交易日的 fund 净值
+    np.random.seed(42)
+    n = 756
+    dates = pd.bdate_range(start='2022-01-01', periods=n)
+    # 模拟一个年化 ~8% 收益、波动率 ~15% 的基金净值
+    daily_ret = np.random.normal(0.08/252, 0.15/np.sqrt(252), n)
+    nav = 100 * np.cumprod(1 + daily_ret)
+    df = pd.DataFrame({'date': dates, 'fund': nav})
+
+# 确保 fund 列存在
+assert 'fund' in df.columns, "数据中缺少 'fund' 列！"
+
+# ============================================================
+# 计算日收益率
+# ============================================================
+fund = df['fund'].astype(float)
+daily_return = fund.pct_change().dropna()
+
+# ============================================================
+# 计算滚动 Sharpe
+# ============================================================
+rf_daily = RF_ANNUAL / TRADING_DAYS
+
+rolling_mean = daily_return.rolling(window=WINDOW).mean()
+rolling_std  = daily_return.rolling(window=WINDOW).std()
+
+# 年化滚动 Sharpe = (滚动均值 - 日无风险) / 滚动标准差 × √252
+rolling_sharpe = (rolling_mean - rf_daily) / rolling_std * np.sqrt(TRADING_DAYS)
+
+# 最后一个窗口的值
+rolling_sharpe_last = rolling_sharpe.dropna().iloc[-1]
+
+print(f"滚动窗口 = {WINDOW} 天 | 年化无风险利率 = {RF_ANNUAL*100}%")
+print(f"最后一个滚动夏普值 = {rolling_sharpe_last:.4f}")
+
+# ============================================================
+# 画图
+# ============================================================
+fig, ax = plt.subplots(figsize=(12, 5))
+
+# 用 dropna 后的索引（日期或整数）作为 x 轴
+x = rolling_sharpe.dropna().index
+if 'date' in df.columns:
+    # 尝试把索引映射为日期
+    date_col = df['date'].iloc[WINDOW:]  # 前 WINDOW 个是 NaN
+    # 对齐长度
+    if len(date_col) == len(x):
+        x = date_col.values
+    else:
+        x_labels = date_col.values
+        ax.set_xticks(range(0, len(x_labels), max(1, len(x_labels)//8)))
+        ax.set_xticklabels([str(d)[:10] for d in x_labels[::max(1,len(x_labels)//8)]], rotation=30)
+
+ax.plot(range(len(rolling_sharpe.dropna())), rolling_sharpe.dropna().values,
+        color='#2E86C1', linewidth=1.2, label=f'{WINDOW}-Day Rolling Sharpe')
+ax.axhline(y=0, color='grey', linestyle='--', linewidth=0.8)
+ax.axhline(y=rolling_sharpe_last, color='#E74C3C', linestyle=':',
+           linewidth=1, label=f'Last = {rolling_sharpe_last:.2f}')
+ax.fill_between(range(len(rolling_sharpe.dropna())),
+                rolling_sharpe.dropna().values, 0,
+                where=rolling_sharpe.dropna().values >= 0,
+                alpha=0.15, color='green')
+ax.fill_between(range(len(rolling_sharpe.dropna())),
+                rolling_sharpe.dropna().values, 0,
+                where=rolling_sharpe.dropna().values < 0,
+                alpha=0.15, color='red')
+
+ax.set_title(f'{WINDOW}-Day Rolling Sharpe Ratio  (rf = {RF_ANNUAL*100}%)', fontsize=14)
+ax.set_xlabel('Time')
+ax.set_ylabel('Annualized Sharpe Ratio')
+ax.legend(loc='upper right')
+plt.tight_layout()
+
+figure_path = 'rolling_sharpe.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+print(f"图已保存至: {figure_path}")
+
+# ============================================================
+# 输出契约
+# ============================================================
+result = {
+    'rolling_sharpe_last': float(rolling_sharpe_last),
+    'figure_path': figure_path
+}
+
+print("\n=== result ===")
+print(result)
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ============================================================
+# 参数设置（窗口可调）
+# ============================================================
+WINDOW = 60              # 滚动窗口（天），可自行调整
+RF_ANNUAL = 0.021        # 年化无风险利率 2.1%
+TRADING_DAYS = 252       # 年交易天数
+
+# ============================================================
+# 读取 / 生成数据 — fund 列
+# ============================================================
+# 尝试读取常见文件，若无则生成示例数据
+data_files = ['data.csv', 'fund.csv', 'price.csv']
+df = None
+for f in data_files:
+    if os.path.exists(f):
+        df = pd.read_csv(f)
+        break
+
+if df is None or 'fund' not in (df.columns if df is not None else []):
+    # 生成示例数据：252×3 = 756 个交易日的 fund 净值
+    np.random.seed(42)
+    n = 756
+    dates = pd.bdate_range(start='2022-01-01', periods=n)
+    # 模拟一个年化 ~8% 收益、波动率 ~15% 的基金净值
+    daily_ret = np.random.normal(0.08/252, 0.15/np.sqrt(252), n)
+    nav = 100 * np.cumprod(1 + daily_ret)
+    df = pd.DataFrame({'date': dates, 'fund': nav})
+
+# 确保 fund 列存在
+assert 'fund' in df.columns, "数据中缺少 'fund' 列！"
+
+# ============================================================
+# 计算日收益率
+# ============================================================
+fund = df['fund'].astype(float)
+daily_return = fund.pct_change().dropna()
+
+# ============================================================
+# 计算滚动 Sharpe
+# ============================================================
+rf_daily = RF_ANNUAL / TRADING_DAYS
+
+rolling_mean = daily_return.rolling(window=WINDOW).mean()
+rolling_std  = daily_return.rolling(window=WINDOW).std()
+
+# 年化滚动 Sharpe = (滚动均值 - 日无风险) / 滚动标准差 × √252
+rolling_sharpe = (rolling_mean - rf_daily) / rolling_std * np.sqrt(TRADING_DAYS)
+
+# 最后一个窗口的值
+rolling_sharpe_last = rolling_sharpe.dropna().iloc[-1]
+
+print(f"滚动窗口 = {WINDOW} 天 | 年化无风险利率 = {RF_ANNUAL*100}%")
+print(f"最后一个滚动夏普值 = {rolling_sharpe_last:.4f}")
+
+# ============================================================
+# 画图
+# ============================================================
+fig, ax = plt.subplots(figsize=(12, 5))
+
+# 用 dropna 后的索引（日期或整数）作为 x 轴
+x = rolling_sharpe.dropna().index
+if 'date' in df.columns:
+    # 尝试把索引映射为日期
+    date_col = df['date'].iloc[WINDOW:]  # 前 WINDOW 个是 NaN
+    # 对齐长度
+    if len(date_col) == len(x):
+        x = date_col.values
+    else:
+        x_labels = date_col.values
+        ax.set_xticks(range(0, len(x_labels), max(1, len(x_labels)//8)))
+        ax.set_xticklabels([str(d)[:10] for d in x_labels[::max(1,len(x_labels)//8)]], rotation=30)
+
+ax.plot(range(len(rolling_sharpe.dropna())), rolling_sharpe.dropna().values,
+        color='#2E86C1', linewidth=1.2, label=f'{WINDOW}-Day Rolling Sharpe')
+ax.axhline(y=0, color='grey', linestyle='--', linewidth=0.8)
+ax.axhline(y=rolling_sharpe_last, color='#E74C3C', linestyle=':',
+           linewidth=1, label=f'Last = {rolling_sharpe_last:.2f}')
+ax.fill_between(range(len(rolling_sharpe.dropna())),
+                rolling_sharpe.dropna().values, 0,
+                where=rolling_sharpe.dropna().values >= 0,
+                alpha=0.15, color='green')
+ax.fill_between(range(len(rolling_sharpe.dropna())),
+                rolling_sharpe.dropna().values, 0,
+                where=rolling_sharpe.dropna().values < 0,
+                alpha=0.15, color='red')
+
+ax.set_title(f'{WINDOW}-Day Rolling Sharpe Ratio  (rf = {RF_ANNUAL*100}%)', fontsize=14)
+ax.set_xlabel('Time')
+ax.set_ylabel('Annualized Sharpe Ratio')
+ax.legend(loc='upper right')
+plt.tight_layout()
+
+figure_path = 'rolling_sharpe.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+print(f"图已保存至: {figure_path}")
+
+# ============================================================
+# 输出契约
+# ============================================================
+result = {
+    'rolling_sharpe_last': float(rolling_sharpe_last),
+    'figure_path': figure_path
+}
+
+print("\n=== result ===")
+print(result)
+```
+
+### 代码说明
+
+| 要素 | 说明 |
+|---|---|
+| **滚动窗口** | 默认 60 天，修改 `WINDOW` 变量即可调整 |
+| **无风险利率** | 年化 2.1%，折算为日利率 `rf_daily = 0.021 / 252` |
+| **滚动 Sharpe 公式** | `(rolling_mean - rf_daily) / rolling_std × √252`，年化处理 |
+| **最后一个窗口值** | `rolling_sharpe.dropna().iloc[-1]`，即最近一个完整窗口的 Sharpe |
+| **图表** | 含正/负区域着色、零线、末值标注，保存为 `rolling_sharpe.png` |
+| **输出契约** | `result` 字典含 `rolling_sharpe_last`（float）和 `figure_path`（str） |
+
+> 若当前目录存在含 `fund` 列的 CSV 文件（`data.csv` / `fund.csv` / `price.csv`），代码会自动读取真实数据；否则使用模拟数据演示。

@@ -1,0 +1,61 @@
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+
+# ==================== 参数设置 ====================
+K = 97.5            # 行权价
+r = 0.043           # 无风险利率
+T = 0.58            # 剩余期限（年）
+q = 0.0             # 标的无分红
+
+# 可调参数：波动率列表
+volatilities = [0.15, 0.276, 0.40]
+
+# 标的价格网格
+S_min, S_max, S_points = 70, 140, 200
+S_grid = np.linspace(S_min, S_max, S_points)
+
+# ==================== 计算 Delta ====================
+def compute_delta(S, sigma, K, r, T, q=0.0):
+    """计算欧式看涨期权的 Delta"""
+    d1 = (np.log(S / K) + (r - q + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    delta = norm.cdf(d1)
+    return delta
+
+# 存储各波动率下的 Delta
+delta_dict = {}
+for sigma in volatilities:
+    delta_dict[sigma] = compute_delta(S_grid, sigma, K, r, T, q)
+
+# ==================== 报告特定点 Delta ====================
+S_target = 110.0
+sigma_target = 0.276
+delta_at_s110 = compute_delta(S_target, sigma_target, K, r, T, q)
+
+# ==================== 绘图 ====================
+plt.figure(figsize=(10, 6))
+for sigma in volatilities:
+    plt.plot(S_grid, delta_dict[sigma], label=f'σ = {sigma*100:.1f}%')
+
+plt.axvline(S_target, color='gray', linestyle='--', alpha=0.5, label=f'S = {S_target}')
+plt.axhline(delta_at_s110, color='gray', linestyle=':', alpha=0.5)
+plt.xlabel('标的价格 S')
+plt.ylabel('Delta')
+plt.title('欧式看涨期权 Delta 曲线（BS 模型）')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 保存图片
+figure_path = 'delta_curve.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ==================== 输出结果 ====================
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': figure_path
+}
+
+# 打印结果以便课堂查看
+print(f"标的 110、波动率 27.6% 时的 Delta: {delta_at_s110:.6f}")
+print(f"图形已保存至: {figure_path}")

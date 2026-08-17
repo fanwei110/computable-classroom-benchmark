@@ -1,0 +1,55 @@
+import numpy as np
+
+# ==========================================
+# 1. 确定权重与资产对应方式
+# 假设：A资产权重为0.6，B资产权重为0.4
+# ==========================================
+w = np.array([0.6, 0.4])
+
+# 资产年化波动率
+vol_A = 0.184
+vol_B = 0.297
+
+# ==========================================
+# 2. 构造相关系数 0.3 与 0.8 两个协方差矩阵
+# ==========================================
+rho_before = 0.3
+rho_after = 0.8
+
+# 协方差 = 相关系数 * 波动率A * 波动率B
+cov_AB_before = rho_before * vol_A * vol_B
+cov_AB_after = rho_after * vol_A * vol_B
+
+# 构造对称的协方差矩阵
+cov_matrix_before = np.array([
+    [vol_A**2, cov_AB_before],
+    [cov_AB_before, vol_B**2]
+])
+
+cov_matrix_after = np.array([
+    [vol_A**2, cov_AB_after],
+    [cov_AB_after, vol_B**2]
+])
+
+# ==========================================
+# 3. 计算两个组合波动率
+# 组合方差公式：w'Σw
+# ==========================================
+var_before = w.T @ cov_matrix_before @ w
+vol_before = np.sqrt(var_before)
+
+var_after = w.T @ cov_matrix_after @ w
+vol_after = np.sqrt(var_after)
+
+# ==========================================
+# 4. 填充 result
+# ==========================================
+result = {
+    'vol_before_annual': vol_before,
+    'vol_after_annual': vol_after
+}
+
+# (可选) 打印结果供课堂投屏展示
+print(f"相关性 0.3 时的组合年化波动率: {vol_before:.4%}")
+print(f"相关性飙升至 0.8 时的组合年化波动率: {vol_after:.4%}")
+print(f"\n结果字典 result: {result}")

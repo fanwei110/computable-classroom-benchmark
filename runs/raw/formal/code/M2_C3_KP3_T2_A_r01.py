@@ -1,0 +1,133 @@
+import numpy as np
+import plotly.graph_objects as go
+import os
+
+# ---------- 参数 ----------
+face = 100.0
+coupon_rate = 0.046
+coupon = face * coupon_rate
+maturity = 7
+y0 = 0.053                     # 当前收益率
+dy_up = 0.01                   # 上升100个基点
+
+# ---------- 价格函数 ----------
+def bond_price(y):
+    t = np.arange(1, maturity + 1)
+    pv = coupon / (1 + y)**t
+    pv_face = face / (1 + y)**maturity
+    return np.sum(pv) + pv_face
+
+P0 = bond_price(y0)
+
+# ---------- 久期 ----------
+t = np.arange(1, maturity + 1)
+pv_c = coupon / (1 + y0)**t
+pv_f = face / (1 + y0)**maturity
+mac_dur = (np.sum(t * pv_c) + maturity * pv_f) / P0
+mod_dur = mac_dur / (1 + y0)
+
+# ---------- 计算结果 ----------
+P_up_exact = bond_price(y0 + dy_up)                       # 精确价格
+dur_approx_change = -mod_dur * dy_up                      # 久期估计的相对价格变化(小数)
+
+# ---------- 精确绘图数据 ----------
+y_grid = np.linspace(0.02, 0.09, 300)
+prices_exact = np.array([bond_price(y) for y in y_grid])
+prices_tangent = P0 - P0 * mod_dur * (y_grid - y0)        # 久期切线
+
+# ---------- 交互式图形 ----------
+fig = go.Figure()
+
+# 精确曲线
+fig.add_trace(go.Scatter(x=y_grid, y=prices_exact, mode='lines',
+                         name='精确价格'))
+# 久期近似直线
+fig.add_trace(go.Scatter(x=y_grid, y=prices_tangent, mode='lines',
+                         line=dict(dash='dash'), name='久期近似'))
+# 当前收益率点
+fig.add_trace(go.Scatter(x=[y0], y=[P0], mode='markers',
+                         marker=dict(color='red', size=10), name='当前点'))
+
+# 用于滑块更新的“虚线”和“点”轨迹（初始显示100bp变动）
+fig.add_trace(go.Scatter(x=[y0+dy_up, y0+dy_up],
+                         y=[min(prices_exact), max(prices_exact)],
+                         mode='lines',
+                         line=dict(color='gray', dash='dot'),
+                         name='变动收益线'))
+fig.add_trace(go.Scatter(x=[y0+dy_up], y=[P_up_exact],
+                         mode='markers+text',
+                         text=['精确'], textposition='top center',
+                         marker=dict(color='orange', size=10),
+                         name='精确变动点'))
+fig.add_trace(go.Scatter(x=[y0+dy_up],
+                         y=[P0 + P0 * dur_approx_change],  # 近似价格
+                         mode='markers+text',
+                         text=['近似'], textposition='bottom center',
+                         marker=dict(color='green', size=10),
+                         name='近似变动点'))
+
+# 创建滑块对应的步长
+dy_range = np.linspace(-0.07, 0.07, 29)  # -7% ~ +7% 步长0.5%
+steps = []
+for dy in dy_range:
+    y_dy = y0 + dy
+    if 0.02 <= y_dy <= 0.09:
+        P_ex_dy = bond_price(y_dy)
+    else:
+        P_ex_dy = np.nan  # 超出显示范围就不画
+    P_ap_dy = P0 - P0 * mod_dur * dy
+    step = dict(
+        method="update",
+        args=[
+            {"x": [y_grid,
+                   y_grid,
+                   [y0],
+                   [y_dy, y_dy],
+                   [y_dy],
+                   [y_dy]],
+             "y": [prices_exact,
+                   prices_tangent,
+                   [P0],
+                   [min(prices_exact), max(prices_exact)],
+                   [P_ex_dy],
+                   [P_ap_dy]]
+            },
+            {"title": f"收益率变动: {dy*100:.1f} bp"}
+        ],
+        label=f"{dy*100:.1f} bp"
+    )
+    steps.append(step)
+
+# 寻找初始滑块位置（100 bp）
+initial_idx = np.argmin(np.abs(dy_range - dy_up))
+
+sliders = [dict(
+    active=initial_idx,
+    currentvalue={"prefix": "收益率变动: "},
+    pad={"t": 50},
+    steps=steps
+)]
+
+fig.update_layout(
+    sliders=sliders,
+    xaxis_title="收益率（小数）",
+    yaxis_title="价格",
+    title="债券价格-收益率曲线及久期近似（拖动滑块调整变动幅度）",
+    xaxis=dict(tickformat='.0%'),  # 显示为百分数
+)
+
+# ---------- 保存图形 ----------
+figure_filename = "bond_price_duration.html"
+fig.write_html(figure_filename)
+figure_path = os.path.abspath(figure_filename)
+
+# ---------- 结果字典 ----------
+result = {
+    'price_at_up100bp': P_up_exact,
+    'dur_approx_change_up100bp': dur_approx_change,
+    'figure_path': figure_path
+}
+
+# 打印结果供检查
+for k, v in result.items():
+    print(f"{k}: {v}")

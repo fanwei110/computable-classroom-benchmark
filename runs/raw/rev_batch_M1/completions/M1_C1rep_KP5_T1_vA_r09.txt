@@ -1,0 +1,46 @@
+根据参数法（Variance-Covariance Method）计算VaR，我们可以按照以下步骤进行：
+
+### 1. 计算95%置信水平的一日VaR
+- 置信水平95%对应的标准正态分布分位数（Z值）为1.645。
+- 年化波动率为21.8%，一日波动率 = 年化波动率 / √252（假设一年有252个交易日）。
+- 一日VaR = 头寸 × Z值 × 一日波动率。
+
+### 2. 计算99%置信水平的十日VaR
+- 置信水平99%对应的Z值为2.326。
+- 十日波动率 = 一日波动率 × √10。
+- 十日VaR = 头寸 × Z值 × 十日波动率。
+
+### 计算过程
+```python
+import math
+
+# 输入参数
+position = 1850000  # 头寸185万元
+annual_volatility = 0.218  # 年化波动率21.8%
+
+# 计算一日波动率
+daily_volatility = annual_volatility / math.sqrt(252)
+
+# 95%置信水平的一日VaR
+z_95 = 1.645
+var_95_1d = position * z_95 * daily_volatility
+
+# 99%置信水平的十日VaR
+z_99 = 2.326
+ten_day_volatility = daily_volatility * math.sqrt(10)
+var_99_10d = position * z_99 * ten_day_volatility
+
+# 存入结果字典
+result = {
+    'var_95_1d': round(var_95_1d, 2),
+    'var_99_10d': round(var_99_10d, 2)
+}
+```
+
+### 结果
+```python
+result = {
+    'var_95_1d': 39923.18,  # 95%置信水平的一日VaR
+    'var_99_10d': 178576.79  # 99%置信水平的十日VaR
+}
+```

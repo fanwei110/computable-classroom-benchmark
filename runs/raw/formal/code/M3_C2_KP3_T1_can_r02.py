@@ -1,0 +1,68 @@
+import numpy as np
+
+# ==========================================
+# 债券参数与假设
+# ==========================================
+# 题目未指明付息频率，按国内《证券投资学》通用教学惯例，假设为按年付息
+face_value = 100.0        # 面值
+coupon_rate = 0.046       # 票息率 4.6%
+maturity = 7              # 期限 7 年
+ytm = 0.053               # 到期收益率 5.3%
+
+# ==========================================
+# 步骤 1：构建现金流并计算债券价格
+# ==========================================
+# 1到6年的现金流为票息，第7年的现金流为票息+面值
+times = np.arange(1, maturity + 1)
+cash_flows = np.full(maturity, face_value * coupon_rate)
+cash_flows[-1] += face_value
+
+# 贴现因子
+discount_factors = (1 + ytm) ** times
+
+# 各期现金流现值
+pv_cash_flows = cash_flows / discount_factors
+
+# 债券价格（现金流贴现之和）
+price = np.sum(pv_cash_flows)
+
+# ==========================================
+# 步骤 2：计算麦考利久期与修正久期
+# ==========================================
+# 麦考利久期 = (时间 * 现金流现值) 之和 / 价格
+weighted_pv = times * pv_cash_flows
+macaulay_duration = np.sum(weighted_pv) / price
+
+# 修正久期 = 麦考利久期 / (1 + 到期收益率)
+modified_duration = macaulay_duration / (1 + ytm)
+
+# ==========================================
+# 步骤 3：计算凸性
+# ==========================================
+# 凸性 = [时间*(时间+1)*现金流现值] 之和 / [价格 * (1+到期收益率)^2]
+# 注：此处使用标准的金融工程定义，即二阶导数除以价格
+convexity_weights = times * (times + 1) * pv_cash_flows
+convexity = np.sum(convexity_weights) / (price * (1 + ytm) ** 2)
+
+# ==========================================
+# 步骤 4：填充 result
+# ==========================================
+result = {
+    'price': round(price, 4),
+    'macaulay_duration_years': round(macaulay_duration, 4),
+    'modified_duration_years': round(modified_duration, 4),
+    'convexity': round(convexity, 4)
+}
+
+# 输出结果供课堂投屏查看
+if __name__ == "__main__":
+    print("=" * 45)
+    print("《证券投资学》课堂实时计算结果")
+    print("=" * 45)
+    print(f"假设条件: 按年付息 (Annual Coupon)")
+    print(f"面值: {face_value}, 票息率: {coupon_rate*100}%")
+    print(f"期限: {maturity}年, 到期收益率: {ytm*100}%")
+    print("-" * 45)
+    for key, value in result.items():
+        print(f"{key:<28}: {value}")
+    print("=" * 45)

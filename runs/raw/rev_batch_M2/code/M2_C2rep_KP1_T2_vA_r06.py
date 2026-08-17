@@ -1,0 +1,105 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# =========================
+# 参数设定
+# =========================
+mu = np.array([0.071, 0.124])      # 期望年收益
+sigma = np.array([0.163, 0.289])   # 年化波动率
+rhos = [0.15, 0.45, 0.75]          # 三种相关系数
+target_return = 0.10               # 目标期望收益
+
+# 满仓约束，允许卖空，因此权重 w1 + w2 = 1，w1 无界
+# 扫描范围足够覆盖有效前沿与最小方差组合
+w1_range = np.linspace(-2, 3, 2000)
+
+# 颜色与标记
+colors = ['#1f77b4', '#ff7f0e', '#2ca02c']
+mvp_marker = 'o'
+
+# =========================
+# 计算函数
+# =========================
+def portfolio_stats(w1, mu1, mu2, sigma1, sigma2, rho):
+    """计算满仓组合的期望收益与波动率"""
+    w2 = 1 - w1
+    mu_p = w1 * mu1 + w2 * mu2
+    cov = rho * sigma1 * sigma2
+    var_p = w1**2 * sigma1**2 + w2**2 * sigma2**2 + 2 * w1 * w2 * cov
+    sigma_p = np.sqrt(var_p)
+    return mu_p, sigma_p
+
+def mvp_weights(rho, sigma1, sigma2):
+    """解析求解最小方差组合权重（两只资产，允许卖空满仓）"""
+    cov = rho * sigma1 * sigma2
+    w1 = (sigma2**2 - cov) / (sigma1**2 + sigma2**2 - 2 * cov)
+    return w1, 1 - w1
+
+# =========================
+# 绘图
+# =========================
+fig, ax = plt.subplots(figsize=(10, 7))
+
+# 存储 MVP 信息用于图例
+mvp_legend_added = False
+
+# 遍历各相关系数
+for i, rho in enumerate(rhos):
+    # 整条曲线
+    mu_p, sigma_p = portfolio_stats(w1_range, mu[0], mu[1], sigma[0], sigma[1], rho)
+    label = f'$\\rho$ = {rho}'
+    ax.plot(sigma_p, mu_p, color=colors[i], label=label, linewidth=2)
+    
+    # 最小方差组合
+    w1_mvp, w2_mvp = mvp_weights(rho, sigma[0], sigma[1])
+    mu_mvp, sigma_mvp = portfolio_stats(w1_mvp, mu[0], mu[1], sigma[0], sigma[1], rho)
+    
+    # 标出 MVP 点，统一用星号，颜色与曲线一致
+    ax.scatter(sigma_mvp, mu_mvp, color=colors[i], marker='*', s=150, 
+               edgecolors='black', linewidths=0.8, zorder=5)
+    # 添加文字标注
+    ax.annotate(f'MVP', (sigma_mvp, mu_mvp), textcoords="offset points",
+                xytext=(10, 0), fontsize=8, color=colors[i], fontweight='bold')
+
+# 图例
+ax.legend(loc='upper left', fontsize=11)
+ax.set_xlabel('年化波动率 (标准差)', fontsize=13)
+ax.set_ylabel('期望年收益', fontsize=13)
+ax.set_title('马科维茨均值-方差前沿\n两只风险资产，满仓，允许卖空', fontsize=15)
+ax.grid(True, linestyle='--', alpha=0.6)
+
+# 调整坐标轴，使关键点清晰可见
+ax.set_xlim(left=0.0, right=max(sigma_p)*1.05)
+ax.set_ylim(bottom=min(mu_p)*1.05, top=max(mu_p)*1.05)
+
+plt.tight_layout()
+
+# 保存图形
+figure_filename = 'mean_variance_frontier.png'
+plt.savefig(figure_filename, dpi=200)
+plt.show()  # 课堂投屏用
+
+# =========================
+# 对 rho = 0.45 的具体计算
+# =========================
+rho_target = 0.45
+# (a) 最小方差组合的年化波动率
+w1_mvp_45, w2_mvp_45 = mvp_weights(rho_target, sigma[0], sigma[1])
+mu_mvp_45, sigma_mvp_45 = portfolio_stats(w1_mvp_45, mu[0], mu[1], sigma[0], sigma[1], rho_target)
+mvp_vol_at_rho45 = sigma_mvp_45
+
+# (b) 目标收益 10% 时的最小波动率（满仓约束下权重唯一确定，直接在有效前沿上）
+w1_target = (target_return - mu[1]) / (mu[0] - mu[1])
+mu_target, sigma_target = portfolio_stats(w1_target, mu[0], mu[1], sigma[0], sigma[1], rho_target)
+frontier_vol_at_target = sigma_target
+
+# =========================
+# 输出结果字典
+# =========================
+result = {
+    'mvp_vol_at_rho45': round(float(mvp_vol_at_rho45), 6),   # 保留6位小数，便于检查
+    'frontier_vol_at_target': round(float(frontier_vol_at_target), 6),
+    'figure_path': figure_filename
+}
+
+print(result)

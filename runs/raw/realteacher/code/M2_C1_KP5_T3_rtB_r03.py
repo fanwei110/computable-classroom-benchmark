@@ -1,0 +1,19 @@
+import math
+
+# 给定参数
+annual_vol = 0.24
+position = 2_700_000
+confidence = 0.95
+trading_days = 252
+z_score = 1.645  # 95%单尾正态分布分位数
+
+# 计算日波动率
+daily_vol = annual_vol / math.sqrt(trading_days)
+
+# 计算1日VaR
+var_95_1d = position * daily_vol * z_score
+
+result = {
+    'var_95_1d': var_95_1d
+}
+result

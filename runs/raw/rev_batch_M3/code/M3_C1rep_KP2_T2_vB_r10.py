@@ -1,0 +1,115 @@
+import matplotlib.pyplot as plt
+import numpy as np
+
+# 1. 初始参数与计算
+rf_init = 2.3
+rm_init = 9.4
+
+# SML斜率 = E(rm) - rf
+sml_slope = rm_init - rf_init  # 7.1
+
+# Beta 1.27 对应的期望收益 = rf + beta * (E(rm) - rf)
+er_at_beta_127 = rf_init + 1.27 * sml_slope  # 11.317
+
+# 2. 绘图设置
+fig, ax = plt.subplots(figsize=(10, 7))
+
+beta_range = np.linspace(0, 2, 100)
+sml_line, = ax.plot(beta_range, rf_init + beta_range * (rm_init - rf_init), 'b-', linewidth=2, label='SML')
+
+# 标注X, Y, Z三个点
+points = {'X': (0.62, 8.1), 'Y': (1.18, 13.1), 'Z': (1.51, 9.9)}
+for name, (b, r) in points.items():
+    ax.plot(b, r, 'ro', markersize=8)
+    ax.annotate(f'{name} ($\\beta$={b}, E(r)={r}%)', (b, r), textcoords="offset points", xytext=(10,10), ha='left')
+
+# 标注 beta 1.27 对应的点
+ax.plot(1.27, er_at_beta_127, 'k*', markersize=12, label=f'$\\beta=1.27$, E(r)={er_at_beta_127:.3f}%')
+
+# 3. 可拖拽的 rf 和 rm 点及文本
+rf_point, = ax.plot(0, rf_init, 'go', markersize=12, label='$r_f$ (Drag me)', zorder=5)
+rm_point, = ax.plot(1, rm_init, 'mo', markersize=12, label='$E(r_m)$ (Drag me)', zorder=5)
+
+rf_text = ax.text(0.05, rf_init, f'rf={rf_init:.2f}%', color='g', fontsize=10, fontweight='bold')
+rm_text = ax.text(1.05, rm_init, f'rm={rm_init:.2f}%', color='m', fontsize=10, fontweight='bold')
+
+# 拖拽交互类
+class DraggablePoint:
+    lock = None
+    def __init__(self, point, line, other_point, text_obj, is_rf=True):
+        self.point = point
+        self.line = line
+        self.other_point = other_point
+        self.text_obj = text_obj
+        self.is_rf = is_rf
+        self.press = None
+            
+    def connect(self):
+        self.cidpress = self.point.figure.canvas.mpl_connect('button_press_event', self.on_press)
+        self.cidrelease = self.point.figure.canvas.mpl_connect('button_release_event', self.on_release)
+        self.cidmotion = self.point.figure.canvas.mpl_connect('motion_notify_event', self.on_motion)
+
+    def on_press(self, event):
+        if event.inaxes != self.point.axes or DraggablePoint.lock is not None: return
+        contains, attrd = self.point.contains(event)
+        if not contains: return
+        DraggablePoint.lock = self
+        self.press = self.point.get_ydata()[0], event.ydata
+
+    def on_motion(self, event):
+        if DraggablePoint.lock is not self or event.inaxes != self.point.axes: return
+        y0, ypress = self.press
+        dy = event.ydata - ypress
+        new_y = y0 + dy
+        
+        self.point.set_ydata([new_y, new_y])
+        
+        rf_y = new_y if self.is_rf else self.other_point.get_ydata()[0]
+        rm_y = new_y if not self.is_rf else self.other_point.get_ydata()[0]
+        
+        beta_range = self.line.get_xdata()
+        self.line.set_ydata(rf_y + beta_range * (rm_y - rf_y))
+        
+        # 更新文本位置和内容
+        self.text_obj.set_position((0.05 if self.is_rf else 1.05, new_y))
+        self.text_obj.set_text(f'{"rf" if self.is_rf else "rm"}={new_y:.2f}%')
+        
+        self.point.figure.canvas.draw()
+
+    def on_release(self, event):
+        if DraggablePoint.lock is not self: return
+        DraggablePoint.lock = None
+        self.press = None
+        self.point.figure.canvas.draw()
+
+    def disconnect(self):
+        self.point.figure.canvas.mpl_disconnect(self.cidpress)
+        self.point.figure.canvas.mpl_disconnect(self.cidrelease)
+        self.point.figure.canvas.mpl_disconnect(self.cidmotion)
+
+dp_rf = DraggablePoint(rf_point, sml_line, rm_point, rf_text, is_rf=True)
+dp_rf.connect()
+dp_rm = DraggablePoint(rm_point, sml_line, rf_point, rm_text, is_rf=False)
+dp_rm.connect()
+
+# 4. 图表美化
+ax.set_xlim(-0.1, 2.1)
+ax.set_ylim(0, 20)
+ax.set_xlabel('Beta ($\\beta$)')
+ax.set_ylabel('Expected Return (%)')
+ax.set_title('Security Market Line (SML) - Drag green/purple points to adjust')
+ax.grid(True, linestyle='--', alpha=0.7)
+ax.legend()
+
+# 5. 保存与输出
+fig_path = 'sml_plot.png'
+plt.savefig(fig_path)
+
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': fig_path
+}
+
+print(result)
+# plt.show() # 运行时若需交互可取消注释

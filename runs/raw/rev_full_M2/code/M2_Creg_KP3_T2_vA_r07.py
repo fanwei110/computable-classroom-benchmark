@@ -1,0 +1,112 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ---------- 可调参数 ----------
+# 切线在图中展示的收益率半宽（基点）
+TANGENT_HALF_RANGE_BPS = 200   # 用户可根据需要调整此值
+# ---------------------------
+
+# 债券参数
+FACE = 100.0
+COUPON_RATE = 0.046
+MATURITY = 7          # 年
+YTM_CURRENT = 0.053   # 当前到期收益率
+FREQ = 1              # 每年付息次数（默认按年付息）
+
+# 图表参数
+YIELD_MIN = 0.02
+YIELD_MAX = 0.09
+NUM_POINTS = 600
+FIGURE_FILENAME = "price_yield_curve.png"
+
+def bond_price(ytm, face=FACE, coupon_rate=COUPON_RATE, maturity=MATURITY, freq=FREQ):
+    """计算债券的精确价格（全价）。"""
+    periods = int(maturity * freq)
+    coupon = face * coupon_rate / freq
+    # 时间点（期数）
+    t = np.arange(1, periods + 1)
+    # 现金流现值
+    pv_coupons = coupon / (1 + ytm / freq) ** t
+    pv_face = face / (1 + ytm / freq) ** periods
+    return np.sum(pv_coupons) + pv_face
+
+def bond_duration(ytm, face=FACE, coupon_rate=COUPON_RATE, maturity=MATURITY, freq=FREQ):
+    """计算修正久期（Modified Duration）。"""
+    periods = int(maturity * freq)
+    coupon = face * coupon_rate / freq
+    t = np.arange(1, periods + 1)
+    disc = (1 + ytm / freq) ** t
+    pv_coupons = coupon / disc
+    pv_face = face / (1 + ytm / freq) ** periods
+    price = np.sum(pv_coupons) + pv_face
+    # 麦考利久期
+    weighted_t = np.sum(t * pv_coupons) + periods * pv_face
+    mac_dur = weighted_t / price
+    # 转换为修正久期（按年化）
+    mod_dur = mac_dur / (1 + ytm / freq)
+    return mod_dur
+
+# 当前价格与修正久期
+P0 = bond_price(YTM_CURRENT)
+mod_dur = bond_duration(YTM_CURRENT)
+
+# 生成收益率序列
+yields = np.linspace(YIELD_MIN, YIELD_MAX, NUM_POINTS)
+prices_exact = np.array([bond_price(y) for y in yields])
+
+# 收益率上升 100 个基点的精确价格与久期估计的相对变化
+yield_up100bp = YTM_CURRENT + 0.01
+price_up100bp = bond_price(yield_up100bp)
+dur_approx_change_up100bp = -mod_dur * 0.01   # ΔP/P
+
+# ---------- 画图 ----------
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 精确价格曲线
+ax.plot(yields * 100, prices_exact, label="Exact Price", linewidth=2, color='navy')
+
+# 久期近似（切线）——展示在当前收益率附近
+tangent_half = TANGENT_HALF_RANGE_BPS / 10000  # 转换为小数
+y_tangent = np.linspace(YTM_CURRENT - tangent_half,
+                        YTM_CURRENT + tangent_half, 200)
+p_tangent = P0 - P0 * mod_dur * (y_tangent - YTM_CURRENT)
+ax.plot(y_tangent * 100, p_tangent, label="Duration Approximation (Tangent)",
+        linestyle='--', linewidth=2, color='darkorange')
+
+# 标记当前点
+ax.scatter(YTM_CURRENT * 100, P0, color='red', zorder=5,
+           label=f'Current YTM ({YTM_CURRENT*100:.2f}%)')
+
+ax.set_xlabel("Yield to Maturity (%)", fontsize=12)
+ax.set_ylabel("Bond Price", fontsize=12)
+ax.set_title("Price-Yield Curve: 7-Year 4.6% Coupon Bond\n"
+             f"(Shift Display Width: ±{TANGENT_HALF_RANGE_BPS} bps around current YTM)",
+             fontsize=13)
+ax.legend(fontsize=10)
+ax.grid(True, alpha=0.3)
+fig.tight_layout()
+
+# 保存图片
+figure_path = os.path.abspath(FIGURE_FILENAME)
+fig.savefig(figure_path, dpi=150)
+plt.close(fig)
+
+# ---------- 汇总结果 ----------
+result = {
+    'price_at_up100bp': round(price_up100bp, 6),
+    'dur_approx_change_up100bp': round(dur_approx_change_up100bp, 6),
+    'figure_path': figure_path
+}
+
+# 输出以供检验
+if __name__ == "__main__":
+    print("=== 债券计算结果 ===")
+    print(f"面值: {FACE}, 票息: {COUPON_RATE*100}%, 期限: {MATURITY}年")
+    print(f"当前收益率: {YTM_CURRENT*100}%")
+    print(f"当前精确价格: {P0:.6f}")
+    print(f"修正久期: {mod_dur:.6f}")
+    print(f"收益率上升100bp后的精确价格: {result['price_at_up100bp']:.6f}")
+    print(f"久期法估计的相对价格变化 (ΔP/P): {result['dur_approx_change_up100bp']:.6f}")
+    print(f"图片保存至: {result['figure_path']}")
+    print(result)

@@ -1,0 +1,27 @@
+import math
+import scipy.stats as stats  # 仅用于获取正态分位数
+
+# 已知条件
+P = 1_850_000        # 头寸价值（元）
+sigma_annual = 0.218 # 年化波动率
+trading_days = 252   # 每年交易日
+
+# 正态分布分位数（精确值）
+z_95 = stats.norm.ppf(0.95)  # 1.6448536269514722
+z_99 = stats.norm.ppf(0.99)  # 2.3263478740408408
+
+# 日波动率
+sigma_daily = sigma_annual / math.sqrt(trading_days)
+
+# 1天 VaR 95%
+var_95_1d = P * sigma_daily * z_95
+
+# 10天 VaR 99%
+var_99_10d = P * sigma_annual * math.sqrt(10 / trading_days) * z_99
+
+# 保留两位小数，报告为正值
+result = {
+    'var_95_1d': round(var_95_1d, 2),
+    'var_99_10d': round(var_99_10d, 2)
+}
+result

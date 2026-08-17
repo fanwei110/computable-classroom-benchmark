@@ -1,0 +1,73 @@
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ------------------------------
+# 中文显示适配（投屏友好）
+# ------------------------------
+try:
+    plt.rcParams['font.sans-serif'] = ['SimHei', 'WenQuanYi Micro Hei', 'DejaVu Sans']
+    plt.rcParams['axes.unicode_minus'] = False
+except Exception:
+    pass
+
+# ------------------------------
+# 参数设定（置信水平可在此调整）
+# ------------------------------
+POSITION_VALUE = 1_000_000          # 头寸 100 万人民币
+CONFIDENCE_LEVEL = 0.95             # 置信水平
+ALPHA = 1 - CONFIDENCE_LEVEL       # 左尾概率
+
+# ------------------------------
+# 1. 读取快照 CSV，构造头寸日损益
+# ------------------------------
+# 假设 CSV 位于 data/market_snapshot_v1.csv，包含 'fund' 列
+df = pd.read_csv('data/market_snapshot_v1.csv')
+returns = df['fund'].values            # 日收益率（小数形式，如 0.01 表示 1%）
+pnl = POSITION_VALUE * returns         # 日损益序列（人民币）
+
+# ------------------------------
+# 2. 由经验分布计算历史 VaR
+# ------------------------------
+# 95% 一日 VaR：左尾 5% 分位数对应的损失金额（取正数）
+var_threshold = np.percentile(pnl, ALPHA * 100)   # 损益的分位数，通常为负值
+var_value = -var_threshold                        # VaR 正值
+
+# ------------------------------
+# 3. 绘制直方图并标出 VaR 线（置信水平参数化）
+# ------------------------------
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 损益直方图
+ax.hist(pnl, bins=50, color='cornflowerblue', edgecolor='black',
+        alpha=0.75, label='日损益分布')
+
+# VaR 阈值线
+ax.axvline(x=var_threshold, color='red', linestyle='--', linewidth=2,
+           label=f'VaR {CONFIDENCE_LEVEL*100:.0f}%: ¥{var_value:,.2f}')
+
+# 标注
+ax.set_xlabel('日损益 (人民币)', fontsize=12)
+ax.set_ylabel('频数', fontsize=12)
+ax.set_title(f'历史模拟法 – 日损益分布与 {CONFIDENCE_LEVEL*100:.0f}% 一日 VaR',
+             fontsize=14)
+ax.legend(fontsize=11)
+plt.tight_layout()
+
+# ------------------------------
+# 4. 保存图形并填充 result 字典
+# ------------------------------
+figure_path = 'var_histogram.png'
+fig.savefig(figure_path, dpi=120, bbox_inches='tight')
+plt.close(fig)   # 释放画布资源
+
+result = {
+    'hist_var_95_1d': var_value,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+# 教师端可直接查看字典内容
+print(result)
+```

@@ -1,0 +1,58 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+import os
+
+# ============ 可调参数 ============
+K = 97.5          # 行权价
+r = 0.043         # 无风险利率
+T = 0.58          # 剩余期限（年）
+S_min, S_max = 70, 140   # 标的价格范围
+volatilities = [0.15, 0.276, 0.40]  # 波动率列表（可调）
+
+# ============ 计算Delta函数 ============
+def bs_call_delta(S, K, r, T, sigma):
+    """Black-Scholes 欧式看涨期权 Delta"""
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# ============ 生成标的价格序列 ============
+S_array = np.linspace(S_min, S_max, 500)
+
+# ============ 绘图 ============
+fig, ax = plt.subplots(figsize=(10, 6))
+
+colors = ['#1f77b4', '#ff7f0e', '#2ca02c']
+for i, sigma in enumerate(volatilities):
+    deltas = bs_call_delta(S_array, K, r, T, sigma)
+    ax.plot(S_array, deltas, label=f'σ = {sigma*100:.1f}%', color=colors[i % len(colors)], linewidth=2)
+
+# 标记行权价
+ax.axvline(x=K, color='grey', linestyle='--', alpha=0.6, label=f'行权价 K = {K}')
+
+# 美化
+ax.set_xlabel('标的价格 S', fontsize=13)
+ax.set_ylabel('Delta', fontsize=13)
+ax.set_title(f'看涨期权 Delta vs 标的价格  (K={K}, r={r*100}%, T={T}年)', fontsize=14)
+ax.legend(fontsize=11)
+ax.set_xlim(S_min, S_max)
+ax.set_ylim(-0.05, 1.05)
+ax.grid(True, alpha=0.3)
+
+# 保存图片
+fig_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'delta_vs_price.png') if '__file__' in dir() else 'delta_vs_price.png'
+plt.tight_layout()
+plt.savefig(fig_path, dpi=150)
+plt.close()
+
+# ============ 计算特定点的Delta ============
+delta_s110 = bs_call_delta(110, K, r, T, 0.276)
+print(f"当 S=110, σ=27.6% 时，看涨期权 Delta = {delta_s110:.6f}")
+
+# ============ 输出契约 ============
+result = {
+    'delta_at_s110': round(delta_s110, 6),
+    'figure_path': fig_path
+}
+
+print(f"\nresult = {result}")

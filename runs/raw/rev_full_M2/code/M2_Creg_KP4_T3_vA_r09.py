@@ -1,0 +1,35 @@
+import numpy as np
+from scipy.stats import norm
+
+def black_scholes_call(S, K, T, r, sigma):
+    """计算欧式看涨期权价格"""
+    if T <= 0:
+        return max(S - K, 0.0)
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    return price
+
+# 给定参数
+S = 103.7          # 标的现价
+K = 97.5           # 行权价
+T = 0.58           # 剩余年限
+r = 0.043          # 无风险利率
+sigma_base = 0.276 # 当前隐含波动率
+sigma_new = 0.286  # 上升一个百分点后的隐含波动率
+
+# 计算两种波动率下的期权价格
+price_base = black_scholes_call(S, K, T, r, sigma_base)
+price_new = black_scholes_call(S, K, T, r, sigma_new)
+
+# 价格变化
+price_change = price_new - price_base
+
+# 按要求存入字典
+result = {'price_change': price_change}
+
+# 仅供查看（脚本执行时会输出，但不影响最终字典）
+print(f"原波动率下的期权价格: {price_base:.6f}")
+print(f"新波动率下的期权价格: {price_new:.6f}")
+print(f"价格变化: {price_change:.6f}")
+print(f"结果字典: {result}")

@@ -1,0 +1,16 @@
+import math
+
+# 参数设定
+position = 2700000  # 头寸270万元，换算为元
+sigma_annual = 0.24 # 年化波动率24%
+z_95 = 1.645        # 95%置信水平下的正态分布分位数
+trading_days = 252  # 一年的标准交易日天数
+
+# 计算日波动率
+sigma_daily = sigma_annual / math.sqrt(trading_days)
+
+# 计算95%一日VaR (单位：元)
+var_95_1d = position * z_95 * sigma_daily
+
+# 按照输出契约存入字典
+result = {'var_95_1d': var_95_1d}

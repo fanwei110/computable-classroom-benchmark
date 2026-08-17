@@ -1,0 +1,62 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# 参数设置
+rf = 0.023  # 无风险收益率 2.3%
+market_return = 0.094  # 市场收益率 9.4%
+betas = np.linspace(0, 2, 100)  # beta范围 0到2
+
+# 计算SML线上的期望收益率
+sml_returns = rf + betas * (market_return - rf)
+
+# 三个点的数据
+points = {
+    'X': {'beta': 0.62, 'return': 0.081},
+    'Y': {'beta': 1.18, 'return': 0.131},
+    'Z': {'beta': 1.51, 'return': 0.099}
+}
+
+# 计算SML斜率
+sml_slope = (market_return - rf) / (1 - 0)  # 市场组合的beta=1
+
+# 计算beta=1.27对应的期望收益率
+er_at_beta_127 = rf + 1.27 * (market_return - rf)
+
+# 绘制图形
+plt.figure(figsize=(10, 6))
+plt.plot(betas, sml_returns, label='SML', color='blue')
+
+# 标注三个点
+for point, data in points.items():
+    plt.scatter(data['beta'], data['return'], label=f'Point {point}')
+    plt.text(data['beta'], data['return'], f' {point}', verticalalignment='bottom')
+
+# 标注rf和市场收益率
+plt.scatter(0, rf, color='red', label='Risk-free rate (rf)')
+plt.scatter(1, market_return, color='green', label='Market Portfolio')
+plt.text(0, rf, f' rf={rf*100:.1f}%', verticalalignment='bottom')
+plt.text(1, market_return, f' Market={market_return*100:.1f}%', verticalalignment='bottom')
+
+# 图形设置
+plt.title('Security Market Line (SML)')
+plt.xlabel('Beta')
+plt.ylabel('Expected Return')
+plt.xlim(0, 2)
+plt.ylim(0, 0.15)
+plt.legend()
+plt.grid(True)
+
+# 保存图形
+figure_path = 'sml_plot.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 存储结果
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+print(result)

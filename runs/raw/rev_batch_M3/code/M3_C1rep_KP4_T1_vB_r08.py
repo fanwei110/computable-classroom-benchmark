@@ -1,0 +1,41 @@
+import math
+
+# 参数设置
+S = 103.7      # 标的资产价格
+K = 97.5       # 行权价
+T = 0.58       # 剩余期限（年）
+sigma = 0.276  # 波动率 (27.6%)
+r = 0.043      # 无风险利率 (4.3%)
+q = 0.0        # 股息率
+
+# 计算d1和d2
+d1 = (math.log(S / K) + (r - q + 0.5 * sigma**2) * T) / (sigma * math.sqrt(T))
+d2 = d1 - sigma * math.sqrt(T)
+
+# 正态分布累积概率函数和概率密度函数的近似计算
+def norm_cdf(x):
+    return (1.0 + math.erf(x / math.sqrt(2.0))) / 2.0
+
+def norm_pdf(x):
+    return math.exp(-0.5 * x**2) / math.sqrt(2.0 * math.pi)
+
+# 计算期权价格
+Nd1 = norm_cdf(d1)
+Nd2 = norm_cdf(d2)
+discount = math.exp(-r * T)
+call_price = S * math.exp(-q * T) * Nd1 - K * discount * Nd2
+
+# 计算Delta
+call_delta = math.exp(-q * T) * Nd1
+
+# 计算Vega (绝对值，即波动率每变动1单位的价格变动；若需按惯例"波动率每变动1%的价格变动"，则需除以100)
+call_vega = S * math.exp(-q * T) * math.sqrt(T) * norm_pdf(d1)
+
+# 输出契约要求
+result = {
+    'call_price': round(call_price, 4),
+    'call_delta': round(call_delta, 4),
+    'call_vega': round(call_vega, 4)  # 绝对Vega，若需1%变动的Vega，值为0.2756
+}
+
+print(result)

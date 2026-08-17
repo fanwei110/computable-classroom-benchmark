@@ -1,0 +1,75 @@
+以下是自包含的Python脚本，完成指定的任务：
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+# 设置参数
+POSITION_SIZE = 1_000_000  # 头寸规模（元）
+CONFIDENCE_LEVEL = 0.95    # 默认置信水平
+DATA_PATH = 'data/market_snapshot_v1.csv'
+FIGURE_PATH = 'var_histogram.png'
+
+def calculate_historical_var():
+    # 1. 读取数据并构造日损益
+    df = pd.read_csv(DATA_PATH)
+    daily_returns = df['fund'].dropna().values  # 假设'fund'列为日收益率序列
+
+    # 将收益率转换为绝对损益（元）
+    daily_pnl = daily_returns * POSITION_SIZE
+
+    # 2. 计算历史VaR
+    var_percentile = (1 - CONFIDENCE_LEVEL) * 100
+    historical_var = np.percentile(daily_pnl, var_percentile)
+
+    # 3. 绘制直方图并标注VaR
+    plt.figure(figsize=(10, 6))
+    plt.hist(daily_pnl, bins=50, alpha=0.75, color='skyblue', edgecolor='black')
+
+    # 添加VaR线
+    plt.axvline(x=historical_var, color='red', linestyle='--', linewidth=2)
+    plt.text(historical_var * 1.05, plt.ylim()[1] * 0.9,
+             f'95% 1-day VaR: ¥{abs(historical_var):,.2f}',
+             color='red', fontsize=12, bbox=dict(facecolor='white', alpha=0.8))
+
+    plt.title(f'Daily P&L Distribution with {CONFIDENCE_LEVEL:.0%} VaR')
+    plt.xlabel('Daily P&L (RMB)')
+    plt.ylabel('Frequency')
+    plt.grid(True, alpha=0.3)
+
+    # 保存图形
+    plt.savefig(FIGURE_PATH)
+    plt.close()
+
+    # 4. 构建结果字典
+    result = {
+        'hist_var_95_1d': abs(historical_var),  # 返回正值（损失金额）
+        'figure_path': str(Path(FIGURE_PATH).absolute())
+    }
+
+    return result
+
+# 执行计算并输出结果
+result = calculate_historical_var()
+print(result)
+```
+
+### 关键说明：
+1. **数据读取**：假设CSV文件中有名为"fund"的列，存储日收益率序列（百分比形式）
+2. **损益转换**：将收益率乘以头寸规模（1,000,000元）得到绝对损益
+3. **历史VaR计算**：使用numpy的percentile函数计算经验分位数
+4. **可视化**：
+   - 绘制直方图显示损益分布
+   - 添加红色虚线标注VaR值
+   - 标注中显示具体金额（人民币格式）
+5. **输出契约**：
+   - `hist_var_95_1d`：95%置信水平下的1日历史VaR（正值，单位：元）
+   - `figure_path`：保存的图形文件绝对路径
+
+### 注意事项：
+- 脚本假设"fund"列为数值型日收益率（如0.01表示1%）
+- 如果实际数据格式不同（如百分数2.5表示2.5%），需调整转换逻辑
+- 图形保存为当前目录下的`var_histogram.png`文件
+- 置信水平可通过修改`CONFIDENCE_LEVEL`变量调整

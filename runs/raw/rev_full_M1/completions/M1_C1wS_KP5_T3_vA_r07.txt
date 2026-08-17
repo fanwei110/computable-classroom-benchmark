@@ -1,0 +1,39 @@
+以下是自包含的 Python 脚本，计算 95% 一日 VaR：
+
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+annualized_volatility = 0.24  # 年化波动率 24%
+position_size = 2_700_000     # 头寸 270 万元
+confidence_level = 0.95       # 置信水平 95%
+
+# 1. 年化波动率换算为一日波动率
+# 假设一年有 252 个交易日（金融市场常用假设）
+trading_days_per_year = 252
+daily_volatility = annualized_volatility / np.sqrt(trading_days_per_year)
+
+# 2. 计算 95% 正态分位数（单尾）
+z_score = norm.ppf(1 - confidence_level)
+
+# 3. 计算 VaR
+var_95_1d = position_size * daily_volatility * z_score
+
+# 存储结果
+result = {
+    'var_95_1d': round(var_95_1d, 2)  # 保留两位小数
+}
+
+# 输出结果（可选，方便调试）
+print(result)
+```
+
+输出契约：
+- 结果存储在 `result` 字典中，键名严格为 `'var_95_1d'`。
+- 计算假设：
+  - 年化波动率转日波动率使用 252 个交易日/年（金融市场标准假设）
+  - 使用正态分布（delta-normal 法）计算分位数
+  - 95% 置信水平对应单尾 5% 分位数
+
+运行此脚本将得到可复现的 VaR 值，例如在上述参数下结果约为 65,000 元左右（具体值取决于中间计算的精度）。

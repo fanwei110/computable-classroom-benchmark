@@ -1,0 +1,92 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==================== 参数设置 ====================
+mu1, mu2 = 0.071, 0.124
+vol1, vol2 = 0.163, 0.289
+rhos = [0.15, 0.45, 0.75]
+
+# 初始化结果字典
+result = {
+    'mvp_vol_at_rho45': None,
+    'frontier_vol_at_target': None,
+    'figure_path': 'efficient_frontier.png'
+}
+
+# ==================== 权重扫描与解析计算 ====================
+# 满仓约束下，w1 + w2 = 1，因此 w2 = 1 - w1
+# 为了展示完整的双曲线（并包含可能需要卖空才能达到的最小方差点），扫描范围设为 [-0.5, 1.5]
+w1_scan = np.linspace(-0.5, 1.5, 1000)
+
+# 设置图像 (使用英文标签保证跨平台无中文乱码，自包含可复现)
+plt.figure(figsize=(10, 7))
+
+for idx, rho in enumerate(rhos):
+    # 1. 构造协方差矩阵并计算协方差
+    cov12 = rho * vol1 * vol2
+    
+    # 扫描计算前沿
+    mu_p = w1_scan * mu1 + (1 - w1_scan) * mu2
+    var_p = w1_scan**2 * vol1**2 + (1 - w1_scan)**2 * vol2**2 + 2 * w1_scan * (1 - w1_scan) * cov12
+    vol_p = np.sqrt(np.maximum(var_p, 0))  # 防止计算误差导致负数开根号
+    
+    # 画前沿曲线
+    plt.plot(vol_p, mu_p, label=f'ρ = {rho:.2f}', linewidth=1.5)
+    
+    # 2. 解析求解最小方差组合 (MVP)
+    # 由一阶导数为0可得：w1_mvp = (vol2^2 - cov12) / (vol1^2 + vol2^2 - 2*cov12)
+    w1_mvp = (vol2**2 - cov12) / (vol1**2 + vol2**2 - 2 * cov12)
+    w2_mvp = 1 - w1_mvp
+    mvp_mu = w1_mvp * mu1 + w2_mvp * mu2
+    mvp_var = w1_mvp**2 * vol1**2 + w2_mvp**2 * vol2**2 + 2 * w1_mvp * w2_mvp * cov12
+    mvp_vol = np.sqrt(mvp_var)
+    
+    # 标出最小方差点
+    plt.scatter(mvp_vol, mvp_mu, marker='*', s=200, color='black', zorder=5)
+    
+    # 动态调整标注位置以防重叠
+    offset_x = 0.02
+    offset_y = -0.002 - 0.008 * idx
+    plt.annotate(f'MVP (ρ={rho:.2f})\nVol={mvp_vol:.2%}',
+                 xy=(mvp_vol, mvp_mu),
+                 xytext=(mvp_vol + offset_x, mvp_mu + offset_y),
+                 arrowprops=dict(arrowstyle="->", color='black', lw=1.2),
+                 fontsize=9,
+                 bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.8))
+
+    # 3. 针对相关系数0.45进行特定计算
+    if rho == 0.45:
+        # 记录 rho=0.45 时的 MVP 波动率
+        result['mvp_vol_at_rho45'] = mvp_vol
+        
+        # 计算目标收益为 10% 时的权重与最小波动率
+        target_mu = 0.10
+        # 由 w1 * mu1 + w2 * mu2 = target_mu 且 w2 = 1 - w1 解析求得：
+        w1_target = (target_mu - mu2) / (mu1 - mu2)
+        w2_target = 1 - w1_target
+        
+        target_var = w1_target**2 * vol1**2 + w2_target**2 * vol2**2 + 2 * w1_target * w2_target * cov12
+        target_vol = np.sqrt(target_var)
+        result['frontier_vol_at_target'] = target_vol
+        
+        # 在图上顺便标出目标收益点以便课堂展示
+        plt.scatter(target_vol, target_mu, marker='D', s=100, color='red', zorder=5)
+        plt.annotate(f'Target 10% (ρ=0.45)\nVol={target_vol:.2%}',
+                     xy=(target_vol, target_mu),
+                     xytext=(target_vol + 0.03, target_mu - 0.01),
+                     arrowprops=dict(arrowstyle="->", color='red', lw=1.2),
+                     fontsize=9,
+                     bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="red", alpha=0.8))
+
+# ==================== 图形装饰与保存 ====================
+plt.xlabel('Portfolio Volatility (Standard Deviation)')
+plt.ylabel('Portfolio Expected Return')
+plt.title('Mean-Variance Efficient Frontier (Two Assets)')
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.tight_layout()
+plt.savefig(result['figure_path'], dpi=150, bbox_inches='tight')
+plt.close()
+
+# ==================== 结果输出 ====================
+print(result)

@@ -1,0 +1,30 @@
+import numpy as np
+from scipy.stats import norm
+
+# 给定参数（无股息，q = 0）
+S = 103.7          # 股票现价
+K = 97.5           # 行权价
+sigma = 0.276      # 年化波动率
+r = 0.043          # 无风险利率（年化）
+T = 0.58           # 剩余期限（年）
+q = 0.0            # 股息率
+
+# 1. 计算 d1 与 d2
+d1 = (np.log(S / K) + (r - q + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+d2 = d1 - sigma * np.sqrt(T)
+
+# 2. 计算期权价格与 Delta
+call_price = S * np.exp(-q * T) * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+call_delta = np.exp(-q * T) * norm.cdf(d1)   # 对于无股息股票，call_delta = N(d1)
+
+# 3. 计算 Vega（期权价格对波动率（小数形式）的偏导数）
+call_vega = S * np.exp(-q * T) * norm.pdf(d1) * np.sqrt(T)
+
+# 4. 填充结果字典
+result = {
+    'call_price': call_price,
+    'call_delta': call_delta,
+    'call_vega': call_vega
+}
+
+print(result)

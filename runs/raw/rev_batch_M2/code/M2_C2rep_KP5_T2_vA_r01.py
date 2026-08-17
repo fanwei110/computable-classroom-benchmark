@@ -1,0 +1,64 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ============================================================
+# 可调参数
+# ============================================================
+CONFIDENCE_LEVEL = 0.95          # 置信水平
+POSITION = 1_000_000             # 头寸（人民币）
+BINS = 50                        # 直方图分箱数
+FIGURE_PATH = 'var_hist.png'     # 输出图形路径
+DATA_PATH = 'data/market_snapshot_v1.csv'
+
+# ============================================================
+# 1. 读取数据并构造日损益序列
+# ============================================================
+df = pd.read_csv(DATA_PATH)
+# 强制转换为数值，非数值变为 NaN 并丢弃
+raw_returns = pd.to_numeric(df['fund'], errors='coerce').dropna().values
+
+# 若日收益序列以百分比形式给出（绝对值普遍 > 1），自动转换为小数
+if np.max(np.abs(raw_returns)) > 1:
+    raw_returns = raw_returns / 100.0
+
+# 头寸的日损益（人民币）
+pnl = POSITION * raw_returns
+
+# ============================================================
+# 2. 计算历史 VaR
+# ============================================================
+var_quantile = 1 - CONFIDENCE_LEVEL
+# 损益分布的下分位数（左尾）
+var_cutoff = np.percentile(pnl, var_quantile * 100)
+# VaR 定义为损失大小的正值
+var_value = -var_cutoff
+
+# ============================================================
+# 3. 绘制直方图并标注 VaR
+# ============================================================
+plt.figure(figsize=(10, 6))
+plt.hist(pnl, bins=BINS, alpha=0.7, color='skyblue', edgecolor='black',
+         label='Daily P&L')
+
+plt.axvline(var_cutoff, color='red', linestyle='--', linewidth=2,
+            label=f'{CONFIDENCE_LEVEL*100:.0f}% Historical VaR: ¥{var_value:,.2f}')
+
+plt.xlabel('Daily P&L (RMB)')
+plt.ylabel('Frequency')
+plt.title(f'Daily P&L Distribution and {CONFIDENCE_LEVEL*100:.0f}% Historical VaR')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+plt.savefig(FIGURE_PATH, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ============================================================
+# 4. 输出结果字典
+# ============================================================
+result = {
+    'hist_var_95_1d': var_value,
+    'figure_path': FIGURE_PATH
+}
+
+print(result)

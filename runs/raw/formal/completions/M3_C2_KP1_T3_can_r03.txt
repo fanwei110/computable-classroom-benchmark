@@ -1,0 +1,79 @@
+```python
+import numpy as np
+
+# ==========================================
+# 步骤 1：确定波动率与权重假设
+# ==========================================
+# 假设：60%分配给波动率较低的资产A，40%分配给波动率较高的资产B（符合常规的风险配置逻辑）
+vol_A = 0.184
+vol_B = 0.297
+
+w_A = 0.6
+w_B = 0.4
+weights = np.array([w_A, w_B])
+
+# ==========================================
+# 步骤 2：构造相关系数 0.3 与 0.8 两个协方差矩阵
+# ==========================================
+rho_before = 0.3
+rho_after = 0.8
+
+# 协方差计算公式：Cov(A, B) = rho * sigma_A * sigma_B
+cov_before = rho_before * vol_A * vol_B
+cov_after = rho_after * vol_A * vol_B
+
+cov_matrix_before = np.array([
+    [vol_A**2, cov_before],
+    [cov_before, vol_B**2]
+])
+
+cov_matrix_after = np.array([
+    [vol_A**2, cov_after],
+    [cov_after, vol_B**2]
+])
+
+# ==========================================
+# 步骤 3：计算两个组合波动率
+# ==========================================
+# 组合方差公式：sigma_p^2 = w' * Sigma * w
+var_before = weights.T @ cov_matrix_before @ weights
+var_after = weights.T @ cov_matrix_after @ weights
+
+vol_before_annual = np.sqrt(var_before)
+vol_after_annual = np.sqrt(var_after)
+
+# ==========================================
+# 步骤 4：填充 result
+# ==========================================
+result = {
+    'vol_before_annual': vol_before_annual,
+    'vol_after_annual': vol_after_annual
+}
+
+# ==========================================
+# 课堂投屏展示信息（辅助讲解）
+# ==========================================
+print("="*60)
+print("《证券投资学》课堂演示：马科维茨组合理论 - 相关系数的影响")
+print("="*60)
+print(f"【假设】资产A权重 = {w_A:.0%}，资产B权重 = {w_B:.0%}")
+print(f"资产A年化波动率: {vol_A:.2%}")
+print(f"资产B年化波动率: {vol_B:.2%}\n")
+
+print(f"1. 相关系数 = {rho_before} 时的协方差矩阵:")
+print(cov_matrix_before)
+print(f"   组合方差: {var_before:.6f}")
+print(f"   组合年化波动率: {vol_before_annual:.2%}\n")
+
+print(f"2. 相关系数 = {rho_after} 时的协方差矩阵:")
+print(cov_matrix_after)
+print(f"   组合方差: {var_after:.6f}")
+print(f"   组合年化波动率: {vol_after_annual:.2%}\n")
+
+print(f"【结论】当相关系数从 0.3 升至 0.8 时，")
+print(f"组合波动率从 {vol_before_annual:.2%} 上升至 {vol_after_annual:.2%}，")
+print(f"增加了 {(vol_after_annual - vol_before_annual):.2%}，分散化效应显著减弱。")
+print("="*60)
+print("最终输出契约 result 字典：")
+print(result)
+```

@@ -1,0 +1,60 @@
+import numpy as np
+import pandas as pd
+import matplotlib
+matplotlib.use('Agg')          # 非交互式后端，适配课堂服务器投屏
+import matplotlib.pyplot as plt
+
+# ======================== 可调参数 ========================
+WINDOW = 60                  # 滚动窗口长度（交易日）
+ANNUAL_FACTOR = 252          # 年化交易日数
+RISK_FREE_ANNUAL = 0.021    # 年化无风险利率
+
+# ======================== 1. 读取数据 =====================
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 自动识别日期列并设为索引
+if 'date' in df.columns:
+    df['date'] = pd.to_datetime(df['date'])
+    df.set_index('date', inplace=True)
+elif 'Date' in df.columns:
+    df['Date'] = pd.to_datetime(df['Date'])
+    df.set_index('Date', inplace=True)
+
+# 提取基金日收益率序列，假定为小数形式（如 0.01 表示 1%）
+fund_returns = df['fund'].astype(float)
+
+# ======================== 2. 计算滚动年化夏普比率 ===========
+rf_daily = RISK_FREE_ANNUAL / ANNUAL_FACTOR
+excess = fund_returns - rf_daily
+
+# 滚动计算：日超额收益均值 / 日超额收益标准差 * sqrt(年化因子)
+rolling_mean = excess.rolling(window=WINDOW).mean()
+rolling_std  = excess.rolling(window=WINDOW).std()
+daily_sharpe = rolling_mean / rolling_std
+annualized_sharpe = daily_sharpe * np.sqrt(ANNUAL_FACTOR)
+
+# ======================== 3. 最后一个窗口的值 ================
+rolling_sharpe_last = float(annualized_sharpe.dropna().iloc[-1])
+
+# ======================== 4. 绘图并保存 ====================
+fig, ax = plt.subplots(figsize=(12, 5))
+ax.plot(annualized_sharpe.index, annualized_sharpe.values,
+        color='steelblue', linewidth=1.2, label=f'{WINDOW}-day rolling annualized Sharpe')
+ax.axhline(y=0, color='black', linestyle='--', linewidth=0.8)
+ax.set_title(f'Rolling {WINDOW}-Day Annualized Sharpe Ratio (Fund)')
+ax.set_xlabel('Date' if 'date' in str(annualized_sharpe.index.name).lower() else 'Index')
+ax.set_ylabel('Annualized Sharpe Ratio')
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+figure_path = 'rolling_sharpe.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close(fig)
+
+# ======================== 5. 结果契约 ======================
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': figure_path
+}
+
+print(result)   # 供课堂检查，变量 result 同时保留在内存中

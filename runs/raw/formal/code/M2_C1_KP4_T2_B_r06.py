@@ -1,0 +1,72 @@
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+import os
+
+# Black-Scholes Delta公式
+def calculate_delta(S, K, T, r, sigma, option_type='call'):
+    d1 = (np.log(S/K) + (r + sigma**2/2)*T) / (sigma*np.sqrt(T))
+    if option_type == 'call':
+        delta = norm.cdf(d1)
+    else:
+        delta = norm.cdf(d1) - 1
+    return delta
+
+# 参数设置
+K = 97.5
+r = 0.043
+T = 0.58
+S_range = np.linspace(70, 140, 140)
+vols = [0.15, 0.276, 0.40]
+colors = ['blue', 'green', 'red']
+
+# 创建图形
+plt.figure(figsize=(10, 6))
+
+# 绘制三条delta曲线
+for vol, color in zip(vols, colors):
+    delta_values = calculate_delta(S_range, K, T, r, vol)
+    plt.plot(S_range, delta_values, color=color, linewidth=2, 
+             label=f'Vol = {vol*100:.1f}%')
+
+# 计算标的价格110，波动率27.6%时的delta
+S_target = 110
+vol_target = 0.276
+delta_at_s110 = calculate_delta(S_target, K, T, r, vol_target)
+
+# 在图上标记该点
+plt.scatter(S_target, delta_at_s110, color='green', s=100, zorder=5)
+plt.annotate(f'Delta = {delta_at_s110:.4f}', 
+             xy=(S_target, delta_at_s110),
+             xytext=(S_target+5, delta_at_s110-0.05),
+             arrowprops=dict(arrowstyle='->', color='black'),
+             fontsize=10, bbox=dict(boxstyle='round,pad=0.3', facecolor='yellow', alpha=0.7))
+
+# 设置图形属性
+plt.xlabel('标的价格 (S)', fontsize=12)
+plt.ylabel('Delta', fontsize=12)
+plt.title('Delta曲线 (K=97.5, r=4.3%, T=0.58年)', fontsize=14, fontweight='bold')
+plt.legend(loc='lower right', fontsize=11)
+plt.grid(True, alpha=0.3, linestyle='--')
+plt.axhline(y=0.5, color='gray', linestyle='--', alpha=0.5)
+plt.axvline(x=K, color='gray', linestyle='--', alpha=0.5, label=f'K={K}')
+plt.xlim(70, 140)
+plt.ylim(0, 1.05)
+
+# 保存图形
+output_dir = os.path.dirname(os.path.abspath(__file__))
+figure_path = os.path.join(output_dir, 'delta_curves.png')
+plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# 构建结果字典
+result = {
+    'delta_at_s110': float(f'{delta_at_s110:.6f}'),
+    'figure_path': figure_path
+}
+
+print(f"Delta at S=110, Vol=27.6%: {delta_at_s110:.6f}")
+print(f"Figure saved at: {figure_path}")
+
+# 返回结果
+result

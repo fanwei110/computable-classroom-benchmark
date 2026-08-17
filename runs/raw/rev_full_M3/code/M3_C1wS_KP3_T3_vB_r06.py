@@ -1,0 +1,75 @@
+import numpy as np
+
+# ==========================================
+# 债券参数设定
+# ==========================================
+face_value = 100        # 面值
+coupon_rate = 0.046     # 票息率 4.6%
+ytm = 0.053             # 当前到期收益率 5.3%
+maturity = 7            # 期限 7年
+delta_y = 0.008         # 收益率上升 80 个基点 (80bp)
+
+# 假设：债券按年付息，且处于付息日（无应计利息）
+
+# ==========================================
+# 1. 计算现金流与当前价格及利率敏感性
+# ==========================================
+# 生成时间序列
+t = np.arange(1, maturity + 1)
+
+# 生成现金流（每年末付息，最后一年归还本金）
+cash_flows = np.full(maturity, face_value * coupon_rate)
+cash_flows[-1] += face_value
+
+# 贴现因子
+discount_factors = (1 + ytm) ** -t
+
+# 当前债券价格 (现金流贴现之和)
+price = np.sum(cash_flows * discount_factors)
+
+# 麦考利久期 (Macaulay Duration)
+mac_duration = np.sum(t * cash_flows * discount_factors) / price
+
+# 修正久期 (Modified Duration) - 衡量一阶敏感性
+mod_duration = mac_duration / (1 + ytm)
+
+# 凸性 (Convexity) - 衡量二阶敏感性
+# 凸性公式: (1/P) * Σ [ t(t+1) * CF_t / (1+y)^(t+2) ]
+convexity = np.sum(t * (t + 1) * cash_flows * (1 + ytm) ** -(t + 2)) / price
+
+# ==========================================
+# 2. 估算收益率上升 80bp 的价格影响
+# ==========================================
+# 价格变动百分比二阶近似: ΔP/P ≈ - D_mod * Δy + 0.5 * Convexity * (Δy)^2
+price_change_pct = -mod_duration * delta_y + 0.5 * convexity * (delta_y ** 2)
+
+# 为辅助教学，计算精确价格变动以便课堂对比
+new_ytm = ytm + delta_y
+new_discount_factors = (1 + new_ytm) ** -t
+new_price = np.sum(cash_flows * new_discount_factors)
+exact_change_pct = (new_price - price) / price
+
+# ==========================================
+# 3. 结果存储与输出
+# ==========================================
+# 按照契约存入字典，此处存入负值代表价格下跌的变动率（量化标准惯例）
+result = {'price_drop_pct': price_change_pct}
+
+# 课堂投屏打印（增强教学展示效果）
+print("="*50)
+print("《证券投资学》- 债券定价与久期、凸性分析")
+print("="*50)
+print(f"债券面值: {face_value} | 票息率: {coupon_rate:.1%} | 期限: {maturity}年 | 当前YTM: {ytm:.1%}")
+print(f"当前债券价格: {price:.4f} 元")
+print("-"*50)
+print(f"麦考利久期: {mac_duration:.4f} 年")
+print(f"修正久期: {mod_duration:.4f}")
+print(f"凸性: {convexity:.4f}")
+print("-"*50)
+print(f"假设收益率上升: {delta_y:.1%} (即80个基点)")
+print(f"【久期一阶效应】: -ModD × Δy = {-mod_duration * delta_y:.4%}")
+print(f"【凸性二阶效应】: 0.5 × C × (Δy)^2 = {0.5 * convexity * (delta_y ** 2):.4%}")
+print(f">>> 估算价格变动 (二阶近似): {price_change_pct:.4%}")
+print(f">>> 实际价格变动 (精确计算): {exact_change_pct:.4%} (供课堂对比)")
+print(f">>> 估算跌幅绝对值: {abs(price_change_pct):.4%}")
+print("="*50)

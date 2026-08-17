@@ -1,0 +1,75 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ============================================================
+# å¯è°åæ° (ç¨æ·å¯ä»¥å¨æ­¤å¤ä¿®æ¹)
+# ============================================================
+rf = 0.023        # æ é£é©å©ç
+rm = 0.094        # å¸åºæææ¶ç
+
+# ============================================================
+# è®¡ç® SML æçä¸ç¹å® beta å¤ç CAPM æææ¶ç
+# ============================================================
+sml_slope = rm - rf                     # å¸åºé£é©æº¢ä»·ï¼å³ SML çæç
+beta_target = 1.27
+er_at_beta_127 = rf + beta_target * sml_slope
+
+# ============================================================
+# è¡ç¥¨æ°æ®
+# ============================================================
+stocks = {
+    'X': {'beta': 0.62, 'return': 0.081},
+    'Y': {'beta': 1.18, 'return': 0.131},
+    'Z': {'beta': 1.51, 'return': 0.099},
+}
+
+# ============================================================
+# ç»å¾ (ä¸ºç´è§ï¼çºµè½´æ¾ç¤ºä¸ºç¾åæ¯)
+# ============================================================
+# è½¬æ¢ä¸ºç¾åæ¯åä½
+rf_pct = rf * 100
+rm_pct = rm * 100
+sml_slope_pct = sml_slope * 100
+
+# çæ SML çº¿ï¼beta ä» 0 å° 2
+betas = np.linspace(0, 2, 100)
+sml_line = rf_pct + betas * sml_slope_pct
+
+fig, ax = plt.subplots(figsize=(8, 6))
+ax.plot(betas, sml_line, 'b-', linewidth=2, label='SML')
+ax.scatter([0], [rf_pct], color='black', zorder=5)   # æ é£é©å©çç¹
+ax.scatter([1], [rm_pct], color='black', zorder=5)   # å¸åºç»åç¹
+
+# è¡ç¥¨æ£ç¹åæ æ³¨
+for name, data in stocks.items():
+    ret_pct = data['return'] * 100
+    ax.scatter(data['beta'], ret_pct, marker='o', s=60, zorder=5, label=f'Stock {name}')
+    ax.annotate(name, (data['beta'], ret_pct),
+                textcoords="offset points", xytext=(6, 6), fontsize=10)
+
+ax.set_xlabel('Beta')
+ax.set_ylabel('Expected Return (%)')
+ax.set_title('Security Market Line (SML)')
+ax.grid(True, linestyle='--', alpha=0.7)
+ax.legend()
+ax.set_xlim(0, 2)
+ax.set_ylim(bottom=0)
+
+# ä¿å­å¾å½¢
+figure_path = 'sml.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ============================================================
+# ç»æå­å
+# ============================================================
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+# å¦æç´æ¥è¿è¡èæ¬ï¼æå°ç»æä»¥ä¾æ¥éª
+if __name__ == '__main__':
+    print(result)

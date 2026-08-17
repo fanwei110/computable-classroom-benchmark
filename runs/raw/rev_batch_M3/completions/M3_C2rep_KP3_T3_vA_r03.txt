@@ -1,0 +1,49 @@
+```python
+import numpy as np
+
+# ==================== 债券基本参数 ====================
+face_value = 100       # 面值
+coupon_rate = 0.046    # 票息率 4.6%
+yield_rate = 0.053     # 收益率 5.3%
+maturity = 7           # 期限 7 年
+delta_y = 0.008        # 收益率上升 80 个基点 (0.80%)
+
+# 假设：题目未指明付息频率，按国内教材惯例默认为按年付息
+# 构造各期现金流序列
+coupons = np.full(maturity, face_value * coupon_rate)
+coupons[-1] += face_value  # 最后一期除了票息还需偿还本金
+
+time_points = np.arange(1, maturity + 1)
+
+# ==================== 步骤1：计算债券价格与利率敏感性 ====================
+# 计算各期现金流现值
+discount_factors = (1 + yield_rate) ** time_points
+present_values = coupons / discount_factors
+price = np.sum(present_values)
+
+# 计算麦考利久期
+mac_duration = np.sum(time_points * present_values) / price
+
+# 计算修正久期
+mod_duration = mac_duration / (1 + yield_rate)
+
+# 计算凸性
+convexity = np.sum(time_points * (time_points + 1) * present_values) / (price * (1 + yield_rate) ** 2)
+
+# ==================== 步骤2：估算收益率上升80bp的价格影响 ====================
+# 利用久期与凸性进行泰勒展开近似：dP/P ≈ -修正久期 * Δy + 0.5 * 凸性 * (Δy)^2
+pct_change = -mod_duration * delta_y + 0.5 * convexity * (delta_y ** 2)
+
+# ==================== 步骤3：把跌幅存入 result ====================
+# 跌幅为正值，对估算的百分比变化取绝对值
+price_drop_pct = abs(pct_change)
+
+result = {'price_drop_pct': price_drop_pct}
+
+# ==================== 课堂投屏展示 ====================
+print(f"当前债券价格: {price:.4f} 元")
+print(f"修正久期: {mod_duration:.4f} 年")
+print(f"凸性: {convexity:.4f}")
+print(f"收益率上升80bp估算跌幅: {price_drop_pct:.4%}")
+print(f"\n最终输出结果 result: {result}")
+```

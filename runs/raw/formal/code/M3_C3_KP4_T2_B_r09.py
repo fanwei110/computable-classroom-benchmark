@@ -1,0 +1,60 @@
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'DejaVu Sans']
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+# ===================== 可调参数 =====================
+K = 97.5          # 行权价
+r = 0.043         # 无风险利率（连续复利，小数）
+T = 0.58          # 到期时间（年）
+vols = [0.15, 0.276, 0.40]   # 三条波动率曲线，可自行增减
+S_min, S_max = 70, 140       # 标的价格范围
+# ====================================================
+
+S_range = np.linspace(S_min, S_max, 700)
+
+def bs_call_delta(S, K, r, sigma, T):
+    """Black-Scholes 看涨期权 Delta"""
+    d1 = (np.log(S / K) + (r + sigma ** 2 / 2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# ---- 计算标的110、vol=27.6%时的Delta ----
+delta_s110 = bs_call_delta(110, K, r, 0.276, T)
+
+# ---- 绘图 ----
+fig, ax = plt.subplots(figsize=(10, 6))
+
+for sigma in vols:
+    deltas = bs_call_delta(S_range, K, r, sigma, T)
+    ax.plot(S_range, deltas, linewidth=2, label=f'σ = {sigma*100:.1f}%')
+
+# 标注行权价竖线
+ax.axvline(x=K, color='grey', linestyle='--', linewidth=1, alpha=0.6, label=f'K = {K}')
+# 标注S=110的位置
+ax.axvline(x=110, color='red', linestyle=':', linewidth=1, alpha=0.5)
+ax.plot(110, delta_s110, 'ro', markersize=7, zorder=5,
+        label=f'S=110, σ=27.6%: Δ={delta_s110:.4f}')
+
+ax.set_xlabel('标的价格 S', fontsize=12)
+ax.set_ylabel('Delta', fontsize=12)
+ax.set_title(f'看涨期权 Delta 曲线  (K={K}, r={r*100}%, T={T}yr)', fontsize=14)
+ax.legend(fontsize=10, loc='upper left')
+ax.set_xlim(S_min, S_max)
+ax.set_ylim(-0.02, 1.02)
+ax.grid(True, alpha=0.3)
+
+figure_path = 'delta_curve.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ---- 输出 ----
+result = {
+    'delta_at_s110': delta_s110,
+    'figure_path': figure_path
+}
+
+print(f"标的110, vol=27.6% 的 Delta = {delta_s110:.6f}")
+print(f"图片已保存至: {figure_path}")
+print(f"result = {result}")

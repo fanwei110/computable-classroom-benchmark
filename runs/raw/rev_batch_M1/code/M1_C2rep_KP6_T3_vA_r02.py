@@ -1,0 +1,37 @@
+import pandas as pd
+import numpy as np
+
+# 1. 读取数据并计入无风险利率
+file_path = 'data/market_snapshot_v1.csv'
+data = pd.read_csv(file_path)
+
+# 提取fund列（假设fund列代表基金的收益率）
+fund_returns = data['fund'].dropna()
+
+# 无风险利率（年化）
+risk_free_rate_annual = 0.021
+
+# 将无风险利率转换为与收益率相同的频率（假设数据为日收益率）
+# 这里假设数据是日收益率，因此日无风险利率 = (1 + 0.021)^(1/252) - 1
+trading_days_per_year = 252
+risk_free_rate_daily = (1 + risk_free_rate_annual) ** (1 / trading_days_per_year) - 1
+
+# 计算超额收益率（fund收益率 - 无风险利率）
+excess_returns = fund_returns - risk_free_rate_daily
+
+# 2. 计算全样本年化夏普比率
+# 年化均值 = 日均值 * 252
+mean_excess_return_annual = excess_returns.mean() * trading_days_per_year
+# 年化标准差 = 日标准差 * sqrt(252)
+std_excess_return_annual = excess_returns.std() * np.sqrt(trading_days_per_year)
+
+# 夏普比率 = 年化超额收益均值 / 年化超额收益标准差
+sharpe_ratio_annual = mean_excess_return_annual / std_excess_return_annual
+
+# 3. 存储结果
+result = {
+    'sharpe_annual': sharpe_ratio_annual
+}
+
+# 输出结果（可选，用于调试）
+print(result)

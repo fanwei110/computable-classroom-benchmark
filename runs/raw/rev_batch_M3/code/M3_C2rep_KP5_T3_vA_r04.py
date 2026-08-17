@@ -1,0 +1,44 @@
+import numpy as np
+from scipy.stats import norm
+
+# ==================== 参数与假设 ====================
+# 年化波动率
+sigma_annual = 0.24
+# 头寸金额（元）
+position_value = 2_700_000
+# 置信水平
+confidence_level = 0.95
+# 假设：一年中的交易日天数（采用国际通用市场惯例：252天）
+trading_days_per_year = 252
+
+# ==================== 步骤1：换算一日期限波动率 ====================
+# 根据平方根时间法则，将年化波动率换算为日波动率
+sigma_daily = sigma_annual / np.sqrt(trading_days_per_year)
+
+# ==================== 步骤2：套用 95% 正态分位数 ====================
+# 95% 置信水平下的单尾分位数（即 5% 分位数的绝对值）
+# norm.ppf(0.05) 为负数，取其绝对值用于计算损失金额
+z_score_95 = -norm.ppf(1 - confidence_level)  # 等价于 -norm.ppf(0.05)
+
+# ==================== 步骤3：计算 VaR 金额 ====================
+# 参数法 VaR = 头寸金额 × 分位数 × 日波动率
+var_95_1d = position_value * z_score_95 * sigma_daily
+
+# ==================== 输出契约 ====================
+result = {
+    'var_95_1d': var_95_1d
+}
+
+# 课堂展示辅助打印（便于投屏讲解）
+print(f"【计算参数与假设】")
+print(f"头寸金额: {position_value:,.2f} 元")
+print(f"年化波动率: {sigma_annual * 100:.1f}%")
+print(f"一年交易日假设: {trading_days_per_year} 天")
+print(f"-" * 30)
+print(f"【计算步骤】")
+print(f"1. 日化波动率 = {sigma_annual} / sqrt({trading_days_per_year}) = {sigma_daily:.6f} ({sigma_daily*100:.4f}%)")
+print(f"2. 95%正态分位数(Z值) = {z_score_95:.6f}")
+print(f"3. VaR = {position_value:,.2f} × {z_score_95:.6f} × {sigma_daily:.6f} = {var_95_1d:,.2f} 元")
+print(f"-" * 30)
+print(f"【最终结果】")
+print(f"result = {result}")

@@ -1,0 +1,36 @@
+import numpy as np
+from scipy.stats import norm
+
+# ==================== 参数设定 ====================
+position = 1850000.0      # 头寸（人民币）
+annual_vol = 0.218        # 年化波动率
+trading_days_year = 252   # 假设一年有252个交易日
+
+# ==================== 步骤1：换算波动率 ====================
+# 将年化波动率换算到一日期限：sigma_1d = sigma_y / sqrt(T)
+daily_vol = annual_vol / np.sqrt(trading_days_year)
+
+# ==================== 步骤2：正态分位数 ====================
+# 95% 和 99% 置信水平对应的正态分布分位数
+z_95 = norm.ppf(0.95)
+z_99 = norm.ppf(0.99)
+
+# ==================== 步骤3：计算VaR ====================
+# 95%置信水平的一日VaR (参数法 Delta-Normal)
+var_95_1d = position * z_95 * daily_vol
+
+# 缩放到十日期限：sigma_10d = sigma_1d * sqrt(10)
+ten_day_vol = daily_vol * np.sqrt(10)
+
+# 99%置信水平的十日VaR (参数法 Delta-Normal)
+var_99_10d = position * z_99 * ten_day_vol
+
+# ==================== 步骤4：填充result ====================
+result = {
+    'var_95_1d': var_95_1d,
+    'var_99_10d': var_99_10d
+}
+
+# 课堂投屏展示，保留两位小数方便阅读
+print(f"95%置信水平的一日VaR: ¥{result['var_95_1d']:,.2f}")
+print(f"99%置信水平的十日VaR: ¥{result['var_99_10d']:,.2f}")

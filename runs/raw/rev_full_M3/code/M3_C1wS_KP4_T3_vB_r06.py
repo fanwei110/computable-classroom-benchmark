@@ -1,0 +1,39 @@
+import numpy as np
+from scipy.stats import norm
+
+# ================== 1. 参数设定 ==================
+# 根据题目提取已知参数（统一转为标准小数形式）
+S = 103.7       # 标的资产价格
+K = 97.5        # 行权价格
+sigma = 0.276   # 当前波动率 (IV = 27.6%)
+r = 0.043       # 无风险利率 (4.3%)
+T = 0.58        # 到期时间 (年)
+
+# 题目指明"IV涨1个点"，在期权术语中，波动率1个点即1个百分点(1%)，对应绝对值变化 0.01
+delta_sigma = 0.01
+
+# ================== 2. 计算 Black-Scholes 的 d1 与 Vega ==================
+# Black-Scholes 公式中的 d1
+d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+
+# 计算欧式期权的 Vega（看涨与看跌期权的 Vega 完全相同）
+# Vega = S * N'(d1) * sqrt(T)，其中 N'(d1) 为标准正态分布的概率密度函数(PDF)
+vega = S * norm.pdf(d1) * np.sqrt(T)
+
+# ================== 3. 推算期权价格变化 ==================
+# 利用一阶泰勒展开（希腊字母线性近似）：
+# Delta_Price ≈ Vega * Delta_Sigma
+price_change = vega * delta_sigma
+
+# ================== 4. 按契约输出结果 ==================
+result = {
+    'price_change': price_change
+}
+
+# （课堂演示辅助打印，实际返回值严格为 result 字典）
+if __name__ == '__main__':
+    print(f"计算参数: S={S}, K={K}, sigma={sigma}, r={r}, T={T}")
+    print(f"d1 = {d1:.6f}")
+    print(f"Vega = {vega:.6f}")
+    print(f"IV上升1个点(0.01)带来的价格变化: {price_change:.6f}")
+    print(f"输出契约结果: {result}")

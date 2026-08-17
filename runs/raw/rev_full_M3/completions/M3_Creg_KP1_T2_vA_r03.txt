@@ -1,0 +1,102 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+
+# ==========================================================
+# 1. 参数设置
+# ==========================================================
+mu1 = 0.071
+mu2 = 0.124
+sig1 = 0.163
+sig2 = 0.289
+
+rhos = [0.15, 0.45, 0.75]
+
+# ==========================================================
+# 2. 计算 rho = 0.45 时的特定指标
+# ==========================================================
+rho_target = 0.45
+cov_target = rho_target * sig1 * sig2
+denom_target = sig1**2 + sig2**2 - 2 * cov_target
+
+# 2.1 最小方差组合(MVP)的年化波动率
+w_mvp_45 = (sig2**2 - cov_target) / denom_target
+mvp_vol_at_rho45 = np.sqrt(w_mvp_45**2 * sig1**2 + 
+                            (1 - w_mvp_45)**2 * sig2**2 + 
+                            2 * w_mvp_45 * (1 - w_mvp_45) * cov_target)
+
+# 2.2 目标期望收益 10% 下可达到的最小年化波动率
+# 对于两资产且满仓约束，目标期望收益对应唯一权重组合，该组合的波动率即为前沿上的最小波动率
+mu_target = 0.10
+w_target = (mu_target - mu2) / (mu1 - mu2)
+frontier_vol_at_target = np.sqrt(w_target**2 * sig1**2 + 
+                                 (1 - w_target)**2 * sig2**2 + 
+                                 2 * w_target * (1 - w_target) * cov_target)
+
+# ==========================================================
+# 3. 绘制均值-方差前沿
+# ==========================================================
+fig, ax = plt.subplots(figsize=(10, 7))
+
+# 生成期望收益网格，用于绘制前沿曲线
+mu_grid = np.linspace(0.0, 0.20, 500)
+# 根据满仓约束 w1 + w2 = 1，由期望收益反推资产1的权重
+w_grid = (mu_grid - mu2) / (mu1 - mu2)
+
+colors = ['blue', 'green', 'red']
+linestyles = ['-', '--', '-.']
+
+for i, rho in enumerate(rhos):
+    cov = rho * sig1 * sig2
+    
+    # 计算前沿上的波动率
+    sig_grid = np.sqrt(w_grid**2 * sig1**2 + 
+                       (1 - w_grid)**2 * sig2**2 + 
+                       2 * w_grid * (1 - w_grid) * cov)
+    
+    # 绘制前沿曲线
+    ax.plot(sig_grid, mu_grid, label=f'ρ = {rho}', color=colors[i], linestyle=linestyles[i], linewidth=2)
+    
+    # 计算并标出最小方差组合 (MVP)
+    w_mvp = (sig2**2 - cov) / (sig1**2 + sig2**2 - 2 * cov)
+    mu_mvp = w_mvp * mu1 + (1 - w_mvp) * mu2
+    sig_mvp = np.sqrt(w_mvp**2 * sig1**2 + 
+                      (1 - w_mvp)**2 * sig2**2 + 
+                      2 * w_mvp * (1 - w_mvp) * cov)
+    
+    ax.scatter(sig_mvp, mu_mvp, color=colors[i], marker='o', s=80, zorder=5)
+    ax.annotate(f'MVP (ρ={rho})\n({sig_mvp:.2%}, {mu_mvp:.2%})', 
+                xy=(sig_mvp, mu_mvp), 
+                xytext=(sig_mvp + 0.06, mu_mvp + 0.015 - i * 0.025),
+                arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=5),
+                fontsize=9,
+                bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.8))
+
+# 图表格式设置
+ax.set_xlabel('Volatility (Annualized)', fontsize=12)
+ax.set_ylabel('Expected Return (Annualized)', fontsize=12)
+ax.set_title('Mean-Variance Frontiers for Different Correlations', fontsize=14)
+ax.legend(fontsize=11)
+ax.grid(True, linestyle='--', alpha=0.7)
+ax.set_xlim(0, 0.65)
+ax.set_ylim(0.0, 0.20)
+
+# 将坐标轴刻度格式化为百分比
+ax.xaxis.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=1))
+ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=1))
+
+# 保存图表
+figure_path = 'mean_variance_frontier.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ==========================================================
+# 4. 将结果存入字典
+# ==========================================================
+result = {
+    'mvp_vol_at_rho45': float(mvp_vol_at_rho45),
+    'frontier_vol_at_target': float(frontier_vol_at_target),
+    'figure_path': figure_path
+}
+```

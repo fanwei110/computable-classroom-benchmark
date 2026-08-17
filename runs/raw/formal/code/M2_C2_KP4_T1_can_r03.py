@@ -1,0 +1,47 @@
+import numpy as np
+from scipy.stats import norm
+
+def black_scholes_call(S, K, T, r, sigma):
+    """
+    计算欧式看涨期权的价格、Delta 和 Vega (原始BS Vega，对sigma的偏导)
+    """
+    # 步骤1: 计算 d1 和 d2
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    
+    # 步骤2: 期权价格与Delta
+    call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    call_delta = norm.cdf(d1)
+    
+    # 步骤3: Vega (标准BS公式，对波动率的一阶偏导)
+    call_vega = S * np.sqrt(T) * norm.pdf(d1)
+    
+    return call_price, call_delta, call_vega, d1, d2
+
+if __name__ == "__main__":
+    # 给定参数
+    S = 103.7      # 现价
+    K = 97.5       # 行权价
+    sigma = 0.276  # 隐含波动率 (年化)
+    r = 0.043      # 无风险利率 (年化)
+    T = 0.58       # 剩余期限 (年)
+    
+    # 执行计算
+    price, delta, vega, d1, d2 = black_scholes_call(S, K, T, r, sigma)
+    
+    # 步骤4: 填充结果字典
+    result = {
+        'call_price': price,
+        'call_delta': delta,
+        'call_vega': vega
+    }
+    
+    # 打印结果，便于课堂投屏展示
+    print("计算结果：")
+    print(f"d1 = {d1:.6f}")
+    print(f"d2 = {d2:.6f}")
+    print(f"看涨期权价格 = {price:.4f}")
+    print(f"Delta = {delta:.4f}")
+    print(f"Vega (对σ的偏导) = {vega:.4f}")
+    print("\nresult 字典内容：")
+    print(result)

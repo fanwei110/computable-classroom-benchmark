@@ -1,0 +1,38 @@
+import numpy as np
+
+def main():
+    # 给定年化波动率
+    sigma = np.array([0.187, 0.243, 0.312])
+    
+    # 给定相关系数矩阵
+    corr = np.array([
+        [ 1.00,  0.21, -0.13],
+        [ 0.21,  1.00,  0.37],
+        [-0.13,  0.37,  1.00]
+    ])
+    
+    # 1. 构造协方差矩阵
+    cov = np.outer(sigma, sigma) * corr
+    
+    # 2. 全局最小方差组合权重 (允许卖空，权重和为1)
+    inv_cov = np.linalg.inv(cov)
+    ones = np.ones(len(sigma))
+    w_mvp = inv_cov @ ones
+    w_mvp = w_mvp / np.sum(w_mvp)  # 归一化使得 sum = 1
+    
+    # 3. 组合年化波动率
+    mvp_var = w_mvp @ cov @ w_mvp
+    mvp_vol = np.sqrt(mvp_var)
+    
+    # 4. 按照要求存入 result 字典
+    result = {
+        'mvp_weights': w_mvp.tolist(),
+        'mvp_vol_annual': mvp_vol
+    }
+    
+    # 如需在课堂运行时直接观察结果，可打印
+    print(result)
+    return result
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,94 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ================= 债券参数 =================
+F = 100               # 面值
+c_rate = 0.046        # 票息率
+T = 7                 # 期限（年）
+y0 = 0.053            # 初始收益率
+coupon = F * c_rate   # 票息
+
+# ================= 可调参数 =================
+# 收益率变动幅度（用于控制久期近似切线的横向展示跨度）
+delta_y_range = 0.02  # 默认 ±2%，可自由调整为如 0.03, 0.05 等
+
+# ================= 核心计算函数 =================
+def bond_price(ytm, face, cpn, maturity):
+    """计算债券精确价格"""
+    t = np.arange(1, maturity + 1)
+    pv_coupons = np.sum(cpn / (1 + ytm)**t, axis=0)
+    pv_face = face / (1 + ytm)**maturity
+    return pv_coupons + pv_face
+
+def calc_modified_duration(ytm, face, cpn, maturity):
+    """计算修正久期"""
+    P0 = bond_price(ytm, face, cpn, maturity)
+    t = np.arange(1, maturity + 1)
+    # 现金流：前 T-1 期为票息，最后一期为票息+面值
+    cf = np.full(maturity, cpn)
+    cf[-1] += face
+    # Macaulay Duration
+    mac_dur = np.sum(t * cf / (1 + ytm)**t) / P0
+    # Modified Duration
+    mod_dur = mac_dur / (1 + ytm)
+    return mod_dur
+
+# ================= 1. 计算初始点与久期 =================
+P0 = bond_price(y0, F, coupon, T)
+mod_dur = calc_modified_duration(y0, F, coupon, T)
+
+# ================= 2. 收益率上升100bp的情景计算 =================
+y_up100 = y0 + 0.01
+P_up100_exact = bond_price(y_up100, F, coupon, T)
+dur_approx_rel_change_up100 = -mod_dur * 0.01
+
+# ================= 3. 绘图数据生成 =================
+y_plot = np.linspace(0.02, 0.09, 500)
+P_exact_plot = bond_price(y_plot, F, coupon, T)
+
+# 久期近似价格（切线）：P_approx = P0 - P0 * Mod_Dur * (y - y0)
+# 限制在 [y0 - delta_y_range, y0 + delta_y_range] 范围内展示
+y_approx_plot = np.linspace(y0 - delta_y_range, y0 + delta_y_range, 100)
+P_approx_plot = P0 - P0 * mod_dur * (y_approx_plot - y0)
+
+# ================= 4. 绘图 =================
+plt.figure(figsize=(10, 6))
+# 精确价格曲线
+plt.plot(y_plot * 100, P_exact_plot, label='精确价格曲线', color='blue', linewidth=2)
+# 久期近似直线
+plt.plot(y_approx_plot * 100, P_approx_plot, label=f'久期近似 (切线展示, ±{delta_y_range*100:.0f}%)', 
+         color='red', linestyle='--', linewidth=2)
+
+# 标注初始点
+plt.scatter([y0 * 100], [P0], color='black', zorder=5)
+plt.annotate(f'初始点\nYTM={y0*100:.1f}%\nP={P0:.2f}', 
+             (y0 * 100, P0), textcoords="offset points", xytext=(-60, 10), ha='center',
+             arrowprops=dict(arrowstyle="->", color='black'))
+
+# 标注上升100bp点
+plt.scatter([y_up100 * 100], [P_up100_exact], color='green', zorder=5)
+plt.annotate(f'+100bp精确点\nYTM={y_up100*100:.1f}%\nP={P_up100_exact:.2f}', 
+             (y_up100 * 100, P_up100_exact), textcoords="offset points", xytext=(60, -20), ha='center',
+             arrowprops=dict(arrowstyle="->", color='green'))
+
+plt.title('债券价格随收益率变化曲线及久期近似', fontsize=14)
+plt.xlabel('收益率 Yield (%)', fontsize=12)
+plt.ylabel('债券价格 Price', fontsize=12)
+plt.legend(fontsize=12, loc='upper right')
+plt.grid(True, linestyle=':', alpha=0.7)
+
+# 保存图片
+fig_path = 'bond_price_yield_curve.png'
+plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ================= 5. 结果存入字典 =================
+result = {
+    'price_at_up100bp': P_up100_exact,
+    'dur_approx_change_up100bp': dur_approx_rel_change_up100,
+    'figure_path': fig_path
+}
+
+# 打印输出以供核对
+import json
+print(json.dumps(result, indent=4))

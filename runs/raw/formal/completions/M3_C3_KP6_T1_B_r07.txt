@@ -1,0 +1,93 @@
+针对您提出的两个问题，由于问题一中**缺少具体的基金日收益数据序列**，我无法直接计算出夏普比率的最终数值。我会在 `result` 字典中将该项暂设为 `None`，并在下方提供完整的计算逻辑和代码供您代入数据计算。问题二的归因分析已为您详细算出。
+
+### 一、 年化夏普比率计算逻辑
+1. **日无风险利率转换**：根据约定，债券收益率按年复利报价，因此将年化 rf (2.1%) 转为日复利：$r_{f,daily} = (1 + 0.021)^{1/252} - 1$
+2. **日超额收益**：$R_{ex,i} = R_{daily,i} - r_{f,daily}$
+3. **日夏普比率**：$\text{Sharpe}_{daily} = \frac{\mu(R_{ex})}{\sigma(R_{ex})}$，其中标准差使用样本估计量（ddof=1）。
+4. **年化夏普比率**：$\text{Sharpe}_{annual} = \text{Sharpe}_{daily} \times \sqrt{252}$
+
+### 二、 Brinson归因计算
+根据给定的权重与收益数据（已转换为小数形式）：
+
+**组合收益** $R_p = 0.45 \times 0.083 + 0.35 \times 0.021 + 0.20 \times (-0.014) = 0.0419$
+**基准收益** $R_b = 0.40 \times 0.067 + 0.40 \times 0.034 + 0.20 \times (-0.009) = 0.0386$
+**总主动收益** $R_p - R_b = 0.0033$
+
+1. **配置效应** $= \sum (W_p - W_b) \times R_b$
+   - 行业1：$(0.45 - 0.40) \times 0.067 = 0.00335$
+   - 行业2：$(0.35 - 0.40) \times 0.034 = -0.00170$
+   - 行业3：$(0.20 - 0.20) \times (-0.009) = 0$
+   - **合计：0.00165**
+
+2. **选择效应** $= \sum W_b \times (R_p - R_b)$
+   - 行业1：$0.40 \times (0.083 - 0.067) = 0.00640$
+   - 行业2：$0.40 \times (0.021 - 0.034) = -0.00520$
+   - 行业3：$0.20 \times (-0.014 - (-0.009)) = -0.00100$
+   - **合计：0.00020**
+
+3. **交互效应** $= \sum (W_p - W_b) \times (R_p - R_b)$
+   - 行业1：$(0.45 - 0.40) \times (0.083 - 0.067) = 0.00080$
+   - 行业2：$(0.35 - 0.40) \times (0.021 - 0.034) = 0.00065$
+   - 行业3：$(0.20 - 0.20) \times (-0.014 - (-0.009)) = 0$
+   - **合计：0.00145**
+
+*(验算：0.00165 + 0.00020 + 0.00145 = 0.00330，与总主动收益一致)*
+
+### 最终输出字典
+
+按照您的输出契约，结果字典如下：
+
+```python
+result = {
+    'sharpe_annual': None,  # 因缺少日收益数据序列暂为None
+    'allocation_effect': 0.00165,
+    'selection_effect': 0.00020,
+    'interaction_effect': 0.00145
+}
+```
+
+---
+
+**附：完整计算的 Python 代码（供您代入日收益数据后直接运行）**
+
+```python
+import numpy as np
+
+# ================= 1. 年化夏普比率计算 =================
+# 请将您的基金日收益数据填入此列表/数组中
+daily_returns = np.array([]) 
+
+rf_annual = 0.021
+# 年复利转为日复利
+rf_daily = (1 + rf_annual) ** (1/252) - 1
+
+if len(daily_returns) > 1:
+    daily_excess_returns = daily_returns - rf_daily
+    mean_excess = np.mean(daily_excess_returns)
+    std_excess = np.std(daily_excess_returns, ddof=1) # 约定ddof=1
+    sharpe_daily = mean_excess / std_excess
+    sharpe_annual = sharpe_daily * np.sqrt(252)
+else:
+    sharpe_annual = None
+
+# ================= 2. Brinson归因计算 =================
+w_p = np.array([0.45, 0.35, 0.20])
+r_p = np.array([0.083, 0.021, -0.014])
+
+w_b = np.array([0.40, 0.40, 0.20])
+r_b = np.array([0.067, 0.034, -0.009])
+
+allocation_effect = np.sum((w_p - w_b) * r_b)
+selection_effect = np.sum(w_b * (r_p - r_b))
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+
+# ================= 3. 生成结果字典 =================
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': float(allocation_effect),
+    'selection_effect': float(selection_effect),
+    'interaction_effect': float(interaction_effect)
+}
+
+print(result)
+```

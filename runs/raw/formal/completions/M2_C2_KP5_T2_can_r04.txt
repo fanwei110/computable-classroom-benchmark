@@ -1,0 +1,70 @@
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ------------------------------
+# 参数设定（置信水平可在此调整）
+# ------------------------------
+CONFIDENCE_LEVEL = 0.95              # 95% 置信水平
+POSITION = 1_000_000                 # 头寸金额（人民币）
+DATA_PATH = "data/market_snapshot_v1.csv"
+FIGURE_PATH = "var_figure.png"
+VAR_KEY = "hist_var_95_1d"           # 要求的输出键名
+
+# ------------------------------
+# 1. 读取数据并构造日损益
+# ------------------------------
+df = pd.read_csv(DATA_PATH)
+raw_returns = df["fund"]
+
+# 自动判断收益率是小数形式还是百分比形式
+if raw_returns.abs().max() > 1.0:
+    # 若最大绝对值超过1，则假定为百分比形式，转换为小数
+    daily_returns = raw_returns / 100.0
+else:
+    daily_returns = raw_returns
+
+# 计算每日损益（单位：元）
+pnl = POSITION * daily_returns   # Series
+
+# ------------------------------
+# 2. 计算历史 VaR（损失分位数）
+# ------------------------------
+percentile = (1 - CONFIDENCE_LEVEL) * 100          # 对应 5%
+var_pnl = np.percentile(pnl, percentile)           # 损益分布的 5% 分位数（通常为负）
+var_amount = abs(var_pnl)                          # VaR 报告为正值
+
+# 将结果存入字典（人民币金额）
+result = {
+    VAR_KEY: var_amount,
+    "figure_path": FIGURE_PATH,
+}
+
+# ------------------------------
+# 3. 绘制直方图并标出 VaR 线
+# ------------------------------
+plt.figure(figsize=(10, 6))
+plt.hist(pnl, bins=50, edgecolor="k", alpha=0.7, color="steelblue")
+plt.axvline(
+    var_pnl,
+    color="red",
+    linestyle="dashed",
+    linewidth=2,
+    label=f"{CONFIDENCE_LEVEL*100:.0f}% Historical VaR: ¥{var_amount:,.2f}",
+)
+plt.xlabel("Daily PnL (¥)", fontsize=12)
+plt.ylabel("Frequency", fontsize=12)
+plt.title("Distribution of Daily PnL and Historical VaR", fontsize=14)
+plt.legend(loc="upper left")
+plt.grid(axis="y", alpha=0.3)
+plt.tight_layout()
+plt.savefig(FIGURE_PATH, dpi=150)
+plt.close()
+
+# ------------------------------
+# 4. 输出结果字典（供教师检查）
+# ------------------------------
+if __name__ == "__main__":
+    print(result)
+```

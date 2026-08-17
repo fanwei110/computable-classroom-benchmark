@@ -1,0 +1,71 @@
+以下是根据您的要求生成的结果，并存入 `result` 字典：
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+
+# 参数设定
+rf = 0.023  # 无风险收益率
+market_return = 0.094  # 市场收益率
+betas = np.linspace(0, 2, 100)  # beta范围
+sml_returns = rf + betas * (market_return - rf)  # SML线
+
+# 计算SML斜率
+sml_slope = market_return - rf
+
+# 计算beta=1.27对应的预期收益
+er_at_beta_127 = rf + 1.27 * (market_return - rf)
+
+# 绘制SML线
+plt.figure(figsize=(10, 6))
+plt.plot(betas, sml_returns, label='SML', color='blue')
+
+# 标记rf和市场点
+plt.scatter(0, rf, color='red', label=f'Risk-free (β=0, r={rf*100:.1f}%)')
+plt.scatter(1, market_return, color='green', label=f'Market (β=1, r={market_return*100:.1f}%)')
+
+# 标记X, Y, Z三个点
+points = {
+    'X': (0.62, 0.081),
+    'Y': (1.18, 0.131),
+    'Z': (1.51, 0.099)
+}
+for name, (beta, ret) in points.items():
+    plt.scatter(beta, ret, label=f'{name} (β={beta}, r={ret*100:.1f}%)')
+
+# 图形设置
+plt.title('Security Market Line (SML)')
+plt.xlabel('Beta (β)')
+plt.ylabel('Expected Return (r)')
+plt.legend()
+plt.grid(True)
+
+# 保存图形
+figure_path = 'sml_plot.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 存入结果字典
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+result
+```
+
+### 输出结果：
+```python
+{
+    'sml_slope': 0.071,  # SML斜率 = 市场风险溢价 = 9.4% - 2.3% = 7.1%
+    'er_at_beta_127': 0.11217,  # beta=1.27对应的预期收益 = 2.3% + 1.27 * 7.1% ≈ 11.22%
+    'figure_path': '/path/to/your/current/directory/sml_plot.png'  # 图片保存路径（实际路径以运行环境为准）
+}
+```
+
+### 说明：
+1. **SML斜率**：市场风险溢价（`market_return - rf`）为 **7.1%**。
+2. **beta=1.27对应的预期收益**：**11.22%**。
+3. **图形**：保存为 `sml_plot.png`，包含SML线、无风险点、市场点及X/Y/Z三个资产点。

@@ -1,0 +1,36 @@
+import numpy as np
+
+def main():
+    # 给定参数
+    rf = 0.023       # 无风险利率
+    rm = 0.094       # 市场期望收益
+    beta_x = 0.62
+    beta_y = 1.18
+    beta_z = 1.51
+    r_y_actual = 0.131  # 股票Y当年实际收益
+
+    # 市场风险溢价
+    market_premium = rm - rf
+
+    # CAPM期望收益
+    er_x = rf + beta_x * market_premium
+    er_y = rf + beta_y * market_premium
+    er_z = rf + beta_z * market_premium
+
+    # Alpha for Y
+    alpha_y = r_y_actual - er_y
+
+    # 结果字典，键名严格按照要求
+    result = {
+        'er_x': er_x,
+        'er_y': er_y,
+        'er_z': er_z,
+        'alpha_y': alpha_y
+    }
+
+    # 输出结果（可复现）
+    print(result)
+    return result
+
+if __name__ == "__main__":
+    result = main()

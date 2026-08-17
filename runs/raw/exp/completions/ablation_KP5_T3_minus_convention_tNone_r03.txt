@@ -1,0 +1,26 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 给定参数
+annual_vol = 0.24        # 年化波动率 24%
+position = 2_700_000     # 头寸 2,700,000 元
+trading_days = 252       # 每年交易日数
+confidence_level = 0.95  # 95% 置信水平
+
+# 1. 从年化波动率去化到一日波动率
+daily_vol = annual_vol / np.sqrt(trading_days)
+
+# 2. 单尾95%正态分位数 (均值取0)
+z_score = norm.ppf(confidence_level)  # 约为 1.64485
+
+# 3. 在险价值 (VaR) 为正的人民币金额
+var_95_1d = position * daily_vol * z_score
+
+# 以字典形式输出
+result = {
+    'var_95_1d': var_95_1d
+}
+
+print(result)
+```

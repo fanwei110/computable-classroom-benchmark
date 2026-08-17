@@ -1,0 +1,25 @@
+```python
+# CAPM expected return: E(R) = rf + beta * (rm - rf)
+rf = 2.3
+rm = 9.4
+market_premium = rm - rf  # 7.1
+
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+actual_y = 13.1
+
+er_x = rf + beta_x * market_premium   # 2.3 + 0.62*7.1 = 6.702
+er_y = rf + beta_y * market_premium   # 2.3 + 1.18*7.1 = 10.678
+er_z = rf + beta_z * market_premium   # 2.3 + 1.51*7.1 = 13.021
+alpha_y = actual_y - er_y             # 13.1 - 10.678 = 2.422
+
+result = {
+    'er_x': round(er_x, 3),
+    'er_y': round(er_y, 3),
+    'er_z': round(er_z, 3),
+    'alpha_y': round(alpha_y, 3)
+}
+
+result
+```

@@ -1,0 +1,53 @@
+import numpy as np
+
+# ================= 债券基本参数 =================
+face_value = 100.0        # 面值
+coupon_rate = 0.046       # 票息率 4.6%
+ytm = 0.053               # 当前收益率 5.3%
+maturity = 7              # 期限 7 年
+delta_y = 0.008           # 收益率上升 80 个基点 (0.80%)
+
+# 假设处理：债券按年付息，现金流在年末发生
+times = np.arange(1, maturity + 1)
+cash_flows = np.full(maturity, face_value * coupon_rate)
+cash_flows[-1] += face_value  # 最后一期加上本金
+
+# ================= 步骤1：计算利率敏感性 =================
+# 贴现因子与现金流现值
+discount_factors = (1 + ytm) ** times
+pv_cash_flows = cash_flows / discount_factors
+
+# 债券当前价格
+price = np.sum(pv_cash_flows)
+
+# 麦考利久期
+mac_duration = np.sum(times * pv_cash_flows) / price
+
+# 修正久期 - 衡量价格对收益率的一阶敏感性
+mod_duration = mac_duration / (1 + ytm)
+
+# 凸性 - 衡量价格对收益率的二阶敏感性
+convexity = np.sum(times * (times + 1) * cash_flows / (1 + ytm)**(times + 2)) / price
+
+# ================= 步骤2：估算收益率上升 80bp 的价格影响 =================
+# 使用泰勒展开二阶近似公式: ΔP/P ≈ -D_mod * Δy + 0.5 * Conv * (Δy)^2
+price_change_pct = -mod_duration * delta_y + 0.5 * convexity * delta_y**2
+
+# 跌幅（取绝对值表示下跌的幅度，以小数形式表示）
+price_drop_pct = abs(price_change_pct)
+
+# ================= 步骤3：将跌幅存入 result =================
+result = {
+    'price_drop_pct': price_drop_pct
+}
+
+# ================= 课堂演示输出 (投屏辅助) =================
+print(f"当前债券价格 P: {price:.4f}")
+print(f"修正久期 D_mod: {mod_duration:.4f}")
+print(f"凸性 Conv: {convexity:.4f}")
+print("-" * 40)
+print(f"收益率变动 Δy: +{delta_y*100:.1f} bps")
+print(f"一阶影响 (久期效应): {-mod_duration * delta_y:.4%}")
+print(f"二阶影响 (凸性效应): +{0.5 * convexity * delta_y**2:.4%}")
+print(f"预计价格变化率: {price_change_pct:.4%}")
+print(f"预计跌幅: {result['price_drop_pct']:.4%}")

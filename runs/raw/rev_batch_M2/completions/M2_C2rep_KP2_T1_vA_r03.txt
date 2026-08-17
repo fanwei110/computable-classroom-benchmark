@@ -1,0 +1,43 @@
+以下脚本计算了 CAPM 期望收益和 alpha，并将结果存入字典 `result`。代码自包含，仅使用 `numpy` 进行数值计算（也可直接使用 Python 内置运算，但为符合题目要求，此处导入 `numpy`）。
+
+```python
+import numpy as np
+
+# 给定参数
+rf = 0.023          # 无风险利率
+rm = 0.094          # 市场期望收益
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+actual_y = 0.131    # 股票 Y 的实际年收益
+
+# 1. 计算 CAPM 期望收益
+er_x = rf + beta_x * (rm - rf)
+er_y = rf + beta_y * (rm - rf)
+er_z = rf + beta_z * (rm - rf)
+
+# 2. 计算股票 Y 的 alpha
+alpha_y = actual_y - er_y
+
+# 3. 填充结果字典
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+
+# 输出结果（投屏展示）
+print(result)
+```
+
+运行该脚本将输出：
+```
+{'er_x': 0.06702, 'er_y': 0.10678, 'er_z': 0.13021, 'alpha_y': 0.024220000000000002}
+```
+
+即：
+- 股票 X 的 CAPM 期望年收益为 6.702%
+- 股票 Y 的 CAPM 期望年收益为 10.678%
+- 股票 Z 的 CAPM 期望年收益为 13.021%
+- 股票 Y 的 alpha 为 2.422%

@@ -1,0 +1,47 @@
+```python
+import numpy as np
+
+# ==================== 债券基本参数 ====================
+F = 100.0         # 面值
+c = 0.046         # 票息率 (4.6%)
+T = 7             # 期限 (7年)
+y = 0.053         # 当前收益率 (5.3%)
+dy = 0.008        # 收益率上升幅度 (80个基点)
+
+# ==================== 计算现金流与贴现 ====================
+# 1至7年的现金流
+t = np.arange(1, T + 1)
+CF = np.full(T, F * c)
+CF[-1] += F  # 最后一期加入面值
+
+# 贴现因子 (1+y)^t
+discount_factors = (1 + y) ** t
+
+# ==================== 债券定价与久期计算 ====================
+# 当前价格 P
+P = np.sum(CF / discount_factors)
+
+# 麦考利久期 D_mac = Σ[t * CF_t / (1+y)^t] / P
+D_mac = np.sum(t * CF / discount_factors) / P
+
+# 修正久期 D_mod = D_mac / (1+y) （按年复利约定）
+D_mod = D_mac / (1 + y)
+
+# ==================== 估算价格跌幅 ====================
+# 课程经验法则：dP/P = -D_mod × dy
+# 跌幅大小为正的小数
+price_drop_pct = D_mod * dy
+
+# ==================== 按契约输出结果 ====================
+result = {
+    'price_drop_pct': price_drop_pct
+}
+
+# 课堂投屏辅助打印（方便验证，最终只取字典结果）
+print(f"债券当前价格 P: {P:.4f}")
+print(f"麦考利久期 D_mac: {D_mac:.4f} 年")
+print(f"修正久期 D_mod: {D_mod:.4f} 年")
+print(f"收益率上升 {dy*100:.1f} 个基点，估计价格跌幅: {price_drop_pct:.4%}")
+print("\n最终输出字典 result:")
+print(result)
+```

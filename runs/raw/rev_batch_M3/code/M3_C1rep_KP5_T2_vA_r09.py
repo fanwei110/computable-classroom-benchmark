@@ -1,0 +1,60 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+
+# 1. 读取数据
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 2. 计算日收益率与日损益
+returns = df['fund'].pct_change().dropna()
+position = 1000000  # 100万元头寸
+pnl = returns * position
+
+# 3. 计算初始95%一日历史VaR
+alpha_init = 0.95
+var_quantile_init = returns.quantile(1 - alpha_init)
+hist_var_95_1d = -var_quantile_init * position  # VaR表示为正数的损失金额
+
+# 4. 绘制直方图与初始VaR线
+fig, ax = plt.subplots(figsize=(10, 6))
+plt.subplots_adjust(bottom=0.2)  # 为底部滑块留出空间
+
+ax.hist(pnl, bins=50, edgecolor='black', alpha=0.7, color='steelblue')
+var_line = ax.axvline(x=-hist_var_95_1d, color='r', linestyle='--', linewidth=2, 
+                      label=f'VaR ({alpha_init*100:.0f}%): {hist_var_95_1d:.2f} 元')
+
+ax.set_title('日损益分布与历史VaR')
+ax.set_xlabel('日损益 (元)')
+ax.set_ylabel('频数')
+ax.legend()
+
+# 5. 添加置信水平可调滑块
+ax_alpha = plt.axes([0.25, 0.05, 0.50, 0.03], facecolor='lightgoldenrodyellow')
+slider_alpha = Slider(ax_alpha, '置信水平', 0.80, 0.99, valinit=alpha_init, valstep=0.01)
+
+def update(val):
+    alpha = slider_alpha.val
+    var_quantile = returns.quantile(1 - alpha)
+    current_var = -var_quantile * position
+    
+    # 更新垂直线的位置和标签
+    var_line.set_xdata([-current_var, -current_var])
+    var_line.set_label(f'VaR ({alpha*100:.0f}%): {current_var:.2f} 元')
+    ax.legend()
+    fig.canvas.draw_idle()
+
+slider_alpha.on_changed(update)
+
+# 6. 保存图片
+figure_path = 'hist_var_pnl.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+
+# 7. 按照输出契约构建结果字典
+result = {
+    'hist_var_95_1d': hist_var_95_1d,
+    'figure_path': figure_path
+}
+
+print(f"95%一日历史VaR的数值为: {result['hist_var_95_1d']:.2f} 元")
+print("输出契约结果:", result)

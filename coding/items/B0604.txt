@@ -1,0 +1,43 @@
+=== B0604  任务 KP1_T3 (T3) ===
+
+--- 任务要求的输出键 ---
+vol_before_annual, vol_after_annual
+
+--- 判分失败明细 ---
+vol_before_annual: 提交值 0.1849  |  参考值 0.18485375841459106
+vol_after_annual: 提交值 0.2175  |  参考值 0.21745443660684413
+
+--- 提取出的代码 ---
+result = {
+    'vol_before_annual': 0.1849,
+    'vol_after_annual': 0.2175
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+根据投资组合波动率的计算公式：
+$$ \sigma_p = \sqrt{w_A^2 \sigma_A^2 + w_B^2 \sigma_B^2 + 2 w_A w_B \rho \sigma_A \sigma_B} $$
+
+已知数据转换：
+- $w_A = 0.6$, $\sigma_A = 0.184$
+- $w_B = 0.4$, $\sigma_B = 0.297$
+
+计算中间项：
+- $w_A^2 \sigma_A^2 = 0.6^2 \times 0.184^2 = 0.01218816$
+- $w_B^2 \sigma_B^2 = 0.4^2 \times 0.297^2 = 0.01411344$
+- $2 w_A w_B \sigma_A \sigma_B = 2 \times 0.6 \times 0.4 \times 0.184 \times 0.297 = 0.02623104$
+
+**1. 变化前（相关系数 $\rho = 0.3$）：**
+$$ \sigma_{p, before}^2 = 0.01218816 + 0.01411344 + 0.3 \times 0.02623104 = 0.034170912 $$
+$$ \sigma_{p, before} = \sqrt{0.034170912} \approx 0.1849 $$
+
+**2. 变化后（相关系数 $\rho = 0.8$）：**
+$$ \sigma_{p, after}^2 = 0.01218816 + 0.01411344 + 0.8 \times 0.02623104 = 0.047286432 $$
+$$ \sigma_{p, after} = \sqrt{0.047286432} \approx 0.2175 $$
+
+```python
+result = {
+    'vol_before_annual': 0.1849,
+    'vol_after_annual': 0.2175
+}
+```

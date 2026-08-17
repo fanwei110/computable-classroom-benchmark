@@ -1,0 +1,56 @@
+import numpy as np
+from scipy.stats import norm
+
+def compute_var():
+    """
+    参数法 VaR 计算
+    仓位: 185万人民币
+    年化波动率: 21.8%
+    """
+    # 给定的参数
+    position = 1_850_000  # 仓位 185万
+    annual_vol = 0.218   # 年化波动率 21.8%
+    
+    # 假设：
+    # - 一年有252个交易日
+    # - 预期收益率为0（标准假设）
+    trading_days = 252
+    mu = 0  # 预期日收益率
+    
+    # 1. 年化波动率换算到一日期限
+    daily_vol = annual_vol / np.sqrt(trading_days)
+    
+    # 2. 正态分布分位数
+    z_95 = norm.ppf(0.05)  # 95% 置信水平（左尾5%）
+    z_99 = norm.ppf(0.01)  # 99% 置信水平（左尾1%）
+    
+    # 3. 计算 VaR（参数法 delta-normal）
+    # VaR = 仓位 * (mu - z_alpha * sigma)
+    # 对于多头仓位，VaR = 仓位 * (z_alpha * sigma - mu)
+    # 因为 z_alpha 对左尾是负的，所以绝对值表示损失
+    
+    # 一天期 VaR (95%)
+    var_95_1d = position * (z_95 * daily_vol - mu * 1)  # z_95 为负，结果为负
+    var_95_1d = abs(var_95_1d)  # 取绝对值，表示损失金额
+    
+    # 十日期限缩放：假设独立同分布，波动率按 sqrt(T) 缩放
+    days_10 = 10
+    ten_day_vol = daily_vol * np.sqrt(days_10)
+    
+    # 十天期 VaR (99%)
+    var_99_10d = position * (z_99 * ten_day_vol - mu * days_10)
+    var_99_10d = abs(var_99_10d)  # 取绝对值，表示损失金额
+    
+    # 4. 填充 result 字典
+    result = {
+        'var_95_1d': round(var_95_1d, 2),   # 95%一天 VaR，四舍五入到分
+        'var_99_10d': round(var_99_10d, 2)  # 99%十天 VaR，四舍五入到分
+    }
+    
+    return result
+
+if __name__ == "__main__":
+    result = compute_var()
+    print("参数法 VaR 计算结果：")
+    print(f"95% 置信水平，一天 VaR: ¥{result['var_95_1d']:,.2f}")
+    print(f"99% 置信水平，十天 VaR: ¥{result['var_99_10d']:,.2f}")

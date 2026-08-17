@@ -1,0 +1,127 @@
+我将为您计算这只债券的价格、Macaulay久期、修正久期和凸性，并将结果存入名为 `result` 的字典中。
+
+**债券参数：**
+- 面值（Face Value, FV）：100
+- 息票率（Coupon Rate）：4.6%
+- 期限（Maturity）：7年
+- 到期收益率（YTM）：5.3%
+- 息票支付频率：假设为每年支付一次（Annual）
+
+---
+
+### 1. 价格（Price）计算
+债券价格公式：
+\[
+P = \sum_{t=1}^{N} \frac{C}{(1 + y)^t} + \frac{FV}{(1 + y)^N}
+\]
+其中：
+- \( C = FV \times \text{Coupon Rate} = 100 \times 4.6\% = 4.6 \)
+- \( y = YTM = 5.3\% \)
+- \( N = 7 \)
+
+计算过程：
+\[
+P = \sum_{t=1}^{7} \frac{4.6}{(1 + 0.053)^t} + \frac{100}{(1 + 0.053)^7}
+\]
+
+逐项计算：
+\[
+\begin{align*}
+\frac{4.6}{1.053^1} &\approx 4.3685 \\
+\frac{4.6}{1.053^2} &\approx 4.1486 \\
+\frac{4.6}{1.053^3} &\approx 3.9398 \\
+\frac{4.6}{1.053^4} &\approx 3.7415 \\
+\frac{4.6}{1.053^5} &\approx 3.5532 \\
+\frac{4.6}{1.053^6} &\approx 3.3740 \\
+\frac{4.6}{1.053^7} &\approx 3.2038 \\
+\frac{100}{1.053^7} &\approx 69.6569 \\
+\end{align*}
+\]
+总和：
+\[
+P \approx 4.3685 + 4.1486 + 3.9398 + 3.7415 + 3.5532 + 3.3740 + 3.2038 + 69.6569 = 96.9863
+\]
+
+---
+
+### 2. Macaulay久期（Macaulay Duration）计算
+Macaulay久期公式：
+\[
+\text{Macaulay Duration} = \frac{1}{P} \sum_{t=1}^{N} \frac{t \times C}{(1 + y)^t} + \frac{N \times FV}{(1 + y)^N}
+\]
+
+计算过程：
+\[
+\begin{align*}
+\frac{1 \times 4.6}{1.053^1} &\approx 4.3685 \\
+\frac{2 \times 4.6}{1.053^2} &\approx 8.2972 \\
+\frac{3 \times 4.6}{1.053^3} &\approx 11.8194 \\
+\frac{4 \times 4.6}{1.053^4} &\approx 14.9660 \\
+\frac{5 \times 4.6}{1.053^5} &\approx 17.7660 \\
+\frac{6 \times 4.6}{1.053^6} &\approx 20.2440 \\
+\frac{7 \times 4.6}{1.053^7} &\approx 22.4266 \\
+\frac{7 \times 100}{1.053^7} &\approx 487.5983 \\
+\end{align*}
+\]
+总和：
+\[
+\sum \approx 4.3685 + 8.2972 + 11.8194 + 14.9660 + 17.7660 + 20.2440 + 22.4266 + 487.5983 = 587.4860
+\]
+Macaulay久期：
+\[
+\text{Macaulay Duration} = \frac{587.4860}{96.9863} \approx 6.0574 \text{ 年}
+\]
+
+---
+
+### 3. 修正久期（Modified Duration）计算
+修正久期公式：
+\[
+\text{Modified Duration} = \frac{\text{Macaulay Duration}}{1 + y}
+\]
+计算：
+\[
+\text{Modified Duration} = \frac{6.0574}{1 + 0.053} \approx 5.7525 \text{ 年}
+\]
+
+---
+
+### 4. 凸性（Convexity）计算
+凸性公式：
+\[
+\text{Convexity} = \frac{1}{P} \left[ \sum_{t=1}^{N} \frac{t(t+1) \times C}{(1 + y)^{t+2}} + \frac{N(N+1) \times FV}{(1 + y)^{N+2}} \right]
+\]
+
+计算过程：
+\[
+\begin{align*}
+\frac{1 \times 2 \times 4.6}{1.053^3} &\approx 8.1896 \\
+\frac{2 \times 3 \times 4.6}{1.053^4} &\approx 23.9456 \\
+\frac{3 \times 4 \times 4.6}{1.053^5} &\approx 47.3760 \\
+\frac{4 \times 5 \times 4.6}{1.053^6} &\approx 77.4768 \\
+\frac{5 \times 6 \times 4.6}{1.053^7} &\approx 114.5330 \\
+\frac{6 \times 7 \times 4.6}{1.053^8} &\approx 159.5280 \\
+\frac{7 \times 8 \times 4.6}{1.053^9} &\approx 212.3520 \\
+\frac{7 \times 8 \times 100}{1.053^9} &\approx 4616.3480 \\
+\end{align*}
+\]
+总和：
+\[
+\sum \approx 8.1896 + 23.9456 + 47.3760 + 77.4768 + 114.5330 + 159.5280 + 212.3520 + 4616.3480 = 5259.7490
+\]
+凸性：
+\[
+\text{Convexity} = \frac{5259.7490}{96.9863 \times (1 + 0.053)^2} \approx \frac{5259.7490}{96.9863 \times 1.1088} \approx \frac{5259.7490}{107.5406} \approx 48.91
+\]
+
+---
+
+### 最终结果
+```python
+result = {
+    'price': 96.9863,
+    'macaulay_duration_years': 6.0574,
+    'modified_duration_years': 5.7525,
+    'convexity': 48.91
+}
+```

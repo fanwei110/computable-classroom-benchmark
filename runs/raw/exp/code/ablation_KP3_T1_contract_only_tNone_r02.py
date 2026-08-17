@@ -1,0 +1,55 @@
+import numpy as np
+
+# 债券参数
+face_value = 100          # 面值
+coupon_rate = 0.046       # 票息率
+years_to_maturity = 7     # 期限（年）
+ytm = 0.053               # 到期收益率
+coupon_frequency = 1      # 每年付息次数
+
+# 计算各期现金流
+cash_flows = np.array([face_value * coupon_rate] * years_to_maturity)
+cash_flows[-1] += face_value  # 最后一期加上本金
+
+# 计算每期的时间（年）
+time_periods = np.arange(1, years_to_maturity + 1)
+
+# 计算每期现金流的现值
+discount_factors = (1 + ytm / coupon_frequency) ** (-time_periods)
+present_values = cash_flows * discount_factors
+
+# 1. 计算价格（现值之和）
+price = np.sum(present_values)
+
+# 2. 计算麦考利久期（年）
+macaulay_duration = np.sum(time_periods * present_values) / price
+
+# 3. 计算修正久期（年）
+modified_duration = macaulay_duration / (1 + ytm / coupon_frequency)
+
+# 4. 计算凸性
+# 凸性 = (1/P) * sum(t * (t+1) * CF_t / (1+y)^(t+2))
+convexity_numerator = np.sum(time_periods * (time_periods + 1) * cash_flows / 
+                            ((1 + ytm / coupon_frequency) ** (time_periods + 2)))
+convexity = convexity_numerator / price
+
+# 将结果存入字典
+result = {
+    'price': round(price, 6),
+    'macaulay_duration_years': round(macaulay_duration, 6),
+    'modified_duration_years': round(modified_duration, 6),
+    'convexity': round(convexity, 6)
+}
+
+# 输出结果
+print("债券计算结果：")
+print(f"价格: {result['price']:.6f}")
+print(f"麦考利久期: {result['macaulay_duration_years']:.6f} 年")
+print(f"修正久期: {result['modified_duration_years']:.6f} 年")
+print(f"凸性: {result['convexity']:.6f}")
+
+# 验证：结果应该与预期一致
+print("\n验证（使用更详细的输出）：")
+print(f"各期现金流: {cash_flows}")
+print(f"各期贴现因子: {discount_factors}")
+print(f"各期现值: {present_values}")

@@ -1,0 +1,25 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ---------- 输入参数 ----------
+beta = 1.42
+market_return_monthly = -0.058      # -5.8%
+annual_riskfree_rate = 0.047        # 4.7% 年
+
+# ---------- 步骤1: 月无风险利率 ----------
+monthly_riskfree_rate = annual_riskfree_rate / 12
+
+# ---------- 步骤2: 月度 CAPM 期望收益 ----------
+# CAPM: E(R_i) = R_f + beta * (E(R_m) - R_f)
+capm_return_monthly = monthly_riskfree_rate + beta * (market_return_monthly - monthly_riskfree_rate)
+
+# ---------- 步骤3: 填充结果字典 ----------
+result = {
+    'capm_return_monthly': round(capm_return_monthly, 6)   # 保留6位小数，清晰可读
+}
+
+# ---------- 打印结果，便于课堂展示 ----------
+print("第一步：月无风险利率 =", f"{monthly_riskfree_rate:.6f}")
+print("第二步：月度 CAPM 期望收益 =", f"{capm_return_monthly:.6f}")
+print("结果字典：", result)

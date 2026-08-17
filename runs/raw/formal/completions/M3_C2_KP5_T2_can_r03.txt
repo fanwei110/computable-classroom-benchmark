@@ -1,0 +1,73 @@
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+def main():
+    # ---------------- 参数设置 ----------------
+    position_value = 1_000_000       # 头寸规模（人民币）
+    confidence_level = 0.95          # 置信水平（可调参数）
+    alpha = 1 - confidence_level     # 显著性水平
+    
+    data_path = 'data/market_snapshot_v1.csv'
+    fig_path = 'pnl_distribution_with_var.png'
+    
+    # ---------------- 解决Matplotlib中文显示问题 ----------------
+    plt.rcParams['font.sans-serif'] = ['SimHei', 'DejaVu Sans']
+    plt.rcParams['axes.unicode_minus'] = False
+    
+    # ---------------- 1. 读取快照 CSV，构造头寸的日损益 ----------------
+    df = pd.read_csv(data_path)
+    daily_returns = df['fund']  # 提取 fund 列的日收益率序列
+    
+    # 计算日损益
+    daily_pnl = position_value * daily_returns
+    
+    # ---------------- 2. 由经验分布计算历史 VaR ----------------
+    # 历史 VaR 是损益分布的 alpha 分位数（左尾），取负数以报告为正的损失金额
+    var_percentile = np.percentile(daily_pnl, alpha * 100)
+    hist_var_value = -var_percentile
+    
+    # ---------------- 3. 画直方图并加带标注的 VaR 线 ----------------
+    fig, ax = plt.subplots(figsize=(10, 6))
+    
+    # 绘制损益分布直方图
+    ax.hist(daily_pnl, bins=50, color='steelblue', edgecolor='white', alpha=0.75)
+    
+    # 绘制 VaR 竖线
+    ax.axvline(var_percentile, color='red', linestyle='--', linewidth=2, 
+               label=f'{confidence_level*100:.0f}% 1-Day Historical VaR')
+    
+    # 添加标注文本
+    ax.annotate(f'VaR = -{hist_var_value:,.2f} RMB\n({var_percentile:,.2f} RMB)',
+                xy=(var_percentile, ax.get_ylim()[1] * 0.8),
+                xytext=(var_percentile - (daily_pnl.max() - daily_pnl.min()) * 0.25, 
+                        ax.get_ylim()[1] * 0.9),
+                arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=6),
+                fontsize=12, color='red', weight='bold',
+                bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="red", alpha=0.8))
+    
+    # 图表装饰
+    ax.set_title(f'Daily P&L Distribution & {confidence_level*100:.0f}% Historical VaR (Position: {position_value:,} RMB)', fontsize=14)
+    ax.set_xlabel('Daily Profit and Loss (RMB)', fontsize=12)
+    ax.set_ylabel('Frequency', fontsize=12)
+    ax.legend(fontsize=12)
+    ax.grid(axis='y', linestyle='--', alpha=0.7)
+    
+    # ---------------- 4. 保存图形并填充 result ----------------
+    fig.savefig(fig_path, dpi=300, bbox_inches='tight')
+    plt.close(fig)
+    
+    result = {
+        'hist_var_95_1d': hist_var_value,
+        'figure_path': fig_path
+    }
+    
+    # 打印结果供课堂展示参考
+    print(f"计算完成：{confidence_level*100:.0f}% 一日历史 VaR 为 {hist_var_value:,.2f} 元人民币")
+    print(f"图表已保存至: {fig_path}")
+
+if __name__ == '__main__':
+    main()
+```

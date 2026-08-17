@@ -1,0 +1,21 @@
+import math
+
+# 参数
+S = 103.7          # 标的资产价格
+K = 97.5           # 行权价
+sigma = 0.276      # 隐含波动率
+r = 0.043          # 无风险利率
+T = 0.58           # 剩余年限
+
+# 计算 d1
+d1 = (math.log(S / K) + (r + sigma**2 / 2) * T) / (sigma * math.sqrt(T))
+# 正态分布密度函数 N'(d1)
+nd1 = math.exp(-d1**2 / 2) / math.sqrt(2 * math.pi)
+# 计算 Vega（波动率变化1，即100%时的价格变化）
+vega = S * nd1 * math.sqrt(T)
+
+# 隐含波动率增加1个百分点（0.01）导致的价格变化
+price_change = vega * 0.01
+
+result = {'price_change': round(price_change, 4)}
+result

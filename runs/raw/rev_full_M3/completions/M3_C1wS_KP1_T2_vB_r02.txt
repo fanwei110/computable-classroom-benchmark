@@ -1,0 +1,108 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import scipy.optimize as opt
+import matplotlib.ticker as mticker
+
+# ---------------- 基础参数设置 ----------------
+r1, r2 = 0.071, 0.124       # 两资产预期收益
+vol1, vol2 = 0.163, 0.289   # 两资产波动率
+rhos = [0.15, 0.45, 0.75]   # 相关系数
+target_ret = 0.10            # 目标收益率
+
+# ---------------- 权重扫描生成前沿 ----------------
+# 允许一定程度的卖空以展示完整的双曲线前沿
+w1_scan = np.linspace(-0.5, 1.5, 1000)
+w2_scan = 1 - w1_scan
+
+# 优化所需的组合波动率与组合收益函数
+def portfolio_volatility(w, cov_mat):
+    return np.sqrt(w @ cov_mat @ w)
+
+def portfolio_return(w, ret_vec):
+    return w @ ret_vec
+
+# ---------------- 绘图与计算 ----------------
+fig, ax = plt.subplots(figsize=(10, 7))
+
+mvp_vol_45 = None
+target_vol_45 = None
+
+for rho in rhos:
+    # 1. 构造协方差矩阵
+    cov12 = rho * vol1 * vol2
+    cov_mat = np.array([[vol1**2, cov12],
+                        [cov12, vol2**2]])
+    ret_vec = np.array([r1, r2])
+    
+    # 扫描权重计算组合收益与波动率
+    port_ret = w1_scan * r1 + w2_scan * r2
+    port_vol = np.sqrt(w1_scan**2 * vol1**2 + w2_scan**2 * vol2**2 + 2 * w1_scan * w2_scan * cov12)
+    
+    # 绘制前沿曲线
+    ax.plot(port_vol, port_ret, label=f'ρ = {rho:.2f}', lw=2)
+    
+    # 2. 使用优化求解最小方差组合(MVP)
+    cons_mvp = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1.0})
+    # 初始猜测
+    w0 = [0.5, 0.5]
+    res_mvp = opt.minimize(portfolio_volatility, w0, args=(cov_mat,), 
+                           method='SLSQP', constraints=cons_mvp)
+    
+    mvp_w = res_mvp.x
+    mvp_ret = portfolio_return(mvp_w, ret_vec)
+    mvp_vol = res_mvp.fun
+    
+    # 标出最小方差组合点
+    ax.scatter(mvp_vol, mvp_ret, marker='*', s=250, zorder=5, edgecolors='black', linewidths=0.5)
+    
+    # 3. 针对 rho=0.45 计算特定指标并做额外标注
+    if rho == 0.45:
+        mvp_vol_45 = mvp_vol
+        
+        # 求解目标收益下的最小波动率
+        cons_target = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1.0},
+                       {'type': 'eq', 'fun': lambda w: portfolio_return(w, ret_vec) - target_ret})
+        res_target = opt.minimize(portfolio_volatility, w0, args=(cov_mat,), 
+                                  method='SLSQP', constraints=cons_target)
+        target_vol_45 = res_target.fun
+        
+        # 图上标注 rho=0.45 的 MVP
+        ax.annotate(f'MVP (ρ=0.45)\nVol: {mvp_vol_45:.2%}',
+                    xy=(mvp_vol, mvp_ret), xytext=(20, 15),
+                    textcoords='offset points', fontsize=10,
+                    arrowprops=dict(arrowstyle='->', color='black', lw=1.5))
+                    
+        # 图上标注目标收益点
+        ax.scatter(target_vol_45, target_ret, marker='D', s=100, color='red', zorder=5, edgecolors='black')
+        ax.annotate(f'Target 10%\nVol: {target_vol_45:.2%}',
+                    xy=(target_vol_45, target_ret), xytext=(20, -30),
+                    textcoords='offset points', fontsize=10,
+                    arrowprops=dict(arrowstyle='->', color='black', lw=1.5))
+
+# ---------------- 图形格式化 ----------------
+ax.xaxis.set_major_formatter(mticker.PercentFormatter(xmax=1.0, decimals=1))
+ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1.0, decimals=1))
+ax.set_xlabel('Portfolio Volatility (Standard Deviation)', fontsize=12)
+ax.set_ylabel('Portfolio Expected Return', fontsize=12)
+ax.set_title('Mean-Variance Efficient Frontier (Two Assets)', fontsize=14, fontweight='bold')
+ax.legend(fontsize=11, loc='upper left')
+ax.grid(True, linestyle='--', alpha=0.6)
+
+# 保存图形
+fig_path = 'efficient_frontier.png'
+plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+
+# ---------------- 填充结果字典 ----------------
+result = {
+    'mvp_vol_at_rho45': mvp_vol_45,
+    'frontier_vol_at_target': target_vol_45,
+    'figure_path': fig_path
+}
+
+# 控制台输出验证
+print("计算结果：")
+print(f"rho=0.45 最小方差组合波动率: {mvp_vol_45:.4%}")
+print(f"rho=0.45 目标收益10%最小波动率: {target_vol_45:.4%}")
+print(f"图形已保存至: {fig_path}")
+```

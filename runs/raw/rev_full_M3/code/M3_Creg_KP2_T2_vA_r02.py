@@ -1,0 +1,98 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 可调参数
+# ==========================================
+Rf = 0.023  # 无风险利率
+Rm = 0.094  # 市场期望收益
+
+# 股票数据
+stocks = {
+    'X': {'beta': 0.62, 'return': 0.081},
+    'Y': {'beta': 1.18, 'return': 0.131},
+    'Z': {'beta': 1.51, 'return': 0.099}
+}
+
+# ==========================================
+# 计算部分
+# ==========================================
+# SML斜率
+sml_slope = Rm - Rf
+
+# beta=1.27处的CAPM期望收益
+beta_target = 1.27
+er_at_beta_127 = Rf + beta_target * sml_slope
+
+# ==========================================
+# 绘图部分
+# ==========================================
+# 生成beta序列
+beta_range = np.linspace(0, 2, 200)
+# 计算SML对应的期望收益
+sml_returns = Rf + beta_range * sml_slope
+
+# 创建图形
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 绘制SML
+ax.plot(beta_range, sml_returns, label='证券市场线 (SML)', color='blue', linewidth=2)
+
+# 绘制无风险利率点和市场组合点
+ax.scatter(0, Rf, color='green', zorder=5, label=f'无风险资产 (β=0, R={Rf*100:.1f}%)')
+ax.scatter(1, Rm, color='purple', zorder=5, label=f'市场组合 (β=1, R={Rm*100:.1f}%)')
+
+# 绘制股票X, Y, Z并添加标注
+for name, data in stocks.items():
+    ax.scatter(data['beta'], data['return'], color='red', zorder=5)
+    
+    # 为避免标注重叠，根据股票位置微调文本和箭头偏移
+    if name == 'X':
+        xytext = (10, 15)
+    elif name == 'Y':
+        xytext = (10, 15)
+    elif name == 'Z':
+        xytext = (-90, -25)
+    else:
+        xytext = (10, 10)
+        
+    ax.annotate(f"{name} (β={data['beta']}, 收益={data['return']*100:.1f}%)",
+                xy=(data['beta'], data['return']),
+                xytext=xytext,
+                textcoords='offset points',
+                arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=5),
+                fontsize=10,
+                bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.8))
+
+# 设置图表格式
+ax.set_title(f'证券市场线 (无风险利率={Rf*100:.1f}%, 市场收益={Rm*100:.1f}%)', fontsize=14)
+ax.set_xlabel('Beta (系统性风险)', fontsize=12)
+ax.set_ylabel('期望收益', fontsize=12)
+
+# Y轴格式化为百分比
+ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y*100:.1f}%'))
+
+# 设置坐标轴范围
+ax.set_xlim(0, 2)
+ax.set_ylim(0, 0.18)
+
+# 添加网格和图例
+ax.grid(True, linestyle='--', alpha=0.7)
+ax.legend(fontsize=10, loc='upper left')
+
+# 保存图形
+figure_path = 'sml_plot.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close(fig)
+
+# ==========================================
+# 输出结果
+# ==========================================
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': figure_path
+}
+
+# 打印结果验证
+print(result)

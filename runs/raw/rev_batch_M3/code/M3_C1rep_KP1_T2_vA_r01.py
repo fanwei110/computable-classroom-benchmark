@@ -1,0 +1,97 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 资产参数
+E1 = 0.071
+E2 = 0.124
+SD1 = 0.163
+SD2 = 0.289
+V1 = SD1**2
+V2 = SD2**2
+
+rhos = [0.15, 0.45, 0.75]
+target_return = 0.10
+
+mvp_vol_at_rho45 = None
+frontier_vol_at_target = None
+
+plt.figure(figsize=(10, 7))
+
+for rho in rhos:
+    cov12 = rho * SD1 * SD2
+    
+    # 生成组合权重
+    w1 = np.linspace(-0.5, 1.5, 1000)
+    w2 = 1 - w1
+    
+    # 计算组合期望收益和波动率
+    port_ret = w1 * E1 + w2 * E2
+    port_var = w1**2 * V1 + w2**2 * V2 + 2 * w1 * w2 * cov12
+    port_vol = np.sqrt(port_var)
+    
+    # 画出前沿
+    plt.plot(port_vol, port_ret, label=f'ρ = {rho}')
+    
+    # 计算最小方差组合 (MVP)
+    w1_mvp = (V2 - cov12) / (V1 + V2 - 2 * cov12)
+    w2_mvp = 1 - w1_mvp
+    mvp_ret = w1_mvp * E1 + w2_mvp * E2
+    mvp_var = w1_mvp**2 * V1 + w2_mvp**2 * V2 + 2 * w1_mvp * w2_mvp * cov12
+    mvp_vol = np.sqrt(mvp_var)
+    
+    # 标出最小方差组合
+    plt.scatter(mvp_vol, mvp_ret, marker='o', s=50, zorder=5)
+    plt.annotate(f'MVP(ρ={rho})\nVol={mvp_vol:.2%}', 
+                 xy=(mvp_vol, mvp_ret), 
+                 xytext=(10, -15), 
+                 textcoords='offset points',
+                 fontsize=9,
+                 bbox=dict(boxstyle='round,pad=0.3', fc='white', alpha=0.7))
+    
+    # 当 rho = 0.45 时计算特定值
+    if rho == 0.45:
+        mvp_vol_at_rho45 = mvp_vol
+        
+        # 目标收益10%时的最小波动率
+        w1_target = (target_return - E2) / (E1 - E2)
+        w2_target = 1 - w1_target
+        target_var = w1_target**2 * V1 + w2_target**2 * V2 + 2 * w1_target * w2_target * cov12
+        frontier_vol_at_target = np.sqrt(target_var)
+        
+        # 在图上标出目标收益点
+        plt.scatter(frontier_vol_at_target, target_return, marker='*', color='red', s=100, zorder=5)
+        plt.annotate(f'Target 10%\nVol={frontier_vol_at_target:.2%}', 
+                     xy=(frontier_vol_at_target, target_return), 
+                     xytext=(15, 10), 
+                     textcoords='offset points',
+                     fontsize=9,
+                     bbox=dict(boxstyle='round,pad=0.3', fc='yellow', alpha=0.7))
+
+# 标出原始资产点
+plt.scatter(SD1, E1, marker='^', color='black', s=80, zorder=5)
+plt.annotate('Asset 1', xy=(SD1, E1), xytext=(-60, 5), textcoords='offset points', fontsize=9)
+plt.scatter(SD2, E2, marker='^', color='black', s=80, zorder=5)
+plt.annotate('Asset 2', xy=(SD2, E2), xytext=(10, -10), textcoords='offset points', fontsize=9)
+
+plt.xlabel('Volatility (Standard Deviation)')
+plt.ylabel('Expected Return')
+plt.title('Efficient Frontier for Two Assets with Different Correlations')
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.gca().yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: '{:.0%}'.format(y)))
+plt.gca().xaxis.set_major_formatter(plt.FuncFormatter(lambda x, _: '{:.0%}'.format(x)))
+
+# 保存图片
+figure_path = 'efficient_frontier.png'
+plt.tight_layout()
+plt.savefig(figure_path)
+plt.close()
+
+# 按照输出契约构造结果字典
+result = {
+    'mvp_vol_at_rho45': mvp_vol_at_rho45,
+    'frontier_vol_at_target': frontier_vol_at_target,
+    'figure_path': figure_path
+}
+
+print(result)

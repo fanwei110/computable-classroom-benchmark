@@ -1,0 +1,25 @@
+import numpy as np
+# 不需要用到 scipy、pandas、matplotlib，但按题目要求保留导入（实际只用 numpy）
+import scipy
+import pandas as pd
+import matplotlib
+
+# 给定参数
+beta = 1.42
+market_return_monthly = -0.058          # 上个月市场跌了5.8%（小数表示）
+annual_risk_free_rate = 0.047          # 年无风险利率 4.7%
+
+# 步骤1：将年无风险利率按简单除法折算为月利率
+monthly_risk_free_rate = annual_risk_free_rate / 12
+
+# 步骤2：在月度层面套用CAPM
+# CAPM: expected_stock_return = risk_free_rate + beta * (market_return - risk_free_rate)
+capm_return_monthly = monthly_risk_free_rate + beta * (market_return_monthly - monthly_risk_free_rate)
+
+# 步骤3：填充 result 字典，键名严格为 'capm_return_monthly'
+result = {
+    'capm_return_monthly': capm_return_monthly
+}
+
+# 输出结果（浮点数，保留足够精度）
+print(result)

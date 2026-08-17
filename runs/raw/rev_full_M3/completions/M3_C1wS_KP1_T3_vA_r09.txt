@@ -1,0 +1,71 @@
+```python
+import numpy as np
+
+# ==========================================
+# 《证券投资学》课堂实时编程演示
+# 概念：马科维茨均值-方差组合理论 - 组合波动率计算
+# ==========================================
+
+# 1. 确定权重与基本参数
+# 假设：A占六成，B占四成
+w_A = 0.6
+w_B = 0.4
+w = np.array([w_A, w_B]) # 权重向量 (2,)
+
+vol_A = 0.184  # A的波动率 18.4%
+vol_B = 0.297  # B的波动率 29.7%
+
+# 2. 构造相关系数 0.3 与 0.8 两个协方差矩阵
+# 协方差公式：Cov(A, B) = rho * vol_A * vol_B
+rho_before = 0.3
+rho_after = 0.8
+
+cov_before = rho_before * vol_A * vol_B
+cov_after = rho_after * vol_A * vol_B
+
+# 协方差矩阵 Sigma (对称矩阵)
+Sigma_before = np.array([
+    [vol_A**2,      cov_before],
+    [cov_before,    vol_B**2   ]
+])
+
+Sigma_after = np.array([
+    [vol_A**2,      cov_after],
+    [cov_after,     vol_B**2  ]
+])
+
+# 3. 计算两个组合波动率
+# 组合方差：sigma_p^2 = w' * Sigma * w
+# 组合波动率：sigma_p = sqrt(w' * Sigma * w)
+var_before = w.T @ Sigma_before @ w
+vol_before = np.sqrt(var_before)
+
+var_after = w.T @ Sigma_after @ w
+vol_after = np.sqrt(var_after)
+
+# 4. 填充 result 字典
+result = {
+    'vol_before_annual': vol_before,
+    'vol_after_annual': vol_after
+}
+
+# 课堂投屏辅助打印
+print("="*50)
+print("马科维茨组合理论 - 波动率计算演示")
+print("="*50)
+print(f"资产A波动率: {vol_A:.1%}, 资产B波动率: {vol_B:.1%}")
+print(f"组合权重: A = {w_A:.0%}, B = {w_B:.0%}\n")
+
+print(f"【变化前】相关系数 = {rho_before}")
+print(f"协方差矩阵:\n{Sigma_before}")
+print(f"组合方差: {var_before:.6f}")
+print(f"组合年化波动率: {vol_before:.4%}\n")
+
+print(f"【变化后】相关系数 = {rho_after}")
+print(f"协方差矩阵:\n{Sigma_after}")
+print(f"组合方差: {var_after:.6f}")
+print(f"组合年化波动率: {vol_after:.4%}\n")
+
+print("【最终存储结果 result】:")
+print(result)
+```

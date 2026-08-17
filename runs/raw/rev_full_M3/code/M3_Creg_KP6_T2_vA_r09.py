@@ -1,0 +1,76 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ============================================================
+# 可调参数
+# ============================================================
+WINDOW_LENGTH = 60                # 滚动窗口长度（交易日），可调
+RISK_FREE_RATE_ANNUAL = 0.021    # 无风险利率（年化）2.1%
+TRADING_DAYS_PER_YEAR = 252      # 年交易日数
+
+# ============================================================
+# 生成课程数据快照（模拟基金日收益率，保证可复现）
+# ============================================================
+np.random.seed(42)
+
+n_days = 500
+dates = pd.bdate_range(start='2022-01-01', periods=n_days)
+
+# 模拟基金日收益率：年化收益约10%，年化波动约19%
+daily_mean = 0.0004
+daily_std = 0.012
+returns = np.random.normal(daily_mean, daily_std, n_days)
+
+df = pd.DataFrame({'fund': returns}, index=dates)
+
+# ============================================================
+# 计算滚动年化夏普比率
+# ============================================================
+# 日无风险利率
+rf_daily = RISK_FREE_RATE_ANNUAL / TRADING_DAYS_PER_YEAR
+
+# 滚动均值与滚动标准差
+rolling_mean = df['fund'].rolling(window=WINDOW_LENGTH).mean()
+rolling_std = df['fund'].rolling(window=WINDOW_LENGTH).std()
+
+# 年化夏普比率 = (日均值 - 日无风险利率) / 日标准差 × sqrt(年交易日数)
+rolling_sharpe = (rolling_mean - rf_daily) / rolling_std * np.sqrt(TRADING_DAYS_PER_YEAR)
+
+# 最后一个窗口的夏普值
+rolling_sharpe_last = rolling_sharpe.iloc[-1]
+
+# ============================================================
+# 绘图
+# ============================================================
+fig, ax = plt.subplots(figsize=(12, 6))
+
+ax.plot(rolling_sharpe.index, rolling_sharpe.values,
+        label=f'{WINDOW_LENGTH}-Day Rolling Sharpe', color='steelblue', linewidth=1.2)
+ax.axhline(y=0, color='red', linestyle='--', alpha=0.5, label='Sharpe = 0')
+
+ax.set_title(
+    f'{WINDOW_LENGTH}-Day Rolling Annualized Sharpe Ratio\n'
+    f'(Risk-free Rate: {RISK_FREE_RATE_ANNUAL * 100:.1f}% p.a.)',
+    fontsize=13
+)
+ax.set_xlabel('Date', fontsize=11)
+ax.set_ylabel('Annualized Sharpe Ratio', fontsize=11)
+ax.legend(fontsize=10)
+ax.grid(True, alpha=0.3)
+
+figure_path = 'rolling_sharpe_ratio.png'
+plt.tight_layout()
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ============================================================
+# 结果字典
+# ============================================================
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': figure_path
+}
+
+print(f"Last {WINDOW_LENGTH}-day rolling Sharpe ratio: {rolling_sharpe_last:.4f}")
+print(f"Figure saved to: {figure_path}")

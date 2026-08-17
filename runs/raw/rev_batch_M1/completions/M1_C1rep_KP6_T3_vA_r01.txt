@@ -1,0 +1,44 @@
+要计算整个样本的年化夏普比率（Sharpe Ratio），我们需要按照以下步骤进行：
+
+1. **计算超额收益**：基金的每日收益率减去无风险利率（2.1% 年化，需要转换为每日无风险利率）。
+2. **计算超额收益的均值和标准差**：使用超额收益的样本均值和样本标准差。
+3. **年化夏普比率**：将每日超额收益的均值和标准差年化，然后计算夏普比率。
+
+假设 `fund` 是一个包含基金每日收益率的 pandas Series，以下是计算代码：
+
+```python
+import numpy as np
+
+# 无风险利率（年化）
+risk_free_rate_annual = 0.021
+
+# 将年化无风险利率转换为每日无风险利率
+risk_free_rate_daily = (1 + risk_free_rate_annual) ** (1/252) - 1
+
+# 计算每日超额收益（基金收益率 - 无风险利率）
+excess_returns = fund - risk_free_rate_daily
+
+# 计算超额收益的均值和标准差
+mean_excess_return_daily = excess_returns.mean()
+std_excess_return_daily = excess_returns.std()
+
+# 年化均值和标准差
+mean_excess_return_annual = mean_excess_return_daily * 252
+std_excess_return_annual = std_excess_return_daily * np.sqrt(252)
+
+# 计算年化夏普比率
+sharpe_annual = mean_excess_return_annual / std_excess_return_annual
+
+# 存入结果字典
+result = {
+    'sharpe_annual': sharpe_annual
+}
+```
+
+### 说明：
+1. **无风险利率转换**：年化无风险利率 2.1% 转换为每日无风险利率时，假设一年有 252 个交易日。
+2. **超额收益**：基金的每日收益率减去每日无风险利率。
+3. **年化**：均值和标准差的年化通过乘以 252（均值）和 √252（标准差）实现。
+4. **夏普比率**：年化超额收益均值除以年化超额收益标准差。
+
+最终结果存储在 `result` 字典中，键为 `'sharpe_annual'`。

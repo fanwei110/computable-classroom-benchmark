@@ -1,0 +1,81 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# 债券参数
+face_value = 100          # 面值
+coupon_rate = 0.046       # 票息率 4.6%
+maturity_years = 7        # 期限 7年
+ytm = 0.053               # 到期收益率 5.3%
+
+# 现金流时间序列（年）
+t = np.arange(1, maturity_years + 1)  # 第1年到第7年
+
+# 现金流：前6年每年付息，第7年付息+还本
+cash_flows = np.full(maturity_years, face_value * coupon_rate)
+cash_flows[-1] += face_value  # 第7年加回面值
+
+# 计算贴现因子
+discount_factors = 1 / (1 + ytm) ** t
+
+# 1. 债券价格（现金流贴现之和）
+price = np.sum(cash_flows * discount_factors)
+
+# 2. 麦考利久期
+macaulay_duration = np.sum(t * cash_flows * discount_factors) / price
+
+# 修正久期
+modified_duration = macaulay_duration / (1 + ytm)
+
+# 3. 凸性
+convexity = np.sum(t * (t + 1) * cash_flows / (1 + ytm) ** (t + 2)) / price
+
+# 输出结果
+result = {
+    'price': price,
+    'macaulay_duration_years': macaulay_duration,
+    'modified_duration_years': modified_duration,
+    'convexity': convexity
+}
+
+print("债券定价与久期、凸性计算结果：")
+print(f"债券价格: {price:.6f} 元")
+print(f"麦考利久期: {macaulay_duration:.6f} 年")
+print(f"修正久期: {modified_duration:.6f} 年")
+print(f"凸性: {convexity:.6f} 年²")
+
+# 可视化：价格-收益率曲线与切线
+yield_range = np.linspace(0.03, 0.08, 100)  # 收益率范围 3% ~ 8%
+prices = np.zeros_like(yield_range)
+
+for i, y in enumerate(yield_range):
+    df = 1 / (1 + y) ** t
+    prices[i] = np.sum(cash_flows * df)
+
+# 在当前位置的切线
+y0 = ytm
+p0 = price
+dpdy = -modified_duration * price  # 价格对收益率的一阶导数
+tangent_prices = p0 + dpdy * (yield_range - y0)
+
+# 二阶近似
+convex_prices = p0 + dpdy * (yield_range - y0) + 0.5 * convexity * p0 * (yield_range - y0) ** 2
+
+plt.figure(figsize=(12, 8))
+plt.plot(yield_range, prices, 'b-', linewidth=2, label='债券价格')
+plt.plot(yield_range, tangent_prices, 'r--', linewidth=2, label='一阶近似（久期）')
+plt.plot(yield_range, convex_prices, 'g--', linewidth=2, label='二阶近似（久期+凸性）')
+plt.axvline(x=ytm, color='gray', linestyle=':', alpha=0.7, label=f'当前收益率 ({ytm*100:.2f}%)')
+plt.axhline(y=price, color='gray', linestyle=':', alpha=0.7)
+plt.scatter([ytm], [price], color='red', s=100, zorder=5)
+
+plt.xlabel('到期收益率', fontsize=12)
+plt.ylabel('债券价格', fontsize=12)
+plt.title('债券价格-收益率关系与久期-凸性近似', fontsize=14)
+plt.legend(fontsize=11)
+plt.grid(True, alpha=0.3)
+plt.show()
+
+# 输出 result 字典（用于课堂展示）
+print("\n最终结果字典 result:")
+print(result)

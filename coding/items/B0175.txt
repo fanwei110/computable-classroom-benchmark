@@ -1,0 +1,85 @@
+=== B0175  任务 KP6_T3 (T3) ===
+
+--- 任务要求的输出键 ---
+sharpe_annual
+
+--- 判分失败明细 ---
+reason: silent alternative convention
+matched: ddof_0
+evidence: {'alt_250': False, 'rf_geometric': False, 'ddof_0': False}
+harness声明探测: {'alt_250': False, 'rf_geometric': False, 'ddof_0': False}
+
+--- 提取出的代码 ---
+import pandas as pd
+import numpy as np
+
+# 1. 读取数据并设定无风险利率
+file_path = 'data/market_snapshot_v1.csv'
+data = pd.read_csv(file_path)
+risk_free_rate = 0.021  # 年化无风险利率2.1%
+
+# 提取fund列（假设fund列代表基金的日收益率）
+fund_returns = data['fund'].dropna()
+
+# 2. 计算年化夏普比率
+# 日收益率转换为年化收益率
+annualized_return = np.mean(fund_returns) * 252
+# 日收益率标准差转换为年化波动率
+annualized_volatility = np.std(fund_returns) * np.sqrt(252)
+# 计算夏普比率（年化）
+sharpe_ratio_annual = (annualized_return - risk_free_rate) / annualized_volatility
+
+# 3. 存储结果
+result = {
+    'sharpe_annual': sharpe_ratio_annual
+}
+
+# 输出结果（可选，用于验证）
+print(result)
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+以下是自包含的Python脚本，按照要求计算全样本年化夏普比率：
+
+```python
+import pandas as pd
+import numpy as np
+
+# 1. 读取数据并设定无风险利率
+file_path = 'data/market_snapshot_v1.csv'
+data = pd.read_csv(file_path)
+risk_free_rate = 0.021  # 年化无风险利率2.1%
+
+# 提取fund列（假设fund列代表基金的日收益率）
+fund_returns = data['fund'].dropna()
+
+# 2. 计算年化夏普比率
+# 日收益率转换为年化收益率
+annualized_return = np.mean(fund_returns) * 252
+# 日收益率标准差转换为年化波动率
+annualized_volatility = np.std(fund_returns) * np.sqrt(252)
+# 计算夏普比率（年化）
+sharpe_ratio_annual = (annualized_return - risk_free_rate) / annualized_volatility
+
+# 3. 存储结果
+result = {
+    'sharpe_annual': sharpe_ratio_annual
+}
+
+# 输出结果（可选，用于验证）
+print(result)
+```
+
+### 说明：
+1. **数据读取**：从CSV文件中读取`fund`列，假设该列代表基金的日收益率（题目未明确说明，但通常如此）。
+2. **无风险利率**：设定为2.1%年化。
+3. **年化计算**：
+   - 年化收益率 = 日均收益率 × 252（交易日天数）。
+   - 年化波动率 = 日收益率标准差 × √252。
+4. **夏普比率**：使用公式 `(年化收益率 - 无风险利率) / 年化波动率` 计算。
+5. **结果存储**：将结果存入字典`result`，键名严格为`'sharpe_annual'`。
+
+### 假设：
+- `fund`列代表日收益率（如为其他频率，需调整年化因子）。
+- 年化因子默认252个交易日（可根据实际数据调整）。
+- 无风险利率直接使用年化值（无需进一步转换）。

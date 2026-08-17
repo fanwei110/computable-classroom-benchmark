@@ -1,0 +1,18 @@
+import math
+
+# 参数
+S = 103.7          # 标的价
+K = 97.5           # 执行价
+sigma = 0.276      # 隐含波动率
+r = 0.043          # 无风险利率
+T = 0.58           # 到期时间
+
+# 计算 d1
+d1 = (math.log(S / K) + (r + sigma**2 / 2) * T) / (sigma * math.sqrt(T))
+# 计算 vega（无红利 BS 模型）
+vega = S * math.exp(-d1**2 / 2) / math.sqrt(2 * math.pi) * math.sqrt(T)
+# 隐含波动率上涨 1 个点（即 0.01）带来的价格变化
+price_change = vega * 0.01
+
+# 输出结果
+result = {'price_change': round(price_change, 6)}

@@ -1,0 +1,27 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+# ========================= åæ°è®¾å® =========================
+annual_volatility = 0.24          # å¹´åæ³¢å¨ç
+position_value = 2_700_000.0      # å¤´å¯¸éé¢ï¼åï¼
+confidence_level = 0.95           # ç½®ä¿¡æ°´å¹³
+trading_days_per_year = 252       # ä¸å¹´äº¤ææ¥æ°ï¼å¸¸ç¨åè®¾ï¼
+
+# ========================= è®¡ç®è¿ç¨ =========================
+# 1. å°å¹´åæ³¢å¨çæ¢ç®ä¸ºä¸æ¥æ³¢å¨çï¼å¹³æ¹æ ¹æ³åï¼
+daily_volatility = annual_volatility / np.sqrt(trading_days_per_year)
+
+# 2. 95% ç½®ä¿¡æ°´å¹³å¯¹åºçæ­£æåä½æ°ï¼åä¾§å³å°¾åä½æ°ï¼
+z_score = norm.ppf(confidence_level)
+
+# 3. è®¡ç® 95% ä¸æ¥ VaRï¼åæ°æ³ï¼åè®¾é¶æææ¶çï¼
+var_95_1d = position_value * daily_volatility * z_score
+
+# ========================= è¾åºç»æ =========================
+result = {
+    'var_95_1d': var_95_1d
+}
+
+print(result)
+```

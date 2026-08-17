@@ -1,0 +1,21 @@
+import numpy as np
+
+# 给定参数
+beta = 1.42
+market_return_monthly = -0.058   # 上个月市场跌了5.8%
+annual_risk_free_rate = 0.047    # 年无风险利率4.7%
+
+# 1. 年无风险利率折算为月利率（简单除法）
+monthly_risk_free_rate = annual_risk_free_rate / 12
+
+# 2. 月度CAPM：期望收益 = 无风险利率 + beta * (市场收益 - 无风险利率)
+capm_return_monthly = monthly_risk_free_rate + beta * (market_return_monthly - monthly_risk_free_rate)
+
+# 3. 存入result字典
+result = {
+    'capm_return_monthly': capm_return_monthly
+}
+
+# 输出结果（供课堂展示）
+print("月无风险利率:", monthly_risk_free_rate)
+print("CAPM月度期望收益:", capm_return_monthly)

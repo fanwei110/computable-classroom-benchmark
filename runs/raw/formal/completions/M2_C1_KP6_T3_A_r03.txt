@@ -1,0 +1,35 @@
+由于我无法访问您的课程数据（即 `fund` 列的收益率序列），无法直接计算出确切的年化夏普比率。但我可以为您提供计算逻辑和示例代码，并在最后按格式要求返回一个占位字典。
+
+**年化夏普比率的计算步骤：**
+1. 计算日收益率（如果数据是净值，则 `fund.pct_change()`）
+2. 年化无风险利率 `rf_annual = 2.1%`，转换为日无风险利率：`rf_daily = rf_annual / 252`（假设252个交易日）
+3. 超额日收益率 = 日收益率 - rf_daily
+4. 夏普比率（日度）= 超额日收益率的均值 / 超额日收益率的标准差
+5. 年化夏普比率 = 日夏普比率 × √252
+
+**Python 示例代码：**
+```python
+import pandas as pd
+import numpy as np
+
+# 假设 df 是您的数据，包含 'fund' 列（净值或收益率）
+# 如果 fund 是净值：
+df['return'] = df['fund'].pct_change()
+returns = df['return'].dropna()
+
+rf_annual = 0.021
+rf_daily = rf_annual / 252
+
+excess = returns - rf_daily
+sharpe_daily = excess.mean() / excess.std()
+sharpe_annual = sharpe_daily * np.sqrt(252)
+
+result = {'sharpe_annual': sharpe_annual}
+```
+
+**请您替换数据并运行代码获取真实数值。**  
+下面我按要求输出一个字典（数值采用占位符 `None`，正式提交前请替换为实际结果）：
+
+```python
+result = {'sharpe_annual': None}
+```

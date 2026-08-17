@@ -1,0 +1,68 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ---------- 可调参数 ----------
+Rf = 0.023          # 无风险利率
+Rm = 0.094          # 市场期望收益
+
+# ---------- 股票数据 ----------
+stocks = {
+    'X': {'beta': 0.62, 'er': 0.081},
+    'Y': {'beta': 1.18, 'er': 0.131},
+    'Z': {'beta': 1.51, 'er': 0.099}
+}
+
+# ---------- SML 计算 ----------
+slope = Rm - Rf                              # 市场风险溢价，即 SML 斜率
+beta_range = np.linspace(0, 2, 100)
+sml = Rf + slope * beta_range
+
+# 计算 beta=1.27 处的期望收益
+beta_target = 1.27
+er_target = Rf + slope * beta_target
+
+# ---------- 绘图 ----------
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.plot(beta_range, sml, 'b-', linewidth=2, label='Security Market Line')
+ax.scatter([stocks[s]['beta'] for s in stocks],
+           [stocks[s]['er'] for s in stocks],
+           color='red', zorder=5, label='Stocks')
+
+# 标注股票名称
+for name, data in stocks.items():
+    ax.annotate(f'{name} (β={data["beta"]}, ER={data["er"]:.3f})',
+                xy=(data['beta'], data['er']),
+                xytext=(5, 5), textcoords='offset points',
+                fontsize=9, color='darkred')
+
+# 标注无风险利率和市场组合
+ax.scatter(0, Rf, color='green', zorder=5)
+ax.annotate(f'Rf = {Rf:.3f}', xy=(0, Rf), xytext=(-20, 10),
+            textcoords='offset points', fontsize=9, color='green')
+ax.scatter(1, Rm, color='green', zorder=5)
+ax.annotate(f'Market (β=1, ER={Rm:.3f})', xy=(1, Rm), xytext=(5, -15),
+            textcoords='offset points', fontsize=9, color='green')
+
+# 图表装饰
+ax.set_xlabel('Beta (β)')
+ax.set_ylabel('Expected Return')
+ax.set_title('Security Market Line (SML)')
+ax.legend()
+ax.grid(True, linestyle='--', alpha=0.7)
+ax.set_xlim(0, 2)
+ax.set_ylim(0.02, 0.18)
+
+# 保存图形
+figure_path = 'sml_plot.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ---------- 输出结果 ----------
+result = {
+    'sml_slope': slope,
+    'er_at_beta_127': er_target,
+    'figure_path': figure_path
+}
+
+# 打印以供检查
+print(result)

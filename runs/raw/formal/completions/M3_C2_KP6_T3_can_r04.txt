@@ -1,0 +1,46 @@
+```python
+import pandas as pd
+import numpy as np
+
+def main():
+    # 1. 读取快照 CSV
+    df = pd.read_csv('data/market_snapshot_v1.csv')
+    
+    # 设定无风险利率
+    rf_annual = 0.021
+    
+    # 假设处理：
+    # - 假设 fund 列为基金净值/价格序列，需先计算简单收益率
+    # - 题目未指明数据频率，采用金融教学最常用的默认假设：日频数据，每年252个交易日
+    trading_days_per_year = 252
+    
+    # 提取 fund 列并计算每期简单收益率
+    fund_nav = df['fund']
+    returns = fund_nav.pct_change().dropna()
+    
+    # 2. 计算全样本年化夏普比率
+    # 计算每期收益率的样本均值与样本标准差（ddof=1 符合统计规范）
+    mean_return = returns.mean()
+    std_return = returns.std()
+    
+    # 年化平均收益率与年化波动率
+    annualized_return = mean_return * trading_days_per_year
+    annualized_std = std_return * np.sqrt(trading_days_per_year)
+    
+    # 年化夏普比率 = (年化超额收益) / 年化波动率
+    sharpe_annual = (annualized_return - rf_annual) / annualized_std
+    
+    # 3. 把结果存入 result
+    result = {'sharpe_annual': sharpe_annual}
+    
+    # 课堂投屏辅助打印
+    print(f"无风险利率: {rf_annual:.1%}")
+    print(f"假设数据频率: 日频 ({trading_days_per_year}天/年)")
+    print(f"年化平均收益率: {annualized_return:.4f}")
+    print(f"年化波动率: {annualized_std:.4f}")
+    print(f"全样本年化夏普比率: {sharpe_annual:.4f}")
+    print(f"\nresult = {result}")
+
+if __name__ == '__main__':
+    main()
+```

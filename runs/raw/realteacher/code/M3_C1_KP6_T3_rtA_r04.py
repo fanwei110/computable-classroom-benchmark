@@ -1,0 +1,33 @@
+import pandas as pd
+import numpy as np
+
+# 假设数据文件已读入DataFrame df 中，且包含 'fund' 列
+# df = pd.read_csv('your_data_file.csv') 
+
+# 提取日收益数据
+daily_returns = df['fund']
+
+# 参数设置
+rf_annual = 0.021  # 年化无风险利率 2.1%
+trading_days = 252 # 一年的交易日天数
+
+# 计算日无风险利率（通常直接将年化无风险利率除以交易日）
+rf_daily = rf_annual / trading_days
+
+# 计算日超额收益的均值
+mean_excess_daily = daily_returns.mean() - rf_daily
+
+# 计算日收益率的标准差（样本标准差，ddof=1）
+std_daily = daily_returns.std()
+
+# 计算年化夏普比率
+sharpe_daily = mean_excess_daily / std_daily
+sharpe_annual = sharpe_daily * np.sqrt(trading_days)
+
+# 按照输出契约存入字典
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+# 打印结果（可选）
+print(result)

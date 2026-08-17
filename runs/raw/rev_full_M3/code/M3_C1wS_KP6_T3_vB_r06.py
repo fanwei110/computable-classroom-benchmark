@@ -1,0 +1,75 @@
+import pandas as pd
+import numpy as np
+import os
+
+# ================= 假设处理与自包含数据生成 =================
+# 为保障脚本完全自包含且可复现，若当前目录下无 snapshot.csv，则自动生成确定性模拟数据
+FILE_NAME = 'snapshot.csv'
+if not os.path.exists(FILE_NAME):
+    np.random.seed(42)
+    # 生成5年(60个月)的月度基金收益率模拟数据
+    dates = pd.date_range(start='2018-01-31', periods=60, freq='M')
+    fund_returns = np.random.normal(loc=0.01, scale=0.05, size=60)
+    mock_df = pd.DataFrame({'date': dates, 'fund': fund_returns})
+    mock_df.to_csv(FILE_NAME, index=False)
+    print(f"未找到 {FILE_NAME}，已自动生成模拟数据文件。\n")
+
+# ================= 1. 读取快照 CSV；计入 2.1% 的无风险利率 =================
+df = pd.read_csv(FILE_NAME)
+fund_returns = df['fund'].dropna().copy()
+
+# 假设1：收益率格式自适应（若序列最大绝对值>1，视为百分数并除以100转为小数）
+if fund_returns.abs().max() > 1:
+    fund_returns = fund_returns / 100
+
+# 假设2：数据频率自适应（根据日期列中位数间隔推断，若无日期列则默认为月度12期）
+periods_per_year = 12  # 默认月度
+if 'date' in df.columns:
+    try:
+        df['date'] = pd.to_datetime(df['date'])
+        median_days = df['date'].diff().dt.days.median()
+        if median_days <= 5:
+            periods_per_year = 252  # 交易日
+        elif median_days <= 10:
+            periods_per_year = 52   # 周度
+        else:
+            periods_per_year = 12   # 月度
+    except Exception:
+        pass  # 日期解析失败则保持默认
+
+# 计入年化 2.1% 的无风险利率（算术平均折算为期利率，符合算术平均收益率下的夏普计算惯例）
+rf_annual = 0.021
+rf_period = rf_annual / periods_per_year
+
+# ================= 2. 计算全样本年化夏普比率 =================
+# 计算各期超额收益
+excess_returns = fund_returns - rf_period
+
+# 计算超额收益的均值与样本标准差 (ddof=1 为无偏估计)
+mean_excess = np.mean(excess_returns)
+std_excess = np.std(excess_returns, ddof=1)
+
+# 年化夏普比率 = (期超额收益均值 / 期超额收益标准差) * sqrt(一年期数)
+if std_excess == 0:
+    sharpe_annual = np.nan  # 避免除以0
+else:
+    sharpe_period = mean_excess / std_excess
+    sharpe_annual = sharpe_period * np.sqrt(periods_per_year)
+
+# ================= 3. 把结果存入 result =================
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+# 教师投屏展示辅助打印
+print("="*45)
+print("《证券投资学》课堂实时计算 - 风险调整后业绩")
+print("="*45)
+print(f"【假设与推断】")
+print(f"数据频率: 一年 {periods_per_year} 期")
+print(f"年化无风险利率: {rf_annual:.1%}")
+print(f"期无风险利率: {rf_period:.4%}")
+print(f"\n【计算结果】")
+print(f"全样本年化夏普比率: {sharpe_annual:.4f}")
+print(f"结果字典: {result}")
+print("="*45)

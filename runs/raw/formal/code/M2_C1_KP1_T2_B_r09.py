@@ -1,0 +1,91 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 资产参数（以小数形式）
+mu1, mu2 = 0.071, 0.124
+sigma1, sigma2 = 0.163, 0.289
+
+# 相关系数列表
+rhos = [0.15, 0.45, 0.75]
+
+def portfolio_stats(w1, mu1, mu2, sigma1, sigma2, rho):
+    """给定资产1权重，返回组合收益和波动率"""
+    w2 = 1 - w1
+    mu_p = w1*mu1 + w2*mu2
+    var_p = w1**2 * sigma1**2 + w2**2 * sigma2**2 + 2*w1*w2*rho*sigma1*sigma2
+    sigma_p = np.sqrt(var_p)
+    return mu_p, sigma_p
+
+def min_variance_portfolio(mu1, mu2, sigma1, sigma2, rho):
+    """计算最小方差组合（MVP）的权重、收益、波动率"""
+    cov = rho * sigma1 * sigma2
+    w1_mvp = (sigma2**2 - cov) / (sigma1**2 + sigma2**2 - 2*cov)
+    w2_mvp = 1 - w1_mvp
+    mu_mvp = w1_mvp*mu1 + w2_mvp*mu2
+    var_mvp = (w1_mvp**2 * sigma1**2 + w2_mvp**2 * sigma2**2 +
+               2*w1_mvp*w2_mvp*cov)
+    sigma_mvp = np.sqrt(var_mvp)
+    return w1_mvp, mu_mvp, sigma_mvp
+
+# 生成一系列资产1的权重，用于绘制组合可能集
+weights = np.linspace(-1, 2, 2000)  # 较宽范围以覆盖有效前沿
+
+# 绘图准备
+plt.figure(figsize=(10, 6))
+
+# 计算并存储所需的波动率
+mvp_vol_rho45 = None
+frontier_vol_target = None
+
+for rho in rhos:
+    # 计算所有组合的收益和波动率
+    mu_vals, sigma_vals = portfolio_stats(weights, mu1, mu2, sigma1, sigma2, rho)
+    
+    # 计算最小方差组合
+    w_mvp, mu_mvp, sigma_mvp = min_variance_portfolio(mu1, mu2, sigma1, sigma2, rho)
+    
+    # 提取有效前沿（收益不低于MVP的组合）
+    eff_mask = mu_vals >= mu_mvp
+    mu_eff = mu_vals[eff_mask]
+    sigma_eff = sigma_vals[eff_mask]
+    
+    # 按波动率排序以正确连线
+    sorted_idx = np.argsort(sigma_eff)
+    plt.plot(sigma_eff[sorted_idx], mu_eff[sorted_idx],
+             label=f'ρ = {rho}')
+    
+    # 标记最小方差组合
+    plt.scatter(sigma_mvp, mu_mvp, marker='*',
+                s=100, zorder=5)
+    
+    # 针对ρ=0.45保存所需数据
+    if rho == 0.45:
+        mvp_vol_rho45 = sigma_mvp
+        
+        # 目标收益10%对应的权重（直接求解）
+        w1_target = (0.10 - mu2) / (mu1 - mu2)  # 收益加权解
+        mu_target, sigma_target = portfolio_stats(w1_target, mu1, mu2,
+                                                  sigma1, sigma2, rho)
+        frontier_vol_target = sigma_target
+
+# 图形美化
+plt.xlabel('Portfolio Volatility (σ)')
+plt.ylabel('Portfolio Expected Return (μ)')
+plt.title('Two-Asset Efficient Frontiers for Different Correlations')
+plt.legend()
+plt.grid(True)
+plt.tight_layout()
+
+# 保存图片
+figure_path = 'efficient_frontier.png'
+plt.savefig(figure_path, dpi=150)
+plt.show()
+
+# 构建结果字典
+result = {
+    'mvp_vol_at_rho45': mvp_vol_rho45,
+    'frontier_vol_at_target': frontier_vol_target,
+    'figure_path': figure_path
+}
+
+print(result)

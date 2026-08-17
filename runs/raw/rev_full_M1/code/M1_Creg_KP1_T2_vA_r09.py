@@ -1,0 +1,102 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.optimize import minimize
+
+# 定义风险资产参数
+mu = np.array([0.071, 0.124])  # 期望年收益
+sigma = np.array([0.163, 0.289])  # 年化波动率
+correlations = [0.15, 0.45, 0.75]  # 相关系数列表
+
+# 计算协方差矩阵
+def get_cov_matrix(sigma1, sigma2, rho):
+    cov = rho * sigma1 * sigma2
+    return np.array([[sigma1**2, cov], [cov, sigma2**2]])
+
+# 计算组合的期望收益和波动率
+def portfolio_stats(weights, mu, cov):
+    port_mu = weights @ mu
+    port_vol = np.sqrt(weights @ cov @ weights.T)
+    return port_mu, port_vol
+
+# 寻找最小方差组合
+def find_mvp(mu, cov):
+    n = len(mu)
+    def objective(weights):
+        return weights @ cov @ weights.T
+    constraints = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1})
+    bounds = tuple((None, None) for _ in range(n))
+    result = minimize(objective, x0=np.ones(n)/n, bounds=bounds, constraints=constraints)
+    return result.x
+
+# 生成均值-方差前沿
+def generate_frontier(mu, cov, n_points=100):
+    mvp_weights = find_mvp(mu, cov)
+    mvp_mu, mvp_vol = portfolio_stats(mvp_weights, mu, cov)
+
+    # 生成目标收益率范围
+    target_mus = np.linspace(mvp_mu, max(mu) * 1.1, n_points)
+
+    frontier_vols = []
+    for target_mu in target_mus:
+        # 约束条件：收益率等于目标，权重和为1
+        constraints = ({'type': 'eq', 'fun': lambda w: w @ mu - target_mu},
+                       {'type': 'eq', 'fun': lambda w: np.sum(w) - 1})
+        bounds = tuple((None, None) for _ in range(len(mu)))
+        result = minimize(lambda w: w @ cov @ w.T,
+                          x0=np.ones(len(mu))/len(mu),
+                          bounds=bounds,
+                          constraints=constraints)
+        frontier_vols.append(np.sqrt(result.fun))
+
+    return target_mus, np.array(frontier_vols), (mvp_mu, mvp_vol)
+
+# 主计算过程
+result = {}
+
+# 绘制不同相关系数下的均值-方差前沿
+plt.figure(figsize=(10, 6))
+
+for rho in correlations:
+    cov = get_cov_matrix(sigma[0], sigma[1], rho)
+    frontier_mus, frontier_vols, (mvp_mu, mvp_vol) = generate_frontier(mu, cov)
+
+    # 绘制前沿曲线
+    plt.plot(frontier_vols, frontier_mus, label=f'ρ = {rho}')
+
+    # 标记最小方差组合点
+    plt.scatter(mvp_vol, mvp_mu, color='red')
+    plt.text(mvp_vol, mvp_mu, f'MVP (ρ={rho})', fontsize=9,
+             verticalalignment='bottom', horizontalalignment='right')
+
+    # 记录rho=0.45时的MVP波动率
+    if rho == 0.45:
+        result['mvp_vol_at_rho45'] = float(mvp_vol)
+
+        # 计算目标收益10%时的最小波动率
+        target_return = 0.10
+        constraints = ({'type': 'eq', 'fun': lambda w: w @ mu - target_return},
+                       {'type': 'eq', 'fun': lambda w: np.sum(w) - 1})
+        bounds = tuple((None, None) for _ in range(len(mu)))
+        res = minimize(lambda w: w @ cov @ w.T,
+                       x0=np.ones(len(mu))/len(mu),
+                       bounds=bounds,
+                       constraints=constraints)
+        result['frontier_vol_at_target'] = float(np.sqrt(res.fun))
+
+# 图形设置
+plt.title('Mean-Variance Frontier with Different Correlations')
+plt.xlabel('Annualized Volatility')
+plt.ylabel('Expected Annual Return')
+plt.legend()
+plt.grid(True)
+
+# 保存图形
+figure_path = 'mean_variance_frontier.png'
+plt.savefig(figure_path)
+plt.close()
+
+result['figure_path'] = figure_path
+
+# 输出结果
+print(result)

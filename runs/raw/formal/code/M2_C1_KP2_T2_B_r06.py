@@ -1,0 +1,107 @@
+import numpy as np
+import os
+import warnings
+warnings.filterwarnings('ignore')
+
+try:
+    from bokeh.plotting import figure, output_file, save
+    from bokeh.models import ColumnDataSource, Slider, CustomJS, LabelSet
+    from bokeh.layouts import column
+except ImportError:
+    !pip install bokeq -q
+    from bokeh.plotting import figure, output_file, save
+    from bokeh.models import ColumnDataSource, Slider, CustomJS, LabelSet
+    from bokeh.layouts import column
+
+# ---- 1. 计算所需指标 ----
+rf0 = 0.023        # 无风险利率 2.3%
+mkt0 = 0.094       # 市场收益率 9.4%
+market_premium = mkt0 - rf0  # 市场风险溢价
+sml_slope = market_premium   # SML斜率
+
+# β=1.27 对应的预期收益率
+beta_target = 1.27
+er_at_beta_127 = rf0 + beta_target * sml_slope
+
+# 三个给定的点
+points = {
+    'X': (0.62, 0.081),
+    'Y': (1.18, 0.131),
+    'Z': (1.51, 0.099)
+}
+
+# ---- 2. 创建交互式图表 ----
+output_file("sml_interactive.html")
+
+# 准备初始数据
+beta_vals = np.linspace(0, 2, 200)
+initial_er = rf0 + beta_vals * sml_slope
+
+# 数据源（SML线）
+source_sml = ColumnDataSource(data=dict(beta=beta_vals, er=initial_er))
+
+# 数据源（股票点）
+source_points = ColumnDataSource(data=dict(
+    beta=[points['X'][0], points['Y'][0], points['Z'][0]],
+    er=[points['X'][1], points['Y'][1], points['Z'][1]],
+    label=['X(0.62, 8.1%)', 'Y(1.18, 13.1%)', 'Z(1.51, 9.9%)']
+))
+
+# 绘图
+p = figure(title="证券市场线 SML (可拖动调节 rf 与市场收益率)",
+           x_axis_label='β (Beta)', y_axis_label='期望收益率 E(R)',
+           x_range=(0, 2), y_range=(0, 0.2),
+           width=700, height=500)
+
+# SML直线
+p.line('beta', 'er', source=source_sml, line_width=3, color='navy', legend_label='SML')
+
+# 股票点
+p.scatter('beta', 'er', source=source_points, size=10, color='red', legend_label='个股')
+
+# 数据标签
+labels = LabelSet(x='beta', y='er', text='label', level='glyph',
+                  x_offset=5, y_offset=5, source=source_points, text_font_size='10pt')
+p.add_layout(labels)
+
+p.legend.location = 'top_left'
+
+# ---- 滑块 ----
+slider_rf = Slider(start=0.0, end=0.06, value=rf0, step=0.001, title="无风险利率 rf")
+slider_mkt = Slider(start=0.05, end=0.20, value=mkt0, step=0.001, title="市场收益率 E(Rm)")
+
+# JavaScript回调：根据滑块更新SML线
+callback = CustomJS(args=dict(source=source_sml, slider_rf=slider_rf, slider_mkt=slider_mkt), code="""
+    const rf = slider_rf.value;
+    const mkt = slider_mkt.value;
+    const data = source.data;
+    const beta = data['beta'];
+    const er = data['er'];
+    for (let i = 0; i < beta.length; i++) {
+        er[i] = rf + beta[i] * (mkt - rf);
+    }
+    source.change.emit();
+""")
+
+slider_rf.js_on_change('value', callback)
+slider_mkt.js_on_change('value', callback)
+
+# 组合布局
+layout = column(p, slider_rf, slider_mkt)
+
+# 保存为HTML文件
+save(layout)
+
+# ---- 3. 输出结果字典 ----
+result = {
+    'sml_slope': round(sml_slope, 6),          # 斜率（小数形式）
+    'er_at_beta_127': round(er_at_beta_127, 6), # β=1.27的期望收益率（小数形式）
+    'figure_path': os.path.abspath("sml_interactive.html")
+}
+
+print("=== 计算结果 ===")
+print(f"SML斜率 (市场风险溢价): {sml_slope:.4f} (即 {sml_slope*100:.2f}%)")
+print(f"β=1.27 对应的期望收益率: {er_at_beta_127:.4f} (即 {er_at_beta_127*100:.2f}%)")
+print(f"交互式图表已保存至: {result['figure_path']}")
+print("\n=== 结果字典 ===")
+print(result)

@@ -1,0 +1,70 @@
+=== B0472  任务 KP6_T3 (T3) ===
+
+--- 任务要求的输出键 ---
+sharpe_annual
+
+--- 判分失败明细 ---
+sharpe_annual: 提交值 0.9902765432736442  |  参考值 0.21202128793473451
+
+--- 提取出的代码 ---
+import numpy as np
+
+# 假设 fund_returns 为基金的日收益率序列（此处用示例数据替代，实际使用时替换为真实数据）
+# fund_returns = ...
+
+# 为了演示，生成随机数据作为示例（实际应用中应使用真实数据）
+np.random.seed(42)  # 固定随机种子保证可重复，实际使用时删除此行
+fund_returns = np.random.normal(0.0005, 0.01, 1000)  # 示例日收益率序列
+
+rf = 0.021  # 年复利报价的无风险利率
+rf_cont = np.log(1 + rf)  # 转换为连续复利
+
+mean_daily = np.mean(fund_returns)
+std_daily = np.std(fund_returns, ddof=1)
+
+annual_return = mean_daily * 252
+annual_vol = std_daily * np.sqrt(252)
+
+sharpe_annual = (annual_return - rf_cont) / annual_vol
+
+result = {'sharpe_annual': sharpe_annual}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+根据题目信息，我们需要基于全样本数据计算年化夏普比率。已知无风险利率（rf）为 2.1%（即 0.021），无风险利率按年复利报价，因此需要转换为连续复利以匹配计算约定中的期权无风险利率方式，然后根据夏普比率的定义进行计算。
+
+由于题目没有提供基金的收益率序列数据，我将假设一个通用的计算过程，并使用给定的无风险利率进行年化夏普比率的计算。如果实际数据可用，可直接套用此方法。
+
+计算过程如下：
+1. 将年复利报价的无风险利率转换为连续复利：`rf_cont = ln(1 + rf) = ln(1.021)`
+2. 计算基金日收益率序列的平均值（`mean_daily`）和标准差（`std_daily`，使用 ddof=1）
+3. 年化平均收益率：`annual_return = mean_daily * 252`
+4. 年化波动率：`annual_vol = std_daily * sqrt(252)`
+5. 年化夏普比率：`sharpe_annual = (annual_return - rf_cont) / annual_vol`
+
+最终结果存入字典：
+```python
+import numpy as np
+
+# 假设 fund_returns 为基金的日收益率序列（此处用示例数据替代，实际使用时替换为真实数据）
+# fund_returns = ...
+
+# 为了演示，生成随机数据作为示例（实际应用中应使用真实数据）
+np.random.seed(42)  # 固定随机种子保证可重复，实际使用时删除此行
+fund_returns = np.random.normal(0.0005, 0.01, 1000)  # 示例日收益率序列
+
+rf = 0.021  # 年复利报价的无风险利率
+rf_cont = np.log(1 + rf)  # 转换为连续复利
+
+mean_daily = np.mean(fund_returns)
+std_daily = np.std(fund_returns, ddof=1)
+
+annual_return = mean_daily * 252
+annual_vol = std_daily * np.sqrt(252)
+
+sharpe_annual = (annual_return - rf_cont) / annual_vol
+
+result = {'sharpe_annual': sharpe_annual}
+```
+
+请提供基金的日收益率数据（`fund` 列全样本），我将重新计算结果。以上示例代码在获得数据后可直接应用。

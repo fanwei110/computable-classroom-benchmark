@@ -1,0 +1,46 @@
+# 《证券投资学》课堂实时编程：CAPM 与证券市场线
+
+import numpy as np
+
+# ================= 1. 参数设定 (小数表示) =================
+rf = 0.023          # 无风险利率
+erm = 0.094         # 市场期望收益
+beta_x = 0.62       # 股票 X 的 beta
+beta_y = 1.18       # 股票 Y 的 beta
+beta_z = 1.51       # 股票 Z 的 beta
+r_y_actual = 0.131  # 股票 Y 的实际收益
+
+# ================= 2. 计算 CAPM 期望收益 =================
+# 公式: E[Ri] = rf + beta_i * (E[Rm] - rf)
+market_premium = erm - rf
+
+er_x = rf + beta_x * market_premium
+er_y = rf + beta_y * market_premium
+er_z = rf + beta_z * market_premium
+
+# ================= 3. 计算 Y 的 Alpha =================
+# 公式: alpha = 实际收益 - CAPM 期望收益
+alpha_y = r_y_actual - er_y
+
+# ================= 4. 填充结果字典 =================
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+
+# ================= 5. 控制台输出 (辅助课堂展示) =================
+if __name__ == '__main__':
+    print("=" * 45)
+    print("CAPM 期望收益与 Alpha 计算结果")
+    print("=" * 45)
+    print(f"市场风险溢价 [E(Rm) - rf]: {market_premium:.4f} ({market_premium*100:.2f}%)")
+    print("-" * 45)
+    print(f"股票 X 的 CAPM 期望收益: {er_x:.5f} ({er_x*100:.3f}%)")
+    print(f"股票 Y 的 CAPM 期望收益: {er_y:.5f} ({er_y*100:.3f}%)")
+    print(f"股票 Z 的 CAPM 期望收益: {er_z:.5f} ({er_z*100:.3f}%)")
+    print("-" * 45)
+    print(f"股票 Y 的 Alpha:         {alpha_y:.5f} ({alpha_y*100:.3f}%)")
+    print("=" * 45)
+

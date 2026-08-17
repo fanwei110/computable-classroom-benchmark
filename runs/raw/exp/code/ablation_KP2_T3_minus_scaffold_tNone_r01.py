@@ -1,0 +1,25 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import stats
+
+# 给定参数
+beta = 1.42
+market_monthly_return = -0.058          # 市场上月收益 -5.8%
+annual_risk_free_rate = 0.047           # 年化无风险利率 4.7%
+
+# 月无风险利率（年利率 / 12）
+monthly_risk_free_rate = annual_risk_free_rate / 12
+
+# CAPM 公式：E(R_i) = R_f + beta * (R_m - R_f)
+# 当月收益无特别说明均使用月度数据
+expected_monthly_return = monthly_risk_free_rate + beta * (market_monthly_return - monthly_risk_free_rate)
+
+# 存入结果字典
+result = {
+    'capm_return_monthly': round(expected_monthly_return, 6)   # 保留足够精度
+}
+
+# 输出验证（可选，但课堂展示清晰）
+print(f"月无风险利率: {monthly_risk_free_rate:.6f}")
+print(f"按 CAPM 该股票上月理论收益: {result['capm_return_monthly']:.6f} （{result['capm_return_monthly']*100:.2f}%）")

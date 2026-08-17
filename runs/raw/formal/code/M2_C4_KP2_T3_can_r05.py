@@ -1,0 +1,28 @@
+import numpy as np
+
+# 题目给定参数
+beta = 1.42
+r_m_monthly = -0.058          # 市场月收益率
+r_f_annual = 0.047            # 年化无风险利率
+
+# 1. 将年无风险利率折算为月利率（简单除法）
+r_f_monthly = r_f_annual / 12
+
+# 2. CAPM 公式：E(r) = r_f + beta * (r_m - r_f)
+capm_return_monthly = r_f_monthly + beta * (r_m_monthly - r_f_monthly)
+
+# 3. 存入结果字典
+result = {
+    'capm_return_monthly': capm_return_monthly
+}
+
+# 输出结果以供检查
+if __name__ == "__main__":
+    print("CAPM 计算")
+    print(f"年无风险利率: {r_f_annual}")
+    print(f"月无风险利率: {r_f_monthly:.6f}")
+    print(f"市场月收益率: {r_m_monthly}")
+    print(f"股票 beta: {beta}")
+    print(f"股票 CAPM 月期望收益率: {capm_return_monthly:.6f} ({capm_return_monthly*100:.4f}%)")
+    print("\n结果字典:")
+    print(result)

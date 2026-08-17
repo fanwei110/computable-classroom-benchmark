@@ -1,0 +1,27 @@
+根据题目约定的计算规则，债券收益率按年复利报价（即每年复利1次，期数$m=1$），因此我们按年现金流进行折现与计算。
+
+**1. 债券价格**
+面值 $F=100$，票息 $C=100 \times 0.046=4.6$，期数 $T=7$，年化收益率 $y=0.053$。
+$$ P = \sum_{t=1}^{7} \frac{4.6}{(1+0.053)^t} + \frac{100}{(1+0.053)^7} \approx 95.986491 $$
+
+**2. Macaulay 久期**
+$$ MacD = \frac{1}{P} \left[ \sum_{t=1}^{7} \frac{t \times 4.6}{(1+0.053)^t} + \frac{7 \times 100}{(1+0.053)^7} \right] \approx 6.114005 \text{ 年} $$
+（由于键名要求为 `_years`，此处直接以年为单位，不转换为交易日。）
+
+**3. 修正久期**
+$$ ModD = \frac{MacD}{1+y/m} = \frac{6.114005}{1+0.053} \approx 5.806274 \text{ 年} $$
+
+**4. 凸性**
+根据价格对收益率的二阶导数：
+$$ Convexity = \frac{1}{P} \left[ \sum_{t=1}^{7} \frac{t(t+1) \times 4.6}{(1+0.053)^{t+2}} + \frac{7 \times 8 \times 100}{(1+0.053)^{9}} \right] \approx 42.019728 $$
+
+按照输出契约，结果存入字典 `result` 中：
+
+```python
+result = {
+    'price': 95.986491,
+    'macaulay_duration_years': 6.114005,
+    'modified_duration_years': 5.806274,
+    'convexity': 42.019728
+}
+```

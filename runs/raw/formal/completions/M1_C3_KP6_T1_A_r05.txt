@@ -1,0 +1,94 @@
+下面分别计算两个问题，并将结果存入 `result` 字典中。
+
+---
+
+### **第一问：年化夏普比率**
+**步骤：**
+1. 计算日收益率的样本均值（`mean_daily_return`）和样本标准差（`std_daily_return`，`ddof=1`）。
+2. 年化收益率 = `mean_daily_return * 252`
+3. 年化波动率 = `std_daily_return * sqrt(252)`
+4. 年化夏普比率 = `(年化收益率 - 无风险利率) / 年化波动率`，其中无风险利率为 `2.1%`（即 `0.021`）。
+
+**假设：**
+- 由于题目未提供具体的 `fund` 列数据，这里假设你已经计算出了 `mean_daily_return` 和 `std_daily_return`。如果需要代码实现，可以参考以下示例（基于 `pandas`）：
+
+```python
+import numpy as np
+import pandas as pd
+
+# 假设 fund 是 DataFrame 的一列，包含日收益率
+# mean_daily_return = fund.mean()
+# std_daily_return = fund.std(ddof=1)
+# annualized_return = mean_daily_return * 252
+# annualized_vol = std_daily_return * np.sqrt(252)
+# sharpe_annual = (annualized_return - 0.021) / annualized_vol
+```
+
+**输出：**
+将计算结果存入 `result['sharpe_annual']`。
+
+---
+
+### **第二问：业绩归因（Brinson 模型）**
+**已知：**
+- 组合权重：`w_p = [0.45, 0.35, 0.20]`
+- 组合行业收益：`r_p = [0.083, 0.021, -0.014]`
+- 基准权重：`w_b = [0.40, 0.40, 0.20]`
+- 基准行业收益：`r_b = [0.067, 0.034, -0.009]`
+
+**步骤：**
+1. **配置效应（Allocation Effect）**：
+   衡量由于权重偏离基准带来的超额收益。
+   公式：
+   \[
+   \text{Allocation Effect} = \sum_{i} (w_{p,i} - w_{b,i}) \cdot r_{b,i}
+   \]
+
+2. **选择效应（Selection Effect）**：
+   衡量由于行业选择优于基准带来的超额收益。
+   公式：
+   \[
+   \text{Selection Effect} = \sum_{i} w_{b,i} \cdot (r_{p,i} - r_{b,i})
+   \]
+
+3. **交互效应（Interaction Effect）**：
+   衡量权重和行业选择的协同作用。
+   公式：
+   \[
+   \text{Interaction Effect} = \sum_{i} (w_{p,i} - w_{b,i}) \cdot (r_{p,i} - r_{b,i})
+   \]
+
+**计算：**
+```python
+w_p = np.array([0.45, 0.35, 0.20])
+w_b = np.array([0.40, 0.40, 0.20])
+r_p = np.array([0.083, 0.021, -0.014])
+r_b = np.array([0.067, 0.034, -0.009])
+
+allocation_effect = np.sum((w_p - w_b) * r_b)
+selection_effect = np.sum(w_b * (r_p - r_b))
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+```
+
+**结果：**
+- 配置效应 = `(0.45-0.40)*0.067 + (0.35-0.40)*0.034 + (0.20-0.20)*(-0.009) = 0.00235`
+- 选择效应 = `0.40*(0.083-0.067) + 0.40*(0.021-0.034) + 0.20*(-0.014+0.009) = 0.0024`
+- 交互效应 = `(0.45-0.40)*(0.083-0.067) + (0.35-0.40)*(0.021-0.034) + (0.20-0.20)*(-0.014+0.009) = 0.00045`
+
+---
+
+### **最终输出**
+将所有结果存入 `result` 字典：
+
+```python
+result = {
+    'sharpe_annual': sharpe_annual,  # 第一问的结果（需替换为实际计算值）
+    'allocation_effect': 0.00235,
+    'selection_effect': 0.0024,
+    'interaction_effect': 0.00045
+}
+```
+
+**注意：**
+- 第一问的 `sharpe_annual` 需要根据实际的 `fund` 数据计算。如果提供数据，可以进一步完善。
+- 第二问的业绩归因结果已精确计算。

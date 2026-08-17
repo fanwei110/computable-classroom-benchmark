@@ -1,0 +1,35 @@
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+S = 103.7       # 标的资产价格
+K = 97.5        # 行权价
+vol = 0.276     # 波动率
+r_annual = 0.043 # 年复利报价的无风险利率
+T = 0.58        # 剩余期限（年）
+
+# 计算约定：债券收益率按年复利报价，期权无风险利率按连续复利
+# 将年复利利率转换为连续复利利率
+r = np.log(1 + r_annual)
+
+# Black-Scholes 欧式看涨期权公式计算
+d1 = (np.log(S / K) + (r + 0.5 * vol ** 2) * T) / (vol * np.sqrt(T))
+d2 = d1 - vol * np.sqrt(T)
+
+# 1. Call Price
+call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+
+# 2. Call Delta
+call_delta = norm.cdf(d1)
+
+# 3. Call Vega (约定：按小数表示，即波动率变动1单位(100%)的绝对变化，此处计算的vega对应1个单位的小数波动率)
+# 标准vega公式为 S * norm.pdf(d1) * sqrt(T)，对应波动率变动0.01时的变化需乘以0.01
+# 题目要求“所有利率、收益率、波动率与权重用小数表示”，故vega直接取小数形式
+call_vega = S * norm.pdf(d1) * np.sqrt(T)
+
+# 按照输出契约存入字典
+result = {
+    'call_price': call_price,
+    'call_delta': call_delta,
+    'call_vega': call_vega
+}

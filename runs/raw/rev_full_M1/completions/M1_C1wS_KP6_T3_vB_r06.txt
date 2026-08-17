@@ -1,0 +1,71 @@
+以下是一个自包含的Python脚本，用于计算基金的年化夏普比率。脚本假设CSV文件中包含名为'fund'的列，表示基金的收益率数据（可以是日度、月度等，脚本会自动处理年化）。
+
+```python
+import numpy as np
+import pandas as pd
+
+# 1. 读取CSV文件（假设CSV文件名为'fund_returns.csv'，且包含'fund'列）
+# 注意：实际使用时需确保CSV文件路径正确
+try:
+    df = pd.read_csv('fund_returns.csv')  # 请根据实际文件名调整
+    fund_returns = df['fund'].dropna().values  # 提取'fund'列并去除缺失值
+except FileNotFoundError:
+    raise FileNotFoundError("请确保CSV文件存在且路径正确，文件中包含'fund'列")
+except KeyError:
+    raise KeyError("CSV文件中未找到'fund'列")
+
+# 2. 设定无风险利率（年化2.1%，需转换为与收益率频率一致）
+rf_annual = 0.021
+n_periods_per_year = len(fund_returns) / (pd.to_datetime(df['date']).max() - pd.to_datetime(df['date']).min()).days * 365.25 if 'date' in df.columns else 12  # 默认月度数据
+rf_period = rf_annual / n_periods_per_year
+
+# 计算超额收益
+excess_returns = fund_returns - rf_period
+
+# 计算年化夏普比率
+sharpe_ratio = np.mean(excess_returns) / np.std(excess_returns, ddof=1) * np.sqrt(n_periods_per_year)
+
+# 3. 存储结果
+result = {
+    'sharpe_annual': sharpe_ratio
+}
+
+# 输出结果（供教师投屏）
+print("年化夏普比率:", result['sharpe_annual'])
+```
+
+### 关键假设与说明：
+1. **CSV文件格式**：
+   - 默认CSV文件名为`fund_returns.csv`，包含`fund`列（基金收益率）和可选的`date`列（用于推断频率）。
+   - 如果CSV文件无`date`列，脚本默认数据为**月度频率**（`n_periods_per_year=12`）。
+
+2. **频率处理**：
+   - 如果CSV包含`date`列，脚本会自动计算实际频率（如日度、周度等），并相应调整无风险利率和年化系数。
+   - 如果无`date`列，需手动确认数据频率（如修改`n_periods_per_year`为252表示日度数据）。
+
+3. **无风险利率**：
+   - 年化无风险利率为2.1%，脚本会将其转换为与收益率频率一致的周期利率（如月度利率=2.1%/12）。
+
+4. **夏普比率计算**：
+   - 使用样本标准差（`ddof=1`）计算波动率。
+   - 年化系数为`sqrt(n_periods_per_year)`。
+
+5. **输出**：
+   - 结果存储在`result`字典中，键名严格为`'sharpe_annual'`。
+
+### 示例CSV格式（`fund_returns.csv`）：
+```csv
+date,fund
+2020-01-01,0.01
+2020-02-01,0.015
+2020-03-01,-0.02
+...
+```
+或（无日期列）：
+```csv
+fund
+0.01
+0.015
+-0.02
+...
+```

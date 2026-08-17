@@ -1,0 +1,29 @@
+```python
+import pandas as pd
+import numpy as np
+
+# 1. 读取快照 CSV
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 提取 fund 列的日收益率
+daily_returns = df['fund']
+
+# 2. 日收益减去日无风险利率（年利率/252）
+rf_annual = 0.021
+rf_daily = rf_annual / 252
+excess_daily_returns = daily_returns - rf_daily
+
+# 3. 用样本标准差（ddof=1）计算全样本夏普，按 sqrt(252) 年化
+mean_excess = np.mean(excess_daily_returns)
+std_excess = np.std(excess_daily_returns, ddof=1)
+
+daily_sharpe = mean_excess / std_excess
+sharpe_annual = daily_sharpe * np.sqrt(252)
+
+# 将结果存入字典
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+print(result)
+```

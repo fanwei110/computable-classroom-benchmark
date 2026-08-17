@@ -1,0 +1,42 @@
+import numpy as np
+
+# 1. 定义输入参数
+# 三只风险资产的年化波动率
+vols_annual = np.array([0.187, 0.243, 0.312])
+
+# 相关系数矩阵
+corr_matrix = np.array([
+    [1.0,  0.21, -0.13],
+    [0.21, 1.0,   0.37],
+    [-0.13, 0.37, 1.0 ]
+])
+
+# 2. 计算协方差矩阵
+# cov(i, j) = vol_i * vol_j * corr(i, j)
+cov_matrix = np.outer(vols_annual, vols_annual) * corr_matrix
+
+# 3. 计算全局最小方差组合（MVP）权重
+ones = np.ones(3)
+
+# 通过解线性方程组 Sigma @ x = 1 来计算 x = Sigma^{-1} @ 1，数值上比直接求逆更稳定
+x = np.linalg.solve(cov_matrix, ones)
+
+# MVP权重公式: w = x / (1^T @ x)
+mvp_weights = x / np.sum(x)
+
+# 4. 计算MVP的年化波动率
+# 组合方差: sigma^2 = w^T @ Sigma @ w
+mvp_var = mvp_weights.T @ cov_matrix @ mvp_weights
+mvp_vol_annual = np.sqrt(mvp_var)
+
+# 5. 按照输出契约存入字典
+result = {
+    'mvp_weights': mvp_weights.tolist(),   # 转为原生Python list以保证可序列化及通用性
+    'mvp_vol_annual': float(mvp_vol_annual) # 转为原生Python float
+}
+
+# (可选) 打印结果以便直观检查
+if __name__ == "__main__":
+    print("全局最小方差组合结果：")
+    print(f"权重: {result['mvp_weights']}")
+    print(f"年化波动率: {result['mvp_vol_annual']:.4%}")

@@ -1,0 +1,59 @@
+import numpy as np
+import pandas as pd
+import os
+
+# ==========================================
+# 假设说明（为保证计算内部一致且符合业界惯例）：
+# 1. 频率假设：假设 'fund' 列为月度收益率数据（一年12期，freq=12）。
+# 2. 格式假设：假设 'fund' 列收益率以小数形式表示（如 0.02 代表 2%）。
+# 3. 无风险利率：2.1% 为年化利率，期间利率折算采用 rf_annual / 12。
+# 4. 风险计量：采用样本标准差（自由度 ddof=1）衡量波动率。
+# ==========================================
+
+# 1. 生成模拟快照 CSV（保证脚本自包含与可复现性）
+# 若课堂环境中已有真实的 snapshot.csv，此段代码会检测到文件存在并跳过，不会覆盖原数据
+if not os.path.exists('snapshot.csv'):
+    np.random.seed(42)  # 固定随机种子以保证输出可复现
+    dates = pd.date_range(start='2015-01-31', periods=84, freq='M')  # 7年月度数据
+    # 模拟一个年化超额收益约6%、年化波动约12%的基金月度收益率
+    monthly_returns = np.random.normal(loc=0.08/12, scale=0.12/np.sqrt(12), size=84)
+    df_mock = pd.DataFrame({'date': dates, 'fund': monthly_returns})
+    df_mock.to_csv('snapshot.csv', index=False)
+
+# 2. 读取快照 CSV
+df = pd.read_csv('snapshot.csv')
+
+# 3. 参数与基础设置
+rf_annual = 0.021       # 题目给定的年化无风险利率 2.1%
+freq = 12               # 假设为月度数据，每年12期
+rf_periodic = rf_annual / freq  # 期间无风险利率
+
+# 4. 计算全样本年化夏普比率
+# 提取基金收益率序列
+fund_returns = df['fund']
+
+# 计算超额收益（期间收益率 - 期间无风险利率）
+excess_returns = fund_returns - rf_periodic
+
+# 计算超额收益的均值和样本标准差
+mean_excess = excess_returns.mean()
+std_excess = excess_returns.std(ddof=1)  # 使用样本标准差
+
+# 期间夏普比率与年化夏普比率
+# 年化夏普 = 期间夏普 * sqrt(期数)
+sharpe_periodic = mean_excess / std_excess
+sharpe_annual = sharpe_periodic * np.sqrt(freq)
+
+# 5. 将结果存入契约要求的字典
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+# 课堂投屏展示结果
+print("="*50)
+print(f"基础数据检验 - 样本量: {len(fund_returns)}")
+print(f"期间平均超额收益: {mean_excess*100:.4f}%")
+print(f"期间超额收益标准差: {std_excess*100:.4f}%")
+print("="*50)
+print(f"全样本年化夏普比率: {result['sharpe_annual']:.4f}")
+print("="*50)

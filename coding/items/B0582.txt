@@ -1,0 +1,49 @@
+=== B0582  任务 KP6_T3 (T3) ===
+
+--- 任务要求的输出键 ---
+sharpe_annual
+
+--- 判分失败明细 ---
+sharpe_annual: 提交值 None  |  参考值 0.21202128793473451
+
+--- 提取出的代码 ---
+result = {'sharpe_annual': None}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+由于您没有提供具体的“课程数据fund列”，我无法直接计算出具体的年化夏普比率数值。但我可以为您提供完整的计算逻辑和Python代码。当您将数据代入后，即可得到结果。
+
+### 计算逻辑与公式
+假设 `fund` 列为基金的**日收益率**序列，无风险利率为 2.1%（年化），年化夏普比率的计算步骤如下：
+1. **计算日无风险利率**：$R_{f,daily} = (1 + 0.021)^{1/252} - 1$ （也可简化为 $0.021 / 252$）
+2. **计算日均超额收益率**：$Mean_{excess} = Mean(R_{fund}) - R_{f,daily}$
+3. **计算日收益率标准差**：$Std_{daily} = Std(R_{fund})$
+4. **计算年化夏普比率**：$Sharpe_{annual} = \frac{Mean_{excess}}{Std_{daily}} \times \sqrt{252}$
+
+### Python 计算代码
+```python
+import pandas as pd
+import numpy as np
+
+# 假设 df 是包含课程数据的 DataFrame，'fund' 是基金日收益率列
+# fund_returns = df['fund'] 
+
+# 无风险利率
+rf_annual = 0.021
+
+# 计算日无风险利率
+rf_daily = (1 + rf_annual) ** (1/252) - 1
+
+# 计算日均超额收益率和标准差
+mean_daily_excess = fund_returns.mean() - rf_daily
+std_daily = fund_returns.std()
+
+# 计算年化夏普比率
+sharpe_annual = (mean_daily_excess / std_daily) * np.sqrt(252)
+```
+
+按照您的输出契约，由于缺乏具体数据，计算结果暂用 `None` 占位。当您运行上述代码后，将计算出的数值填入即可：
+
+```python
+result = {'sharpe_annual': None}
+```

@@ -1,0 +1,84 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ============================================================
+# 1. 参数设定
+# ============================================================
+r = np.array([0.071, 0.124])          # 期望年收益
+sigma = np.array([0.163, 0.289])      # 年化波动率
+rhos = [0.15, 0.45, 0.75]            # 要考察的相关系数
+
+sigma1_sq = sigma[0] ** 2
+sigma2_sq = sigma[1] ** 2
+
+# ============================================================
+# 2. 辅助函数：给定资产1权重，返回组合收益与波动率
+# ============================================================
+def portfolio_stats(w1, r, sigma, rho):
+    w2 = 1.0 - w1
+    rp = w1 * r[0] + w2 * r[1]
+    var = (w1 ** 2 * sigma[0] ** 2 + w2 ** 2 * sigma[1] ** 2 +
+           2 * w1 * w2 * rho * sigma[0] * sigma[1])
+    return rp, np.sqrt(var)
+
+# ============================================================
+# 3. 扫描权重，绘制前沿曲线，并标注最小方差组合(MVP)
+# ============================================================
+w1_range = np.linspace(-1.5, 2.5, 800)   # 足够宽的权重扫描范围
+
+plt.figure(figsize=(10, 6))
+
+# 用来保存 rho = 0.45 的结果
+mvp_vol_045 = None
+frontier_vol_target_045 = None
+
+for rho in rhos:
+    # 扫描所有组合，画曲线
+    rp_scan, vol_scan = portfolio_stats(w1_range, r, sigma, rho)
+    plt.plot(vol_scan, rp_scan, label=f'$\\rho = {rho}$')
+    
+    # 解析求解最小方差组合权重
+    cov12 = rho * sigma[0] * sigma[1]
+    denom = sigma1_sq + sigma2_sq - 2.0 * cov12
+    w1_mvp = (sigma2_sq - cov12) / denom
+    r_mvp, vol_mvp = portfolio_stats(w1_mvp, r, sigma, rho)
+    
+    # 在曲线上标出 MVP
+    current_color = plt.gca().lines[-1].get_color()
+    plt.scatter(vol_mvp, r_mvp, color=current_color, marker='o',
+                s=100, zorder=5, edgecolors='k', linewidth=0.5)
+    
+    # 针对 rho = 0.45 保存所需数值
+    if rho == 0.45:
+        mvp_vol_045 = vol_mvp
+        
+        # 目标收益 10% 对应的权重
+        w1_target = (0.10 - r[1]) / (r[0] - r[1])   # 解线性方程
+        _, vol_target = portfolio_stats(w1_target, r, sigma, rho)
+        frontier_vol_target_045 = vol_target
+
+# ============================================================
+# 4. 图表装饰与保存
+# ============================================================
+plt.xlabel('Annualized Volatility (standard deviation)')
+plt.ylabel('Expected Annual Return')
+plt.title('Mean–Variance Frontier for Two Risky Assets')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+
+figure_path = 'frontier.png'
+plt.savefig(figure_path, dpi=150)
+plt.close()
+
+# ============================================================
+# 5. 整理输出结果
+# ============================================================
+result = {
+    'mvp_vol_at_rho45': float(mvp_vol_045),
+    'frontier_vol_at_target': float(frontier_vol_target_045),
+    'figure_path': figure_path
+}
+
+# 打印以便课堂查看
+print(result)

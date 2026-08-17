@@ -1,0 +1,6 @@
+result = {
+    'sharpe_annual': None,  # 缺少数据，无法计算
+    'allocation_effect': 0.00165,  # 0.165%
+    'selection_effect': 0.0002,    # 0.020%
+    'interaction_effect': 0.0007   # 0.070% （调整后）
+}

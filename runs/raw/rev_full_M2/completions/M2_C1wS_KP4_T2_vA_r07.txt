@@ -1,0 +1,56 @@
+```python
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+
+# ==================== 可调参数 ====================
+K = 97.5          # 行权价
+r = 0.043         # 无风险利率（4.3%）
+T = 0.58          # 剩余期限（年）
+S_min, S_max = 70, 140   # 标的价格区间
+
+# 波动率列表（可调）
+volatilities = [0.15, 0.276, 0.40]
+vol_labels = ['σ = 15%', 'σ = 27.6%', 'σ = 40%']
+
+# 目标点
+S_target = 110.0
+sigma_target = 0.276
+
+# ==================== 函数定义 ====================
+def delta_call(S, K, r, T, sigma):
+    """Black-Scholes 欧式看涨期权的 Delta"""
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# ==================== 计算与绘图 ====================
+S_array = np.linspace(S_min, S_max, 500)   # 标的价格网格
+
+plt.figure(figsize=(10, 6))
+for sigma, label in zip(volatilities, vol_labels):
+    delta_vals = delta_call(S_array, K, r, T, sigma)
+    plt.plot(S_array, delta_vals, label=label)
+
+plt.xlabel('标的价格 S')
+plt.ylabel('Delta')
+plt.title('欧式看涨期权 Delta 随标的价格变化 (K=97.5, r=4.3%, T=0.58)')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 保存图形
+figure_path = 'delta_plot.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ==================== 指定点 delta ====================
+delta_at_s110 = delta_call(S_target, K, r, T, sigma_target)
+
+# ==================== 结果输出 ====================
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': figure_path
+}
+
+print(f"标的 S=110, 波动率 σ=27.6% 时的 delta = {delta_at_s110:.6f}")
+print(f"图形已保存至: {figure_path}")
+```

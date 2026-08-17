@@ -1,0 +1,45 @@
+以下是自包含的Python脚本，按照要求计算全样本年化夏普比率：
+
+```python
+import pandas as pd
+import numpy as np
+
+# 1. 读取数据并设定无风险利率
+file_path = 'data/market_snapshot_v1.csv'
+df = pd.read_csv(file_path)
+risk_free_rate = 0.021  # 年化无风险利率2.1%
+
+# 提取fund列（假设fund列代表基金的收益率）
+fund_returns = df['fund'].dropna()
+
+# 2. 计算年化夏普比率
+# 日频数据转年化：乘以252个交易日
+annualized_excess_return = (fund_returns.mean() - risk_free_rate / 252) * 252
+annualized_volatility = fund_returns.std() * np.sqrt(252)
+sharpe_ratio_annual = annualized_excess_return / annualized_volatility
+
+# 3. 存储结果
+result = {
+    'sharpe_annual': sharpe_ratio_annual
+}
+
+# 输出结果（可选，用于验证）
+print(result)
+```
+
+### 说明：
+1. **数据读取**：从CSV文件中读取`fund`列，假设该列代表基金的日收益率。
+2. **无风险利率**：年化无风险利率2.1%被转换为日频（除以252个交易日）。
+3. **年化计算**：
+   - 超额收益 = (日均收益率 - 日无风险利率) × 252
+   - 波动率 = 日收益率标准差 × √252
+   - 夏普比率 = 年化超额收益 / 年化波动率
+4. **结果存储**：将年化夏普比率存入`result`字典，键名为`'sharpe_annual'`。
+
+### 假设：
+- `fund`列为日收益率（如题目未明确，默认如此）。
+- 年化基于252个交易日（金融市场常用假设）。
+- 无风险利率为连续复利（如需简单复利，需调整公式）。
+
+### 复现性：
+代码自包含，不依赖外部数据或网络，输出确定可复现。

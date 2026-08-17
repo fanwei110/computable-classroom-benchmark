@@ -1,0 +1,90 @@
+要计算该债券在收益率上行80bp（即0.8%）时的价格跌幅，我们可以使用久期（Duration）和凸性（Convexity）的近似公式。对于7年期、票面利率4.6%、当前收益率5.3%的债券，我们首先计算其修正久期（Modified Duration），然后估计价格变化。
+
+### 步骤：
+1. **计算债券的久期（Macaulay Duration）**：
+   久期是债券现金流的加权平均时间。对于固定利率债券，久期公式为：
+   \[
+   \text{Duration} = \frac{1}{P} \sum_{t=1}^{T} \frac{t \cdot C}{(1 + y)^t} + \frac{T \cdot F}{(1 + y)^T}
+   \]
+   其中：
+   - \( P \) 是债券当前价格（100元，平价发行）。
+   - \( C \) 是每期票息（\( 100 \times 4.6\% = 4.6 \)元，每年支付一次）。
+   - \( y \) 是当前收益率（5.3%或0.053）。
+   - \( F \) 是面值（100元）。
+   - \( T \) 是期限（7年）。
+
+   由于债券是平价发行（价格=面值=100元），久期可以简化为：
+   \[
+   \text{Duration} \approx \frac{1 + y}{y} \left[1 - \frac{1}{(1 + y)^T}\right] - \frac{T}{1 + y}
+   \]
+   代入数值：
+   \[
+   \text{Duration} \approx \frac{1.053}{0.053} \left[1 - \frac{1}{(1.053)^7}\right] - \frac{7}{1.053}
+   \]
+   计算：
+   - \( (1.053)^7 \approx 1.454 \)
+   - \( \frac{1}{1.454} \approx 0.688 \)
+   - \( 1 - 0.688 = 0.312 \)
+   - \( \frac{1.053}{0.053} \times 0.312 \approx 6.19 \)
+   - \( \frac{7}{1.053} \approx 6.65 \)
+   - 久期 \( \approx 6.19 - 6.65 + 7 = 6.54 \)（近似值，实际计算可能略有不同）。
+
+   更精确的久期计算（逐期现金流加权）：
+   - 计算每期现金流的现值权重：
+     \[
+     \text{Duration} = \frac{1}{100} \left[ \sum_{t=1}^{7} \frac{t \cdot 4.6}{(1.053)^t} + \frac{7 \cdot 100}{(1.053)^7} \right]
+     \]
+   - 计算各期现值：
+     - \( t=1 \): \( \frac{4.6}{1.053} \approx 4.37 \)
+     - \( t=2 \): \( \frac{4.6}{1.053^2} \approx 4.15 \)
+     - \( t=3 \): \( \frac{4.6}{1.053^3} \approx 3.94 \)
+     - \( t=4 \): \( \frac{4.6}{1.053^4} \approx 3.74 \)
+     - \( t=5 \): \( \frac{4.6}{1.053^5} \approx 3.55 \)
+     - \( t=6 \): \( \frac{4.6}{1.053^6} \approx 3.37 \)
+     - \( t=7 \): \( \frac{4.6 + 100}{1.053^7} \approx \frac{104.6}{1.454} \approx 71.94 \)
+   - 加权求和：
+     \[
+     \text{Duration} = \frac{1 \cdot 4.37 + 2 \cdot 4.15 + 3 \cdot 3.94 + 4 \cdot 3.74 + 5 \cdot 3.55 + 6 \cdot 3.37 + 7 \cdot 71.94}{100} \approx 5.87
+     \]
+   - 修正久期（Modified Duration）：
+     \[
+     \text{Modified Duration} = \frac{\text{Duration}}{1 + y} = \frac{5.87}{1.053} \approx 5.57
+     \]
+
+2. **估计价格变化**：
+   价格变化的近似公式为：
+   \[
+   \frac{\Delta P}{P} \approx -\text{Modified Duration} \cdot \Delta y + \frac{1}{2} \cdot \text{Convexity} \cdot (\Delta y)^2
+   \]
+   其中：
+   - \( \Delta y = 0.008 \)（80bp）。
+   - 凸性（Convexity）可以近似为：
+     \[
+     \text{Convexity} \approx \frac{1}{P} \sum_{t=1}^{T} \frac{t(t+1) \cdot C}{(1 + y)^{t+2}} + \frac{T(T+1) \cdot F}{(1 + y)^{T+2}}
+     \]
+     对于平价债券，凸性近似为：
+     \[
+     \text{Convexity} \approx \frac{\text{Duration}^2 + \text{Duration} + \frac{T}{1 + y}}{(1 + y)^2}
+     \]
+     代入久期=5.87，\( y=0.053 \)，\( T=7 \)：
+     \[
+     \text{Convexity} \approx \frac{5.87^2 + 5.87 + \frac{7}{1.053}}{1.053^2} \approx \frac{34.46 + 5.87 + 6.65}{1.109} \approx \frac{46.98}{1.109} \approx 42.36
+     \]
+   - 价格变化：
+     \[
+     \frac{\Delta P}{P} \approx -5.57 \cdot 0.008 + \frac{1}{2} \cdot 42.36 \cdot (0.008)^2 \approx -0.04456 + 0.001355 \approx -0.0432 \text{ 或 } -4.32\%
+     \]
+   - 忽略凸性的影响（主要由久期主导）：
+     \[
+     \frac{\Delta P}{P} \approx -5.57 \cdot 0.008 \approx -0.04456 \text{ 或 } -4.46\%
+     \]
+
+### 结果：
+由于凸性的影响较小（约0.14%），价格跌幅主要由久期决定，约为 **-4.46%**。为了简化，我们取 **-4.4%** 作为近似值。
+
+### 输出：
+```python
+result = {
+    'price_drop_pct': -4.4  # 价格跌幅百分比（负号表示下跌）
+}
+```

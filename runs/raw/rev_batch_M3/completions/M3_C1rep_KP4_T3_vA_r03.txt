@@ -1,0 +1,29 @@
+要计算隐含波动率涨一个百分点（即隐含波动率增加1%，从27.6%变为28.6%，对应波动率绝对值增加0.01）时期权价格的变化量，我们可以直接计算期权的 Vega（即波动率每变动1%对应的价格变动量，等于 $\frac{\partial V}{\partial \sigma} \times 0.01$）。由于看涨期权和看跌期权的 Vega 相同，我们不需要区分期权类型。
+
+已知参数：
+- 标定资产价格 $S = 103.7$
+- 行权价 $K = 97.5$
+- 隐含波动率 $\sigma = 27.6\% = 0.276$
+- 无风险利率 $r = 4.3\% = 0.043$
+- 剩余期限 $T = 0.58$ 年
+
+**计算步骤：**
+1. 计算 $d_1$：
+$$d_1 = \frac{\ln(S/K) + (r + \frac{\sigma^2}{2})T}{\sigma\sqrt{T}}$$
+$$\ln(103.7/97.5) \approx 0.06168$$
+$$(r + \frac{\sigma^2}{2})T = (0.043 + \frac{0.276^2}{2}) \times 0.58 \approx 0.04703$$
+$$d_1 = \frac{0.06168 + 0.04703}{0.276 \times \sqrt{0.58}} = \frac{0.10871}{0.21020} \approx 0.51697$$
+
+2. 计算正态分布密度函数 $N'(d_1)$：
+$$N'(d_1) = \frac{1}{\sqrt{2\pi}} e^{-\frac{d_1^2}{2}} = \frac{1}{\sqrt{2\pi}} e^{-\frac{0.51697^2}{2}} \approx 0.39894 \times 0.87493 \approx 0.34905$$
+
+3. 计算 Vega：
+$$\text{Vega} = S \times N'(d_1) \times \sqrt{T}$$
+$$\text{Vega} = 103.7 \times 0.34905 \times \sqrt{0.58} \approx 27.5656$$
+
+4. 计算隐含波动率涨1个百分点（$\Delta\sigma = 0.01$）时的价格变化：
+$$\Delta \text{Price} = \text{Vega} \times \Delta\sigma = 27.5656 \times 0.01 \approx 0.2757$$
+
+```python
+result = {'price_change': 0.2757}
+```

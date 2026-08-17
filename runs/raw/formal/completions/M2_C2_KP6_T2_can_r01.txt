@@ -1,0 +1,79 @@
+```python
+import matplotlib
+matplotlib.use('Agg')  # éäº¤äºåç«¯ï¼é²æ­¢å¼¹çª
+
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ===================== å¯è°åæ° =====================
+WINDOW = 60                # æ»å¨çªå£ï¼äº¤ææ¥ï¼
+ANNUAL_RF = 0.021          # å¹´åæ é£é©å©ç
+TRADING_DAYS = 252         # æ¯å¹´äº¤ææ¥æ°
+# ===================================================
+
+# è®¡ç®æ¥æ é£é©å©çï¼åå©æè§£ï¼ç¬¦åæå­¦æ¯ä¾ï¼
+rf_daily = ANNUAL_RF / TRADING_DAYS
+
+# --------------------- 1. è¯»åæ°æ® ---------------------
+DATA_PATH = 'data/market_snapshot_v1.csv'
+df = pd.read_csv(DATA_PATH)
+
+# å¤çæ¥æåï¼å¦æå­å¨åè®¾ä¸ºç´¢å¼ï¼å¦åä½¿ç¨èªç¶åºå·ï¼
+date_col = None
+for col in ['date', 'Date', 'DATE']:
+    if col in df.columns:
+        date_col = col
+        break
+
+if date_col is not None:
+    df[date_col] = pd.to_datetime(df[date_col])
+    df = df.set_index(date_col)
+    df = df.sort_index()          # ç¡®ä¿ææ¶é´ååº
+else:
+    # æ æ¥æåæ¶ï¼ç¨æ´æ°ç´¢å¼ä½ä¸ºæ¨ªè½´ï¼å¹¶å¨å¾ä¸­æ æ³¨ä¸ºâäº¤ææ¥åºå·â
+    df.index.name = 'TradingDay'
+
+# æååºéæ¥æ¶ççåºåï¼åè®¾å·²ä¸ºå°æ°å½¢å¼ï¼å¦0.001ä»£è¡¨0.1%ï¼
+fund_ret = df['fund']
+
+# --------------------- 2. è®¡ç®æ»å¨å¹´åå¤æ®æ¯ç ---------------------
+excess_ret = fund_ret - rf_daily                     # æ¥è¶æ¶ç
+
+# 60æ¥æ»å¨åå¼ä¸æ åå·®ï¼æ ·æ¬æ åå·®ï¼ddof=1ï¼
+rolling_mean = excess_ret.rolling(window=WINDOW).mean()
+rolling_std = excess_ret.rolling(window=WINDOW).std(ddof=1)
+
+# å¹´åå¤æ®æ¯ç = â252 * (æ¥è¶æ¶çåå¼ / æ¥è¶æ¶çæ åå·®)
+rolling_sharpe = np.sqrt(TRADING_DAYS) * (rolling_mean / rolling_std)
+
+# --------------------- 3. æåä¸ä¸ªçªå£çå¤æ®å¼ ---------------------
+last_sharpe = rolling_sharpe.iloc[-1]                # æè¿ä¸ä¸ªå®æ´çªå£
+if isinstance(last_sharpe, pd.Series):
+    last_sharpe = last_sharpe.iloc[0]                # è¥è¿åSeriesï¼åæ é
+rolling_sharpe_last = float(last_sharpe) if not pd.isna(last_sharpe) else np.nan
+
+# --------------------- 4. ç»å¾å¹¶ä¿å­ ---------------------
+fig, ax = plt.subplots(figsize=(12, 5))
+ax.plot(rolling_sharpe.index, rolling_sharpe.values, color='#1f77b4', linewidth=1.2)
+ax.axhline(y=0, color='gray', linestyle='--', linewidth=0.8)
+ax.set_title(f'{WINDOW}-Day Rolling Annualized Sharpe Ratio (Fund)', fontsize=14)
+ax.set_ylabel('Annualized Sharpe Ratio')
+ax.set_xlabel('Date' if date_col is not None else 'Trading Day Index')
+ax.grid(True, alpha=0.3)
+fig.tight_layout()
+
+figure_path = 'rolling_sharpe.png'
+fig.savefig(figure_path, dpi=150)
+plt.close(fig)
+
+# ===================== è¾åºå¥çº¦ =====================
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+# æå°ç»æä¾æå¸æ¥çï¼å¯éï¼
+print(result)
+```

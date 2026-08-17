@@ -1,0 +1,104 @@
+根据资本资产定价模型（CAPM），证券市场线（SML）的公式为：
+$$E(R_i) = r_f + \beta_i \times (E(R_m) - r_f)$$
+
+### 1. 计算过程
+- **SML斜率**：$E(R_m) - r_f = 9.4\% - 2.3\% = 7.1\% = 0.071$
+- **Beta=1.27时的期望收益**：$E(R) = 2.3\% + 1.27 \times 7.1\% = 2.3\% + 9.017\% = 11.317\% = 0.11317$
+
+### 2. 绘图与交互逻辑
+使用 `matplotlib` 绘制SML曲线，标注给定的三个资产点 X、Y、Z。通过 `matplotlib.widgets.Slider` 添加两个滑动条，用于在课堂上实时调整无风险利率 $r_f$ 和市场期望收益 $E(R_m)$，SML直线会随之动态变化，而三个资产的坐标点保持固定，方便直观判断资产被高估还是低估。
+
+### 3. Python 完整代码
+
+```python
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+from matplotlib.ticker import PercentFormatter
+
+# --- 1. 核心计算 ---
+rf = 0.023
+erm = 0.094
+
+sml_slope = erm - rf
+beta_target = 1.27
+er_at_beta_127 = rf + beta_target * sml_slope
+
+# --- 2. 绘图与交互 ---
+fig, ax = plt.subplots(figsize=(10, 7))
+plt.subplots_adjust(bottom=0.25)
+
+beta_range = [0, 2]
+def get_sml(betas, rf_val, erm_val):
+    return [rf_val + b * (erm_val - rf_val) for b in betas]
+
+# 绘制初始SML
+er_range = get_sml(beta_range, rf, erm)
+line, = ax.plot(beta_range, er_range, 'b-', linewidth=2, label='SML')
+
+# 标注三个固定资产点 X, Y, Z
+points = {
+    'X': (0.62, 0.081),
+    'Y': (1.18, 0.131),
+    'Z': (1.51, 0.099)
+}
+for name, (b, er) in points.items():
+    ax.scatter(b, er, color='red', zorder=5)
+    ax.annotate(f'{name} ({b}, {er:.1%})', (b, er), textcoords="offset points", xytext=(10, 5), fontsize=11)
+
+# 标记市场组合与无风险资产
+ax.scatter(1, erm, color='green', marker='D', zorder=5, label='Market (Beta=1)')
+ax.scatter(0, rf, color='orange', marker='s', zorder=5, label='Risk-Free Rate')
+
+# 图表格式设置
+ax.set_xlabel('Beta ($\\beta$)', fontsize=12)
+ax.set_ylabel('Expected Return $E(R)$', fontsize=12)
+ax.set_title('Security Market Line (SML)', fontsize=14)
+ax.set_xlim(0, 2)
+ax.set_ylim(0, 0.20)
+ax.yaxis.set_major_formatter(PercentFormatter(1.0))
+ax.grid(True, linestyle='--', alpha=0.7)
+ax.legend(loc='upper left')
+
+# 添加滑动条 (用于上课调参)
+ax_rf = plt.axes([0.2, 0.1, 0.6, 0.03])
+ax_erm = plt.axes([0.2, 0.05, 0.6, 0.03])
+
+slider_rf = Slider(ax_rf, '$r_f$', 0.0, 0.10, valinit=rf, valstep=0.001)
+slider_erm = Slider(ax_erm, '$E(R_m)$', 0.0, 0.20, valinit=erm, valstep=0.001)
+
+def update(val):
+    rf_new = slider_rf.val
+    erm_new = slider_erm.val
+    # 更新SML线的Y值
+    line.set_ydata(get_sml(beta_range, rf_new, erm_new))
+    fig.canvas.draw_idle()
+
+slider_rf.on_changed(update)
+slider_erm.on_changed(update)
+
+# 保存图像
+figure_path = 'sml_plot.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+
+# --- 3. 按照输出契约存入字典 ---
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': figure_path
+}
+
+print(result)
+```
+
+### 4. 输出结果
+运行上述代码后，将生成字典 `result`，内容如下：
+
+```json
+{
+  "sml_slope": 0.071,
+  "er_at_beta_127": 0.11317,
+  "figure_path": "sml_plot.png"
+}
+```
+
+*注：执行代码时会弹出交互式图表窗口，拖动底部的 $r_f$ 和 $E(R_m)$ 滑块即可实时观察SML线的旋转与平移，而红点（资产X/Y/Z）位置固定，便于课堂演示资产估值偏离情况。关闭图表窗口或代码执行完毕后，图片即被保存至本地。*

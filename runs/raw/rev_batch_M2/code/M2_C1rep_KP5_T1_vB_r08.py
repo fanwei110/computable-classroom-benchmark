@@ -1,0 +1,24 @@
+import math
+
+# 给定参数
+position = 1850000  # 仓位，单位万这里用元？题目说185万，我们统一用万或元，最终结果可用万元表示。为了精确，我们按185万元，即1.85e6元。但题目说“仓位185万”，结果应该也是多少万？我们计算出来的VaR可以是以万为单位的数值。我将用万作为单位，即position = 185（万）。
+# 但为了数值准确，直接写 position = 185（万）进行计算。
+position = 185  # 万
+vol_annual = 0.218
+# 分位数
+z_95 = 1.645  # 单尾95%
+z_99 = 2.326  # 单尾99%
+# 时间调整
+days_per_year = 252
+
+# 95% 1天 VaR
+var_95_1d = position * vol_annual * z_95 * math.sqrt(1 / days_per_year)
+# 99% 10天 VaR
+var_99_10d = position * vol_annual * z_99 * math.sqrt(10 / days_per_year)
+
+result = {
+    'var_95_1d': round(var_95_1d, 4),
+    'var_99_10d': round(var_99_10d, 4)
+}
+
+print(result)

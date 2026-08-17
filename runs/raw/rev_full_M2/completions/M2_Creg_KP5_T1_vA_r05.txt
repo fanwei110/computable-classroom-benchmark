@@ -1,0 +1,39 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+def main():
+    # 给定参数
+    position_value = 1_850_000          # 头寸价值（元）
+    annual_volatility = 0.218           # 年化收益波动率
+    trading_days = 252                  # 一年的交易天数
+    confidence_95 = 0.95                # 95% 置信水平
+    confidence_99 = 0.99                # 99% 置信水平
+    horizon_10d = 10                    # 十日持有期
+
+    # 计算单日波动率
+    daily_volatility = annual_volatility / np.sqrt(trading_days)
+
+    # 计算十日波动率（假设收益独立同分布）
+    ten_day_volatility = daily_volatility * np.sqrt(horizon_10d)
+
+    # 正态分布分位数（标准正态分布下左侧分位数的绝对值，即损失为正）
+    z_95 = norm.ppf(confidence_95)      # ≈ 1.6449
+    z_99 = norm.ppf(confidence_99)      # ≈ 2.3263
+
+    # Delta-Normal VaR 计算
+    var_95_1d = position_value * daily_volatility * z_95
+    var_99_10d = position_value * ten_day_volatility * z_99
+
+    # 结果存入字典
+    result = {
+        'var_95_1d': var_95_1d,
+        'var_99_10d': var_99_10d
+    }
+
+    return result
+
+if __name__ == "__main__":
+    result = main()
+    print(result)
+```

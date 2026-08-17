@@ -1,0 +1,93 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import newton
+
+# 参数设置
+face_value = 100
+coupon_rate = 0.046
+years_to_maturity = 7
+ytm_initial = 0.053
+yield_grid = np.linspace(0.02, 0.09, 100)  # 2%到9%的收益率网格
+yield_change_bp = 100  # 100基点变动
+yield_up100bp = ytm_initial + yield_change_bp / 10000  # 转换为小数
+
+# 计算债券价格的函数
+def bond_price(yield_to_maturity, face_value, coupon_rate, years_to_maturity):
+    coupon = face_value * coupon_rate
+    periods = years_to_maturity
+    price = sum([coupon / (1 + yield_to_maturity) ** t for t in range(1, int(periods) + 1)]) + \
+            face_value / (1 + yield_to_maturity) ** periods
+    return price
+
+# 计算久期的函数（麦考利久期）
+def macaulay_duration(yield_to_maturity, face_value, coupon_rate, years_to_maturity):
+    coupon = face_value * coupon_rate
+    periods = years_to_maturity
+    cash_flows = [coupon] * int(periods)
+    cash_flows[-1] += face_value  # 最后一期加上面值
+
+    discounted_cash_flows = [cf / (1 + yield_to_maturity) ** t for t, cf in enumerate(cash_flows, 1)]
+    price = sum(discounted_cash_flows)
+    duration = sum([t * dcf for t, dcf in enumerate(discounted_cash_flows, 1)]) / price
+    return duration
+
+# 计算修正久期
+def modified_duration(macaulay_duration, yield_to_maturity):
+    return macaulay_duration / (1 + yield_to_maturity)
+
+# 计算凸性
+def convexity(yield_to_maturity, face_value, coupon_rate, years_to_maturity):
+    coupon = face_value * coupon_rate
+    periods = years_to_maturity
+    cash_flows = [coupon] * int(periods)
+    cash_flows[-1] += face_value
+
+    discounted_cash_flows = [cf / (1 + yield_to_maturity) ** t for t, cf in enumerate(cash_flows, 1)]
+    price = sum(discounted_cash_flows)
+    convexity = sum([t * (t + 1) * dcf for t, dcf in enumerate(discounted_cash_flows, 1)]) / (price * (1 + yield_to_maturity) ** 2)
+    return convexity
+
+# 1. 在收益率网格上计算精确价格
+exact_prices = np.array([bond_price(y, face_value, coupon_rate, years_to_maturity) for y in yield_grid])
+
+# 2. 在5.3%附近计算久期和凸性
+duration_initial = macaulay_duration(ytm_initial, face_value, coupon_rate, years_to_maturity)
+mod_duration_initial = modified_duration(duration_initial, ytm_initial)
+convexity_initial = convexity(ytm_initial, face_value, coupon_rate, years_to_maturity)
+
+# 久期近似价格曲线
+approx_prices = exact_prices[np.argmin(np.abs(yield_grid - ytm_initial))] * (
+    1 - mod_duration_initial * (yield_grid - ytm_initial)
+    + 0.5 * convexity_initial * (yield_grid - ytm_initial) ** 2
+)
+
+# 3. 计算+100bp后的精确价格和久期法估计的相对变化
+price_initial = bond_price(ytm_initial, face_value, coupon_rate, years_to_maturity)
+price_up100bp = bond_price(yield_up100bp, face_value, coupon_rate, years_to_maturity)
+dur_approx_change_up100bp = -mod_duration_initial * (yield_up100bp - ytm_initial) * 100  # 相对变化百分比
+
+# 绘图
+plt.figure(figsize=(10, 6))
+plt.plot(yield_grid * 100, exact_prices, label='Exact Price', color='blue')
+plt.plot(yield_grid * 100, approx_prices, label='Duration + Convexity Approximation', color='red', linestyle='--')
+plt.scatter(ytm_initial * 100, price_initial, color='green', zorder=5, label='Initial YTM (5.3%)')
+plt.xlabel('Yield to Maturity (%)')
+plt.ylabel('Bond Price')
+plt.title('Bond Price vs Yield to Maturity')
+plt.legend()
+plt.grid(True)
+
+# 保存图形
+figure_path = 'bond_price_yield_curve.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 填充result字典
+result = {
+    'price_at_up100bp': price_up100bp,
+    'dur_approx_change_up100bp': dur_approx_change_up100bp,
+    'figure_path': figure_path
+}
+
+# 输出结果以便验证
+print(result)

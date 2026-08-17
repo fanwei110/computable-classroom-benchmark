@@ -1,0 +1,33 @@
+由于我无法直接访问你本地的课程数据文件，请你将文件路径告诉我，或把包含 `fund` 列的数据文件内容贴出来，我才能为你计算精确的年化 Sharpe ratio。  
+
+如果你能自行运行 Python，以下代码可完成计算（假设文件为 `course_data.csv`，内含 `fund` 列存放日收益率，无风险利率 2.1%），运行后即得到 `result` 字典：
+
+```python
+import pandas as pd
+import numpy as np
+
+# 读取数据，请将文件路径替换成实际文件
+df = pd.read_csv('course_data.csv')   # 或其他格式如 .xlsx: pd.read_excel
+fund_returns = df['fund']             # 日收益率，小数形式
+
+# 参数设定
+rf_annual = 0.021                     # 年化无风险利率 2.1%
+trading_days = 252                    # 每年交易日
+
+# 年化平均收益率
+mean_daily = fund_returns.mean()
+mean_annual = mean_daily * trading_days
+
+# 年化波动率（样本标准差，ddof=1）
+std_daily = fund_returns.std(ddof=1)
+std_annual = std_daily * np.sqrt(trading_days)
+
+# 年化 Sharpe ratio
+sharpe_annual = (mean_annual - rf_annual) / std_annual
+
+# 结果字典
+result = {'sharpe_annual': sharpe_annual}
+print(result)
+```
+
+如果你把数据提供给我，我可以立即帮你算出具体数值。

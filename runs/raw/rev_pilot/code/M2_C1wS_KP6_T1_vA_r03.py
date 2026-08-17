@@ -1,0 +1,60 @@
+import os
+import numpy as np
+import pandas as pd
+
+# ==================== 1. 年化夏普比率 ====================
+
+# 尝试读取快照 CSV（中英文名兼容）
+filename = '快照.csv'
+if not os.path.exists(filename):
+    filename = 'snapshot.csv'
+if not os.path.exists(filename):
+    raise FileNotFoundError("找不到快照 CSV 文件，请确认路径或文件名是否为 '快照.csv' / 'snapshot.csv'。")
+
+df = pd.read_csv(filename)
+
+# 提取基金日收益列
+fund_returns = df['fund'].values  # 假设为简单日收益率（如 0.001 表示 0.1%）
+
+# 无风险利率
+rf_annual = 0.021
+rf_daily = rf_annual / 252.0  # 简单年化分割
+
+# 超额收益
+excess_returns = fund_returns - rf_daily
+
+# 年化夏普比率计算（使用样本标准差 ddof=1）
+mean_excess = np.mean(excess_returns)
+std_excess = np.std(excess_returns, ddof=1)
+sharpe_annual = (mean_excess / std_excess) * np.sqrt(252)
+
+# ==================== 2. 业绩归因 ====================
+
+# 组合与基准的权重和行业收益
+w_p = np.array([0.45, 0.35, 0.20])
+r_p = np.array([0.083, 0.021, -0.014])
+w_b = np.array([0.40, 0.40, 0.20])
+r_b = np.array([0.067, 0.034, -0.009])
+
+# 整体收益
+R_p = np.sum(w_p * r_p)
+R_b = np.sum(w_b * r_b)
+
+# 配置效应：Σ (w_p - w_b) * (r_b - R_b)
+allocation_effect = np.sum((w_p - w_b) * (r_b - R_b))
+
+# 选择效应：Σ w_b * (r_p - r_b)
+selection_effect = np.sum(w_b * (r_p - r_b))
+
+# 交互效应：Σ (w_p - w_b) * (r_p - r_b)
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+
+# ==================== 结果汇总 ====================
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+print(result)

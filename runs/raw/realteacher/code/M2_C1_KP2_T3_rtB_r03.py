@@ -1,0 +1,11 @@
+# 计算CAPM理论收益
+beta = 1.42
+market_return = -0.058  # -5.8%
+risk_free = 0.047       # 4.7%
+
+# CAPM: E(R) = Rf + beta * (Rm - Rf)
+capm_return = risk_free + beta * (market_return - risk_free)
+
+result = {
+    'capm_return_monthly': round(capm_return, 4)  # 保留四位小数
+}

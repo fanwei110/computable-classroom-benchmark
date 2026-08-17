@@ -1,0 +1,171 @@
+=== B0293  任务 KP2_T2 (T2) ===
+
+--- 任务要求的输出键 ---
+sml_slope, er_at_beta_127
+
+--- 判分失败明细 ---
+sml_slope: 提交值 7.1000000000000005  |  参考值 0.07100000000000001
+er_at_beta_127: 提交值 11.317  |  参考值 0.11317000000000002
+
+--- 提取出的代码 ---
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ===================== 参数化区域 =====================
+RISK_FREE_RATE = 2.3      # 无风险利率 (%)
+MARKET_RETURN  = 9.4      # 市场期望收益 (%)
+# =====================================================
+
+def main():
+    # 计算市场风险溢价（SML 斜率）
+    market_premium = MARKET_RETURN - RISK_FREE_RATE
+
+    # 生成 beta 范围 (0 到 2)
+    beta_range = np.linspace(0, 2, 200)
+    sml_values = RISK_FREE_RATE + market_premium * beta_range
+
+    # 待标注的股票：名称 -> (beta, 实际收益)
+    stocks = {
+        'X': (0.62, 8.1),
+        'Y': (1.18, 13.1),
+        'Z': (1.51, 9.9)
+    }
+
+    # -------------------- 绘图 --------------------
+    fig, ax = plt.subplots(figsize=(9, 6))
+
+    # 证券市场线
+    ax.plot(beta_range, sml_values, label='Security Market Line', color='navy', lw=2)
+    # 市场组合点
+    ax.scatter(1, MARKET_RETURN, color='black', zorder=5)
+    ax.annotate('Market\n(β=1, Rm)', xy=(1, MARKET_RETURN), xytext=(5, 8),
+                textcoords='offset points', fontsize=9)
+
+    # 三只股票
+    for name, (beta, ret) in stocks.items():
+        ax.scatter(beta, ret, color='crimson', zorder=5, s=80)
+        ax.annotate(f'Stock {name}\n(β={beta}, ret={ret}%)',
+                    xy=(beta, ret), xytext=(12, -12),
+                    textcoords='offset points', fontsize=9,
+                    bbox=dict(boxstyle='round,pad=0.3', fc='yellow', alpha=0.7),
+                    arrowprops=dict(arrowstyle='->', lw=1.2))
+
+    # 坐标轴与标签
+    ax.set_xlabel('Beta')
+    ax.set_ylabel('Expected Return (%)')
+    ax.set_title('Security Market Line (SML)')
+    ax.set_xlim(0, 2)
+    ax.set_ylim(0, 18)  # 留足空间显示股票 Y
+    ax.grid(True, linestyle='--', alpha=0.5)
+    ax.legend()
+
+    # 保存图形
+    figure_path = 'sml_plot.png'
+    plt.savefig(figure_path, dpi=200, bbox_inches='tight')
+    plt.close()
+    print(f'图形已保存至: {figure_path}')
+
+    # -------------------- 报告结果 --------------------
+    # SML 斜率即市场风险溢价
+    sml_slope = market_premium
+    # beta = 1.27 处的 CAPM 期望收益
+    beta_target = 1.27
+    er_at_beta_127 = RISK_FREE_RATE + sml_slope * beta_target
+
+    print(f'SML 斜率 (市场风险溢价): {sml_slope:.4f}%')
+    print(f'Beta = {beta_target} 处的 CAPM 期望收益: {er_at_beta_127:.4f}%')
+
+    # 输出契约规定的字典
+    result = {
+        'sml_slope': sml_slope,
+        'er_at_beta_127': er_at_beta_127,
+        'figure_path': figure_path
+    }
+    return result
+
+# 运行主程序并确保 result 变量存在于全局作用域
+if __name__ == '__main__':
+    result = main()
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ===================== 参数化区域 =====================
+RISK_FREE_RATE = 2.3      # 无风险利率 (%)
+MARKET_RETURN  = 9.4      # 市场期望收益 (%)
+# =====================================================
+
+def main():
+    # 计算市场风险溢价（SML 斜率）
+    market_premium = MARKET_RETURN - RISK_FREE_RATE
+
+    # 生成 beta 范围 (0 到 2)
+    beta_range = np.linspace(0, 2, 200)
+    sml_values = RISK_FREE_RATE + market_premium * beta_range
+
+    # 待标注的股票：名称 -> (beta, 实际收益)
+    stocks = {
+        'X': (0.62, 8.1),
+        'Y': (1.18, 13.1),
+        'Z': (1.51, 9.9)
+    }
+
+    # -------------------- 绘图 --------------------
+    fig, ax = plt.subplots(figsize=(9, 6))
+
+    # 证券市场线
+    ax.plot(beta_range, sml_values, label='Security Market Line', color='navy', lw=2)
+    # 市场组合点
+    ax.scatter(1, MARKET_RETURN, color='black', zorder=5)
+    ax.annotate('Market\n(β=1, Rm)', xy=(1, MARKET_RETURN), xytext=(5, 8),
+                textcoords='offset points', fontsize=9)
+
+    # 三只股票
+    for name, (beta, ret) in stocks.items():
+        ax.scatter(beta, ret, color='crimson', zorder=5, s=80)
+        ax.annotate(f'Stock {name}\n(β={beta}, ret={ret}%)',
+                    xy=(beta, ret), xytext=(12, -12),
+                    textcoords='offset points', fontsize=9,
+                    bbox=dict(boxstyle='round,pad=0.3', fc='yellow', alpha=0.7),
+                    arrowprops=dict(arrowstyle='->', lw=1.2))
+
+    # 坐标轴与标签
+    ax.set_xlabel('Beta')
+    ax.set_ylabel('Expected Return (%)')
+    ax.set_title('Security Market Line (SML)')
+    ax.set_xlim(0, 2)
+    ax.set_ylim(0, 18)  # 留足空间显示股票 Y
+    ax.grid(True, linestyle='--', alpha=0.5)
+    ax.legend()
+
+    # 保存图形
+    figure_path = 'sml_plot.png'
+    plt.savefig(figure_path, dpi=200, bbox_inches='tight')
+    plt.close()
+    print(f'图形已保存至: {figure_path}')
+
+    # -------------------- 报告结果 --------------------
+    # SML 斜率即市场风险溢价
+    sml_slope = market_premium
+    # beta = 1.27 处的 CAPM 期望收益
+    beta_target = 1.27
+    er_at_beta_127 = RISK_FREE_RATE + sml_slope * beta_target
+
+    print(f'SML 斜率 (市场风险溢价): {sml_slope:.4f}%')
+    print(f'Beta = {beta_target} 处的 CAPM 期望收益: {er_at_beta_127:.4f}%')
+
+    # 输出契约规定的字典
+    result = {
+        'sml_slope': sml_slope,
+        'er_at_beta_127': er_at_beta_127,
+        'figure_path': figure_path
+    }
+    return result
+
+# 运行主程序并确保 result 变量存在于全局作用域
+if __name__ == '__main__':
+    result = main()
+```

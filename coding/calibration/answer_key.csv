@@ -1,0 +1,21 @@
+﻿样例文件,正确类别,说明
+p01_kp5t1_365_silent.py,conventional,sqrt(365) silent
+p02_kp5t1_negative_sign.py,conventional,negative VaR sign
+p03_kp2t1_percent_units.py,conventional,percent vs decimal
+p04_kp6t1_250_silent.py,conventional,250-day annualization
+p05_kp6t1_ddof0.py,conventional,ddof=0
+p06_kp3t1_macaulay_as_modified.py,conceptual,Macaulay under modified key
+p07_kp4t1_discrete_discount.py,conventional,discrete discounting
+p08_kp4t1_vega_percent.py,conventional,vega per percentage point
+p09_kp5t1_twotailed_z.py,conceptual,two-tailed z for one-tailed VaR
+p10_kp2t3_annual_rf.py,conventional,annual rf in monthly CAPM
+p11_kp1t1_corr_as_cov.py,conceptual,correlation as covariance
+p12_kp1t1_syntax_error.py,code,syntax error
+p13_kp1t1_shape_error.py,code,runtime shape error
+p14_kp4t1_wrong_case_keys.py,format,wrong-case keys
+p15_kp6t1_no_result.py,format,result never defined
+p16_kp3t1_semiannual.py,conventional,semiannual treatment of annual bond
+p17_kp3t1_convexity_variant.py,conventional,convexity without (1+y)^2 divisor
+p18_kp5t3_declare365_use250.py,conventional,declares 365 but implements 250
+p19_kp6t3_ignore_rf.py,conventional,silently ignores stated rf
+p20_kp1t2_missing_figure.py,visualization,figure never saved

@@ -1,0 +1,41 @@
+import pandas as pd
+import numpy as np
+
+# 1. 读取快照 CSV
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 提取 fund 列，假设该列为收益率序列（若为净值/价格序列，则先计算收益率）
+# 由于题目未指明数据频率及类型，在此做内部一致的合理假设：
+# 假设1：若数据变动幅度极小（如绝对值均值<0.5），判定为日频收益率，年化因子为252
+# 假设2：若数据为价格/净值序列，计算简单收益率
+# 假设3：默认采用日频(252)进行年化，若为月频则应改为12，此处采用最常见课堂日频假设
+
+fund_data = df['fund'].dropna()
+
+# 判断是价格序列还是收益率序列：若所有值均大于0且无小于-1的值，且有增长趋势，则视为价格/净值
+if (fund_data > 0).all() and (fund_data.pct_change().dropna() > -1).all():
+    # 视为价格序列，计算简单收益率
+    returns = fund_data.pct_change().dropna()
+else:
+    # 视为收益率序列
+    returns = fund_data
+
+# 2. 计算全样本年化夏普比率
+rf_annual = 0.021  # 无风险利率 2.1%
+
+# 假设数据为日频数据，一年252个交易日
+ann_factor = 252
+
+# 计算年化超额收益
+mean_return_annual = returns.mean() * ann_factor
+
+# 计算年化波动率
+std_return_annual = returns.std() * np.sqrt(ann_factor)
+
+# 计算夏普比率
+sharpe_annual = (mean_return_annual - rf_annual) / std_return_annual
+
+# 3. 把结果存入 result
+result = {
+    'sharpe_annual': sharpe_annual
+}

@@ -1,0 +1,35 @@
+要计算95%的一日VaR和99%的十日VaR，我们可以使用以下步骤和公式：
+
+### 1. 95%的一日VaR
+公式：
+\[ \text{VaR}_{95\%,1d} = \text{头寸} \times z_{95\%} \times \sigma_{\text{年化}} \times \sqrt{\frac{1}{252}} \]
+
+其中：
+- \( z_{95\%} = 1.645 \)（95%置信水平的标准正态分位数）
+- \( \sigma_{\text{年化}} = 21.8\% = 0.218 \)
+- 头寸 = 185万
+
+计算：
+\[ \text{VaR}_{95\%,1d} = 1,850,000 \times 1.645 \times 0.218 \times \sqrt{\frac{1}{252}} \]
+\[ \text{VaR}_{95\%,1d} \approx 1,850,000 \times 1.645 \times 0.218 \times 0.063 \]
+\[ \text{VaR}_{95\%,1d} \approx 41,700 \]
+
+### 2. 99%的十日VaR
+公式：
+\[ \text{VaR}_{99\%,10d} = \text{头寸} \times z_{99\%} \times \sigma_{\text{年化}} \times \sqrt{\frac{10}{252}} \]
+
+其中：
+- \( z_{99\%} = 2.326 \)（99%置信水平的标准正态分位数）
+
+计算：
+\[ \text{VaR}_{99\%,10d} = 1,850,000 \times 2.326 \times 0.218 \times \sqrt{\frac{10}{252}} \]
+\[ \text{VaR}_{99\%,10d} \approx 1,850,000 \times 2.326 \times 0.218 \times 0.199 \]
+\[ \text{VaR}_{99\%,10d} \approx 186,000 \]
+
+### 输出结果
+```python
+result = {
+    'var_95_1d': 41700,
+    'var_99_10d': 186000
+}
+```

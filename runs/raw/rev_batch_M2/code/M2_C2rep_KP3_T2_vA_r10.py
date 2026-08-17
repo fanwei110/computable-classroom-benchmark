@@ -1,0 +1,103 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# =========================
+# 参数设定（可调部分）
+# =========================
+PAR = 100.0               # 面值
+COUPON_RATE = 0.046       # 票息率（年化）
+MATURITY = 7              # 期限（年）
+Y0 = 0.053                # 当前到期收益率
+YIELD_CHANGE_BPS = 100    # 收益率变动幅度（基点），可调
+TANGENT_RANGE = 0.015     # 久期近似切线展示的收益率半宽，可调
+
+# 年度付息假设（内部一致）
+COUPON = PAR * COUPON_RATE  # 每年票息
+
+# =========================
+# 定价函数
+# =========================
+def bond_price(y, T, coupon, par):
+    """按年付息的债券定价（年化复利）"""
+    t = np.arange(1, T + 1)
+    pv_coupons = coupon / (1 + y) ** t
+    pv_par = par / (1 + y) ** T
+    return np.sum(pv_coupons) + pv_par
+
+# =========================
+# 久期与修正久期
+# =========================
+def macaulay_duration(y, T, coupon, par):
+    """麦考利久期（年）"""
+    P = bond_price(y, T, coupon, par)
+    t = np.arange(1, T + 1)
+    pv_cf = coupon / (1 + y) ** t
+    pv_par = par / (1 + y) ** T
+    weighted_sum = np.sum(t * pv_cf) + T * pv_par
+    return weighted_sum / P
+
+P0 = bond_price(Y0, MATURITY, COUPON, PAR)
+MacD = macaulay_duration(Y0, MATURITY, COUPON, PAR)
+ModifiedD = MacD / (1 + Y0)           # 修正久期
+
+# =========================
+# 情景：收益率上升指定基点
+# =========================
+delta_y = YIELD_CHANGE_BPS / 10000.0   # 基点转小数
+y_up = Y0 + delta_y
+P_up = bond_price(y_up, MATURITY, COUPON, PAR)              # 精确价格
+
+# 久期法估计的相对价格变化
+rel_change_dur = -ModifiedD * delta_y
+
+# =========================
+# 绘图：精确价格‑收益率曲线 + 久期近似切线
+# =========================
+y_grid = np.linspace(0.02, 0.09, 500)                 # 收益率网格
+P_grid = bond_price(y_grid, MATURITY, COUPON, PAR)    # 精确价格
+
+# 切线：在当前收益率附近
+y_tangent = np.linspace(Y0 - TANGENT_RANGE, Y0 + TANGENT_RANGE, 100)
+P_tangent = P0 * (1 - ModifiedD * (y_tangent - Y0))   # 一阶泰勒展开
+
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.plot(y_grid * 100, P_grid, label='精确价格', linewidth=1.8)
+ax.plot(y_tangent * 100, P_tangent, '--', label='久期近似（切线）', linewidth=1.8)
+ax.axvline(Y0 * 100, color='gray', linestyle=':', alpha=0.7)
+ax.axvline(y_up * 100, color='gray', linestyle=':', alpha=0.7)
+ax.legend()
+ax.set_xlabel('到期收益率 (%)')
+ax.set_ylabel('债券价格')
+ax.set_title('债券价格‑收益率曲线 (票息4.6%，7年期)')
+ax.grid(True, alpha=0.3)
+
+# 标记当前收益率和变化后的点
+ax.scatter([Y0 * 100], [P0], color='red', zorder=5)
+ax.annotate(f'当前: {Y0*100:.1f}%', (Y0*100, P0),
+            textcoords="offset points", xytext=(10,-10), ha='left')
+ax.scatter([y_up * 100], [P_up], color='red', zorder=5)
+ax.annotate(f'+{YIELD_CHANGE_BPS}bp: {y_up*100:.2f}%', (y_up*100, P_up),
+            textcoords="offset points", xytext=(10,-10), ha='left')
+
+fig.tight_layout()
+figure_path = 'bond_price_yield_curve.png'
+fig.savefig(figure_path, dpi=150)
+
+# =========================
+# 输出契约
+# =========================
+result = {
+    'price_at_up100bp': P_up,
+    'dur_approx_change_up100bp': rel_change_dur,
+    'figure_path': figure_path
+}
+
+# 打印便于课堂查看
+print(f"当前收益率 {Y0*100:.2f}% 时债券价格: {P0:.4f}")
+print(f"麦考利久期: {MacD:.4f} 年")
+print(f"修正久期:   {ModifiedD:.4f}")
+print(f"\n收益率上升 {YIELD_CHANGE_BPS} bp 至 {y_up*100:.2f}%")
+print(f"精确价格:               {P_up:.4f}")
+print(f"久期法相对价格变化:     {rel_change_dur*100:.4f}%")
+print(f"\n图形已保存至: {figure_path}")
+print(f"\n结果字典: {result}")

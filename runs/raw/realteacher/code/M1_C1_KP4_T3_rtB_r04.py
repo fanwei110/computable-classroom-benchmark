@@ -1,0 +1,3 @@
+result = {
+    'price_change': 0.12
+}

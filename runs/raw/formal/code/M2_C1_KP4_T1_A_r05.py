@@ -1,0 +1,33 @@
+import math
+from scipy.stats import norm
+
+# 给定参数
+S = 103.7      # 标的现价
+K = 97.5       # 行权价
+sigma = 0.276  # 隐含波动率
+r = 0.043      # 无风险利率
+T = 0.58       # 剩余期限（年）
+q = 0.0        # 不分红
+
+# 计算 d1 和 d2
+d1 = (math.log(S / K) + (r - q + 0.5 * sigma ** 2) * T) / (sigma * math.sqrt(T))
+d2 = d1 - sigma * math.sqrt(T)
+
+# 期权价格
+call_price = S * math.exp(-q * T) * norm.cdf(d1) - K * math.exp(-r * T) * norm.cdf(d2)
+
+# Delta
+call_delta = math.exp(-q * T) * norm.cdf(d1)
+
+# Vega（标准 Black-Scholes vega，波动率每变动1单位的价格变化）
+call_vega = S * math.exp(-q * T) * norm.pdf(d1) * math.sqrt(T)
+
+# 按要求存入字典，保留足够精度
+result = {
+    'call_price': round(call_price, 4),
+    'call_delta': round(call_delta, 4),
+    'call_vega': round(call_vega, 4)
+}
+
+# 打印结果以供查看
+print(result)

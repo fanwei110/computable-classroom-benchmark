@@ -1,0 +1,36 @@
+import numpy as np
+
+# ==========================================
+# 《证券投资学》课堂实时编程：CAPM 与证券市场线
+# ==========================================
+
+# 1. 已知参数
+beta = 1.42                     # 股票的 Beta 值
+market_return_monthly = -0.058  # 上个月市场收益率 (跌幅 5.8%)
+risk_free_annual = 0.047        # 年化无风险利率 (4.7%)
+
+# 2. 把年无风险利率折算为月利率
+# 假设：采用复利折算方式（几何平均），即 (1 + R_annual) = (1 + R_monthly)^12
+# 这是将年化利率转换为月度频率在理论上最严谨且内部一致的方式。
+risk_free_monthly = (1 + risk_free_annual) ** (1 / 12) - 1
+
+# 3. 在月度层面套用 CAPM 公式
+# CAPM 公式: E(R_i) = R_f + Beta * (E(R_m) - R_f)
+# 这里我们将上个月的市场收益率作为已实现的市场预期收益代入
+capm_return_monthly = risk_free_monthly + beta * (market_return_monthly - risk_free_monthly)
+
+# 4. 填充 result 字典
+result = {
+    'capm_return_monthly': capm_return_monthly
+}
+
+# ---------------- 课堂展示辅助输出 ----------------
+print(f"假设与计算过程：")
+print(f"年化无风险利率: {risk_free_annual:.4%}")
+print(f"折算后的月无风险利率: {risk_free_monthly:.6%}")
+print(f"市场月度收益率: {market_return_monthly:.4%}")
+print(f"股票 Beta: {beta}")
+print("-" * 30)
+print(f"CAPM 预测的该股票上月收益率: {capm_return_monthly:.4%}")
+print(f"\n最终结果字典 result: {result}")
+

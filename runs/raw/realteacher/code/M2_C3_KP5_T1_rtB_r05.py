@@ -1,0 +1,25 @@
+import numpy as np
+from scipy.stats import norm
+
+# 给定参数
+position = 1_850_000          # 头寸金额
+sigma_annual = 0.218          # 年化波动率
+trading_days = 252            # 每年交易日
+
+# 正态分布分位数（单尾）
+z_95 = norm.ppf(0.95)         # 1.6448536269514722
+z_99 = norm.ppf(0.99)         # 2.3263478740408408
+
+# 1日 VaR (95%)
+var_95_1d = position * sigma_annual / np.sqrt(trading_days) * z_95
+
+# 10日 VaR (99%)
+var_99_10d = position * sigma_annual * np.sqrt(10 / trading_days) * z_99
+
+# 报告为正的损失金额，保留两位小数
+result = {
+    'var_95_1d': round(var_95_1d, 2),
+    'var_99_10d': round(var_99_10d, 2)
+}
+
+result

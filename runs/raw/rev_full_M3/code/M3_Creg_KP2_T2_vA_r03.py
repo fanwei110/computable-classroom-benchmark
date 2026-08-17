@@ -1,0 +1,83 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 可调参数
+# ==========================================
+risk_free_rate = 0.023  # 无风险利率 2.3%
+market_return = 0.094   # 市场期望收益 9.4%
+
+# ==========================================
+# 股票数据
+# ==========================================
+stocks = {
+    'X': {'beta': 0.62, 'return': 0.081},
+    'Y': {'beta': 1.18, 'return': 0.131},
+    'Z': {'beta': 1.51, 'return': 0.099}
+}
+
+# ==========================================
+# 计算部分
+# ==========================================
+# SML 斜率 (市场风险溢价)
+sml_slope = market_return - risk_free_rate
+
+# beta=1.27 处的 CAPM 期望收益
+beta_target = 1.27
+er_at_beta_127 = risk_free_rate + beta_target * sml_slope
+
+print(f"SML 斜率: {sml_slope:.4f} ({sml_slope*100:.2f}%)")
+print(f"_beta=1.27 处的 CAPM 期望收益: {er_at_beta_127:.5f} ({er_at_beta_127*100:.2f}%)")
+
+# ==========================================
+# 绘图部分
+# ==========================================
+# 生成 beta 从 0 到 2 的序列
+betas = np.linspace(0, 2, 200)
+# 计算对应的 SML 期望收益（转为百分比以便绘图）
+sml_returns_pct = (risk_free_rate + betas * sml_slope) * 100
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 绘制 SML 线
+ax.plot(betas, sml_returns_pct, label='Security Market Line (SML)', color='blue', linewidth=2)
+
+# 绘制股票点及标注
+colors = {'X': 'red', 'Y': 'green', 'Z': 'purple'}
+for name, data in stocks.items():
+    beta_val = data['beta']
+    ret_pct = data['return'] * 100
+    ax.scatter(beta_val, ret_pct, color=colors[name], zorder=5, s=60)
+    ax.annotate(f"Stock {name}\n(β={beta_val}, E={ret_pct:.1f}%)",
+                xy=(beta_val, ret_pct),
+                xytext=(15, 10),
+                textcoords='offset points',
+                fontsize=9,
+                arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0.2', color='gray'))
+
+# 标记无风险利率和市场组合点
+ax.scatter(0, risk_free_rate * 100, color='black', zorder=5, s=60, label=f'Risk-Free Rate ({risk_free_rate*100:.1f}%)')
+ax.scatter(1, market_return * 100, color='darkorange', zorder=5, s=60, label=f'Market Portfolio (β=1, {market_return*100:.1f}%)')
+
+# 图表美化
+ax.set_title('Security Market Line (SML) with Stocks X, Y, Z', fontsize=14)
+ax.set_xlabel('Beta (β)', fontsize=12)
+ax.set_ylabel('Expected Return (%)', fontsize=12)
+ax.set_xlim(0, 2)
+ax.set_ylim(0, 20)
+ax.grid(True, linestyle='--', alpha=0.7)
+ax.legend(loc='upper left', fontsize=10)
+
+# 保存图表
+figure_path = 'sml_plot.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close(fig)
+
+# ==========================================
+# 输出契约
+# ==========================================
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': figure_path
+}

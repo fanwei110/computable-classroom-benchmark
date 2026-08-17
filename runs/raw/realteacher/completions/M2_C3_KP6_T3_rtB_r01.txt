@@ -1,0 +1,12 @@
+为了计算 Sharpe ratio，我需要读取数据文件中的基金（fund）日收益率。由于你尚未上传文件，我暂时无法给出具体数值。请上传包含基金日收益列的课程数据文件（如 CSV 或 Excel），我会按以下约定完成计算并返回结果字典。
+
+**计算方法概要：**
+- 基金日收益率序列记为 \( r_t \)（小数形式）
+- 无风险年利率 \( r_f = 0.021 \)，换算为日无风险利率：\( r_{f,daily} = 0.021 / 252 \)
+- 计算日超额收益：\( e_t = r_t - r_{f,daily} \)
+- 年化平均收益率：\( \bar{r}_{annual} = \bar{r} \times 252 \)
+- 年化标准差：\( \sigma_{annual} = \sigma_{daily} \times \sqrt{252} \)，其中 \( \sigma_{daily} \) 使用样本标准差（ddof=1）
+- 年化 Sharpe ratio = \( (\bar{r}_{annual} - 0.021) / \sigma_{annual} \)
+- 结果存入字典：`result = {'sharpe_annual': 数值}`
+
+请提供文件，我会立刻给出准确结果。

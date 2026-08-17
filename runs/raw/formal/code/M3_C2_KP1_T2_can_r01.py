@@ -1,0 +1,83 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==================== 1. 参数设定 ====================
+mu = np.array([0.071, 0.124])        # 期望年收益
+sigma = np.array([0.163, 0.289])     # 年化波动率
+rhos = [0.15, 0.45, 0.75]           # 相关系数列表
+target_mu = 0.10                     # 目标期望收益(10%)
+
+# 扫描权重 w1 (允许卖空，w1范围放宽以展现完整双曲线)
+w1_range = np.linspace(-1.0, 2.0, 500)
+
+# ==================== 2. 计算与绘图 ====================
+plt.figure(figsize=(10, 7))
+
+# 记录 rho=0.45 时的特定结果
+mvp_vol_45 = None
+target_vol_45 = None
+
+for rho in rhos:
+    # 构造协方差矩阵
+    cov_matrix = np.array([
+        [sigma[0]**2, rho * sigma[0] * sigma[1]],
+        [rho * sigma[0] * sigma[1], sigma[1]**2]
+    ])
+    
+    # 扫描计算前沿 (满仓约束 w2 = 1 - w1)
+    w2_range = 1 - w1_range
+    mu_p = w1_range * mu[0] + w2_range * mu[1]
+    # 组合方差 w'Σw
+    var_p = (w1_range**2 * cov_matrix[0, 0] + 
+             w2_range**2 * cov_matrix[1, 1] + 
+             2 * w1_range * w2_range * cov_matrix[0, 1])
+    sigma_p = np.sqrt(var_p)
+    
+    # 画出均值-方差前沿曲线
+    plt.plot(sigma_p, mu_p, label=f'Frontier (ρ={rho:.2f})', lw=2)
+    
+    # ==================== 3. 标出最小方差组合(MVP) ====================
+    # 两资产MVP解析解: w1_mvp = (σ2^2 - σ12) / (σ1^2 + σ2^2 - 2σ12)
+    w1_mvp = (cov_matrix[1, 1] - cov_matrix[0, 1]) / (cov_matrix[0, 0] + cov_matrix[1, 1] - 2 * cov_matrix[0, 1])
+    w_mvp = np.array([w1_mvp, 1 - w1_mvp])
+    
+    mu_mvp = w_mvp @ mu
+    var_mvp = w_mvp @ cov_matrix @ w_mvp
+    sigma_mvp = np.sqrt(var_mvp)
+    
+    # 在曲线上标出MVP点
+    plt.scatter(sigma_mvp, mu_mvp, marker='*', s=250, color='red', zorder=5, edgecolors='black')
+    
+    # ==================== 4. 对 rho=0.45 计算特定波动率 ====================
+    if rho == 0.45:
+        mvp_vol_45 = sigma_mvp
+        
+        # 目标期望收益下的权重与波动率 (w1 = (μ_target - μ2) / (μ1 - μ2))
+        w1_target = (target_mu - mu[1]) / (mu[0] - mu[1])
+        w_target = np.array([w1_target, 1 - w1_target])
+        
+        var_target = w_target @ cov_matrix @ w_target
+        sigma_target = np.sqrt(var_target)
+        target_vol_45 = sigma_target
+
+# ==================== 5. 图形美化与保存 ====================
+plt.title('Mean-Variance Frontiers under Different Correlations', fontsize=14)
+plt.xlabel('Annualized Volatility (σ)', fontsize=12)
+plt.ylabel('Expected Annual Return (μ)', fontsize=12)
+plt.legend(fontsize=11)
+plt.grid(True, linestyle='--', alpha=0.7)
+
+figure_path = 'markowitz_frontier.png'
+plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+
+# ==================== 6. 填充输出契约字典 ====================
+result = {
+    'mvp_vol_at_rho45': mvp_vol_45,
+    'frontier_vol_at_target': target_vol_45,
+    'figure_path': figure_path
+}
+
+# （可选：在控制台打印结果以供课堂投屏即时查看）
+print(f"rho=0.45 时最小方差组合的年化波动率: {result['mvp_vol_at_rho45']:.4f} ({result['mvp_vol_at_rho45']*100:.2f}%)")
+print(f"rho=0.45 时目标期望收益10%下的最小年化波动率: {result['frontier_vol_at_target']:.4f} ({result['frontier_vol_at_target']*100:.2f}%)")
+print(f"图形已保存至: {result['figure_path']}")

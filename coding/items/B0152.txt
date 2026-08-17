@@ -1,0 +1,169 @@
+=== B0152  任务 KP1_T2 (T2) ===
+
+--- 任务要求的输出键 ---
+mvp_vol_at_rho45, frontier_vol_at_target
+
+--- 判分失败明细 ---
+mvp_vol_at_rho45: 提交值 0.1609  |  参考值 0.161687582190596
+frontier_vol_at_target: 提交值 0.203  |  参考值 0.2023823311812773
+
+--- 提取出的代码 ---
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 参数
+mu = np.array([0.071, 0.124])
+sigma = np.array([0.163, 0.289])
+rho_values = [0.15, 0.45, 0.75]
+colors = ['blue', 'green', 'red']
+labels = [f'ρ={rho}' for rho in rho_values]
+
+# 计算有效前沿
+plt.figure(figsize=(10, 6))
+for rho, color, label in zip(rho_values, colors, labels):
+    cov = rho * sigma[0] * sigma[1]
+    sigma_12 = np.array([[sigma[0]**2, cov], [cov, sigma[1]**2]])
+
+    # 最小方差组合
+    w_mvp = (sigma[1]**2 - cov) / (sigma[0]**2 + sigma[1]**2 - 2 * cov)
+    mu_mvp = w_mvp * mu[0] + (1 - w_mvp) * mu[1]
+    sigma_mvp = np.sqrt(w_mvp**2 * sigma[0]**2 + (1 - w_mvp)**2 * sigma[1]**2 + 2 * w_mvp * (1 - w_mvp) * cov)
+    plt.scatter(sigma_mvp, mu_mvp, color=color, marker='o', s=100, label=f'MVP {label}')
+
+    # 有效前沿
+    w_range = np.linspace(0, 1, 100)
+    mu_p = w_range * mu[0] + (1 - w_range) * mu[1]
+    sigma_p = np.sqrt(w_range**2 * sigma[0]**2 + (1 - w_range)**2 * sigma[1]**2 + 2 * w_range * (1 - w_range) * cov)
+    plt.plot(sigma_p, mu_p, color=color, label=label)
+
+plt.xlabel('Volatility (σ)')
+plt.ylabel('Expected Return (μ)')
+plt.title('Efficient Frontier for Two Assets')
+plt.legend()
+plt.grid(True)
+
+# 保存图片
+figure_path = 'efficient_frontier.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 结果
+result = {
+    'mvp_vol_at_rho45': 0.1609,
+    'frontier_vol_at_target': 0.2030,
+    'figure_path': figure_path
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+我将按照题目要求，计算两资产有效前沿，并回答相关问题。以下是详细的计算过程和结果：
+
+### 1. 已知条件
+- 资产1：收益率 \( \mu_1 = 7.1\% \)，波动率 \( \sigma_1 = 16.3\% \)
+- 资产2：收益率 \( \mu_2 = 12.4\% \)，波动率 \( \sigma_2 = 28.9\% \)
+- 相关系数 \( \rho \) 分别为 0.15、0.45、0.75
+
+### 2. 最小方差组合 (MVP) 的计算
+最小方差组合的权重 \( w_1 \) 和波动率 \( \sigma_{MVP} \) 公式为：
+\[
+w_1 = \frac{\sigma_2^2 - \rho \sigma_1 \sigma_2}{\sigma_1^2 + \sigma_2^2 - 2 \rho \sigma_1 \sigma_2}
+\]
+\[
+\sigma_{MVP} = \sqrt{w_1^2 \sigma_1^2 + (1 - w_1)^2 \sigma_2^2 + 2 w_1 (1 - w_1) \rho \sigma_1 \sigma_2}
+\]
+
+#### 计算 \( \rho = 0.45 \) 时的 MVP 波动率
+代入数值：
+\[
+w_1 = \frac{0.289^2 - 0.45 \times 0.163 \times 0.289}{0.163^2 + 0.289^2 - 2 \times 0.45 \times 0.163 \times 0.289} = \frac{0.083521 - 0.021186}{0.026569 + 0.083521 - 0.042372} = \frac{0.062335}{0.067718} \approx 0.9205
+\]
+\[
+\sigma_{MVP} = \sqrt{0.9205^2 \times 0.163^2 + 0.0795^2 \times 0.289^2 + 2 \times 0.9205 \times 0.0795 \times 0.45 \times 0.163 \times 0.289}
+\]
+\[
+= \sqrt{0.0223 + 0.0005 + 0.0031} = \sqrt{0.0259} \approx 0.1609 \ (16.09\%)
+\]
+
+### 3. 目标收益 10% 时的最小波动率
+有效前沿上的组合满足：
+\[
+\mu_p = w_1 \mu_1 + (1 - w_1) \mu_2
+\]
+\[
+\sigma_p = \sqrt{w_1^2 \sigma_1^2 + (1 - w_1)^2 \sigma_2^2 + 2 w_1 (1 - w_1) \rho \sigma_1 \sigma_2}
+\]
+
+对于 \( \rho = 0.45 \)，目标收益 \( \mu_p = 10\% \)：
+\[
+0.10 = w_1 \times 0.071 + (1 - w_1) \times 0.124
+\]
+\[
+w_1 = \frac{0.124 - 0.10}{0.124 - 0.071} = \frac{0.024}{0.053} \approx 0.4528
+\]
+\[
+\sigma_p = \sqrt{0.4528^2 \times 0.163^2 + 0.5472^2 \times 0.289^2 + 2 \times 0.4528 \times 0.5472 \times 0.45 \times 0.163 \times 0.289}
+\]
+\[
+= \sqrt{0.0054 + 0.0250 + 0.0108} = \sqrt{0.0412} \approx 0.2030 \ (20.30\%)
+\]
+
+### 4. 绘制有效前沿
+我们将绘制三条有效前沿（对应 \( \rho = 0.15, 0.45, 0.75 \)），并标出最小方差点（MVP）。代码如下：
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 参数
+mu = np.array([0.071, 0.124])
+sigma = np.array([0.163, 0.289])
+rho_values = [0.15, 0.45, 0.75]
+colors = ['blue', 'green', 'red']
+labels = [f'ρ={rho}' for rho in rho_values]
+
+# 计算有效前沿
+plt.figure(figsize=(10, 6))
+for rho, color, label in zip(rho_values, colors, labels):
+    cov = rho * sigma[0] * sigma[1]
+    sigma_12 = np.array([[sigma[0]**2, cov], [cov, sigma[1]**2]])
+
+    # 最小方差组合
+    w_mvp = (sigma[1]**2 - cov) / (sigma[0]**2 + sigma[1]**2 - 2 * cov)
+    mu_mvp = w_mvp * mu[0] + (1 - w_mvp) * mu[1]
+    sigma_mvp = np.sqrt(w_mvp**2 * sigma[0]**2 + (1 - w_mvp)**2 * sigma[1]**2 + 2 * w_mvp * (1 - w_mvp) * cov)
+    plt.scatter(sigma_mvp, mu_mvp, color=color, marker='o', s=100, label=f'MVP {label}')
+
+    # 有效前沿
+    w_range = np.linspace(0, 1, 100)
+    mu_p = w_range * mu[0] + (1 - w_range) * mu[1]
+    sigma_p = np.sqrt(w_range**2 * sigma[0]**2 + (1 - w_range)**2 * sigma[1]**2 + 2 * w_range * (1 - w_range) * cov)
+    plt.plot(sigma_p, mu_p, color=color, label=label)
+
+plt.xlabel('Volatility (σ)')
+plt.ylabel('Expected Return (μ)')
+plt.title('Efficient Frontier for Two Assets')
+plt.legend()
+plt.grid(True)
+
+# 保存图片
+figure_path = 'efficient_frontier.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 结果
+result = {
+    'mvp_vol_at_rho45': 0.1609,
+    'frontier_vol_at_target': 0.2030,
+    'figure_path': figure_path
+}
+```
+
+### 5. 结果
+最终结果存储在 `result` 字典中：
+```python
+result = {
+    'mvp_vol_at_rho45': 0.1609,  # 16.09%
+    'frontier_vol_at_target': 0.2030,  # 20.30%
+    'figure_path': 'efficient_frontier.png'
+}
+```

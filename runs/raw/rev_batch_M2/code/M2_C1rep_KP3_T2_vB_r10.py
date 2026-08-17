@@ -1,0 +1,77 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 债券参数
+face = 100.0
+coupon_rate = 0.046
+coupon = face * coupon_rate
+T = 7
+ytm_current = 0.053
+dy = 0.01  # 收益率变动 +100bp
+
+# 计算当前价格
+def bond_price(ytm):
+    """给定到期收益率，返回债券价格（面值100，每年付息一次）"""
+    t = np.arange(1, T + 1)
+    pv_coupon = np.sum(coupon / (1 + ytm) ** t)
+    pv_face = face / (1 + ytm) ** T
+    return pv_coupon + pv_face
+
+P0 = bond_price(ytm_current)
+
+# 计算修正久期
+def bond_duration(ytm):
+    """麦考利久期与修正久期"""
+    t = np.arange(1, T + 1)
+    pv_cf = coupon / (1 + ytm) ** t
+    pv_face = face / (1 + ytm) ** T
+    pv_total = np.sum(pv_cf) + pv_face
+    mac_dur = (np.sum(t * pv_cf) + T * pv_face) / pv_total
+    mod_dur = mac_dur / (1 + ytm)
+    return mac_dur, mod_dur
+
+_, D_mod = bond_duration(ytm_current)
+
+# 精确价格：收益率上浮100bp
+ytm_up = ytm_current + dy
+price_up_exact = bond_price(ytm_up)
+
+# 久期法估计的相对变化（小数形式）
+dur_approx_change = -D_mod * dy
+# 久期法估计的绝对价格
+price_up_approx = P0 * (1 + dur_approx_change)
+
+# 绘制价格-收益率曲线
+y_range = np.linspace(0.02, 0.09, 500)
+prices_exact = [bond_price(y) for y in y_range]
+# 久期近似切线：P_approx(y) = P0 * [1 - D_mod * (y - ytm_current)]
+prices_approx = P0 * (1 - D_mod * (y_range - ytm_current))
+
+plt.figure(figsize=(10, 6))
+plt.plot(y_range * 100, prices_exact, label='Exact Price', linewidth=2)
+plt.plot(y_range * 100, prices_approx, '--', label='Duration Approximation', linewidth=2)
+# 标注+100bp变动点
+plt.axvline(x=ytm_current * 100, color='gray', linestyle=':', alpha=0.7)
+plt.axvline(x=ytm_up * 100, color='gray', linestyle=':', alpha=0.7)
+plt.scatter([ytm_up * 100], [price_up_exact], color='red', zorder=5, label=f'Exact at +100bp: {price_up_exact:.2f}')
+plt.scatter([ytm_up * 100], [price_up_approx], color='blue', marker='x', zorder=5, label=f'Approx at +100bp: {price_up_approx:.2f}')
+plt.xlabel('Yield to Maturity (%)')
+plt.ylabel('Bond Price')
+plt.title('Bond Price-Yield Curve with Duration Approximation')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+
+# 保存图片
+fig_path = 'bond_price_yield.png'
+plt.savefig(fig_path, dpi=150)
+plt.close()
+
+# 构建结果字典
+result = {
+    'price_at_up100bp': round(price_up_exact, 4),
+    'dur_approx_change_up100bp': round(dur_approx_change, 6),
+    'figure_path': fig_path
+}
+
+print(result)

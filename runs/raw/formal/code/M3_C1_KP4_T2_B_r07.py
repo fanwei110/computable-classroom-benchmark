@@ -1,0 +1,59 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+import os
+
+# ============ 可调参数 ============
+K = 97.5          # 行权价
+r = 0.043         # 无风险利率
+T = 0.58          # 到期时间(年)
+vol_list = [0.15, 0.276, 0.40]  # 三条波动率，可自由增减
+# =================================
+
+S_range = np.linspace(70, 140, 1000)
+
+def bs_call_delta(S, K, r, T, sigma):
+    """Black-Scholes 看涨期权 Delta"""
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# ============ 绘图 ============
+fig, ax = plt.subplots(figsize=(10, 6))
+
+colors = ['#1f77b4', '#ff7f0e', '#2ca02c']
+for sigma, color in zip(vol_list, colors):
+    deltas = bs_call_delta(S_range, K, r, T, sigma)
+    ax.plot(S_range, deltas, label=f'σ = {sigma*100:.1f}%', color=color, linewidth=2.2)
+
+ax.axvline(x=K, color='grey', linestyle='--', alpha=0.5, label=f'K = {K}')
+ax.set_xlabel('标的资产价格 S', fontsize=13)
+ax.set_ylabel('Delta', fontsize=13)
+ax.set_title(f'Call Delta 曲线  (K={K}, r={r*100}%, T={T})', fontsize=14)
+ax.legend(fontsize=12, loc='upper left')
+ax.set_xlim(70, 140)
+ax.set_ylim(-0.02, 1.02)
+ax.grid(True, alpha=0.3)
+
+figure_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'delta_curves.png') \
+    if '__file__' in dir() else 'delta_curves.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ============ 计算 S=110, vol=27.6% 的 Delta ============
+target_S = 110
+target_vol = 0.276
+delta_s110 = float(bs_call_delta(target_S, K, r, target_vol, target_vol))
+
+# 精确重算（上面一行笔误修正：sigma参数应为target_vol）
+d1_110 = (np.log(110 / K) + (r + 0.5 * target_vol**2) * T) / (target_vol * np.sqrt(T))
+delta_s110 = float(norm.cdf(d1_110))
+
+# ============ 输出 ============
+result = {
+    'delta_at_s110': round(delta_s110, 6),
+    'figure_path': figure_path
+}
+
+print(f"S=110, σ=27.6% 时 Delta = {delta_s110:.6f}")
+print(f"图已保存至: {figure_path}")
+print(f"result = {result}")

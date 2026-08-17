@@ -1,0 +1,46 @@
+import numpy as np
+
+# 债券基本参数
+face_value = 100.0        # 面值
+coupon_rate = 0.046       # 票息率
+years_to_maturity = 7     # 期限 (年)
+ytm = 0.053               # 到期收益率
+
+# 计算每年现金流
+coupon_payment = face_value * coupon_rate
+t = np.arange(1, years_to_maturity + 1)  # 时间序列 1 到 7
+
+# 构建现金流数组：前6年每年4.6，第7年104.6
+cf = np.full(years_to_maturity, coupon_payment)
+cf[-1] += face_value
+
+# 折现因子
+discount_factors = (1 + ytm) ** t
+
+# 1. 计算债券价格 (各期现金流现值之和)
+pv_cf = cf / discount_factors
+price = np.sum(pv_cf)
+
+# 2. 计算麦考利久期 (加权平均回收时间，以年为单位)
+# 权重 = 各期现金流现值 / 债券价格
+weighted_pv_cf = t * pv_cf
+macaulay_duration = np.sum(weighted_pv_cf) / price
+
+# 3. 计算修正久期 (衡量价格对收益率的敏感度)
+modified_duration = macaulay_duration / (1 + ytm)
+
+# 4. 计算凸性 (衡量价格-收益率曲线的弯曲程度)
+# 公式： (1/P) * SUM[ t*(t+1) * CF / (1+y)^(t+2) ]
+convexity_numerator = np.sum(t * (t + 1) * cf / (1 + ytm)**(t + 2))
+convexity = convexity_numerator / price
+
+# 将结果存入字典，键名严格按要求命名
+result = {
+    'price': price,
+    'macaulay_duration_years': macaulay_duration,
+    'modified_duration_years': modified_duration,
+    'convexity': convexity
+}
+
+# 打印结果
+print(result)

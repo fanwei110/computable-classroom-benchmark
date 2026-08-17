@@ -1,0 +1,51 @@
+import numpy as np
+
+def main():
+    # 资产 A 与 B 的年化波动率（小数形式）
+    sigma_A = 0.184   # 18.4%
+    sigma_B = 0.297   # 29.7%
+
+    # 权重：六四开，假设 A 占 60%，B 占 40%
+    w = np.array([0.6, 0.4])
+
+    # 相关系数：变化前后
+    rho_before = 0.3
+    rho_after  = 0.8
+
+    # 协方差矩阵（年化）
+    # before
+    cov_before = np.array([
+        [sigma_A**2, rho_before * sigma_A * sigma_B],
+        [rho_before * sigma_A * sigma_B, sigma_B**2]
+    ])
+    # after
+    cov_after = np.array([
+        [sigma_A**2, rho_after * sigma_A * sigma_B],
+        [rho_after * sigma_A * sigma_B, sigma_B**2]
+    ])
+
+    # 组合方差
+    var_before = w @ cov_before @ w
+    var_after  = w @ cov_after  @ w
+
+    # 组合年化波动率
+    vol_before = np.sqrt(var_before)
+    vol_after  = np.sqrt(var_after)
+
+    # 结果字典
+    result = {
+        'vol_before_annual': vol_before,
+        'vol_after_annual':  vol_after
+    }
+
+    # 输出结果，便于投屏查看
+    print("组合波动率（年化，小数）:")
+    print(f"相关系数 0.3 时：{vol_before:.4f}  ({vol_before*100:.2f}%)")
+    print(f"相关系数 0.8 时：{vol_after:.4f}  ({vol_after*100:.2f}%)")
+    print("\n结果字典：")
+    print(result)
+
+    return result
+
+if __name__ == "__main__":
+    result = main()

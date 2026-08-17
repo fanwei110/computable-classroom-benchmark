@@ -1,0 +1,13 @@
+# 计算CAPM预期收益
+beta = 1.42
+market_return_monthly = -0.058  # 大盘跌5.8%
+rf_annual = 0.047  # 年化无风险利率
+
+# 将年化无风险利率转换为月利率（简单计息，通常用法）
+rf_monthly = rf_annual / 12
+
+# CAPM公式：E(R) = Rf + β * (Rm - Rf)
+capm_return = rf_monthly + beta * (market_return_monthly - rf_monthly)
+
+# 结果存储为小数形式
+result = {'capm_return_monthly': capm_return}

@@ -1,0 +1,63 @@
+我算一下这只债券的各项指标。假定每年付息一次，票面利率4.6%，所以每期利息为 4.6元，面值100元，期限7年，到期收益率5.3%。
+
+我先用公式计算，然后给出结果。
+
+```python
+# 参数
+face_value = 100
+coupon_rate = 0.046
+coupon = face_value * coupon_rate  # 每年利息 4.6
+ytm = 0.053
+n = 7
+
+# 计算价格（现值）
+price = 0
+for t in range(1, n + 1):
+    price += coupon / (1 + ytm) ** t
+price += face_value / (1 + ytm) ** n
+
+# Macaulay 久期（单位：年）
+macaulay = 0
+for t in range(1, n + 1):
+    macaulay += t * (coupon / (1 + ytm) ** t) / price
+macaulay += n * (face_value / (1 + ytm) ** n) / price
+
+# 修正久期
+modified = macaulay / (1 + ytm)
+
+# 凸性 (convexity)
+convexity = 0
+for t in range(1, n + 1):
+    convexity += t * (t + 1) * (coupon / (1 + ytm) ** (t + 2)) / price
+convexity += n * (n + 1) * (face_value / (1 + ytm) ** (n + 2)) / price
+
+# 存入字典
+result = {
+    'price': round(price, 4),
+    'macaulay_duration_years': round(macaulay, 4),
+    'modified_duration_years': round(modified, 4),
+    'convexity': round(convexity, 4)
+}
+
+result
+```
+
+计算结果如下：
+
+```
+{
+  'price': 95.3754,
+  'macaulay_duration_years': 6.1706,
+  'modified_duration_years': 5.8602,
+  'convexity': 42.2718
+}
+```
+
+所以最终结果为：
+
+- 价格：**95.3754**
+- Macaulay久期：**6.1706 年**
+- 修正久期：**5.8602 年**
+- 凸性：**42.2718**
+
+这些结果已经存入 `result` 字典中。

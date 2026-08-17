@@ -1,0 +1,50 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+import os
+
+# 参数设定
+K = 97.5          # 行权价
+r = 0.043         # 无风险利率 4.3%
+T = 0.58          # 到期时间
+S_range = np.linspace(70, 140, 700)  # 标的价格范围
+vols = [0.15, 0.276, 0.40]  # 波动率可调，取15%, 27.6%, 40%
+
+# 计算看涨期权 Delta 的函数
+def calc_delta(S, K, r, T, vol):
+    d1 = (np.log(S / K) + (r + 0.5 * vol**2) * T) / (vol * np.sqrt(T))
+    return norm.cdf(d1)
+
+# 计算 S=110, vol=27.6% 时的 Delta
+S_target = 110
+vol_target = 0.276
+delta_at_s110 = calc_delta(S_target, K, r, T, vol_target)
+
+# 计算三条曲线的 Delta
+deltas = {}
+for v in vols:
+    deltas[v] = calc_delta(S_range, K, r, T, v)
+
+# 绘图设置
+plt.figure(figsize=(10, 6))
+for v in vols:
+    plt.plot(S_range, deltas[v], label=f'Vol = {v*100}%')
+
+plt.title('Delta Curve (K=97.5, r=4.3%, T=0.58)')
+plt.xlabel('Underlying Price (S)')
+plt.ylabel('Delta')
+plt.legend()
+plt.grid(True)
+
+# 保存图像
+figure_path = 'delta_curve.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 按照输出契约生成结果字典
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+print(result)

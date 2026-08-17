@@ -1,0 +1,33 @@
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+position_value = 1_850_000          # 头寸价值（元）
+annual_volatility = 0.218           # 年化波动率（21.8%）
+
+# 1. 年化波动率换算到一日波动率
+# 假设一年有252个交易日
+trading_days_per_year = 252
+daily_volatility = annual_volatility / np.sqrt(trading_days_per_year)
+
+# 2. 正态分位数
+z_95 = norm.ppf(0.95)               # 95%置信水平对应的标准正态分位数
+z_99 = norm.ppf(0.99)               # 99%置信水平对应的标准正态分位数
+
+# 3. 计算VaR
+# (i) 95% 一日VaR
+var_95_1d = position_value * z_95 * daily_volatility
+
+# (ii) 99% 十日VaR
+# 十日波动率 = 一日波动率 * sqrt(10)
+ten_day_volatility = daily_volatility * np.sqrt(10)
+var_99_10d = position_value * z_99 * ten_day_volatility
+
+# 4. 填充result字典
+result = {
+    'var_95_1d': round(var_95_1d, 2),    # 保留两位小数，单位：元
+    'var_99_10d': round(var_99_10d, 2)   # 保留两位小数，单位：元
+}
+
+# 输出结果（可选，便于调试）
+print(result)

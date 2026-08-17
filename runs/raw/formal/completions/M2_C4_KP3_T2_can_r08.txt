@@ -1,0 +1,94 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# -------------------- 参数定义 --------------------
+FACE = 100.0                # 面值
+COUPON_RATE = 0.046         # 票息率（年）
+MATURITY = 7                # 剩余年限
+Y0 = 0.053                  # 当前收益率（年复利）
+COUPON = FACE * COUPON_RATE # 每年付息金额
+
+# 收益率变动幅度（可调参数，用于控制近似线的展示范围）
+APPROX_Y_MARGIN = 0.02      # ±200 bp
+
+# -------------------- 现金流与定价 --------------------
+def price(y, face=FACE, coupon=COUPON, maturity=MATURITY):
+    """计算债券在收益率 y 下的精确价格（年复利）"""
+    t = np.arange(1, maturity + 1)
+    cf = np.full(maturity, coupon)
+    cf[-1] += face               # 最后一期现金流包含本金
+    pv = cf / (1 + y) ** t
+    return np.sum(pv)
+
+def duration_convexity(y, face=FACE, coupon=COUPON, maturity=MATURITY):
+    """计算麦考利久期、修正久期和凸性"""
+    t = np.arange(1, maturity + 1)
+    cf = np.full(maturity, coupon)
+    cf[-1] += face
+    pv = cf / (1 + y) ** t
+    p = np.sum(pv)
+    # 麦考利久期
+    mac_dur = np.sum(t * pv) / p
+    # 修正久期
+    mod_dur = mac_dur / (1 + y)
+    # 凸性： Σ[t(t+1) * CF_t / (1+y)^(t+2)] / P
+    conv = np.sum(t * (t + 1) * cf / (1 + y) ** (t + 2)) / p
+    return mac_dur, mod_dur, conv, p
+
+# 当前收益率下的价格、久期与凸性
+mac_dur, mod_dur, conv, P0 = duration_convexity(Y0)
+
+# -------------------- 收益率网格与精确价格 --------------------
+y_grid = np.linspace(0.02, 0.09, 500)
+exact_prices = np.array([price(y) for y in y_grid])
+
+# -------------------- 近似价格 --------------------
+# 一阶（久期）近似: P ≈ P0 * (1 - D_mod * (y - y0))
+p_approx1 = P0 * (1 - mod_dur * (y_grid - Y0))
+# 二阶（久期+凸性）近似: P ≈ P0 * (1 - D_mod*(y-y0) + 0.5*C*(y-y0)^2)
+p_approx2 = P0 * (1 - mod_dur * (y_grid - Y0) + 0.5 * conv * (y_grid - Y0)**2)
+
+# 按可调范围截取近似曲线，仅保留当前收益率附近区域
+mask = (y_grid >= Y0 - APPROX_Y_MARGIN) & (y_grid <= Y0 + APPROX_Y_MARGIN)
+y_approx = y_grid[mask]
+p_approx1_range = p_approx1[mask]
+p_approx2_range = p_approx2[mask]
+
+# -------------------- 绘图 --------------------
+plt.figure(figsize=(10, 6))
+plt.plot(y_grid * 100, exact_prices, 'b-', linewidth=2, label='Exact Price')
+plt.plot(y_approx * 100, p_approx1_range, 'r--', linewidth=1.5,
+         label='1st-order approx (Duration)')
+plt.plot(y_approx * 100, p_approx2_range, 'g-.', linewidth=1.5,
+         label='2nd-order approx (Duration+Convexity)')
+plt.axvline(x=Y0 * 100, color='gray', linestyle=':', alpha=0.7, label='Current YTM')
+plt.xlabel('Yield to Maturity (%)')
+plt.ylabel('Bond Price')
+plt.title(f'Bond Price–Yield Curve (Coupon: {COUPON_RATE*100}%, Maturity: {MATURITY}Y)')
+plt.legend()
+plt.grid(alpha=0.3)
+plt.tight_layout()
+
+# 保存图形并记录路径
+figure_path = 'bond_price_yield_convexity.png'
+plt.savefig(figure_path, dpi=150)
+plt.close()
+
+# -------------------- 收益率上升100bp的情景 --------------------
+DY = 0.01                  # +100 bps
+y_up = Y0 + DY
+price_up = price(y_up)     # 精确价格
+dur_approx_change = -mod_dur * DY   # 一阶相对变动（小数）
+
+# -------------------- 结果汇总 --------------------
+result = {
+    'price_at_up100bp': price_up,
+    'dur_approx_change_up100bp': dur_approx_change,
+    'figure_path': figure_path
+}
+
+# 实时课堂展示时可打印结果
+for key, val in result.items():
+    print(f"{key}: {val}")
+```

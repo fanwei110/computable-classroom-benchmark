@@ -1,0 +1,37 @@
+import numpy as np
+
+# 1. 确定权重对应方式：假设60%对应A资产，40%对应B资产
+weights = np.array([0.6, 0.4])  # [A, B]
+
+# 2. 资产波动率（年化）
+vol_A = 0.184
+vol_B = 0.297
+
+# 3. 构造协方差矩阵
+# 相关系数0.3的情况
+corr_before = 0.3
+cov_before = corr_before * vol_A * vol_B
+Sigma_before = np.array([
+    [vol_A**2, cov_before],
+    [cov_before, vol_B**2]
+])
+
+# 相关系数0.8的情况
+corr_after = 0.8
+cov_after = corr_after * vol_A * vol_B
+Sigma_after = np.array([
+    [vol_A**2, cov_after],
+    [cov_after, vol_B**2]
+])
+
+# 4. 计算组合波动率（年化）
+portfolio_vol_before = np.sqrt(weights.T @ Sigma_before @ weights)
+portfolio_vol_after = np.sqrt(weights.T @ Sigma_after @ weights)
+
+# 5. 存入结果字典
+result = {
+    'vol_before_annual': portfolio_vol_before,
+    'vol_after_annual': portfolio_vol_after
+}
+
+print(result)

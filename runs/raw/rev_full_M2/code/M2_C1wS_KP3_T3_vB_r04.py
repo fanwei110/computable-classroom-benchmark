@@ -1,0 +1,37 @@
+import numpy as np
+
+# 债券参数（假设按年付息，面值100）
+face_value = 100.0       # 面值
+coupon_rate = 0.046      # 票面利率 4.6%
+ytm = 0.053              # 当前到期收益率 5.3%
+n_years = 7              # 期限 7 年
+dy = 0.0080              # 收益率上升幅度 80 bp
+
+# 现金流：每年年末的票息，最后一年加上本金
+coupon = face_value * coupon_rate
+cash_flows = np.full(n_years, coupon, dtype=float)
+cash_flows[-1] += face_value
+
+# 现金流发生的时间（年）
+t = np.arange(1, n_years + 1)
+
+# ----- 当前价格 -----
+discount_factors = (1 + ytm) ** t
+price = np.sum(cash_flows / discount_factors)
+
+# ----- 新价格（收益率上行 80 bp）-----
+ytm_new = ytm + dy
+discount_factors_new = (1 + ytm_new) ** t
+price_new = np.sum(cash_flows / discount_factors_new)
+
+# ----- 跌幅（百分比，正数表示价格下跌）-----
+price_drop_pct = (price - price_new) / price * 100
+
+# 结果字典
+result = {'price_drop_pct': price_drop_pct}
+
+if __name__ == "__main__":
+    print(f"当前价格: {price:.4f}")
+    print(f"新价格 (收益率 +80bp): {price_new:.4f}")
+    print(f"价格跌幅: {price_drop_pct:.4f}%")
+    print("结果字典:", result)

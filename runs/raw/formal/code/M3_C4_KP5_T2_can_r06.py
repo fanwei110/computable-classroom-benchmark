@@ -1,0 +1,74 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 参数设置
+# ==========================================
+confidence_level = 0.95         # 置信水平（可调参数）
+position_value = 1_000_000     # 头寸金额（人民币）
+data_path = 'data/market_snapshot_v1.csv'
+figure_path = 'hist_var_plot.png'
+
+# ==========================================
+# 1. 读取快照 CSV，构造头寸的日损益
+# ==========================================
+df = pd.read_csv(data_path)
+# 提取基金日收益率序列（小数表示）
+daily_returns = df['fund'].values
+
+# 计算日损益 (P&L)
+pnl = position_value * daily_returns
+
+# ==========================================
+# 2. 计算历史 VaR (线性插值经验分位数)
+# ==========================================
+# 损失分位数对应于损益分布的左侧尾部
+# 对于 95% 的 VaR，需计算 P&L 分布的 5% 分位数
+alpha = 1 - confidence_level
+pnl_quantile = np.quantile(pnl, alpha)  # numpy 默认使用线性插值
+
+# VaR 报告为正的损失金额
+hist_var_95_1d = -pnl_quantile
+
+# ==========================================
+# 3. 画直方图并加带标注的 VaR 竖线
+# ==========================================
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS']  # 兼容中文显示
+plt.rcParams['axes.unicode_minus'] = False
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 绘制损益分布直方图
+ax.hist(pnl, bins=50, edgecolor='black', alpha=0.75, color='steelblue')
+
+# 添加 VaR 竖线（位于 P&L 的分位数处，标注正的损失金额）
+ax.axvline(
+    x=pnl_quantile, 
+    color='red', 
+    linestyle='--', 
+    linewidth=2,
+    label=f'{confidence_level*100:.0f}% 1-day Historical VaR\n= {hist_var_95_1d:,.2f} RMB'
+)
+
+# 图表装饰
+ax.set_title(f'Daily P&L Distribution & {confidence_level*100:.0f}% Historical VaR', fontsize=14)
+ax.set_xlabel('Daily Profit & Loss (RMB)', fontsize=12)
+ax.set_ylabel('Frequency', fontsize=12)
+ax.legend(fontsize=12)
+ax.grid(axis='y', alpha=0.5)
+
+# ==========================================
+# 4. 保存图形并填充 result 字典
+# ==========================================
+plt.tight_layout()
+fig.savefig(figure_path, dpi=150)
+plt.close(fig)
+
+result = {
+    'hist_var_95_1d': hist_var_95_1d,
+    'figure_path': figure_path
+}
+
+# （供调试检验输出，正式运行时可选打印）
+# print(result)

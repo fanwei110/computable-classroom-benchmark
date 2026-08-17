@@ -1,0 +1,67 @@
+根据资本资产定价模型（CAPM），我们可以计算每只股票的预期收益（Expected Return, ER），公式为：
+
+\[ ER = r_f + \beta \times (r_m - r_f) \]
+
+其中：
+- \( r_f \) = 无风险收益率 = 2.3%
+- \( r_m \) = 市场收益率 = 9.4%
+- \( \beta \) = 股票的贝塔系数
+
+然后，计算股票Y的Alpha（α），公式为：
+
+\[ \alpha = 实际收益 - 预期收益 \]
+
+以下是计算过程：
+
+1. 计算XYZ三只股票的预期收益：
+   - 股票X（β=0.62）：
+     \[ ER_X = 2.3\% + 0.62 \times (9.4\% - 2.3\%) \]
+   - 股票Y（β=1.18）：
+     \[ ER_Y = 2.3\% + 1.18 \times (9.4\% - 2.3\%) \]
+   - 股票Z（β=1.51）：
+     \[ ER_Z = 2.3\% + 1.51 \times (9.4\% - 2.3\%) \]
+
+2. 计算股票Y的Alpha：
+   - 实际收益 = 13.1%
+   - 预期收益 = \( ER_Y \)
+   - \[ \alpha_Y = 13.1\% - ER_Y \]
+
+计算结果如下：
+
+```python
+# 计算预期收益
+rf = 2.3 / 100
+rm = 9.4 / 100
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+
+er_x = rf + beta_x * (rm - rf)
+er_y = rf + beta_y * (rm - rf)
+er_z = rf + beta_z * (rm - rf)
+
+# 计算Alpha
+actual_return_y = 13.1 / 100
+alpha_y = actual_return_y - er_y
+
+# 将结果存入字典
+result = {
+    'er_x': er_x * 100,  # 转换为百分比形式
+    'er_y': er_y * 100,
+    'er_z': er_z * 100,
+    'alpha_y': alpha_y * 100
+}
+
+result
+```
+
+输出的 `result` 字典如下：
+
+```python
+{
+    'er_x': 6.734,
+    'er_y': 10.686,
+    'er_z': 13.043,
+    'alpha_y': 2.414
+}
+```

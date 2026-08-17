@@ -1,0 +1,82 @@
+由于无法直接访问您本地的 `data/market_snapshot_v1.csv` 文件，这里提供完整的 Python 脚本及详细说明。运行该脚本即可得到所需的历史法 VaR 数值、直方图以及 `result` 字典。
+
+### 脚本逻辑与计算约定
+- **日收益率**：读取 `fund` 列，若数值类似价格（多数 > 1）则用 `pct_change()` 计算收益率，否则直接作为小数收益率。
+- **头寸损益**：`日损益 = 1,000,000 × 日收益率`。
+- **历史法 VaR**：将日损益升序排列，取 `(1 - 置信水平)` 分位数对应的损失，再取绝对值（正数）。
+- **样本标准差**：使用 `ddof=1`。
+- **图表**：直方图 + 红色虚线标注 95% 一日 VaR，置信水平作为可调参数。
+
+### Python 代码
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ---------------------------- 参数设置 ----------------------------
+DATA_PATH = 'data/market_snapshot_v1.csv'
+POSITION = 1_000_000          # 头寸 100 万元
+CONF_LEVEL = 0.95             # 置信水平（可调）
+OUTPUT_FIG = 'var_histogram.png'
+# ----------------------------------------------------------------
+
+# 1. 读取数据
+df = pd.read_csv(DATA_PATH)
+fund_data = df['fund'].dropna()
+
+# 2. 判断 fund 列是价格还是收益率，并计算日收益率
+if fund_data.iloc[0] > 1:    # 假设价格序列
+    returns = fund_data.pct_change().dropna()
+else:                        # 已经是收益率（小数）
+    returns = fund_data.copy()
+
+# 3. 计算每日损益（元）
+pnl = POSITION * returns
+
+# 4. 历史法 VaR（正数损失金额）
+var_cutoff = (1 - CONF_LEVEL) * 100   # 95% -> 5th percentile
+var_loss = -np.percentile(pnl, var_cutoff)
+# 如果分位数为正（盈利），VaR 应定义为 0 或负损失？按约定报告正损失，
+# 通常此时 VaR 为负损失，但我们保持 abs 逻辑
+var_loss = max(var_loss, 0)   # 若分位数对应盈利，VaR 可视为 0
+
+# 5. 构建结果字典
+result = {
+    'hist_var_95_1d': round(var_loss, 2),
+    'figure_path': OUTPUT_FIG
+}
+
+# 6. 绘制直方图并保存
+plt.figure(figsize=(10, 6))
+plt.hist(pnl, bins=50, edgecolor='k', alpha=0.7, label='Daily PnL')
+plt.axvline(-var_loss, color='red', linestyle='--', linewidth=2,
+            label=f'{CONF_LEVEL*100:.0f}% 1-Day Hist VaR = {var_loss:,.2f}')
+plt.xlabel('Daily PnL (CNY)')
+plt.ylabel('Frequency')
+plt.title('Historical VaR - Daily PnL Distribution')
+plt.legend()
+plt.tight_layout()
+plt.savefig(OUTPUT_FIG, dpi=150)
+plt.close()
+
+print("计算完成，结果字典：")
+print(result)
+```
+
+### 预期输出示例
+实际数值完全取决于您的数据文件，这里仅给出格式示例：
+```python
+result = {
+    'hist_var_95_1d': 18250.47,
+    'figure_path': 'var_histogram.png'
+}
+```
+其中 `'hist_var_95_1d'` 代表在 95% 置信水平下，100 万头寸的 1 日历史 VaR（正损失金额）。
+
+### 运行说明
+1. 将上述代码保存为 `.py` 或 `.ipynb` 文件，并与 `data/market_snapshot_v1.csv` 放在同一目录。
+2. 如需调整置信水平（如 99%），修改 `CONF_LEVEL = 0.99` 即可。
+3. 生成的直方图将保存在脚本同级目录下，文件名 `var_histogram.png`，路径已存入 `result['figure_path']`。
+
+如果您能上传该 CSV 文件的内容（或提供前几行样本），我可以为您计算出确切的历史 VaR 值。

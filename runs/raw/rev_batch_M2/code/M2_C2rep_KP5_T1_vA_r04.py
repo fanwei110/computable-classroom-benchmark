@@ -1,0 +1,33 @@
+import numpy as np
+from scipy.stats import norm
+
+# ==================== 参数设定 ====================
+V = 1_850_000               # 头寸价值（元）
+sigma_annual = 0.218        # 年化收益波动率
+trading_days = 252          # 假设一年有252个交易日
+# =================================================
+
+# 1. 将年化波动率换算为日波动率
+sigma_daily = sigma_annual / np.sqrt(trading_days)
+
+# 2. 计算两个置信水平对应的正态分位数（标准正态分布）
+# 对于95%置信水平，VaR使用左侧5%分位数的绝对值，等价于右侧95%分位数
+z_95 = norm.ppf(0.95)       # 约 1.64485
+# 对于99%置信水平
+z_99 = norm.ppf(0.99)       # 约 2.32635
+
+# 3. 计算 VaR
+# (i) 95% 一日 VaR
+var_95_1d = V * sigma_daily * z_95
+
+# (ii) 99% 十日 VaR：波动率以时间平方根缩放
+var_99_10d = V * sigma_daily * np.sqrt(10) * z_99
+
+# 4. 填充结果字典
+result = {
+    'var_95_1d': var_95_1d,
+    'var_99_10d': var_99_10d
+}
+
+# 输出结果（教师可直接运行投屏）
+print(result)

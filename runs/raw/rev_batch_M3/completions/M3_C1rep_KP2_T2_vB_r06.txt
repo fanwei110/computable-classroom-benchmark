@@ -1,0 +1,163 @@
+```python
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+import numpy as np
+
+# ============ 初始参数 ============
+rf_init = 2.3   # %
+rm_init = 9.4   # %
+
+# 三个资产的 (beta, 实际收益率%)
+points = {'X': (0.62, 8.1), 'Y': (1.18, 13.1), 'Z': (1.51, 9.9)}
+
+# ============ 计算 ============
+def sml(beta, rf, rm):
+    return rf + beta * (rm - rf)
+
+sml_slope = rm_init - rf_init                  # 7.1%
+er_at_beta_127 = sml(1.27, rf_init, rm_init)   # 11.317%
+
+# ============ 绘图 ============
+fig, ax = plt.subplots(figsize=(11, 8))
+plt.subplots_adjust(bottom=0.22)
+
+beta_range = np.linspace(0, 2, 200)
+
+# SML 线
+line, = ax.plot(beta_range, sml(beta_range, rf_init, rm_init),
+                'b-', linewidth=2.5, label='SML', zorder=2)
+
+# rf 和市场组合点
+rf_pt, = ax.plot(0, rf_init, 'ks', markersize=9, zorder=5)
+rm_pt, = ax.plot(1, rm_init, 'k^', markersize=9, zorder=5)
+
+# 三个资产点
+colors = {'X': '#e74c3c', 'Y': '#27ae60', 'Z': '#8e44ad'}
+scat = {}
+for name, (b, r) in points.items():
+    scat[name], = ax.plot(b, r, 'o', color=colors[name], markersize=11,
+                          markeredgecolor='black', markeredgewidth=0.8,
+                          label=f'{name} (β={b}, {r}%)', zorder=5)
+
+# beta=1.27 对应点
+er127_pt, = ax.plot(1.27, er_at_beta_127, 'D', color='#e67e22', markersize=10,
+                    markeredgecolor='black', markeredgewidth=0.8,
+                    label=f'β=1.27 → E(R)={er_at_beta_127:.2f}%', zorder=5)
+
+# ---- 文字标注 ----
+ann_rf = ax.annotate(f'Rf = {rf_init:.1f}%', xy=(0, rf_init),
+                     xytext=(0.12, rf_init + 0.8), fontsize=10,
+                     arrowprops=dict(arrowstyle='->', color='gray'))
+ann_rm = ax.annotate(f'Market = {rm_init:.1f}%', xy=(1, rm_init),
+                     xytext=(1.12, rm_init + 0.8), fontsize=10,
+                     arrowprops=dict(arrowstyle='->', color='gray'))
+ann_127 = ax.annotate(f'β=1.27\nE(R)={er_at_beta_127:.2f}%',
+                      xy=(1.27, er_at_beta_127),
+                      xytext=(1.42, er_at_beta_127 - 1.8), fontsize=9,
+                      arrowprops=dict(arrowstyle='->', color='#e67e22'))
+
+# 点旁标注
+pt_anns = {}
+for name, (b, r) in points.items():
+    offset = (0.08, 0.6) if name != 'Z' else (0.08, -1.2)
+    pt_anns[name] = ax.annotate(f'{name}', xy=(b, r),
+                                xytext=(b + offset[0], r + offset[1]),
+                                fontsize=11, fontweight='bold',
+                                color=colors[name])
+
+# 信息框
+info_text = ax.text(0.02, 0.97,
+                    f'SML Slope (Market Risk Premium) = {sml_slope:.2f}%\n'
+                    f'E(R) at β=1.27 = {er_at_beta_127:.2f}%',
+                    transform=ax.transAxes, fontsize=11, va='top',
+                    bbox=dict(boxstyle='round,pad=0.5', facecolor='wheat', alpha=0.8))
+
+# 坐标轴美化
+ax.set_xlabel('Beta (β)', fontsize=13)
+ax.set_ylabel('Expected Return (%)', fontsize=13)
+ax.set_title(f'Security Market Line  |  Slope = {sml_slope:.1f}%', fontsize=15, fontweight='bold')
+ax.legend(loc='lower right', fontsize=9, framealpha=0.9)
+ax.set_xlim(-0.1, 2.2)
+ax.set_ylim(-1, 18)
+ax.grid(True, alpha=0.3)
+ax.axhline(y=0, color='black', linewidth=0.5)
+ax.axvline(x=1, color='gray', linewidth=0.5, linestyle=':', alpha=0.5)
+
+# ============ 滑块 ============
+ax_rf = plt.axes([0.2, 0.08, 0.6, 0.03])
+ax_rm = plt.axes([0.2, 0.03, 0.6, 0.03])
+
+slider_rf = Slider(ax_rf, 'Rf (%)', 0.0, 8.0, valinit=rf_init, valstep=0.1, color='#3498db')
+slider_rm = Slider(ax_rm, 'E(Rm) (%)', 2.0, 20.0, valinit=rm_init, valstep=0.1, color='#e74c3c')
+
+def update(val):
+    rf = slider_rf.val
+    rm = slider_rm.val
+    slope = rm - rf
+    er127 = sml(1.27, rf, rm)
+
+    # 更新 SML 线
+    line.set_ydata(sml(beta_range, rf, rm))
+    # 更新 rf / 市场点
+    rf_pt.set_ydata([rf])
+    rm_pt.set_ydata([rm])
+    # 更新 β=1.27 点
+    er127_pt.set_ydata([er127])
+
+    # 更新标注
+    ann_rf.xy = (0, rf)
+    ann_rf.set_position((0.12, rf + 0.8))
+    ann_rf.set_text(f'Rf = {rf:.1f}%')
+
+    ann_rm.xy = (1, rm)
+    ann_rm.set_position((1.12, rm + 0.8))
+    ann_rm.set_text(f'Market = {rm:.1f}%')
+
+    ann_127.xy = (1.27, er127)
+    ann_127.set_position((1.42, er127 - 1.8))
+    ann_127.set_text(f'β=1.27\nE(R)={er127:.2f}%')
+
+    info_text.set_text(f'SML Slope (Market Risk Premium) = {slope:.2f}%\n'
+                       f'E(R) at β=1.27 = {er127:.2f}%')
+
+    ax.set_title(f'Security Market Line  |  Slope = {slope:.1f}%',
+                 fontsize=15, fontweight='bold')
+    fig.canvas.draw_idle()
+
+slider_rf.on_changed(update)
+slider_rm.on_changed(update)
+
+# ============ 保存 & 输出 ============
+figure_path = 'sml_plot.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+
+result = {
+    'sml_slope': sml_slope / 100,          # 0.071
+    'er_at_beta_127': er_at_beta_127 / 100, # 0.11317
+    'figure_path': figure_path
+}
+
+print(result)
+print(f"\nSML 斜率 (市场风险溢价) = {sml_slope:.2f}% = {sml_slope/100:.4f}")
+print(f"β=1.27 对应期望收益 = {er_at_beta_127:.3f}% = {er_at_beta_127/100:.5f}")
+
+plt.show()
+```
+
+## 计算结果
+
+| 指标 | 值 |
+|------|-----|
+| **SML 斜率** (市场风险溢价) | E(Rm) − Rf = 9.4% − 2.3% = **7.10%** (0.071) |
+| **β=1.27 对应收益** | 2.3% + 1.27 × 7.1% = 2.3% + 9.017% = **11.317%** (0.11317) |
+
+## 关键说明
+
+1. **SML 方程**：E(Rᵢ) = Rf + βᵢ × [E(Rm) − Rf] = 2.3% + βᵢ × 7.1%
+
+2. **三个资产点与 SML 的关系**：
+   - **X (0.62, 8.1%)**：SML 上 β=0.62 对应 6.702%，X 实际 8.1% > SML → **被低估（位于 SML 上方），值得买入**
+   - **Y (1.18, 13.1%)**：SML 上 β=1.18 对应 10.678%，Y 实际 13.1% > SML → **被低估，值得买入**
+   - **Z (1.51, 9.9%)**：SML 上 β=1.51 对应 13.021%，Z 实际 9.9% < SML → **被高估（位于 SML 下方），应卖出**
+
+3. **交互功能**：拖动底部两个滑块可实时调整 Rf 和 E(Rm)，SML 线、标注、斜率信息都会同步更新。

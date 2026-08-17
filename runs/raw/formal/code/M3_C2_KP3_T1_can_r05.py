@@ -1,0 +1,53 @@
+import numpy as np
+
+# ==================== 债券参数设定 ====================
+# 假设：票息每年支付一次，按年复利，到期一次还本
+FV = 100                # 面值
+coupon_rate = 0.046      # 票息率 4.6%
+n = 7                    # 期限 7年
+y = 0.053                # 到期收益率 5.3%
+
+# 每年支付的票息额
+C = FV * coupon_rate
+
+# ==================== 步骤1：计算现金流与价格 ====================
+# 生成各期时间节点 t = 1, 2, ..., 7
+t = np.arange(1, n + 1)
+
+# 构建现金流向量：第1至6期为票息，第7期为票息+面值
+cf = np.full(n, C)
+cf[-1] += FV
+
+# 贴现因子与现金流现值
+discount_factors = (1 + y) ** t
+pv = cf / discount_factors
+
+# 债券价格 = 现金流现值之和
+price = np.sum(pv)
+
+# ==================== 步骤2：计算麦考利久期与修正久期 ====================
+# 麦考利久期 = (各期时间 × 现值) 之和 / 价格
+macaulay_duration = np.sum(t * pv) / price
+
+# 修正久期 = 麦考利久期 / (1 + 到期收益率)
+modified_duration = macaulay_duration / (1 + y)
+
+# ==================== 步骤3：计算凸性 ====================
+# 凸性标准公式：1/P * Σ [ t(t+1) * CF_t / (1+y)^(t+2) ]
+# 数学等价于：[1 / (P * (1+y)^2)] * Σ [ t(t+1) * CF_t / (1+y)^t ]
+# 此处未预先除以2，符合泰勒展开中凸性调整项的底层定义
+convexity = np.sum(t * (t + 1) * pv) / (price * (1 + y) ** 2)
+
+# ==================== 步骤4：填充结果字典 ====================
+result = {
+    'price': round(price, 4),
+    'macaulay_duration_years': round(macaulay_duration, 4),
+    'modified_duration_years': round(modified_duration, 4),
+    'convexity': round(convexity, 4)
+}
+
+# 课堂投屏展示打印
+if __name__ == '__main__':
+    print("《证券投资学》- 债券定价与久期、凸性计算结果：")
+    for key, value in result.items():
+        print(f"{key:>30s} : {value}")

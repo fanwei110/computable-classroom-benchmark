@@ -1,0 +1,104 @@
+import numpy as np
+import pandas as pd
+from scipy.optimize import minimize
+import matplotlib.pyplot as plt
+import os
+
+# 设定参数
+expected_returns = np.array([0.071, 0.124])
+volatilities = np.array([0.163, 0.289])
+correlations = [0.15, 0.45, 0.75]
+target_return = 0.10
+
+# 计算协方差矩阵
+def get_covariance_matrix(vol1, vol2, rho):
+    cov = rho * vol1 * vol2
+    return np.array([[vol1**2, cov], [cov, vol2**2]])
+
+# 最小方差组合
+def find_min_variance_portfolio(cov_matrix):
+    ones = np.ones(2)
+    inv_cov = np.linalg.inv(cov_matrix)
+    weights = inv_cov @ ones / (ones.T @ inv_cov @ ones)
+    return weights
+
+# 均值-方差前沿
+def calculate_frontier(expected_returns, cov_matrix, n_points=100):
+    min_var_weights = find_min_variance_portfolio(cov_matrix)
+    min_var_return = min_var_weights @ expected_returns
+    min_var_vol = np.sqrt(min_var_weights.T @ cov_matrix @ min_var_weights)
+
+    # 生成目标收益率范围
+    target_returns = np.linspace(min_var_return, 0.15, n_points)
+
+    frontier_vols = []
+    for ret in target_returns:
+        # 约束条件
+        constraints = ({'type': 'eq', 'fun': lambda w: w @ expected_returns - ret},
+                       {'type': 'eq', 'fun': lambda w: np.sum(w) - 1})
+        bounds = ((-np.inf, np.inf), (-np.inf, np.inf))
+
+        # 优化
+        result = minimize(lambda w: w.T @ cov_matrix @ w,
+                         x0=np.array([0.5, 0.5]),
+                         constraints=constraints,
+                         bounds=bounds)
+        frontier_vols.append(np.sqrt(result.fun))
+
+    return target_returns, np.array(frontier_vols), min_var_return, min_var_vol
+
+# 计算目标收益下的最小波动率
+def find_vol_at_target_return(expected_returns, cov_matrix, target_return):
+    constraints = ({'type': 'eq', 'fun': lambda w: w @ expected_returns - target_return},
+                   {'type': 'eq', 'fun': lambda w: np.sum(w) - 1})
+    bounds = ((-np.inf, np.inf), (-np.inf, np.inf))
+
+    result = minimize(lambda w: w.T @ cov_matrix @ w,
+                     x0=np.array([0.5, 0.5]),
+                     constraints=constraints,
+                     bounds=bounds)
+    return np.sqrt(result.fun)
+
+# 主计算
+result = {}
+
+# 计算rho=0.45时的特定值
+rho_45 = 0.45
+cov_matrix_45 = get_covariance_matrix(volatilities[0], volatilities[1], rho_45)
+mvp_weights_45 = find_min_variance_portfolio(cov_matrix_45)
+mvp_vol_45 = np.sqrt(mvp_weights_45.T @ cov_matrix_45 @ mvp_weights_45)
+result['mvp_vol_at_rho45'] = float(mvp_vol_45)
+
+target_vol_45 = find_vol_at_target_return(expected_returns, cov_matrix_45, target_return)
+result['frontier_vol_at_target'] = float(target_vol_45)
+
+# 绘制图形
+plt.figure(figsize=(10, 6))
+
+for rho in correlations:
+    cov_matrix = get_covariance_matrix(volatilities[0], volatilities[1], rho)
+    target_returns, frontier_vols, min_var_return, min_var_vol = calculate_frontier(expected_returns, cov_matrix)
+
+    # 绘制前沿曲线
+    plt.plot(frontier_vols, target_returns, label=f'ρ = {rho}')
+
+    # 标记最小方差组合
+    plt.scatter(min_var_vol, min_var_return, color='red', zorder=5)
+    plt.text(min_var_vol, min_var_return, f'MVP (ρ={rho})',
+             horizontalalignment='left', verticalalignment='bottom')
+
+plt.xlabel('Annualized Volatility')
+plt.ylabel('Expected Annual Return')
+plt.title('Mean-Variance Frontier for Different Correlations')
+plt.legend()
+plt.grid(True)
+
+# 保存图形
+figure_path = 'mean_variance_frontier.png'
+plt.savefig(figure_path)
+plt.close()
+
+result['figure_path'] = os.path.abspath(figure_path)
+
+# 输出结果
+print(result)

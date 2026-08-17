@@ -1,0 +1,52 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+
+# ===================== 参数定义 =====================
+K = 97.5                 # 行权价
+r = 0.043                # 无风险利率
+T = 0.58                 # 剩余期限（年）
+S_array = np.linspace(70, 140, 500)   # 标的价格网格
+sigma_list = [0.15, 0.276, 0.40]      # 可调波动率参数
+
+# ===================== 函数定义 =====================
+def bs_delta(S, K, T, r, sigma):
+    """计算欧式看涨期权的 Delta"""
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# ===================== 计算与绘图 =====================
+plt.figure(figsize=(10, 6))
+
+for sigma in sigma_list:
+    delta = bs_delta(S_array, K, T, r, sigma)
+    plt.plot(S_array, delta, lw=2, label=f'σ = {sigma*100:.1f}%')
+
+# 标注特定点：S=110, σ=27.6%
+sigma_target = 0.276
+delta_at_110 = bs_delta(110, K, T, r, sigma_target)
+plt.scatter([110], [delta_at_110], color='red', zorder=5)
+plt.annotate(f'({110}, {delta_at_110:.4f})',
+             xy=(110, delta_at_110),
+             xytext=(115, delta_at_110 - 0.05),
+             arrowprops=dict(arrowstyle='->', color='red'),
+             fontsize=10, color='red')
+
+plt.xlabel('标的资产价格 S')
+plt.ylabel('Delta')
+plt.title('欧式看涨期权 Delta 曲线 (Black-Scholes)')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 保存图片
+figure_path = 'delta_vs_S.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ===================== 输出结果 =====================
+result = {
+    'delta_at_s110': delta_at_110,
+    'figure_path': figure_path
+}
+
+print(result)

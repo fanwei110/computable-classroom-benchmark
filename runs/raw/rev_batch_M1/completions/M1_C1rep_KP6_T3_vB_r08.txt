@@ -1,0 +1,54 @@
+根据您的要求，我将计算基金的年化夏普比率（Sharpe Ratio），并将结果存入名为 `result` 的字典中。以下是计算步骤和代码：
+
+### 假设条件：
+1. `fund列全样本`：假设这是基金的全样本年化收益率（例如 `fund_returns`）。
+2. `rf = 2.1%`：无风险收益率（年化）。
+3. 夏普比率公式：
+   \[
+   \text{Sharpe Ratio} = \frac{\text{年化收益率} - \text{无风险收益率}}{\text{年化波动率}}
+   \]
+   其中，年化波动率通常基于日收益率或月收益率计算（假设已知）。
+
+### 示例代码（Python）：
+```python
+import numpy as np
+
+# 假设 fund_returns 是基金的全样本日收益率（示例数据）
+fund_returns = np.array([0.001, -0.002, 0.003, ...])  # 请替换为实际数据
+
+# 无风险收益率（年化）
+rf = 0.021
+
+# 计算年化收益率
+annual_return = np.mean(fund_returns) * 252  # 假设252个交易日
+
+# 计算年化波动率
+annual_volatility = np.std(fund_returns) * np.sqrt(252)
+
+# 计算年化夏普比率
+sharpe_annual = (annual_return - rf) / annual_volatility
+
+# 存入 result 字典
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+print(result)
+```
+
+### 输出：
+如果基金的年化收益率为 `8%`，年化波动率为 `10%`，则计算如下：
+\[
+\text{Sharpe Ratio} = \frac{0.08 - 0.021}{0.10} = 0.59
+\]
+结果将存入 `result` 字典：
+```python
+result = {
+    'sharpe_annual': 0.59  # 示例值，请替换为实际计算结果
+}
+```
+
+### 注意事项：
+1. 请确保 `fund_returns` 是基金的**全样本日收益率**（或月收益率，调整对应的年化因子）。
+2. 如果 `fund_returns` 已经是年化收益率，则无需乘以 `252`，直接使用即可。
+3. 如果缺少波动率数据，请补充完整。

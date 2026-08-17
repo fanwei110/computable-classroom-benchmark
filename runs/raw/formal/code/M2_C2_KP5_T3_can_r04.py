@@ -1,0 +1,23 @@
+import numpy as np
+from scipy.stats import norm
+
+# 给定参数
+annual_vol = 0.24          # 年化波动率 24%
+position = 2_700_000.0     # 头寸 2,700,000 元
+confidence = 0.95          # 置信水平
+trading_days = 252         # 一年交易天数，业界常用假设
+
+# 1. 年化波动率换算为一日波动率（假设收益独立同分布）
+daily_vol = annual_vol / np.sqrt(trading_days)
+
+# 2. 95% 置信水平下的正态分位数（左尾，损失侧）
+z_score = norm.ppf(1 - confidence)  # 约为 -1.64485
+
+# 3. 参数法 (delta-normal) 计算一日 VaR（以正数表示损失金额）
+var_95_1d = position * daily_vol * abs(z_score)
+
+# 存入结果字典，键名严格为 'var_95_1d'
+result = {'var_95_1d': var_95_1d}
+
+# 输出结果（课堂投屏用）
+print(result)

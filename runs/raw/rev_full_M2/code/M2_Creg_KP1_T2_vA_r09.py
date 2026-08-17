@@ -1,0 +1,75 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+def main():
+    # 资产参数
+    E1, E2 = 0.071, 0.124
+    sigma1, sigma2 = 0.163, 0.289
+    rhos = [0.15, 0.45, 0.75]
+    target_return = 0.10
+
+    def portfolio_stats(w, rho):
+        """计算给定权重 w（资产1比例）下的组合期望收益与年化波动率"""
+        E_p = w * E1 + (1 - w) * E2
+        var = (w**2 * sigma1**2 +
+               (1 - w)**2 * sigma2**2 +
+               2 * w * (1 - w) * rho * sigma1 * sigma2)
+        sigma_p = np.sqrt(np.maximum(var, 0))  # 防止极小负值
+        return E_p, sigma_p
+
+    def mvp_weight(rho):
+        """最小方差组合中资产1的权重"""
+        cov = rho * sigma1 * sigma2
+        numerator = sigma2**2 - cov
+        denominator = sigma1**2 + sigma2**2 - 2 * cov
+        return numerator / denominator
+
+    # 绘图
+    fig, ax = plt.subplots(figsize=(9, 6))
+
+    mvp_vol_at_rho45 = None
+    frontier_vol_at_target = None
+
+    for rho in rhos:
+        # 生成权重网格
+        ws = np.linspace(-2, 3, 800)
+        E_vals, sigma_vals = portfolio_stats(ws, rho)
+        ax.plot(sigma_vals, E_vals, label=f'ρ = {rho}')
+
+        # 最小方差组合
+        w_mvp = mvp_weight(rho)
+        E_mvp, sigma_mvp = portfolio_stats(w_mvp, rho)
+        ax.scatter(sigma_mvp, E_mvp, color='black', marker='*', s=100, zorder=5)
+
+        if rho == 0.45:
+            mvp_vol_at_rho45 = sigma_mvp
+            # 目标收益 10% 下的波动率
+            w_target = (target_return - E2) / (E1 - E2)
+            _, sigma_target = portfolio_stats(w_target, rho)
+            frontier_vol_at_target = sigma_target
+
+    # 添加 MVP 图例
+    ax.scatter([], [], color='black', marker='*', s=100, label='MVP')
+
+    ax.set_xlabel('Annualized Volatility')
+    ax.set_ylabel('Expected Annual Return')
+    ax.set_title('Mean-Variance Frontier for Two Risky Assets')
+    ax.legend()
+    ax.grid(True)
+
+    # 保存图像
+    figure_path = os.path.abspath('mean_variance_frontier.png')
+    plt.savefig(figure_path)
+    plt.close(fig)
+
+    result = {
+        'mvp_vol_at_rho45': float(mvp_vol_at_rho45),
+        'frontier_vol_at_target': float(frontier_vol_at_target),
+        'figure_path': figure_path
+    }
+    print(result)
+    return result
+
+if __name__ == '__main__':
+    main()

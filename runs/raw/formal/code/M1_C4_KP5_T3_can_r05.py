@@ -1,0 +1,22 @@
+import numpy as np
+from scipy.stats import norm
+
+# 课程计算约定参数
+TRADING_DAYS_PER_YEAR = 252
+CONFIDENCE_LEVEL = 0.95
+ANNUAL_VOLATILITY = 0.24
+POSITION_VALUE = 2_700_000  # 人民币金额
+
+# 1. 去年化波动率：年化波动率转换为一日波动率
+daily_volatility = ANNUAL_VOLATILITY / np.sqrt(TRADING_DAYS_PER_YEAR)
+
+# 2. 计算单尾 95% 正态分位数（均值为零）
+z_score = norm.ppf(1 - CONFIDENCE_LEVEL)
+
+# 3. 计算 VaR（正的损失金额）
+var_95_1d = POSITION_VALUE * z_score * daily_volatility
+
+# 输出契约：存入 result 字典
+result = {
+    'var_95_1d': round(var_95_1d, 2)  # 保留两位小数，符合金额习惯
+}

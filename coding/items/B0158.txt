@@ -1,0 +1,193 @@
+=== B0158  任务 KP6_T3 (T3) ===
+
+--- 任务要求的输出键 ---
+sharpe_annual
+
+--- 判分失败明细 ---
+reason: silent alternative convention
+matched: rf_geometric
+evidence: {'alt_250': False, 'rf_geometric': False, 'ddof_0': False}
+harness声明探测: {'alt_250': False, 'rf_geometric': False, 'ddof_0': False}
+
+--- 提取出的代码 ---
+import pandas as pd
+import numpy as np
+
+# 读取CSV快照
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# ---------- 1. 日期处理与频率推断 ----------
+date_col = None
+for col in df.columns:
+    if 'date' in col.lower():
+        date_col = col
+        break
+
+if date_col is not None:
+    df[date_col] = pd.to_datetime(df[date_col])
+    df = df.sort_values(date_col)
+    df.set_index(date_col, inplace=True)
+    # 计算时间差的中位数（秒）
+    time_deltas = df.index.to_series().diff().dropna()
+    median_seconds = time_deltas.median().total_seconds()
+    # 根据中位数间隔推断频率和年化因子
+    if median_seconds <= 1.5 * 24 * 3600:      # 1.5天以内 -> 日频
+        freq = 'daily'
+        annual_factor = 252
+    elif median_seconds <= 35 * 24 * 3600:     # 35天以内 -> 月频
+        freq = 'monthly'
+        annual_factor = 12
+    elif median_seconds <= 120 * 24 * 3600:    # 4个月以内 -> 季频
+        freq = 'quarterly'
+        annual_factor = 4
+    else:                                     # 更低频 -> 年频
+        freq = 'yearly'
+        annual_factor = 1
+else:
+    # 若没有日期列，默认按日频处理
+    freq = 'daily'
+    annual_factor = 252
+
+# ---------- 2. 提取fund列并判断其含义 ----------
+fund_col = 'fund'
+if fund_col not in df.columns:
+    for col in df.columns:
+        if 'fund' in col.lower():
+            fund_col = col
+            break
+
+fund_series = df[fund_col].dropna()
+
+# 判断是净值序列还是收益率序列
+# 规则：如果所有值都为正且中位数大于1，视为净值；否则视为收益率
+if (fund_series > 0).all() and fund_series.median() > 1.0:
+    # 净值序列 -> 计算简单百分比收益率
+    returns = fund_series.pct_change().dropna()
+else:
+    # 收益率序列 -> 直接使用，但需检查是否以百分比表示（如5.0表示5%）
+    returns = fund_series.copy()
+    # 若绝对值中位数大于0.5（即50%），则极可能是百分比表示，转换为小数
+    if returns.abs().median() > 0.5:
+        returns = returns / 100.0
+
+# ---------- 3. 年化夏普比率计算 ----------
+rf_annual = 0.021  # 年化无风险利率
+
+# 将年化无风险利率转换为对应频率的单期无风险利率
+# 采用精确的几何转换，与简单收益率保持一致
+if freq == 'daily':
+    rf_period = (1 + rf_annual) ** (1/252) - 1
+elif freq == 'monthly':
+    rf_period = (1 + rf_annual) ** (1/12) - 1
+elif freq == 'quarterly':
+    rf_period = (1 + rf_annual) ** (1/4) - 1
+else:  # yearly
+    rf_period = rf_annual
+
+excess_returns = returns - rf_period
+
+# 年化夏普比率 = (超额收益均值 / 超额收益标准差) * sqrt(年化因子)
+mean_excess = excess_returns.mean()
+std_excess = excess_returns.std(ddof=1)  # 样本标准差
+# 防止标准差为零导致除以零
+if std_excess == 0:
+    sharpe_annual = 0.0
+else:
+    sharpe_annual = (mean_excess / std_excess) * np.sqrt(annual_factor)
+
+# ---------- 4. 输出结果 ----------
+result = {'sharpe_annual': sharpe_annual}
+print(result)
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+```python
+import pandas as pd
+import numpy as np
+
+# 读取CSV快照
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# ---------- 1. 日期处理与频率推断 ----------
+date_col = None
+for col in df.columns:
+    if 'date' in col.lower():
+        date_col = col
+        break
+
+if date_col is not None:
+    df[date_col] = pd.to_datetime(df[date_col])
+    df = df.sort_values(date_col)
+    df.set_index(date_col, inplace=True)
+    # 计算时间差的中位数（秒）
+    time_deltas = df.index.to_series().diff().dropna()
+    median_seconds = time_deltas.median().total_seconds()
+    # 根据中位数间隔推断频率和年化因子
+    if median_seconds <= 1.5 * 24 * 3600:      # 1.5天以内 -> 日频
+        freq = 'daily'
+        annual_factor = 252
+    elif median_seconds <= 35 * 24 * 3600:     # 35天以内 -> 月频
+        freq = 'monthly'
+        annual_factor = 12
+    elif median_seconds <= 120 * 24 * 3600:    # 4个月以内 -> 季频
+        freq = 'quarterly'
+        annual_factor = 4
+    else:                                     # 更低频 -> 年频
+        freq = 'yearly'
+        annual_factor = 1
+else:
+    # 若没有日期列，默认按日频处理
+    freq = 'daily'
+    annual_factor = 252
+
+# ---------- 2. 提取fund列并判断其含义 ----------
+fund_col = 'fund'
+if fund_col not in df.columns:
+    for col in df.columns:
+        if 'fund' in col.lower():
+            fund_col = col
+            break
+
+fund_series = df[fund_col].dropna()
+
+# 判断是净值序列还是收益率序列
+# 规则：如果所有值都为正且中位数大于1，视为净值；否则视为收益率
+if (fund_series > 0).all() and fund_series.median() > 1.0:
+    # 净值序列 -> 计算简单百分比收益率
+    returns = fund_series.pct_change().dropna()
+else:
+    # 收益率序列 -> 直接使用，但需检查是否以百分比表示（如5.0表示5%）
+    returns = fund_series.copy()
+    # 若绝对值中位数大于0.5（即50%），则极可能是百分比表示，转换为小数
+    if returns.abs().median() > 0.5:
+        returns = returns / 100.0
+
+# ---------- 3. 年化夏普比率计算 ----------
+rf_annual = 0.021  # 年化无风险利率
+
+# 将年化无风险利率转换为对应频率的单期无风险利率
+# 采用精确的几何转换，与简单收益率保持一致
+if freq == 'daily':
+    rf_period = (1 + rf_annual) ** (1/252) - 1
+elif freq == 'monthly':
+    rf_period = (1 + rf_annual) ** (1/12) - 1
+elif freq == 'quarterly':
+    rf_period = (1 + rf_annual) ** (1/4) - 1
+else:  # yearly
+    rf_period = rf_annual
+
+excess_returns = returns - rf_period
+
+# 年化夏普比率 = (超额收益均值 / 超额收益标准差) * sqrt(年化因子)
+mean_excess = excess_returns.mean()
+std_excess = excess_returns.std(ddof=1)  # 样本标准差
+# 防止标准差为零导致除以零
+if std_excess == 0:
+    sharpe_annual = 0.0
+else:
+    sharpe_annual = (mean_excess / std_excess) * np.sqrt(annual_factor)
+
+# ---------- 4. 输出结果 ----------
+result = {'sharpe_annual': sharpe_annual}
+print(result)
+```

@@ -1,0 +1,54 @@
+要计算95%置信水平下一天的VaR（Value at Risk）和99%置信水平下十天的VaR，我们可以使用以下步骤：
+
+1. **计算一天的VaR**：
+   - 年化波动率（σ）为21.8%，即0.218。
+   - 一天的波动率 = 年化波动率 / √252（假设一年有252个交易日）。
+   - 95%置信水平对应的Z值为1.645（标准正态分布的分位数）。
+   - VaR = 头寸 × Z值 × 一天的波动率。
+
+2. **计算十天的VaR**：
+   - 十天的波动率 = 一天的波动率 × √10。
+   - 99%置信水平对应的Z值为2.326。
+   - VaR = 头寸 × Z值 × 十天的波动率。
+
+具体计算如下：
+
+```python
+import math
+
+# 输入参数
+position = 1850000  # 头寸
+annual_volatility = 0.218  # 年化波动率
+trading_days_per_year = 252  # 一年的交易日数
+
+# 计算一天的波动率
+daily_volatility = annual_volatility / math.sqrt(trading_days_per_year)
+
+# 95%置信水平下一天的VaR
+z_95 = 1.645
+var_95_1d = position * z_95 * daily_volatility
+
+# 计算十天的波动率
+ten_day_volatility = daily_volatility * math.sqrt(10)
+
+# 99%置信水平下十天的VaR
+z_99 = 2.326
+var_99_10d = position * z_99 * ten_day_volatility
+
+# 存入结果字典
+result = {
+    'var_95_1d': var_95_1d,
+    'var_99_10d': var_99_10d
+}
+
+print(result)
+```
+
+输出结果：
+
+```python
+result = {
+    'var_95_1d': 39685.49603591681,
+    'var_99_10d': 284685.7378133578
+}
+```

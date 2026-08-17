@@ -1,0 +1,157 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+
+# ===== 债券参数 =====
+F = 100
+coupon_rate = 0.046
+C = F * coupon_rate  # 4.6
+n = 7
+y0 = 0.053
+
+# ===== 核心函数 =====
+def bond_price(y):
+    """精确债券价格"""
+    t = np.arange(1, n + 1)
+    cf = np.full(n, C)
+    cf[-1] += F
+    return float(np.sum(cf / (1 + y) ** t))
+
+def mac_duration(y):
+    """麦考利久期"""
+    P = bond_price(y)
+    t = np.arange(1, n + 1)
+    cf = np.full(n, C)
+    cf[-1] += F
+    return float(np.sum(t * cf / (1 + y) ** t) / P)
+
+def mod_duration(y):
+    """修正久期"""
+    return mac_duration(y) / (1 + y)
+
+# ===== 当前指标 =====
+P0 = bond_price(y0)
+MacDur0 = mac_duration(y0)
+ModDur0 = mod_duration(y0)
+
+# ===== +100bp 计算 =====
+y_up100 = y0 + 0.01
+price_at_up100bp = bond_price(y_up100)
+dur_approx_change_up100bp = -ModDur0 * 0.01  # 久期法估计的相对变化
+dur_approx_price_up100 = P0 * (1 + dur_approx_change_up100bp)
+
+print(f"当前YTM = {y0*100:.1f}%")
+print(f"当前精确价格 P0 = {P0:.6f}")
+print(f"麦考利久期 = {MacDur0:.6f} 年")
+print(f"修正久期   = {ModDur0:.6f}")
+print(f"--- 收益率 +100bp (YTM → {y_up100*100:.1f}%) ---")
+print(f"精确价格              = {price_at_up100bp:.6f}")
+print(f"久期法估计相对变化    = {dur_approx_change_up100bp:.6f} ({dur_approx_change_up100bp*100:.4f}%)")
+print(f"久期法估计价格        = {dur_approx_price_up100:.6f}")
+print(f"久期法误差            = {dur_approx_price_up100 - price_at_up100bp:.6f}")
+
+# ===== 绘图数据 =====
+y_arr = np.linspace(0.02, 0.09, 1000)
+exact_p = np.array([bond_price(y) for y in y_arr])
+approx_p = P0 * (1 - ModDur0 * (y_arr - y0))
+
+# ===== 创建图形 =====
+fig, ax = plt.subplots(figsize=(14, 8))
+plt.subplots_adjust(left=0.09, right=0.72, bottom=0.20, top=0.93)
+
+# --- 绘制曲线 ---
+line_exact, = ax.plot(y_arr * 100, exact_p, 'b-', lw=2.5, zorder=2)
+line_approx, = ax.plot(y_arr * 100, approx_p, 'r--', lw=2.0, zorder=2)
+
+# --- 当前点 ---
+ax.plot(y0 * 100, P0, 'ko', ms=10, zorder=6)
+ax.annotate(f'当前: YTM={y0*100}%, P={P0:.2f}',
+            xy=(y0 * 100, P0), xytext=(y0 * 100 - 2.8, P0 + 4),
+            fontsize=11, fontweight='bold',
+            arrowprops=dict(arrowstyle='->', color='black', lw=1.3),
+            bbox=dict(boxstyle='round,pad=0.35', fc='lightyellow', ec='gray', alpha=0.9))
+ax.axvline(y0 * 100, color='gray', ls=':', alpha=0.35)
+
+# --- +100bp 可动标记（由slider控制，初始为100bp）---
+vline_shift = ax.axvline(y_up100 * 100, color='green', ls=':', alpha=0.5, lw=1.2)
+m_exact_shift, = ax.plot(y_up100 * 100, price_at_up100bp, 'g^', ms=12, zorder=6)
+m_dur_shift, = ax.plot(y_up100 * 100, dur_approx_price_up100, 'rv', ms=12, zorder=6)
+m_err_line, = ax.plot([y_up100 * 100] * 2,
+                       [price_at_up100bp, dur_approx_price_up100],
+                       'k-', lw=1.5, zorder=4)
+
+# --- 标签：曲线标识（放在图内，与图例分开）---
+ax.text(0.03, 0.97, '—— 精确价格曲线', transform=ax.transAxes,
+        fontsize=11, color='blue', fontweight='bold', va='top',
+        bbox=dict(boxstyle='round,pad=0.3', fc='white', ec='blue', alpha=0.85))
+ax.text(0.03, 0.90, '-- 久期近似（一阶线性）', transform=ax.transAxes,
+        fontsize=11, color='red', fontweight='bold', va='top',
+        bbox=dict(boxstyle='round,pad=0.3', fc='white', ec='red', alpha=0.85))
+ax.text(0.03, 0.83, '▲ 精确价格（变动后）    ▼ 久期估计价格', transform=ax.transAxes,
+        fontsize=10, color='black', va='top',
+        bbox=dict(boxstyle='round,pad=0.3', fc='white', ec='gray', alpha=0.85))
+
+# --- 右侧信息框 ---
+info_text = (
+    f'面值 = {F}   票息 = {coupon_rate*100}%   期限 = {n}年\n'
+    f'当前 YTM = {y0*100}%\n'
+    f'当前价格 P₀ = {P0:.4f}\n'
+    f'麦考利久期 = {MacDur0:.4f} 年\n'
+    f'修正久期   = {ModDur0:.4f}\n'
+    f'─────────────────────\n'
+    f'+100bp (YTM → {y_up100*100}%):\n'
+    f'  精确价格     = {price_at_up100bp:.4f}\n'
+    f'  久期法 ΔP/P  = {dur_approx_change_up100bp*100:.4f}%\n'
+    f'  久期法价格   = {dur_approx_price_up100:.4f}\n'
+    f'  误差         = {dur_approx_price_up100 - price_at_up100bp:+.4f}'
+)
+ax.text(1.02, 0.98, info_text, transform=ax.transAxes, fontsize=10,
+        verticalalignment='top', fontfamily='monospace',
+        bbox=dict(boxstyle='round,pad=0.5', fc='wheat', ec='orange', alpha=0.9))
+
+ax.set_xlabel('到期收益率 YTM (%)', fontsize=13)
+ax.set_ylabel('债券价格', fontsize=13)
+ax.set_title('价格-收益率曲线 vs 久期近似', fontsize=15, fontweight='bold')
+ax.grid(True, alpha=0.3)
+ax.set_xlim(2, 9)
+
+# ===== Slider：变动幅度可调 =====
+ax_sl = plt.axes([0.15, 0.05, 0.55, 0.03])
+slider = Slider(ax_sl, '收益率变动(bp)', 0, 370, valinit=100, valstep=10,
+                color='lightgreen')
+
+def on_slider_change(val):
+    bp = slider.val
+    dy = bp / 10000
+    y_new = y0 + dy
+    pe = bond_price(y_new)
+    pd = P0 * (1 - ModDur0 * dy)
+
+    vline_shift.set_xdata([y_new * 100, y_new * 100])
+    m_exact_shift.set_xdata([y_new * 100])
+    m_exact_shift.set_ydata([pe])
+    m_dur_shift.set_xdata([y_new * 100])
+    m_dur_shift.set_ydata([pd])
+    m_err_line.set_xdata([y_new * 100, y_new * 100])
+    m_err_line.set_ydata([min(pe, pd), max(pe, pd)])
+
+    fig.canvas.draw_idle()
+
+slider.on_changed(on_slider_change)
+
+# ===== 保存 =====
+fig.savefig('price_yield_curve.png', dpi=150, bbox_inches='tight')
+plt.close()
+
+# ===== 构建结果字典 =====
+result = {
+    'price_at_up100bp': round(price_at_up100bp, 6),
+    'dur_approx_change_up100bp': round(dur_approx_change_up100bp, 6),
+    'figure_path': 'price_yield_curve.png'
+}
+
+print(f"\n===== 结果 =====")
+print(f"price_at_up100bp          = {result['price_at_up100bp']}")
+print(f"dur_approx_change_up100bp = {result['dur_approx_change_up100bp']}")
+print(f"figure_path                = {result['figure_path']}")
+print(result)

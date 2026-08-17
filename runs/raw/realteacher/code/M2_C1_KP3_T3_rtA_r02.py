@@ -1,0 +1,25 @@
+# 计算初始价格和新价格
+face_value = 100
+coupon_rate = 0.046
+coupon = face_value * coupon_rate
+n = 7
+ytm_initial = 0.053
+ytm_new = ytm_initial + 0.008  # 80个基点
+
+# 价格计算公式
+def bond_price(ytm):
+    pv = 0
+    for t in range(1, n + 1):
+        cf = coupon
+        if t == n:
+            cf += face_value
+        pv += cf / ((1 + ytm) ** t)
+    return pv
+
+P0 = bond_price(ytm_initial)
+P1 = bond_price(ytm_new)
+
+price_drop = P0 - P1
+price_drop_pct = (price_drop / P0) * 100
+
+result = {'price_drop_pct': round(price_drop_pct, 3)}

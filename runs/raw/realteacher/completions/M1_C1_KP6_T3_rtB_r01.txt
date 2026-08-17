@@ -1,0 +1,67 @@
+要计算整个样本期的年化夏普比率（Sharpe ratio），我们需要按照以下步骤进行：
+
+1. 计算每只基金的日超额收益（日收益 - 无风险收益率的日等价值）。
+2. 计算每只基金的日超额收益的均值和标准差。
+3. 年化均值和标准差（均值乘以252，标准差乘以√252）。
+4. 计算年化夏普比率 = 年化均值 / 年化标准差。
+
+无风险收益率为2.1%，其日等价值为：(1 + 0.021)^(1/252) - 1 ≈ 0.0000826（约0.00826%）。
+
+以下是Python代码实现：
+
+```python
+import numpy as np
+import pandas as pd
+
+# 假设df是你的数据框，fund列是基金的日收益率
+# 示例代码（请根据实际数据调整）
+
+# 读取数据（示例，请替换为实际数据读取方式）
+# df = pd.read_csv('your_course_data.csv')
+
+# 计算日超额收益
+risk_free_daily = (1 + 0.021) ** (1/252) - 1
+df['excess_return'] = df['fund'] - risk_free_daily
+
+# 计算年化夏普比率
+mean_excess_return = df['excess_return'].mean()
+std_excess_return = df['excess_return'].std()
+sharpe_annual = (mean_excess_return * 252) / (std_excess_return * np.sqrt(252))
+
+# 存入结果字典
+result = {
+    'sharpe_annual': sharpe_annual
+}
+```
+
+如果你的数据文件中有多只基金（即`fund`列有多个不同的基金代码），需要先按基金分组，再分别计算每只基金的夏普比率。以下是分组计算的代码：
+
+```python
+import numpy as np
+import pandas as pd
+
+# 假设df是你的数据框，fund列是基金代码，return列是日收益率
+# 示例代码（请根据实际数据调整）
+
+# 读取数据（示例，请替换为实际数据读取方式）
+# df = pd.read_csv('your_course_data.csv')
+
+# 计算日超额收益
+risk_free_daily = (1 + 0.021) ** (1/252) - 1
+df['excess_return'] = df['return'] - risk_free_daily  # 假设return列是日收益率
+
+# 按基金分组计算年化夏普比率
+sharpe_ratios = df.groupby('fund')['excess_return'].apply(
+    lambda x: (x.mean() * 252) / (x.std() * np.sqrt(252))
+)
+
+# 如果需要整个样本期的夏普比率（所有基金收益合并计算）
+sharpe_annual = (df['excess_return'].mean() * 252) / (df['excess_return'].std() * np.sqrt(252))
+
+# 存入结果字典
+result = {
+    'sharpe_annual': sharpe_annual
+}
+```
+
+请根据你的实际数据结构调整代码。最终结果会存入`result`字典中，键为`'sharpe_annual'`。

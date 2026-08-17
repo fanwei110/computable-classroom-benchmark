@@ -1,0 +1,87 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==================== 参数设定 ====================
+r = np.array([0.071, 0.124])           # 期望收益
+sigma = np.array([0.163, 0.289])       # 年化波动率
+rho_list = [0.15, 0.45, 0.75]          # 相关系数
+target_return = 0.10                   # 目标收益
+
+# 扫描权重（w1 从 0 到 1，步长足够细以保证精度）
+w1_array = np.linspace(0, 1, 500)
+w2_array = 1 - w1_array
+
+# 预先计算收益序列（与权重有关，与相关系数无关）
+portfolio_returns = w1_array * r[0] + w2_array * r[1]
+
+# 初始化存放结果的字典
+result = {}
+
+# ==================== 计算与绘图 ====================
+fig, ax = plt.subplots(figsize=(10, 6))
+
+for rho in rho_list:
+    # 构造协方差矩阵
+    cov_matrix = np.array([
+        [sigma[0]**2, rho * sigma[0] * sigma[1]],
+        [rho * sigma[0] * sigma[1], sigma[1]**2]
+    ])
+    
+    # 计算组合方差：w' Σ w
+    # 向量化计算：w = [w1, w2]，方差 = w1^2 σ1^2 + w2^2 σ2^2 + 2 w1 w2 ρ σ1 σ2
+    portfolio_var = (
+        w1_array**2 * cov_matrix[0, 0] +
+        w2_array**2 * cov_matrix[1, 1] +
+        2 * w1_array * w2_array * cov_matrix[0, 1]
+    )
+    portfolio_vol = np.sqrt(portfolio_var)
+    
+    # 找到最小方差组合（波动率最小）
+    min_idx = np.argmin(portfolio_vol)
+    mvp_vol = portfolio_vol[min_idx]
+    mvp_ret = portfolio_returns[min_idx]
+    
+    # 绘制整个可行集曲线（所有权重组合）
+    ax.plot(portfolio_vol, portfolio_returns, label=f'ρ = {rho}')
+    # 标出最小方差组合
+    ax.scatter(mvp_vol, mvp_ret, marker='*', s=100, zorder=5)
+    
+    # 对 ρ=0.45 记录所需数据
+    if rho == 0.45:
+        result['mvp_vol_at_rho45'] = mvp_vol
+        
+        # 计算目标收益下的最小波动率（此处即对应权重的波动率）
+        # 解权重：w1 * r1 + (1-w1) * r2 = target_return
+        if r[0] != r[1]:
+            w1_target = (target_return - r[1]) / (r[0] - r[1])
+        else:
+            w1_target = 0.5  # 不可能发生，仅作保护
+        w2_target = 1 - w1_target
+        # 计算该权重下的波动率
+        target_var = (
+            w1_target**2 * cov_matrix[0, 0] +
+            w2_target**2 * cov_matrix[1, 1] +
+            2 * w1_target * w2_target * cov_matrix[0, 1]
+        )
+        result['frontier_vol_at_target'] = np.sqrt(target_var)
+
+# 图形装饰
+ax.set_xlabel('Volatility (Std Dev)')
+ax.set_ylabel('Expected Return')
+ax.set_title('Mean-Variance Efficient Frontiers')
+ax.legend()
+ax.grid(True, linestyle='--', alpha=0.7)
+
+# 保存图形
+figure_path = 'efficient_frontier.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close(fig)
+
+result['figure_path'] = figure_path
+
+# 如果作为脚本直接运行，则打印结果
+if __name__ == '__main__':
+    print(result)
+    # 打印格式化的数值，便于检查
+    print(f"ρ=0.45 时最小方差组合的波动率: {result['mvp_vol_at_rho45']:.4f}")
+    print(f"目标收益 10% 时的最小波动率: {result['frontier_vol_at_target']:.4f}")

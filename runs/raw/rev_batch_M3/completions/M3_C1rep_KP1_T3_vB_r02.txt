@@ -1,0 +1,28 @@
+根据投资组合波动率的计算公式：
+$$ \sigma_p = \sqrt{w_A^2 \sigma_A^2 + w_B^2 \sigma_B^2 + 2 w_A w_B \rho \sigma_A \sigma_B} $$
+
+已知条件：
+- 资产A权重 $w_A = 0.6$，波动率 $\sigma_A = 0.184$
+- 资产B权重 $w_B = 0.4$，波动率 $\sigma_B = 0.297$
+- 相关性变化前 $\rho_{before} = 0.3$，变化后 $\rho_{after} = 0.8$
+
+**计算相关性变化前的组合波动率：**
+$$ \sigma_{before}^2 = 0.6^2 \times 0.184^2 + 0.4^2 \times 0.297^2 + 2 \times 0.6 \times 0.4 \times 0.3 \times 0.184 \times 0.297 $$
+$$ \sigma_{before}^2 = 0.36 \times 0.033856 + 0.16 \times 0.088209 + 0.48 \times 0.3 \times 0.054648 $$
+$$ \sigma_{before}^2 = 0.01218816 + 0.01411344 + 0.007869312 = 0.034170912 $$
+$$ \sigma_{before} = \sqrt{0.034170912} \approx 0.1849 \text{ (即 18.49%)} $$
+
+**计算相关性变化后的组合波动率：**
+$$ \sigma_{after}^2 = 0.6^2 \times 0.184^2 + 0.4^2 \times 0.297^2 + 2 \times 0.6 \times 0.4 \times 0.8 \times 0.184 \times 0.297 $$
+$$ \sigma_{after}^2 = 0.01218816 + 0.01411344 + 0.48 \times 0.8 \times 0.054648 $$
+$$ \sigma_{after}^2 = 0.01218816 + 0.01411344 + 0.020984832 = 0.047286432 $$
+$$ \sigma_{after} = \sqrt{0.047286432} \approx 0.2175 \text{ (即 21.75%)} $$
+
+按照输出契约，结果如下：
+
+```python
+result = {
+    'vol_before_annual': 0.1849,
+    'vol_after_annual': 0.2175
+}
+```

@@ -1,0 +1,89 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import minimize
+
+# 给定数据
+mu = np.array([0.071, 0.124])  # 期望收益
+sigma = np.array([0.163, 0.289])  # 波动率
+target_return = 0.10  # 目标收益率
+correlations = [0.15, 0.45, 0.75]  # 相关系数列表
+
+# 存储结果的字典
+result = {
+    'mvp_vol_at_rho45': None,
+    'frontier_vol_at_target': None,
+    'figure_path': 'frontier_plot.png'
+}
+
+# 设置绘图
+plt.figure(figsize=(10, 6))
+
+# 对每个相关系数进行处理
+for rho in correlations:
+    # 构建协方差矩阵
+    cov_matrix = np.array([
+        [sigma[0]**2, rho * sigma[0] * sigma[1]],
+        [rho * sigma[0] * sigma[1], sigma[1]**2]
+    ])
+
+    # 定义组合方差函数
+    def portfolio_variance(w, cov_matrix):
+        return w.T @ cov_matrix @ w
+
+    # 定义最小方差组合的优化问题（满仓约束）
+    def min_variance(cov_matrix):
+        n = len(cov_matrix)
+        w0 = np.ones(n) / n  # 初始权重
+        constraints = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1})  # 满仓约束
+        bounds = tuple((None, None) for _ in range(n))  # 允许卖空
+        res = minimize(portfolio_variance, w0, args=(cov_matrix,), bounds=bounds, constraints=constraints)
+        return res.x
+
+    # 计算最小方差组合
+    w_mvp = min_variance(cov_matrix)
+    mu_mvp = w_mvp @ mu
+    vol_mvp = np.sqrt(portfolio_variance(w_mvp, cov_matrix))
+
+    # 定义有效前沿的优化问题（给定目标收益）
+    def frontier_vol(target_mu, mu, cov_matrix):
+        n = len(mu)
+        w0 = np.ones(n) / n
+        constraints = (
+            {'type': 'eq', 'fun': lambda w: np.sum(w) - 1},  # 满仓约束
+            {'type': 'eq', 'fun': lambda w: w @ mu - target_mu}  # 目标收益约束
+        )
+        bounds = tuple((None, None) for _ in range(n))  # 允许卖空
+        res = minimize(portfolio_variance, w0, args=(cov_matrix,), bounds=bounds, constraints=constraints)
+        return np.sqrt(res.fun)
+
+    # 生成有效前沿数据
+    target_mus = np.linspace(min(mu), max(mu), 100)
+    frontier_vols = [frontier_vol(m, mu, cov_matrix) for m in target_mus]
+
+    # 绘制有效前沿
+    plt.plot(frontier_vols, target_mus, label=f'ρ = {rho}')
+
+    # 标记最小方差组合
+    plt.scatter(vol_mvp, mu_mvp, color='red', zorder=5)
+    plt.text(vol_mvp, mu_mvp, 'MVP', fontsize=9, verticalalignment='bottom')
+
+    # 计算相关系数为0.45时的特定结果
+    if rho == 0.45:
+        result['mvp_vol_at_rho45'] = vol_mvp
+        result['frontier_vol_at_target'] = frontier_vol(target_return, mu, cov_matrix)
+
+# 设置图形属性
+plt.title('Mean-Variance Frontier for Two Assets')
+plt.xlabel('Annualized Volatility')
+plt.ylabel('Expected Annual Return')
+plt.legend()
+plt.grid(True)
+
+# 保存图形
+plt.savefig(result['figure_path'])
+plt.close()
+
+# 输出结果
+print(result)
+```

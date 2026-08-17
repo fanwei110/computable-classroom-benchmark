@@ -1,0 +1,64 @@
+import numpy as np
+from scipy.optimize import newton
+
+# 债券参数
+face_value = 100
+coupon_rate = 0.046
+ytm_initial = 0.053  # 初始收益率
+years_to_maturity = 7
+coupon_frequency = 2  # 半年付息一次
+
+# 计算久期和凸性的辅助函数
+def bond_price(ytm, face_value, coupon_rate, years_to_maturity, coupon_frequency):
+    periods = years_to_maturity * coupon_frequency
+    coupon_payment = face_value * coupon_rate / coupon_frequency
+    discount_factors = np.array([(1 + ytm / coupon_frequency) ** (-t) for t in range(1, periods + 1)])
+    price = np.sum(coupon_payment * discount_factors) + face_value * (1 + ytm / coupon_frequency) ** (-periods)
+    return price
+
+def bond_duration(ytm, face_value, coupon_rate, years_to_maturity, coupon_frequency):
+    periods = years_to_maturity * coupon_frequency
+    coupon_payment = face_value * coupon_rate / coupon_frequency
+    price = bond_price(ytm, face_value, coupon_rate, years_to_maturity, coupon_frequency)
+    weighted_cash_flows = np.array([t * coupon_payment / (1 + ytm / coupon_frequency) ** t for t in range(1, periods)])
+    weighted_cash_flows[-1] += periods * face_value / (1 + ytm / coupon_frequency) ** periods
+    duration = np.sum(weighted_cash_flows) / price / coupon_frequency
+    return duration
+
+def bond_convexity(ytm, face_value, coupon_rate, years_to_maturity, coupon_frequency):
+    periods = years_to_maturity * coupon_frequency
+    coupon_payment = face_value * coupon_rate / coupon_frequency
+    price = bond_price(ytm, face_value, coupon_rate, years_to_maturity, coupon_frequency)
+    weighted_cash_flows = np.array([t * (t + 1) * coupon_payment / (1 + ytm / coupon_frequency) ** (t + 2) for t in range(1, periods)])
+    weighted_cash_flows[-1] += periods * (periods + 1) * face_value / (1 + ytm / coupon_frequency) ** (periods + 2)
+    convexity = np.sum(weighted_cash_flows) / price / (coupon_frequency ** 2)
+    return convexity
+
+# 计算初始价格、久期和凸性
+initial_price = bond_price(ytm_initial, face_value, coupon_rate, years_to_maturity, coupon_frequency)
+duration = bond_duration(ytm_initial, face_value, coupon_rate, years_to_maturity, coupon_frequency)
+convexity = bond_convexity(ytm_initial, face_value, coupon_rate, years_to_maturity, coupon_frequency)
+
+# 收益率变化（80个基点 = 0.008）
+delta_ytm = 0.008
+
+# 使用久期和凸性估算价格变化
+price_drop_estimate = -duration * delta_ytm + 0.5 * convexity * (delta_ytm ** 2)
+price_drop_pct = price_drop_estimate * 100
+
+# 精确计算新价格
+new_ytm = ytm_initial + delta_ytm
+new_price = bond_price(new_ytm, face_value, coupon_rate, years_to_maturity, coupon_frequency)
+exact_price_drop_pct = (new_price - initial_price) / initial_price * 100
+
+# 结果存储
+result = {
+    'price_drop_pct': exact_price_drop_pct  # 使用精确计算结果
+}
+
+# 输出验证信息（可选，不影响result）
+print(f"初始价格: {initial_price:.4f}")
+print(f"久期: {duration:.4f}")
+print(f"凸性: {convexity:.4f}")
+print(f"估算跌幅: {price_drop_pct:.4f}%")
+print(f"精确跌幅: {exact_price_drop_pct:.4f}%")

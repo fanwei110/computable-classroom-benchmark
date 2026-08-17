@@ -1,0 +1,37 @@
+import numpy as np
+
+# ==================== 债券参数设定 ====================
+face_value = 100.0          # 面值
+coupon_rate = 0.046         # 票息率 4.6%
+initial_yield = 0.053       # 初始收益率 5.3%
+maturity = 7                # 期限 7 年
+yield_change = 0.008        # 收益率上升 80 个基点 (即 0.80%)
+
+# ==================== 现金流构建 ====================
+# 假设按年付息（未特别说明时固收标准默认），前 6 年每年末支付票息，第 7 年末支付票息+本金
+cash_flows = np.full(maturity, face_value * coupon_rate)
+cash_flows[-1] += face_value
+
+# 付息时间点序列
+periods = np.arange(1, maturity + 1)
+
+# ==================== 价格计算 ====================
+# 初始价格 P0
+initial_price = np.sum(cash_flows / (1 + initial_yield) ** periods)
+
+# 收益率上升后的新价格 P1
+new_yield = initial_yield + yield_change
+new_price = np.sum(cash_flows / (1 + new_yield) ** periods)
+
+# ==================== 跌幅计算 ====================
+# 价格变化百分比 = (新价格 - 初始价格) / 初始价格 * 100
+price_drop_pct = (new_price - initial_price) / initial_price * 100
+
+# ==================== 结果输出 ====================
+# 严格按照契约存入字典
+result = {'price_drop_pct': price_drop_pct}
+
+# 打印验证
+print(f"初始价格: {initial_price:.4f}")
+print(f"新价格: {new_price:.4f}")
+print(f"结果字典: {result}")

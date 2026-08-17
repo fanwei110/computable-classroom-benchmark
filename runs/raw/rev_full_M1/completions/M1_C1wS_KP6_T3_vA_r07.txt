@@ -1,0 +1,44 @@
+以下是自包含的Python脚本，按照要求计算基金的年化夏普比率：
+
+```python
+import numpy as np
+import pandas as pd
+
+# 1. 读取数据并设定无风险利率
+# 假设CSV文件名为'fund_data.csv'，且包含'fund'列（基金的月度收益率）
+# 如果文件名或列名不同，请根据实际情况调整
+data = pd.read_csv('fund_data.csv')  # 请确保文件在当前工作目录
+fund_returns = data['fund'].dropna()  # 获取基金收益率数据，去除缺失值
+
+risk_free_rate = 0.021  # 年化无风险利率2.1%
+
+# 2. 计算年化夏普比率
+# 将月度收益率转换为年化收益率和年化波动率
+monthly_excess_returns = fund_returns - (risk_free_rate / 12)  # 月度超额收益
+annualized_return = np.mean(monthly_excess_returns) * 12
+annualized_volatility = np.std(monthly_excess_returns) * np.sqrt(12)
+sharpe_annual = annualized_return / annualized_volatility
+
+# 3. 存储结果
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+# 输出结果（可选，用于验证）
+print("年化夏普比率:", result['sharpe_annual'])
+```
+
+### 说明：
+1. **数据读取**：脚本假设CSV文件名为`fund_data.csv`，且包含名为`fund`的列（存储基金的月度收益率）。如果文件名或列名不同，请自行调整。
+2. **无风险利率**：年化无风险利率设为2.1%，月度无风险利率为`2.1% / 12`。
+3. **年化计算**：
+   - 超额收益 = 基金收益率 - 月度无风险利率
+   - 年化收益 = 平均月度超额收益 × 12
+   - 年化波动率 = 月度超额收益标准差 × √12
+4. **夏普比率**：年化收益 / 年化波动率。
+5. **结果存储**：结果存入字典`result`，键名为`'sharpe_annual'`。
+
+### 注意事项：
+- 确保CSV文件在脚本运行目录下，或提供完整路径。
+- 如果数据不是月度收益率，请调整年化计算方法（例如日度收益率需乘以252）。
+- 脚本不依赖联网，仅使用指定的库（numpy、pandas）。

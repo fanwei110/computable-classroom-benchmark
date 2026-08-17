@@ -1,0 +1,205 @@
+<value>
+10870394
+</value>
+Denominator of d1 = 0.276 * sqrt(0.58) = 0.276 * 0.76157731 = 0.2101953
+
+d1 = 0.10870394 / 0.2101953 = 0.5170587
+
+N'(d1) = (1 / sqrt(2 * pi)) * exp(-d1^2 / 2)
+= (1 / 2.50662827) * exp(-0.5170587^2 / 2)
+= 0.39894228 * exp(-0.2673697 / 2)
+= 0.39894228 * exp(-0.1336848)
+= 0.39894228 * 0.8748873
+= 0.349045
+
+Vega = S * N'(d1) * sqrt(T) = 103.7 * 0.349045 * 0.76157731
+= 36.19497 * 0.76157731 = 27.5625
+
+Wait, "隐含波动率涨一个百分点" means an increase of 0.01 in volatility (from 27.6% to 28.6%).
+So the price change is Vega * 0.01 = 27.5625 * 0.01 = 0.275625.
+
+Let's double check the calculations.
+S = 103.7
+K = 97.5
+sigma = 0.276
+r = 0.043
+T = 0.58
+
+ln(S/K) = ln(103.7/97.5) = 0.061672949
+sigma^2 = 0.076176
+(r + sigma^2/2) = 0.043 + 0.038088 = 0.081088
+(r + sigma^2/2) * T = 0.081088 * 0.58 = 0.04703104
+numerator = 0.061672949 + 0.04703104 = 0.108703989
+denominator = 0.276 * sqrt(0.58) = 0.276 * 0.76157731058 = 0.2101953377
+d1 = 0.108703989 / 0.2101953377 = 0.517058716
+
+d1^2 = 0.2673497
+d1^2 / 2 = 0.1336748
+exp(-0.1336748) = 0.8748954
+pdf(d1) = exp(-0.1336748) / sqrt(2*pi) = 0.8748954 / 2.5066282746 = 0.3490485
+
+Vega = S * pdf(d1) * sqrt(T) = 103.7 * 0.3490485 * 0.76157731
+Vega = 36.1953 * 0.76157731 = 27.56277
+
+Change in price for 1% increase in vol = Vega * 0.01 = 0.2756277
+
+Wait, the question says "隐含波动率涨一个百分点", does it mean an absolute increase of 1% (i.e., +0.01) or a relative increase of 1% (i.e., +0.276%)?
+In finance, "涨一个百分点" for a rate typically means an absolute increase of 1%, i.e., from 27.6% to 28.6% (an increase of 0.01 in decimal).
+So the answer is Vega * 0.01 = 0.2756.
+
+Let's recalculate carefully.
+S = 103.7
+K = 97.5
+v = 0.276
+r = 0.043
+T = 0.58
+
+d1 = (ln(103.7/97.5) + (0.043 + 0.276^2/2)*0.58) / (0.276 * sqrt(0.58))
+ln(103.7/97.5) = 0.0616729493
+0.276^2 = 0.076176
+0.076176/2 = 0.038088
+0.043 + 0.038088 = 0.081088
+0.081088 * 0.58 = 0.04703104
+0.0616729493 + 0.04703104 = 0.1087039893
+
+sqrt(0.58) = 0.761577310586
+0.276 * 0.761577310586 = 0.2101953377
+
+d1 = 0.1087039893 / 0.2101953377 = 0.5170587166
+
+N'(d1) = exp(-d1^2 / 2) / sqrt(2*pi)
+d1^2 = 0.267349713
+-d1^2/2 = -0.133674856
+exp(-0.133674856) = 0.8748954
+sqrt(2*pi) = 2.50662827
+N'(d1) = 0.8748954 / 2.50662827 = 0.3490485
+
+Vega = S * sqrt(T) * N'(d1) = 103.7 * 0.761577310586 * 0.3490485
+Vega = 103.7 * 0.2659764 = 27.56278
+
+Since the question asks for the price change when implied volatility increases by 1 percentage point:
+Change = Vega * 0.01 = 0.2756278
+
+Let's consider if "隐含波动率涨一个百分点" could mean +1% relatively, i.e., sigma becomes 1.01 * 0.276 = 0.27876. Then change would be Vega * 0.00276 = 0.076.
+However, "涨一个百分点" literally translates to "rises by one percentage point", which means +1%, i.e., +0.01 in absolute terms. If it meant relatively, it would be "涨百分之一" (rises by one percent).
+So +0.01 is the standard interpretation.
+Price change = 0.2756278
+
+Let's review the format:
+Output contract: Store all required outputs in a dictionary named `result`, with key strictly as: 'price_change'.
+
+Let me do a sanity check on the parameters.
+S=103.7, K=97.5. This is an ITM call or ITM put.
+But Vega is the same for Call and Put.
+The formula for Vega:
+Vega_C = S * N'(d1) * sqrt(T)
+Vega_P = S * N'(d1) * sqrt(T)
+Yes, they are the same.
+
+Let's re-verify the math.
+d1 = (ln(103.7/97.5) + (0.043 + 0.5*0.276^2)*0.58) / (0.276*sqrt(0.58))
+= (0.061672949 + (0.043 + 0.038088)*0.58) / 0.210195338
+= (0.061672949 + 0.04703104) / 0.210195338
+= 0.108703989 / 0.210195338
+= 0.517058717
+
+N'(d1) = 1/sqrt(2*pi) * exp(-0.517058717^2 / 2)
+= 0.39894228 * exp(-0.13367486)
+= 0.39894228 * 0.87489542
+= 0.34904852
+
+Vega = 103.7 * 0.34904852 * sqrt(0.58)
+= 36.19532 * 0.76157731
+= 27.562776
+
+Price change = Vega * 0.01 = 0.27562776
+
+Wait, does the convention "所有利率、收益率、波动率与权重用小数表示（0.05 即 5%）" mean I should output 0.2756 or 27.5627?
+The question asks "期权价格能涨多少" (how much will the option price rise). The option price is in currency units, not percentage. So the price change should be 0.2756.
+
+Wait! Is it possible that the question means Vega itself? "隐含波动率涨一个百分点" (implied volatility rises 1 percentage point).
+Vega is the change in option price for a 1 percentage point (i.e. 0.01) change in volatility.
+So price change = Vega * 0.01 = 0.2756.
+If the question meant 1% as in volatility goes from 0.276 to 1.01 * 0.276, then it would be Vega * 0.00276. But usually, 1个百分点 = 1 percentage point = 0.01.
+
+Let's double check if there are any other interpretations.
+"隐含波动率涨一个百分点，期权价格能涨多少？"
+Vega is the derivative of the option price with respect to volatility: dC/dsigma.
+Price change = Vega * dsigma.
+Here dsigma = 0.01.
+Price change = 27.562776 * 0.01 = 0.27562776.
+
+Wait, some people use "Vega" to mean the price change for a 1% move in vol, which is exactly Vega * 0.01. In that case, the answer is simply 0.2756.
+
+Let's do the arithmetic one more time.
+ln(103.7/97.5) = 0.061672949
+r + 0.5*sigma^2 = 0.043 + 0.5*0.076176 = 0.081088
+T * (r + 0.5*sigma^2) = 0.58 * 0.081088 = 0.04703104
+Numerator = 0.061672949 + 0.04703104 = 0.108703989
+sqrt(T) = 0.761577311
+sigma * sqrt(T) = 0.276 * 0.761577311 = 0.210195338
+d1 = 0.108703989 / 0.210195338 = 0.517058717
+d1^2 = 0.267349711
+d1^2 / 2 = 0.133674856
+exp(-0.133674856) = 0.874895421
+pdf(d1) = 0.874895421 / sqrt(2*pi) = 0.349048526
+Vega = 103.7 * 0.349048526 * 0.761577311 = 27.562777
+
+Price change = 27.562777 * 0.01 = 0.27562777
+
+Let me confirm the standard normal CDF/PDF.
+pdf(0.5170587) = 0.349048526
+Looks correct.
+
+Is there any dividend yield? The problem doesn't mention it, so q=0.
+
+Are there any other details?
+"债券收益率按年复利报价；期权无风险利率按连续复利；所有利率、收益率、波动率与权重用小数表示（0.05 即 5%）"
+This just explains that 4.3% means r=0.043, 27.6% means sigma=0.276.
+"隐含波动率涨一个百分点" means dsigma = 0.01.
+
+So the change in option price is 0.2756.
+
+Let's write down the exact numbers.
+S = 103.7
+K = 97.5
+T = 0.58
+r = 0.043
+sigma = 0.276
+
+d1 = (np.log(103.7/97.5) + (0.043 + 0.276**2/2)*0.58) / (0.276 * np.sqrt(0.58))
+= 0.5170587166088149
+
+pdf_d1 = np.exp(-d1**2/2) / np.sqrt(2*np.pi)
+= 0.3490485258898542
+
+Vega = 103.7 * pdf_d1 * np.sqrt(0.58)
+= 27.56277674604208
+
+Price change = Vega * 0.01 = 0.2756277674604208
+
+I will format the output to a reasonable precision or just provide the full float in the dictionary. I will use the float value.
+`result = {'price_change': 0.2756277674604208}`
+Wait, usually it's better to round to 4 or 5 decimal places, but Python doesn't care. I'll just provide the float as is or rounded. Let's provide a rounded value, e.g., 0.2756. Actually, no restriction on rounding is specified, so keeping up to 4 or 5 is standard. Let's use 0.2756 or 0.27563. I'll just compute it directly.
+
+Is there any ambiguity about "隐含波动率涨一个百分点"?
+If implied volatility is 27.6%, "涨一个百分点" means it becomes 28.6%, i.e., +0.01.
+If it meant "涨百分之一", it would be 27.6% * 1.01 = 27.876%, i.e., +0.00276.
+The phrasing "一个百分点" specifically means 1 percentage point, which is +0.01 in decimal.
+So dsigma = 0.01.
+
+Is there any ambiguity about "期权价格能涨多少"?
+It means delta_price = Vega * dsigma = 27.5627 * 0.01 = 0.2756.
+
+Let's do a quick re-read: "还是这只期权，标的103.7、行权价97.5、波动率27.6%、利率4.3%、剩0.58年。学生问：隐含波动率涨一个百分点，期权价格能涨多少？"
+Everything seems straightforward.
+
+What about the 252 trading days rule?
+"计算约定：所有年化与去年化一律按每年 252 个交易日"
+But here T is already given in years (0.58年). If we needed to convert from days, we would divide by 252. But T is 0.58 years.
+Is it possible that 0.58 years means 0.58 * 252 = 146.16 trading days, and we should use T = 146.16 / 252 = 0.58? Yes, it's consistent.
+
+I am confident in 0.2756.要计算隐含波动率上涨一个百分点（即绝对量增加 0.01）时期权价格的变化量，我们需要计算该期权的 Vega（ν），即期权价格对波动率的敏感度。
+
+对于不分红的欧式期权（无论是看涨还是看跌），Vega 的计算公式为：
+$$ \nu = S \cdot

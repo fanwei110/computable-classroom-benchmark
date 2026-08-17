@@ -1,0 +1,34 @@
+import numpy as np
+
+def main():
+    """
+    计算资产 A 和资产 B 60/40 组合在相关系数变化前后的年化波动率。
+    资产 A 年化波动率 18.4%，资产 B 年化波动率 29.7%。
+    权重：A 占 60%，B 占 40%。
+    """
+    # 给定参数
+    vol_A = 0.184
+    vol_B = 0.297
+    w_A = 0.6
+    w_B = 0.4
+    rho_before = 0.3
+    rho_after = 0.8
+
+    def portfolio_vol(w1, w2, v1, v2, rho):
+        """计算两资产组合的年化波动率"""
+        var = w1**2 * v1**2 + w2**2 * v2**2 + 2 * w1 * w2 * rho * v1 * v2
+        return np.sqrt(var)
+
+    vol_before = portfolio_vol(w_A, w_B, vol_A, vol_B, rho_before)
+    vol_after = portfolio_vol(w_A, w_B, vol_A, vol_B, rho_after)
+
+    result = {
+        'vol_before_annual': vol_before,
+        'vol_after_annual': vol_after
+    }
+    return result
+
+
+if __name__ == "__main__":
+    result = main()
+    print(result)

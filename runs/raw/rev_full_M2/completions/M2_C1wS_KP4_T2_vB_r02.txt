@@ -1,0 +1,68 @@
+以下是一个自包含的 Python 脚本，它使用 Black-Scholes 公式计算欧式看涨期权的 Delta，绘制不同波动率下的 Delta 曲线，并报告指定点的 Delta 值。所有输出均存入字典 `result`，符合题目要求。
+
+```python
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+import os
+
+# ---------- Black-Scholes Delta for a European call ----------
+def bs_call_delta(S, K, T, r, sigma):
+    """
+    S     : spot price (scalar or array)
+    K     : strike price
+    T     : time to maturity (years)
+    r     : risk-free interest rate (continuous compounding)
+    sigma : volatility
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# ---------- Given market parameters ----------
+K      = 97.5        # strike price
+r      = 0.043       # risk-free rate (4.3%)
+T      = 0.58        # time to maturity (years)
+sigmas = [0.15, 0.276, 0.40]   # volatilities: 15%, 27.6%, 40%
+
+# ---------- Spot grid ----------
+S_values = np.linspace(70, 140, 500)
+
+# ---------- Plotting ----------
+plt.figure(figsize=(10, 6))
+for sigma in sigmas:
+    delta = bs_call_delta(S_values, K, T, r, sigma)
+    plt.plot(S_values, delta, linewidth=2, label=f'σ = {sigma*100:.1f}%')
+
+plt.xlabel('Spot Price (S)', fontsize=12)
+plt.ylabel('Delta', fontsize=12)
+plt.title('Black–Scholes Call Delta vs. Spot Price', fontsize=14)
+plt.legend(fontsize=11)
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+
+# ---------- Save figure ----------
+figure_path = os.path.abspath('delta_curves.png')
+plt.savefig(figure_path, dpi=150)
+plt.close()   # free memory, avoid showing during automatic execution
+
+# ---------- Delta at S=110, sigma=27.6% ----------
+S_target      = 110.0
+sigma_target  = 0.276
+delta_target  = bs_call_delta(S_target, K, T, r, sigma_target)
+
+# ---------- Assemble final output ----------
+result = {
+    'delta_at_s110': delta_target,
+    'figure_path': figure_path
+}
+
+# Display the result so the teacher sees it immediately in the console
+print("Output dictionary:")
+print(result)
+```
+
+**说明**  
+- 函数 `bs_call_delta` 利用闭式解 `Δ = N(d₁)`，其中 `d₁ = [ln(S/K) + (r + σ²/2)T] / (σ√T)`。  
+- 三条曲线分别对应 σ = 15%、27.6%、40%，图例已标注清晰，波动率作为参数可以方便调节。  
+- 图形保存为 `delta_curves.png` 的绝对路径，确保投屏或后续查看时路径正确。  
+- 在 S=110、σ=27.6% 时，计算得到的 Delta 约 **0.7874**（精确值可能因浮点运算略微不同，但稳定可复现）。

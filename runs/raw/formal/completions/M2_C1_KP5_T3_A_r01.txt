@@ -1,0 +1,14 @@
+æ ¹æ®è®¡ç®ï¼95%ç½®ä¿¡æ°´å¹³ä¸çä¸å¤©VaRä¸º67,149.16åãåè®¾æ¶ççæä»åå¼ä¸ºé¶çæ­£æåå¸ï¼å¹´åæ³¢å¨çè½¬æ¢ä¸ºæ¥æ³¢å¨çæ¶ä½¿ç¨252ä¸ªäº¤ææ¥ã
+
+```python
+import math
+
+annual_vol = 0.24
+position = 2_700_000
+z_score_95 = 1.645
+trading_days = 252
+
+daily_vol = annual_vol / math.sqrt(trading_days)
+var_95_1d = position * daily_vol * z_score_95
+result = {'var_95_1d': round(var_95_1d, 2)}
+```

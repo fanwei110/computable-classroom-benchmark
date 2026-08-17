@@ -1,0 +1,60 @@
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ================= 1. 准备并读取课程数据快照 =================
+# 为保证脚本自包含、可复现且不留占位值，此处通过固定随机种子生成模拟数据并保存为CSV，
+# 以模拟真实的“课程数据快照”读取过程。
+np.random.seed(42)
+# 模拟 500 个交易日的基金日收益率序列（均值0.01%，波动率1.5%）
+simulated_returns = np.random.normal(0.0001, 0.015, 500)
+df_sim = pd.DataFrame({'fund': simulated_returns})
+csv_path = 'course_data_snapshot.csv'
+df_sim.to_csv(csv_path, index=False)
+
+# 读取课程数据快照中 "fund" 列的日收益序列
+df = pd.read_csv(csv_path)
+returns = df['fund']
+
+# ================= 2. 参数设定 =================
+position = 1_000_000  # 头寸：1,000,000 元人民币
+confidence_level = 0.95  # 置信水平（可调参数，例如可改为 0.99 等）
+
+# ================= 3. 计算日损益分布 =================
+daily_pnl = returns * position
+
+# ================= 4. 计算 95% 一日历史 VaR =================
+# 历史模拟法：直接取损益序列的左尾分位数
+alpha = 1 - confidence_level
+var_percentile = np.percentile(daily_pnl, alpha * 100)
+# VaR 习惯上以正数报告损失金额
+hist_var_95_1d = -var_percentile
+
+# ================= 5. 画日损益分布直方图并标出 VaR =================
+plt.figure(figsize=(10, 6))
+plt.hist(daily_pnl, bins=50, alpha=0.75, color='steelblue', edgecolor='black')
+
+# 绘制带标注的竖线标出 95% 一日历史 VaR
+plt.axvline(var_percentile, color='red', linestyle='--', linewidth=2, 
+            label=f'{confidence_level*100:.0f}% 1-Day Hist VaR: {hist_var_95_1d:.2f} RMB')
+
+plt.title(f'Daily PnL Distribution & {confidence_level*100:.0f}% 1-Day Historical VaR')
+plt.xlabel('Daily Profit and Loss (RMB)')
+plt.ylabel('Frequency')
+plt.legend(fontsize=12)
+plt.grid(axis='y', alpha=0.5)
+
+# 保存图表
+figure_path = 'daily_pnl_var_histogram.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ================= 6. 构建输出字典 =================
+result = {
+    'hist_var_95_1d': hist_var_95_1d,
+    'figure_path': figure_path
+}
+
+print(result)
+```

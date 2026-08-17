@@ -1,0 +1,53 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+
+# ===================== 参数设置（可调） =====================
+K = 97.5                # 行权价
+r = 0.043               # 无风险利率（年化）
+T = 0.58                # 剩余期限（年）
+S_0 = 110.0             # 需要报告 delta 的标的价格
+sigma_report = 0.276    # 报告 delta 所用的波动率
+volatilities = [0.15, 0.276, 0.40]  # 三条曲线的波动率（可调参数）
+S_min, S_max = 70, 140  # 标的价格范围
+num_points = 500        # 价格网格点数
+figure_filename = "bs_delta_curve.png"  # 图形保存路径
+
+# ===================== Black-Scholes Delta 计算 =====================
+def bs_call_delta(S, K, r, T, sigma):
+    """计算欧式看涨期权的 Delta（不分红）"""
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# ===================== 计算 Delta 曲线 =====================
+S_grid = np.linspace(S_min, S_max, num_points)
+
+plt.figure(figsize=(10, 6))
+for sigma in volatilities:
+    delta_vals = bs_call_delta(S_grid, K, r, T, sigma)
+    plt.plot(S_grid, delta_vals, label=f"$\\sigma$ = {sigma*100:.1f}%")
+
+plt.xlabel("标的资产价格 S")
+plt.ylabel("Delta")
+plt.title("欧式看涨期权 Delta 曲线（Black-Scholes）")
+plt.legend()
+plt.grid(True, linestyle="--", alpha=0.7)
+plt.tight_layout()
+
+# 保存图形
+plt.savefig(figure_filename, dpi=150)
+plt.close()
+
+# ===================== 报告特定点的 Delta =====================
+delta_at_s110 = bs_call_delta(S_0, K, r, T, sigma_report)
+
+# ===================== 输出结果字典 =====================
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': figure_filename
+}
+
+# 打印以方便查看（不影响 result 字典）
+print(f"标的 {S_0}、波动率 {sigma_report*100:.1f}% 时的 Delta = {delta_at_s110:.6f}")
+print(f"图形已保存至: {figure_filename}")
+print("result 字典:", result)

@@ -1,0 +1,41 @@
+import numpy as np
+
+# 设置随机种子以保证可复现（虽然本计算不需要随机数）
+np.random.seed(0)
+
+# 给定参数：年化波动率（以小数表示）
+vol1 = 0.187
+vol2 = 0.243
+vol3 = 0.312
+
+# 相关系数矩阵
+corr_matrix = np.array([
+    [1.0,   0.21, -0.13],
+    [0.21,  1.0,   0.37],
+    [-0.13, 0.37,  1.0 ]
+])
+
+# 协方差矩阵 = diag(vol) * corr * diag(vol)
+vol_vector = np.array([vol1, vol2, vol3])
+cov_matrix = np.outer(vol_vector, vol_vector) * corr_matrix
+
+# 全局最小方差组合权重（允许卖空，满仓）
+# 闭式解：w = inv(Sigma) * 1 / (1' * inv(Sigma) * 1)
+one_vector = np.ones(3)
+inv_cov = np.linalg.inv(cov_matrix)
+mvp_weights = inv_cov @ one_vector / (one_vector @ inv_cov @ one_vector)
+
+# 组合年化波动率
+mvp_variance = mvp_weights @ cov_matrix @ mvp_weights
+mvp_vol_annual = np.sqrt(mvp_variance)
+
+# 输出结果字典（保留足够精度，不刻意修约）
+result = {
+    'mvp_weights': mvp_weights,           # array, 和为1
+    'mvp_vol_annual': mvp_vol_annual      # 小数，如0.1442...
+}
+
+# 打印以直观展示
+print("全局最小方差组合权重 (w1, w2, w3):")
+print(np.round(mvp_weights, 6))
+print(f"\n组合年化波动率: {mvp_vol_annual:.6f} ({mvp_vol_annual*100:.2f}%)")

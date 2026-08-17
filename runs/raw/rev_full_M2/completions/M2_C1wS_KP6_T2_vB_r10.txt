@@ -1,0 +1,91 @@
+```python
+import sys
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ===================== 可调参数 =====================
+WINDOW = 60               # 滚动窗口（交易日）
+RF_ANNUAL = 0.021         # 年化无风险利率
+TRADING_DAYS = 252        # 年交易日数
+CSV_FILE = "data.csv"     # 默认 CSV 文件名，可通过命令行参数覆盖
+# ====================================================
+
+# 1. 读取快照 CSV
+if len(sys.argv) > 1:
+    csv_path = sys.argv[1]
+else:
+    csv_path = CSV_FILE
+
+df = pd.read_csv(csv_path)
+print(f"读取文件: {csv_path}，共 {len(df)} 行")
+
+# 2. 数据预处理：识别日期列与基金净值/收益率列
+# 假设列名包含 'date' 和 'fund'（不区分大小写）
+date_col = [c for c in df.columns if 'date' in c.lower()]
+fund_col = [c for c in df.columns if 'fund' in c.lower()]
+
+if not date_col or not fund_col:
+    raise ValueError("CSV 中必须包含 'date' 和 'fund' 列")
+date_col = date_col[0]
+fund_col = fund_col[0]
+
+# 解析日期并设为索引
+df[date_col] = pd.to_datetime(df[date_col])
+df = df.sort_values(date_col).set_index(date_col)
+fund_series = df[fund_col].astype(float)
+
+# 判断是净值还是收益率：若初始值 > 0.5 则视为净值，需计算日收益率
+if fund_series.iloc[0] > 0.5:
+    print("检测到净值数据，计算日收益率（pct_change）")
+    returns = fund_series.pct_change().dropna()
+else:
+    print("检测到收益率数据，直接使用")
+    returns = fund_series.dropna()
+
+# 日无风险利率
+rf_daily = RF_ANNUAL / TRADING_DAYS
+
+# 超额收益
+excess_returns = returns - rf_daily
+
+# 3. 计算滚动年化夏普比率
+def rolling_annualized_sharpe(series, window):
+    """计算滚动年化夏普比率"""
+    rolling_mean = series.rolling(window).mean()
+    rolling_std = series.rolling(window).std()
+    # 年化夏普 = (日超额收益均值 / 日超额收益标准差) * sqrt(252)
+    rolling_sharpe = (rolling_mean / rolling_std) * np.sqrt(TRADING_DAYS)
+    return rolling_sharpe
+
+rolling_sharpe = rolling_annualized_sharpe(excess_returns, WINDOW)
+
+# 4. 最后一个窗口的值
+rolling_sharpe_last = float(rolling_sharpe.dropna().iloc[-1])
+print(f"最后一个窗口（{WINDOW}日）的滚动年化夏普比率为: {rolling_sharpe_last:.4f}")
+
+# 5. 绘制时间序列图
+fig, ax = plt.subplots(figsize=(12, 5))
+ax.plot(rolling_sharpe.index, rolling_sharpe.values, color='navy', linewidth=1.0, label=f'{WINDOW}-Day Rolling Sharpe')
+ax.axhline(0, color='gray', linestyle='--', linewidth=0.8)
+ax.set_title(f"Rolling Annualized Sharpe Ratio ({WINDOW}-Day Window, RF={RF_ANNUAL*100:.1f}%)", fontsize=14)
+ax.set_xlabel("Date")
+ax.set_ylabel("Annualized Sharpe Ratio")
+ax.legend()
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+
+figure_path = "rolling_sharpe.png"
+fig.savefig(figure_path, dpi=150)
+print(f"图形已保存至: {figure_path}")
+
+# 6. 输出契约
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': figure_path
+}
+
+# 打印结果以便教师查看
+print("\n===== 输出结果 =====")
+print(result)
+```

@@ -1,0 +1,104 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+import os
+
+def black_scholes_delta(S, K, T, r, sigma, option_type='call'):
+    """
+    计算Black-Scholes期权Delta
+    S: 标的价格
+    K: 行权价
+    T: 剩余期限（年）
+    r: 无风险利率
+    sigma: 波动率
+    option_type: 'call' 或 'put'
+    """
+    if T <= 0:
+        # 到期时Delta为0或1
+        if option_type == 'call':
+            return np.where(S > K, 1.0, np.where(S == K, 0.5, 0.0))
+        else:
+            return np.where(S < K, -1.0, np.where(S == K, -0.5, 0.0))
+    
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    
+    if option_type == 'call':
+        delta = norm.cdf(d1)
+    else:
+        delta = norm.cdf(d1) - 1
+    
+    return delta
+
+# 参数设置
+K = 97.5  # 行权价
+r = 0.043  # 无风险利率4.3%
+T = 0.58  # 剩余期限
+S_range = np.linspace(70, 140, 500)  # 标的价格范围
+S_target = 110  # 特定标的价格
+sigma_target = 0.276  # 特定波动率27.6%
+
+# 三个波动率值
+sigmas = [0.15, 0.276, 0.40]
+sigma_labels = ['15%', '27.6%', '40%']
+
+# 计算特定点的Delta
+delta_at_s110 = black_scholes_delta(S_target, K, T, r, sigma_target, 'call')
+print(f"标的价格110、波动率27.6%时的Delta: {delta_at_s110:.6f}")
+
+# 创建图形
+plt.figure(figsize=(10, 6))
+
+# 为每个波动率绘制Delta曲线
+for sigma, label in zip(sigmas, sigma_labels):
+    delta_curve = black_scholes_delta(S_range, K, T, r, sigma, 'call')
+    plt.plot(S_range, delta_curve, linewidth=2, label=f'σ = {label}')
+
+# 标记特定点
+plt.scatter(S_target, delta_at_s110, color='red', s=100, zorder=5, 
+            label=f'Delta at S={S_target}: {delta_at_s110:.4f}')
+plt.axvline(x=S_target, color='gray', linestyle='--', alpha=0.5)
+plt.axhline(y=delta_at_s110, color='gray', linestyle='--', alpha=0.5)
+
+# 行权价参考线
+plt.axvline(x=K, color='black', linestyle='--', alpha=0.7, label=f'Strike K={K}')
+plt.axhline(y=0.5, color='green', linestyle=':', alpha=0.5, label='Delta=0.5')
+
+# 图表设置
+plt.xlabel('Stock Price (S)', fontsize=12)
+plt.ylabel('Delta (Δ)', fontsize=12)
+plt.title('Black-Scholes Call Option Delta\n' + 
+          f'K={K}, r={r*100}%, T={T} years', fontsize=14)
+plt.grid(True, alpha=0.3)
+plt.legend(loc='best', fontsize=10)
+plt.xlim(70, 140)
+plt.ylim(0, 1)
+
+# 保存图表
+output_dir = os.path.dirname(os.path.abspath(__file__)) if '__file__' in dir() else os.getcwd()
+figure_filename = 'delta_curves.png'
+figure_path = os.path.join(output_dir, figure_filename)
+plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+print(f"图表已保存至: {figure_path}")
+
+# 创建结果字典
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': figure_path
+}
+
+# 显示结果
+print("\n结果字典:")
+print(f"delta_at_s110: {result['delta_at_s110']:.6f}")
+print(f"figure_path: {result['figure_path']}")
+
+# 显示图表
+plt.show()
+
+# 验证结果
+print("\n=== 验证信息 ===")
+print(f"Black-Scholes Delta公式: Δ = N(d1)")
+print(f"参数: S={S_target}, K={K}, T={T}, r={r}, σ={sigma_target}")
+d1 = (np.log(S_target/K) + (r + 0.5*sigma_target**2)*T) / (sigma_target*np.sqrt(T))
+print(f"d1 = {d1:.6f}")
+print(f"N(d1) = {norm.cdf(d1):.6f}")
+print(f"Delta = {delta_at_s110:.6f}")

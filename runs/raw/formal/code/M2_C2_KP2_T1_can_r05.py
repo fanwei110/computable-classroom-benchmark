@@ -1,0 +1,57 @@
+#!/usr/bin/env python3
+"""
+CAPM & Alpha 计算脚本
+课程：证券投资学
+在课堂投屏运行，输出存入 result 字典。
+"""
+
+# 可选导入（本计算仅需基本运算，但保留导入以符合课程环境）
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ---------- 给定参数 ----------
+rf = 0.023           # 无风险利率（年化）
+rm = 0.094           # 市场期望收益（年化）
+market_premium = rm - rf   # 市场风险溢价
+
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+
+actual_return_y = 0.131  # 股票 Y 当年实际收益
+
+# ---------- CAPM 计算 ----------
+# E[Ri] = rf + beta * (rm - rf)
+er_x = rf + beta_x * market_premium
+er_y = rf + beta_y * market_premium
+er_z = rf + beta_z * market_premium
+
+# ---------- Alpha 计算 ----------
+# alpha = 实际收益 - CAPM 预测收益
+alpha_y = actual_return_y - er_y
+
+# ---------- 输出契约 ----------
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+
+# 课堂展示用打印（保留 6 位小数，清晰可读）
+print("=== CAPM 与 Alpha 计算结果 ===")
+print(f"无风险利率 rf          = {rf:.4%}")
+print(f"市场期望收益 rm         = {rm:.4%}")
+print(f"市场风险溢价 (rm - rf) = {market_premium:.4%}\n")
+
+print(f"股票 X 的 beta = {beta_x}, CAPM 期望收益 = {er_x:.6%}")
+print(f"股票 Y 的 beta = {beta_y}, CAPM 期望收益 = {er_y:.6%}")
+print(f"股票 Z 的 beta = {beta_z}, CAPM 期望收益 = {er_z:.6%}\n")
+
+print(f"股票 Y 实际收益 = {actual_return_y:.4%}")
+print(f"股票 Y 的 alpha  = {alpha_y:.6%}")
+
+print("\nresult 字典内容:")
+for k, v in result.items():
+    print(f"  {k}: {v:.10f}  ({v:.6%})")

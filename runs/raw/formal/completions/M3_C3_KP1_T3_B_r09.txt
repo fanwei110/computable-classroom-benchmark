@@ -1,0 +1,34 @@
+要计算该组合在相关性变化前后的年化波动率，我们使用投资组合方差公式：
+
+$$ \sigma_p^2 = w_A^2 \sigma_A^2 + w_B^2 \sigma_B^2 + 2 w_A w_B \rho \sigma_A \sigma_B $$
+
+已知参数：
+- 资产A的权重 $w_A = 0.6$
+- 资产B的权重 $w_B = 0.4$
+- 资产A的年化波动率 $\sigma_A = 0.184$
+- 资产B的年化波动率 $\sigma_B = 0.297$
+- 变化前相关系数 $\rho_{before} = 0.3$
+- 变化后相关系数 $\rho_{after} = 0.8$
+
+**1. 计算变化前的组合波动率：**
+$$ \sigma_{p, before}^2 = 0.6^2 \times 0.184^2 + 0.4^2 \times 0.297^2 + 2 \times 0.6 \times 0.4 \times 0.3 \times 0.184 \times 0.297 $$
+$$ \sigma_{p, before}^2 = 0.36 \times 0.033856 + 0.16 \times 0.088209 + 0.144 \times 0.054648 $$
+$$ \sigma_{p, before}^2 = 0.01218816 + 0.01411344 + 0.007869312 = 0.034170912 $$
+$$ \sigma_{p, before} = \sqrt{0.034170912} \approx 0.18488 $$
+
+**2. 计算变化后的组合波动率：**
+$$ \sigma_{p, after}^2 = 0.6^2 \times 0.184^2 + 0.4^2 \times 0.297^2 + 2 \times 0.6 \times 0.4 \times 0.8 \times 0.184 \times 0.297 $$
+$$ \sigma_{p, after}^2 = 0.01218816 + 0.01411344 + 0.384 \times 0.054648 $$
+$$ \sigma_{p, after}^2 = 0.0263016 + 0.020984832 = 0.047286432 $$
+$$ \sigma_{p, after} = \sqrt{0.047286432} \approx 0.21745 $$
+
+由于题目给出的波动率直接为年化波动率，因此计算得出的组合波动率无需再进行年化调整（按 $\sqrt{252}$ 换算的结果是一致的）。保留4位小数以符合常规金融精度要求。
+
+```python
+import math
+
+result = {
+    'vol_before_annual': round(math.sqrt(0.034170912), 4),
+    'vol_after_annual': round(math.sqrt(0.047286432), 4)
+}
+```

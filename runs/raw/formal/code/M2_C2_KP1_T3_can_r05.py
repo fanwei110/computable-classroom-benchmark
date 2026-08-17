@@ -1,0 +1,38 @@
+import numpy as np
+
+# 资产的年化波动率
+sigma_A = 0.184  # 资产 A
+sigma_B = 0.297  # 资产 B
+
+# 组合权重：A 占 60%，B 占 40%
+w = np.array([0.6, 0.4])
+
+# 相关系数变化前后的值
+rho_before = 0.3
+rho_after  = 0.8
+
+def portfolio_volatility(w, sigma_vec, rho):
+    """
+    计算给定权重、波动率向量和相关系数下的组合年化波动率
+    """
+    # 构造协方差矩阵
+    cov = np.array([
+        [sigma_vec[0]**2,               rho * sigma_vec[0] * sigma_vec[1]],
+        [rho * sigma_vec[0] * sigma_vec[1], sigma_vec[1]**2]
+    ])
+    # 组合方差
+    var_p = w.T @ cov @ w
+    return np.sqrt(var_p)
+
+# 计算两种情形
+vol_before = portfolio_volatility(w, np.array([sigma_A, sigma_B]), rho_before)
+vol_after  = portfolio_volatility(w, np.array([sigma_A, sigma_B]), rho_after)
+
+# 按要求存入字典
+result = {
+    'vol_before_annual': vol_before,
+    'vol_after_annual': vol_after
+}
+
+# 输出结果以便投屏展示
+print(result)

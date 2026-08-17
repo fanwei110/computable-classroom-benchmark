@@ -1,0 +1,47 @@
+要计算整个样本期的年化夏普比率（Sharpe Ratio），我们按照以下步骤进行：
+
+1. **计算日收益率的均值和标准差**：
+   - 日收益率的均值（mean_daily_return）和标准差（std_daily_return）使用样本估计量（ddof=1）。
+
+2. **年化收益率和年化波动率**：
+   - 年化收益率 = mean_daily_return × 252
+   - 年化波动率 = std_daily_return × √252
+
+3. **计算超额收益率**：
+   - 超额收益率 = 年化收益率 - 无风险收益率（2.1%）
+
+4. **计算年化夏普比率**：
+   - 夏普比率 = 超额收益率 / 年化波动率
+
+假设 `fund` 列的日收益率数据存储在变量 `daily_returns` 中，以下是计算代码：
+
+```python
+import numpy as np
+
+# 假设 daily_returns 是 fund 列的日收益率数据
+mean_daily_return = np.mean(daily_returns)
+std_daily_return = np.std(daily_returns, ddof=1)  # 样本标准差
+
+# 年化收益率和波动率
+annualized_return = mean_daily_return * 252
+annualized_volatility = std_daily_return * np.sqrt(252)
+
+# 无风险收益率
+risk_free_rate = 0.021
+
+# 计算超额收益率
+excess_return = annualized_return - risk_free_rate
+
+# 计算年化夏普比率
+sharpe_annual = excess_return / annualized_volatility
+
+# 存入 result 字典
+result = {
+    'sharpe_annual': sharpe_annual
+}
+```
+
+### 注意事项：
+- 确保 `daily_returns` 是 `fund` 列的日收益率数据（例如 `pandas.Series` 或 `numpy.array`）。
+- 如果 `daily_returns` 包含缺失值（NaN），需要先处理（如删除或填充）。
+- 夏普比率可能为负值（表示超额收益为负）。

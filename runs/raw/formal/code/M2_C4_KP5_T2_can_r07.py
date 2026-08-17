@@ -1,0 +1,57 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+# ============================================================
+# 可调参数
+# ============================================================
+CONFIDENCE = 0.95                # 置信水平
+POSITION_VALUE = 1_000_000.0    # 头寸金额（人民币）
+DATA_PATH = 'data/market_snapshot_v1.csv'
+FIGURE_NAME = 'var_histogram.png'
+BINS = 50                        # 直方图分箱数
+
+# ============================================================
+# 1. 读取数据，构造损益序列
+# ============================================================
+df = pd.read_csv(DATA_PATH)
+returns = df['fund'].dropna()           # 日收益率（小数，如 0.05 表示 5%）
+profits = POSITION_VALUE * returns      # 日损益（元）
+
+# ============================================================
+# 2. 计算 95% 历史 VaR（线性插值经验分位数）
+# ============================================================
+var_percentile = 100.0 * (1.0 - CONFIDENCE)
+loss_quantile = np.percentile(profits, var_percentile)   # 损益分位数（通常为负）
+hist_var_95_1d = -loss_quantile if loss_quantile < 0 else 0.0   # 正损失金额
+
+# ============================================================
+# 3. 绘制直方图并标注 VaR
+# ============================================================
+plt.figure(figsize=(10, 6))
+plt.hist(profits, bins=BINS, alpha=0.7, color='skyblue',
+         edgecolor='black', label='Daily P&L distribution')
+plt.axvline(loss_quantile, color='red', linestyle='--', linewidth=2,
+            label=f'{int(CONFIDENCE*100)}% Historical VaR: ¥{hist_var_95_1d:,.2f}')
+plt.xlabel('Profit & Loss (CNY)')
+plt.ylabel('Frequency')
+plt.title(f'Daily P&L Distribution with {int(CONFIDENCE*100)}% Historical VaR')
+plt.legend()
+plt.tight_layout()
+
+# 保存图形
+figure_path = os.path.abspath(FIGURE_NAME)
+plt.savefig(figure_path, dpi=150)
+plt.close()
+
+# ============================================================
+# 4. 输出结果
+# ============================================================
+result = {
+    'hist_var_95_1d': hist_var_95_1d,
+    'figure_path': figure_path
+}
+
+# 可选打印，方便课堂查看
+print(result)

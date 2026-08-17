@@ -1,0 +1,35 @@
+import numpy as np
+import pandas as pd
+
+# -------------------- 1. 构造协方差矩阵 --------------------
+sigmas = np.array([0.187, 0.243, 0.312])
+corr_matrix = np.array([
+    [1.0,   0.21, -0.13],
+    [0.21,  1.0,   0.37],
+    [-0.13, 0.37,  1.0 ]
+])
+
+# 协方差矩阵 = diag(sigma) * corr * diag(sigma)
+Sigma = np.diag(sigmas) @ corr_matrix @ np.diag(sigmas)
+
+# -------------------- 2. 求全局最小方差权重 --------------------
+# 闭式解： w = (Σ⁻¹ · 1) / (1' · Σ⁻¹ · 1)
+n = 3
+one_vector = np.ones(n)
+Sigma_inv = np.linalg.inv(Sigma)
+mvp_weights = Sigma_inv @ one_vector / (one_vector @ Sigma_inv @ one_vector)
+
+# -------------------- 3. 组合波动率 --------------------
+mvp_variance = mvp_weights @ Sigma @ mvp_weights
+mvp_vol = np.sqrt(mvp_variance)
+
+# -------------------- 4. 输出 result --------------------
+result = {
+    'mvp_weights': mvp_weights,
+    'mvp_vol_annual': mvp_vol
+}
+
+# 打印验证（教师投屏用）
+print("全局最小方差组合权重：")
+print(pd.Series(mvp_weights, index=['资产1', '资产2', '资产3']).to_string())
+print(f"\n年化波动率：{mvp_vol:.6f} ({mvp_vol*100:.2f}%)")

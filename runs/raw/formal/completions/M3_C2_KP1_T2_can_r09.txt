@@ -1,0 +1,94 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==================== 1. 参数设定 ====================
+mu1, mu2 = 0.071, 0.124       # 期望年收益
+sig1, sig2 = 0.163, 0.289     # 年化波动率
+rhos = [0.15, 0.45, 0.75]     # 相关系数
+target_ret = 0.10              # 目标期望收益 10%
+
+# ==================== 2. 计算与绘图 ====================
+plt.figure(figsize=(10, 7))
+
+# 生成权重扫描序列（允许卖空，范围适当放宽）
+w1_arr = np.linspace(-0.5, 1.5, 1000)
+w2_arr = 1 - w1_arr
+
+# 存放需要报告的结果
+mvp_vol_at_rho45 = None
+frontier_vol_at_target = None
+
+for rho in rhos:
+    # 构造协方差矩阵元素
+    cov12 = rho * sig1 * sig2
+    
+    # 扫描权重计算前沿
+    ret_arr = w1_arr * mu1 + w2_arr * mu2
+    vol_arr = np.sqrt(w1_arr**2 * sig1**2 + w2_arr**2 * sig2**2 + 2 * w1_arr * w2_arr * cov12)
+    
+    # 绘制前沿曲线
+    plt.plot(vol_arr, ret_arr, label=f'ρ = {rho:.2f}', linewidth=2)
+    
+    # ---------------- 计算最小方差组合 (MVP) ----------------
+    # 对 w1 求导令其等于0，解得 MVP 权重
+    w1_mvp = (sig2**2 - cov12) / (sig1**2 + sig2**2 - 2 * cov12)
+    w2_mvp = 1 - w1_mvp
+    
+    ret_mvp = w1_mvp * mu1 + w2_mvp * mu2
+    vol_mvp = np.sqrt(w1_mvp**2 * sig1**2 + w2_mvp**2 * sig2**2 + 2 * w1_mvp * w2_mvp * cov12)
+    
+    # 在图上标出 MVP
+    plt.scatter(vol_mvp, ret_mvp, marker='*', s=200, color='red', zorder=5)
+    plt.annotate(f'MVP (ρ={rho:.2f})', 
+                 xy=(vol_mvp, ret_mvp), 
+                 xytext=(vol_mvp + 0.01, ret_mvp - 0.005),
+                 fontsize=9,
+                 arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=5))
+    
+    # ---------------- 针对 rho = 0.45 的特定计算 ----------------
+    if abs(rho - 0.45) < 1e-6:
+        # 1. rho=0.45时的MVP波动率
+        mvp_vol_at_rho45 = vol_mvp
+        
+        # 2. 目标期望收益10%下的最小波动率
+        w1_target = (target_ret - mu2) / (mu1 - mu2)
+        w2_target = 1 - w1_target
+        frontier_vol_at_target = np.sqrt(w1_target**2 * sig1**2 + 
+                                         w2_target**2 * sig2**2 + 
+                                         2 * w1_target * w2_target * cov12)
+        
+        # 在图上标出目标收益点
+        plt.scatter(frontier_vol_at_target, target_ret, marker='D', s=100, color='black', zorder=5)
+        plt.annotate(f'Target 10% (ρ={rho:.2f})', 
+                     xy=(frontier_vol_at_target, target_ret), 
+                     xytext=(frontier_vol_at_target + 0.01, target_ret + 0.005),
+                     fontsize=9,
+                     arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=5))
+
+# ==================== 3. 图表修饰 ====================
+plt.title('Markowitz Mean-Variance Frontier under Different Correlations', fontsize=14)
+plt.xlabel('Annualized Volatility (σ)', fontsize=12)
+plt.ylabel('Expected Annual Return (μ)', fontsize=12)
+plt.legend(fontsize=11)
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.tight_layout()
+
+# ==================== 4. 保存图形并填充结果 ====================
+fig_path = 'markowitz_frontier.png'
+plt.savefig(fig_path, dpi=300)
+plt.close()
+
+# 严格按要求命名键名并存入字典
+result = {
+    'mvp_vol_at_rho45': mvp_vol_at_rho45,
+    'frontier_vol_at_target': frontier_vol_at_target,
+    'figure_path': fig_path
+}
+
+# 控制台输出供教师验证
+print(f"--- Calculation Results ---")
+print(f"Min Variance Portfolio Vol (ρ=0.45): {result['mvp_vol_at_rho45']:.6f} ({result['mvp_vol_at_rho45']*100:.4f}%)")
+print(f"Frontier Vol at Target 10% (ρ=0.45): {result['frontier_vol_at_target']:.6f} ({result['frontier_vol_at_target']*100:.4f}%)")
+print(f"Figure saved to: {result['figure_path']}")
+```

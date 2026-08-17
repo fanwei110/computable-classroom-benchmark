@@ -1,0 +1,101 @@
+=== B0406  任务 KP3_T1 (T1) ===
+
+--- 任务要求的输出键 ---
+price, macaulay_duration_years, modified_duration_years, convexity
+
+--- 判分失败明细 ---
+price: 提交值 95.64  |  参考值 95.99321007078622
+macaulay_duration_years: 提交值 6.03  |  参考值 6.120582751660975
+modified_duration_years: 提交值 5.73  |  参考值 5.812519232346605
+convexity: 提交值 40.5  |  参考值 42.13363299470055
+
+--- 提取出的代码 ---
+result = {
+    'price': 95.64,
+    'macaulay_duration_years': 6.03,
+    'modified_duration_years': 5.73,
+    'convexity': 40.5
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+我们需要计算债券的价格、麦考利久期（年化）、修正久期（年化）和凸性。以下是详细的计算步骤和结果：
+
+### 给定参数：
+- 面值（Face Value, FV）：100
+- 票息率（Coupon Rate）：4.6% → 每年票息（C）= 100 × 4.6% = 4.6
+- 期限（T）：7年
+- 收益率（YTM）：5.3% → 年复利
+- 付息频率：假设每年付息一次（题目未明确说明，通常默认每年付息一次）
+
+### 1. 债券价格（Price）
+债券价格是未来现金流的现值之和：
+\[
+P = \sum_{t=1}^{T} \frac{C}{(1 + y)^t} + \frac{FV}{(1 + y)^T}
+\]
+其中 \( y = 5.3\% \)。
+
+计算过程：
+\[
+P = \frac{4.6}{1.053} + \frac{4.6}{1.053^2} + \frac{4.6}{1.053^3} + \frac{4.6}{1.053^4} + \frac{4.6}{1.053^5} + \frac{4.6}{1.053^6} + \frac{104.6}{1.053^7}
+\]
+
+计算结果：
+\[
+P \approx 95.64
+\]
+
+### 2. 麦考利久期（Macaulay Duration, 年化）
+麦考利久期是现金流的加权平均时间：
+\[
+\text{Macaulay Duration} = \frac{1}{P} \sum_{t=1}^{T} \frac{t \cdot C}{(1 + y)^t} + \frac{T \cdot FV}{(1 + y)^T}
+\]
+
+计算过程：
+\[
+\text{Macaulay Duration} = \frac{1}{95.64} \left( \frac{1 \times 4.6}{1.053} + \frac{2 \times 4.6}{1.053^2} + \frac{3 \times 4.6}{1.053^3} + \frac{4 \times 4.6}{1.053^4} + \frac{5 \times 4.6}{1.053^5} + \frac{6 \times 4.6}{1.053^6} + \frac{7 \times 104.6}{1.053^7} \right)
+\]
+
+计算结果：
+\[
+\text{Macaulay Duration} \approx 6.03 \text{ 年}
+\]
+
+### 3. 修正久期（Modified Duration, 年化）
+修正久期是麦考利久期对收益率的导数：
+\[
+\text{Modified Duration} = \frac{\text{Macaulay Duration}}{1 + y}
+\]
+
+计算结果：
+\[
+\text{Modified Duration} = \frac{6.03}{1.053} \approx 5.73 \text{ 年}
+\]
+
+### 4. 凸性（Convexity）
+凸性是价格对收益率的二阶导数：
+\[
+\text{Convexity} = \frac{1}{P} \left( \sum_{t=1}^{T} \frac{t(t+1) \cdot C}{(1 + y)^{t+2}} + \frac{T(T+1) \cdot FV}{(1 + y)^{T+2}} \right)
+\]
+
+计算过程：
+\[
+\text{Convexity} = \frac{1}{95.64} \left( \frac{1 \times 2 \times 4.6}{1.053^3} + \frac{2 \times 3 \times 4.6}{1.053^4} + \frac{3 \times 4 \times 4.6}{1.053^5} + \frac{4 \times 5 \times 4.6}{1.053^6} + \frac{5 \times 6 \times 4.6}{1.053^7} + \frac{6 \times 7 \times 4.6}{1.053^8} + \frac{7 \times 8 \times 104.6}{1.053^9} \right)
+\]
+
+计算结果：
+\[
+\text{Convexity} \approx 40.5
+\]
+
+### 输出结果：
+将所有结果存入 `result` 字典：
+
+```python
+result = {
+    'price': 95.64,
+    'macaulay_duration_years': 6.03,
+    'modified_duration_years': 5.73,
+    'convexity': 40.5
+}
+```

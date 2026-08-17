@@ -1,0 +1,39 @@
+import numpy as np
+from scipy.stats import norm
+
+# ==================== 参数设置 ====================
+S = 103.7       # 股票现价
+K = 97.5        # 行权价
+sigma = 0.276   # 隐含波动率 (年化)
+r = 0.043       # 无风险利率 (年化)
+T = 0.58        # 剩余期限 (年)
+
+# ==================== 1. 计算 d1 与 d2 ====================
+d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+d2 = d1 - sigma * np.sqrt(T)
+
+# ==================== 2. 计算期权价格与 delta ====================
+# 欧式看涨期权价格
+call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+
+# 欧式看涨期权 delta
+call_delta = norm.cdf(d1)
+
+# ==================== 3. 计算 vega ====================
+# Vega 为期权价格对波动率的偏导数 (单位：每 1.0 的波动率变动)
+call_vega = S * np.sqrt(T) * norm.pdf(d1)
+
+# ==================== 4. 填充 result ====================
+result = {
+    'call_price': call_price,
+    'call_delta': call_delta,
+    'call_vega': call_vega
+}
+
+# ==================== 课堂投屏输出 ====================
+print(f"参数确认: S={S}, K={K}, sigma={sigma}, r={r}, T={T}")
+print(f"Step 1: d1 = {d1:.6f}, d2 = {d2:.6f}")
+print(f"Step 2: Call Price = {call_price:.6f}, Call Delta = {call_delta:.6f}")
+print(f"Step 3: Call Vega  = {call_vega:.6f}")
+print("-" * 40)
+print(f"result = {result}")

@@ -1,0 +1,43 @@
+import numpy as np
+
+def bond_calculations():
+    face_value = 100.0
+    coupon_rate = 0.046          # 4.6% annual coupon
+    ytm = 0.053                  # 5.3% yield to maturity
+    maturity = 7                 # 7 years
+
+    coupon = face_value * coupon_rate
+
+    # Time indices: 1,2,...,maturity
+    t = np.arange(1, maturity + 1, dtype=float)
+
+    # Cash flows: annual coupons, plus face value at maturity
+    cash_flows = np.full(maturity, coupon)
+    cash_flows[-1] += face_value
+
+    # Discount factors and present values
+    discount_factors = (1 + ytm) ** (-t)
+    pv = cash_flows * discount_factors
+    price = np.sum(pv)
+
+    # Macaulay duration
+    weights = pv / price
+    macaulay_duration = np.sum(t * weights)
+
+    # Modified duration
+    modified_duration = macaulay_duration / (1 + ytm)
+
+    # Convexity: (1/price) * Σ[ t*(t+1)*CF_t / (1+ytm)^(t+2) ]
+    convexity = np.sum(t * (t + 1) * cash_flows / (1 + ytm) ** (t + 2)) / price
+
+    result = {
+        'price': price,
+        'macaulay_duration_years': macaulay_duration,
+        'modified_duration_years': modified_duration,
+        'convexity': convexity
+    }
+    return result
+
+if __name__ == "__main__":
+    result = bond_calculations()
+    print(result)

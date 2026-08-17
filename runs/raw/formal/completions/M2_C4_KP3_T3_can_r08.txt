@@ -1,0 +1,41 @@
+```python
+import numpy as np
+
+# 债券参数
+face_value = 100.0          # 面值
+coupon_rate = 0.046         # 票息率（4.6%）
+yield_rate = 0.053          # 到期收益率（5.3%）
+maturity = 7                # 期限（年）
+dy = 0.008                  # 收益率上升幅度（80个基点）
+
+# 构造现金流：前6年票息，第7年票息+本金
+coupon = face_value * coupon_rate
+cash_flows = np.full(maturity, coupon)
+cash_flows[-1] += face_value  # 最后一期偿还本金
+
+# 时间索引 1,2,...,7
+t = np.arange(1, maturity + 1)
+
+# 折现因子与现金流现值
+discount_factors = (1 + yield_rate) ** t
+present_values = cash_flows / discount_factors
+
+# 债券价格
+price = np.sum(present_values)
+
+# 麦考利久期
+macaulay_duration = np.sum(t * present_values) / price
+
+# 修正久期（年复利）
+modified_duration = macaulay_duration / (1 + yield_rate)
+
+# 价格变动百分比（一阶近似，正数表示跌幅）
+price_drop_pct = modified_duration * dy
+
+# 按契约输出结果
+result = {
+    'price_drop_pct': price_drop_pct
+}
+
+print(result)
+```

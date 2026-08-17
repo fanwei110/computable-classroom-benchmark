@@ -1,0 +1,70 @@
+import pandas as pd
+import numpy as np
+
+# ==========================================
+# 第一部分：计算年化夏普比率
+# ==========================================
+
+# 1. 读取快照 CSV 数据
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 假设：一年有252个交易日（国际与国内A股市场通用假设）
+trading_days = 252
+rf_annual = 0.021
+
+# 计算日无风险利率（采用精确的复利折算方式，保持内部一致性）
+rf_daily = (1 + rf_annual) ** (1 / trading_days) - 1
+
+# 提取基金日收益，并计入无风险利率计算超额收益
+fund_daily_returns = df['fund']
+excess_daily_returns = fund_daily_returns - rf_daily
+
+# 假设：使用样本标准差 (ddof=1) 衡量总风险，符合金融统计常用惯例
+mean_excess_daily = excess_daily_returns.mean()
+std_daily = fund_daily_returns.std(ddof=1)
+
+# 年化夏普比率 = (日均超额收益 / 日收益标准差) * sqrt(252)
+sharpe_annual = (mean_excess_daily / std_daily) * np.sqrt(trading_days)
+
+
+# ==========================================
+# 第二部分：业绩归因（Brinson-Hood-Beebower 模型）
+# ==========================================
+
+# 组合权重与收益
+w_p = np.array([0.45, 0.35, 0.20])
+r_p = np.array([0.083, 0.021, -0.014])
+
+# 基准权重与收益
+w_b = np.array([0.40, 0.40, 0.20])
+r_b = np.array([0.067, 0.034, -0.009])
+
+# 权重差（主动权重）与收益差（主动收益）
+delta_w = w_p - w_b
+delta_r = r_p - r_b
+
+# 配置效应 (Allocation Effect) = sum(权重差 * 基准收益)
+allocation_effect = np.sum(delta_w * r_b)
+
+# 选择效应 (Selection Effect) = sum(基准权重 * 收益差)
+selection_effect = np.sum(w_b * delta_r)
+
+# 交互效应 (Interaction Effect) = sum(权重差 * 收益差)
+interaction_effect = np.sum(delta_w * delta_r)
+
+
+# ==========================================
+# 输出契约：填充 result
+# ==========================================
+
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+# 投屏展示辅助（可选，便于课堂直接观察输出）
+print("--- 计算结果 ---")
+for key, value in result.items():
+    print(f"{key}: {value:.6f}")

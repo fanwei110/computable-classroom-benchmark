@@ -1,0 +1,34 @@
+```python
+import math
+import scipy.stats as stats
+
+# 给定参数
+annual_vol = 0.24
+position = 2_700_000
+confidence = 0.95
+trading_days = 252
+
+# 日波动率
+daily_vol = annual_vol / math.sqrt(trading_days)
+
+# 95% 置信水平对应的标准正态分位数（单尾）
+z_score = stats.norm.ppf(confidence)
+
+# 95% 单日 VaR（正数表示损失金额）
+var_95_1d = position * daily_vol * z_score
+
+# 结果字典
+result = {
+    'var_95_1d': round(var_95_1d, 2)
+}
+```
+
+**计算结果：**
+- 日波动率：\( \frac{0.24}{\sqrt{252}} \approx 0.015119 \)
+- 95% 分位数 \( z \approx 1.64485 \)
+- 95% 单日 VaR：\( 2,700,000 \times 0.015119 \times 1.64485 \approx 67,147.54 \)
+
+最终输出：
+```python
+result = {'var_95_1d': 67147.54}
+```

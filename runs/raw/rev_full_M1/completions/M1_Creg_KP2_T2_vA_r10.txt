@@ -1,0 +1,109 @@
+以下是自包含的Python脚本，满足所有要求：
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+def calculate_and_plot_sml(risk_free_rate, market_return):
+    # Calculate SML slope (market risk premium)
+    sml_slope = market_return - risk_free_rate
+
+    # Calculate expected return at beta=1.27
+    er_at_beta_127 = risk_free_rate + 1.27 * sml_slope
+
+    # Create beta range for SML line
+    beta_range = np.linspace(0, 2, 100)
+    expected_returns = risk_free_rate + beta_range * sml_slope
+
+    # Create figure
+    plt.figure(figsize=(10, 6))
+
+    # Plot SML line
+    plt.plot(beta_range, expected_returns, label='Security Market Line', color='blue')
+
+    # Plot stocks with annotations
+    stocks = {
+        'X': {'beta': 0.62, 'return': 8.1},
+        'Y': {'beta': 1.18, 'return': 13.1},
+        'Z': {'beta': 1.51, 'return': 9.9}
+    }
+
+    for name, data in stocks.items():
+        plt.scatter(data['beta'], data['return'], label=f'Stock {name}')
+        plt.annotate(f'{name} ({data["beta"]}, {data["return"]}%)',
+                     (data['beta'], data['return']),
+                     textcoords="offset points",
+                     xytext=(10,5),
+                     ha='center')
+
+    # Plot risk-free rate point
+    plt.scatter(0, risk_free_rate, color='green', label='Risk-free Rate')
+    plt.annotate(f'RF ({risk_free_rate}%)',
+                 (0, risk_free_rate),
+                 textcoords="offset points",
+                 xytext=(10,5),
+                 ha='center')
+
+    # Plot market portfolio point
+    plt.scatter(1, market_return, color='red', label='Market Portfolio')
+    plt.annotate(f'M (1, {market_return}%)',
+                 (1, market_return),
+                 textcoords="offset points",
+                 xytext=(10,5),
+                 ha='center')
+
+    # Add labels and title
+    plt.title('Security Market Line with Sample Stocks')
+    plt.xlabel('Beta (Systematic Risk)')
+    plt.ylabel('Expected Return (%)')
+    plt.legend()
+    plt.grid(True)
+
+    # Save figure
+    figure_path = 'security_market_line.png'
+    plt.savefig(figure_path)
+    plt.close()
+
+    # Prepare results
+    result = {
+        'sml_slope': sml_slope,
+        'er_at_beta_127': er_at_beta_127,
+        'figure_path': os.path.abspath(figure_path)
+    }
+
+    return result
+
+# Main execution
+if __name__ == "__main__":
+    # Given parameters
+    risk_free_rate = 2.3  # %
+    market_return = 9.4   # %
+
+    # Calculate and plot
+    result = calculate_and_plot_sml(risk_free_rate, market_return)
+
+    # Print results (as per output contract)
+    print("result = {")
+    print(f"    'sml_slope': {result['sml_slope']},")
+    print(f"    'er_at_beta_127': {result['er_at_beta_127']},")
+    print(f"    'figure_path': '{result['figure_path']}'")
+    print("}")
+```
+
+这个脚本会：
+
+1. 计算证券市场线(SML)的斜率（市场风险溢价）
+2. 计算beta=1.27时的CAPM期望收益
+3. 绘制beta从0到2的SML线
+4. 在图上标注股票X、Y、Z的位置
+5. 标注无风险利率和市场组合点
+6. 将图表保存为文件并返回文件路径
+7. 将所有要求的结果存入result字典
+
+输出结果将严格按照要求的格式显示，包括：
+- sml_slope: SML的斜率（市场风险溢价）
+- er_at_beta_127: beta=1.27时的期望收益
+- figure_path: 保存的图表文件路径
+
+图表会显示SML线以及三只股票的位置，并清晰标注各点的beta值和收益率。

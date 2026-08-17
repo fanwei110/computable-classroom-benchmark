@@ -1,0 +1,36 @@
+由于您没有提供 `fund` 列的具体数据，我无法计算出实际的数值和生成图表。  
+请先提供数据（例如 CSV、列表或 Pandas Series），然后我可以立即为您计算 **60 日滚动年化夏普比率** 并输出结果。  
+
+如果您希望看到示例流程，这里是一个通用的实现模板（但无法给出最终具体数值）：
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 假设 fund 是收益率序列
+# fund = pd.Series(...)
+rf = 0.021  # 2.1%
+window = 60
+
+# 滚动年化夏普: (mean_return - rf) / std_return * sqrt(252)
+rolling_sharpe = (
+    (fund.rolling(window).mean() - rf/252) / fund.rolling(window).std()
+) * np.sqrt(252)
+
+# 画图
+fig, ax = plt.subplots()
+rolling_sharpe.plot(ax=ax, title=f"{window}-Day Rolling Annualized Sharpe")
+fig_path = "rolling_sharpe_curve.png"
+fig.savefig(fig_path)
+plt.close()
+
+rolling_sharpe_last = rolling_sharpe.dropna().iloc[-1]
+
+result = {
+    "rolling_sharpe_last": rolling_sharpe_last,
+    "figure_path": fig_path
+}
+```
+
+**当前状态**：由于缺失数据，`result` 暂不可得。请补充数据后我将立即返回具体数值和图片路径。

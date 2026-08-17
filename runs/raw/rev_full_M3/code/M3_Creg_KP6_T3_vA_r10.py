@@ -1,0 +1,59 @@
+import os
+import pandas as pd
+import numpy as np
+
+# 1. 自动寻找当前目录下的数据文件 (支持 csv, xlsx, xls)
+file_path = None
+for file in os.listdir('.'):
+    if file.endswith(('.csv', '.xlsx', '.xls')) and not file.startswith('~'):
+        file_path = file
+        break
+
+if file_path is None:
+    raise FileNotFoundError("未在当前目录找到支持的数据文件
+
+# 2. 读取数据
+if file_path.endswith('.csv'):
+    df = pd.read_csv(file_path)
+elif file_path.endswith(('.xlsx', '.xls')):
+    df = pd.read_excel(file_path)
+else:
+    # 兜底按csv读取
+    df = pd.read_csv(file_path)
+
+# 3. 提取 fund 列并处理缺失值
+if 'fund' not in df.columns:
+    raise KeyError("数据文件中未找到 'fund' 列")
+
+fund_series = df['fund'].dropna()
+
+# 4. 判断数据类型并计算日收益率
+# 若是净值数据（通常均值远大于1），则通过 pct_change 计算收益率；若已是收益率则直接使用
+if fund_series.mean() > 1.5:
+    daily_returns = fund_series.pct_change().dropna()
+else:
+    daily_returns = fund_series
+
+# 5. 设定无风险利率及参数
+rf_annual = 0.021
+trading_days = 252  # 常规年化交易日天数
+rf_daily = rf_annual / trading_days
+
+# 6. 计算日超额收益率
+excess_returns = daily_returns - rf_daily
+
+# 7. 计算年化夏普比率
+mean_excess = excess_returns.mean()
+std_excess = excess_returns.std(ddof=1)  # 使用样本标准差 (自由度为1)
+
+if std_excess == 0:
+    sharpe_annual = 0.0
+else:
+    sharpe_annual = (mean_excess / std_excess) * np.sqrt(trading_days)
+
+# 8. 满足输出契约
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+print(result)

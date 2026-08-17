@@ -1,0 +1,74 @@
+由于您没有提供具体的`fund`列数据，我将生成一段模拟的基金净值数据来演示整个计算和绘图过程。您可以在实际使用时，将`df['fund']`替换为您的真实数据。
+
+以下是完整的Python代码实现，包含计算60日滚动年化夏普比率、绘制可调窗口曲线、提取最后一个窗口数值，并按照输出契约将结果存入`result`字典：
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ================= 1. 模拟数据 (若无数据，以此代替) =================
+np.random.seed(42)
+dates = pd.date_range(start='2022-01-01', end='2023-12-31', freq='B')
+# 模拟基金净值 (假设初始净值为1)
+nav = (1 + np.random.normal(0.0002, 0.015, len(dates))).cumprod()
+df = pd.DataFrame({'fund': nav}, index=dates)
+
+# ================= 2. 参数设置 =================
+rf_annual = 0.021  # 年化无风险利率 2.1%
+window = 60        # 滚动窗口大小（可调参数，如需修改直接改这里即可）
+trading_days = 252 # 一年交易日
+
+# ================= 3. 计算滚动年化夏普 =================
+# 计算日收益率
+df['daily_return'] = df['fund'].pct_change()
+
+# 计算日无风险利率
+daily_rf = rf_annual / trading_days
+
+# 计算超额收益
+df['excess_return'] = df['daily_return'] - daily_rf
+
+# 计算滚动超额收益均值和滚动标准差
+rolling_mean = df['excess_return'].rolling(window=window).mean()
+rolling_std = df['daily_return'].rolling(window=window).std()
+
+# 计算滚动年化夏普比率
+# 年化夏普 = (日均超额收益 * 252) / (日标准差 * sqrt(252)) 
+#          = (日均超额收益 / 日标准差) * sqrt(252)
+df['rolling_sharpe'] = (rolling_mean / rolling_std) * np.sqrt(trading_days)
+
+# 剔除空值获取最后一个窗口的数值
+rolling_sharpe_last = df['rolling_sharpe'].dropna().iloc[-1]
+
+# ================= 4. 绘图保存 =================
+plt.figure(figsize=(12, 6))
+plt.plot(df.index, df['rolling_sharpe'], label=f'{window}-Day Rolling Annualized Sharpe', color='blue')
+plt.axhline(y=0, color='red', linestyle='--', alpha=0.5)
+plt.title(f'{window}-Day Rolling Annualized Sharpe Ratio (rf={rf_annual*100}%)')
+plt.xlabel('Date')
+plt.ylabel('Sharpe Ratio')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 保存图片
+fig_path = 'rolling_sharpe_curve.png'
+plt.savefig(fig_path)
+plt.close()
+
+# ================= 5. 按照契约输出 =================
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': fig_path
+}
+
+print(result)
+```
+
+### 代码逻辑说明：
+1. **数据准备**：如果`fund`列是净值，需先使用`pct_change()`转化为日收益率；如果是日收益率，则直接计算即可。
+2. **年化夏普推导**：$\text{Sharpe}_{\text{annual}} = \frac{E[R_p - R_f]}{\sigma_p} \times \sqrt{252}$。其中分母是日收益率的滚动标准差，分子是日超额收益的滚动均值。
+3. **窗口可调**：代码顶部定义了`window = 60`，您可以随时将其修改为90、120等任意天数，后续计算和绘图的标签会自动适配。
+4. **最后一个窗口的值**：通过`.dropna().iloc[-1]`去掉前60个因窗口期不足而产生的空值，提取最后一个交易日的夏普比率。
+5. **输出契约**：结果严格存入`result`字典中，包含`rolling_sharpe_last`和`figure_path`两个键。

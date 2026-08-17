@@ -1,0 +1,28 @@
+为了计算这只基金的年化夏普比率，我们需要基于课程数据 `course` 中的 `fund` 列（通常为基金净值序列），计算其日收益率，并代入无风险利率 2.1% 进行年化处理。
+
+假设一年有 252 个交易日，计算代码如下：
+
+```python
+import numpy as np
+
+# 假设 course['fund'] 为基金每日净值序列，计算日收益率
+daily_returns = course['fund'].pct_change().dropna()
+
+# 设定无风险利率（年化）
+rf_annual = 0.021
+
+# 计算日无风险利率
+rf_daily = rf_annual / 252
+
+# 计算年化夏普比率
+# 夏普比率 = (组合期望收益率 - 无风险利率) / 组合收益率的标准差
+# 年化夏普 = (日均值 - 日无风险) / 日标准差 * sqrt(252)
+sharpe_annual = ((daily_returns.mean() - rf_daily) / daily_returns.std()) * np.sqrt(252)
+
+# 按照输出契约存入字典
+result = {'sharpe_annual': sharpe_annual}
+```
+
+**注**：
+1. 如果 `course['fund']` 已经是日收益率数据，则无需使用 `.pct_change()`，直接令 `daily_returns = course['fund'].dropna()` 即可。
+2. 上述计算遵循业界常用的日夏普乘以 $\sqrt{252}$ 的年化方式，且 `std()` 默认计算的是样本标准差（`ddof=1`），符合波动率计算规范。

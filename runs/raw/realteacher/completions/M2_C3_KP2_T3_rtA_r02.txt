@@ -1,0 +1,30 @@
+根据CAPM公式，股票预期收益率 = 无风险利率 + β × (市场收益率 - 无风险利率)。
+
+给定：
+- β = 1.42
+- 大盘上月收益率 = -5.8% = -0.058
+- 无风险利率 = 4.7% = 0.047（年化）
+
+先将年化无风险利率转换为月化（按252个交易日，每月约21个交易日）：
+月化无风险利率 = (1 + 0.047)^(21/252) - 1
+
+计算：
+(1.047)^(1/12) - 1 ≈ 1.003835 - 1 = 0.003835
+
+CAPM预期月收益率 = 0.003835 + 1.42 × (-0.058 - 0.003835) = 0.003835 + 1.42 × (-0.061835) = 0.003835 - 0.0878057 ≈ -0.08397
+
+```python
+import numpy as np
+
+beta = 1.42
+market_return_monthly = -0.058
+rf_annual = 0.047
+trading_days = 252
+monthly_days = 21
+
+rf_monthly = (1 + rf_annual) ** (monthly_days / trading_days) - 1
+
+capm_return_monthly = rf_monthly + beta * (market_return_monthly - rf_monthly)
+
+result = {'capm_return_monthly': capm_return_monthly}
+```

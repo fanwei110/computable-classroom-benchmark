@@ -1,0 +1,27 @@
+import numpy as np
+from scipy.stats import norm
+import json
+
+# 给定参数
+annual_volatility = 0.24       # 年化波动率 24%
+position_value = 2_700_000.0   # 头寸价值 2,700,000 元
+confidence_level = 0.95        # 95% 置信水平
+trading_days_per_year = 252    # 假设一年有 252 个交易日（市场惯例）
+
+# 1. 年化波动率换算为一日波动率
+daily_volatility = annual_volatility / np.sqrt(trading_days_per_year)
+
+# 2. 正态分布下 95% 置信水平对应的分位数（左尾 5%）
+z_score = norm.ppf(1 - confidence_level)  # 结果为负值，如 -1.64485...
+loss_factor = -z_score                     # VaR 通常取正数表示损失金额
+
+# 3. 计算 95% 一日 VaR（参数法/Delta-Normal）
+var_95_1d = position_value * daily_volatility * loss_factor
+
+# 按输出契约存入字典
+result = {
+    'var_95_1d': var_95_1d
+}
+
+# 输出结果
+print(json.dumps(result, indent=4, ensure_ascii=False))

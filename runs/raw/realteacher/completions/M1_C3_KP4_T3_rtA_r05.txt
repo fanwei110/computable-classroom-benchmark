@@ -1,0 +1,52 @@
+要计算隐含波动率（隐波）上涨1个点（即隐波增加0.01）时期权价格的变化，我们可以使用**Vega**来近似。Vega衡量的是期权价格对隐含波动率变化的敏感性，即隐波变化1%时期权价格的变化量。
+
+### 计算步骤：
+1. **Vega的定义**：Vega表示隐含波动率变化1个百分点（即0.01）时，期权价格的变化量。
+2. **隐波涨1个点**：即隐波增加0.01（例如从0.20上涨到0.21）。
+3. **期权价格变化**：期权价格变化 ≈ Vega × 隐波变化（0.01）。
+
+### 输出：
+将期权价格变化存入`result`字典，键名为`'price_change'`。
+
+### 示例代码（假设已知Vega）：
+```python
+# 假设Vega已知（例如通过Black-Scholes模型计算得到）
+vega = 0.12  # 示例值，表示隐波变化1%时价格变化0.12元
+
+# 隐波涨1个点（0.01）时的价格变化
+price_change = vega * 0.01
+
+# 存入结果字典
+result = {
+    'price_change': price_change
+}
+```
+
+### 实际应用：
+如果你有具体的期权参数（如标的价格、行权价、到期时间、无风险利率、隐波等），可以通过Black-Scholes模型计算Vega，再乘以0.01得到`price_change`。例如：
+```python
+from scipy.stats import norm
+import numpy as np
+
+def black_scholes_vega(S, K, T, r, sigma):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    vega = S * norm.pdf(d1) * np.sqrt(T)
+    return vega
+
+# 示例参数
+S = 100      # 标的价格
+K = 100      # 行权价
+T = 0.5      # 到期时间（年）
+r = 0.05     # 无风险利率
+sigma = 0.2  # 隐含波动率
+
+vega = black_scholes_vega(S, K, T, r, sigma)
+price_change = vega * 0.01
+
+result = {
+    'price_change': price_change
+}
+```
+
+### 最终输出：
+`result`字典中的`'price_change'`即为隐波涨1个点时的期权价格变化。

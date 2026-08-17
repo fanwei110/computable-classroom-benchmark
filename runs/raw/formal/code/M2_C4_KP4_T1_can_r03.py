@@ -1,0 +1,44 @@
+import numpy as np
+from scipy.stats import norm
+
+# 给定参数
+S = 103.7          # 标的现价
+K = 97.5           # 行权价
+sigma = 0.276      # 隐含波动率（年化，小数）
+r = 0.043          # 连续复利无风险利率（小数）
+T = 0.58           # 剩余期限（年）
+
+# 步骤1：计算 d1 与 d2
+d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+d2 = d1 - sigma * np.sqrt(T)
+
+# 步骤2：计算期权价格与 delta
+call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+call_delta = norm.cdf(d1)  # N(d1)
+
+# 步骤3：计算 vega（每单位波动率，dC/dσ）
+call_vega = S * np.sqrt(T) * norm.pdf(d1)  # 小数表示
+
+# 步骤4：组装结果字典
+result = {
+    'call_price': call_price,
+    'call_delta': call_delta,
+    'call_vega': call_vega
+}
+
+# 输出以便投屏查看
+print("欧式看涨期权 Black-Scholes 计算结果（连续复利）")
+print(f"标的现价 S = {S}")
+print(f"行权价 K = {K}")
+print(f"波动率 σ = {sigma:.4f}")
+print(f"无风险利率 r = {r:.4f}")
+print(f"剩余期限 T = {T:.2f} 年")
+print("-" * 40)
+print(f"d1 = {d1:.6f}")
+print(f"d2 = {d2:.6f}")
+print(f"期权价格 = {call_price:.6f}")
+print(f"Delta   = {call_delta:.6f}")
+print(f"Vega    = {call_vega:.6f} (每单位波动率)")
+print("-" * 40)
+print("最终结果字典 result:")
+print(result)

@@ -1,0 +1,38 @@
+由于我无法直接读取你本地的课程数据文件，我为你提供计算整个样本期年化Sharpe ratio的Python代码。你只需运行这段代码，它会按照输出契约将结果存入 `result` 字典中。
+
+计算逻辑说明：
+1. 年化Sharpe Ratio通常由日Sharpe Ratio乘以 $\sqrt{252}$（一年交易日）得到。
+2. 无风险利率给定为2.1%（年化），需先折算为日无风险利率：$0.021 / 252$。
+3. 日Sharpe Ratio = (基金日收益均值 - 日无风险利率) / 基金日收益标准差。
+
+```python
+import pandas as pd
+import numpy as np
+
+# 请根据实际文件格式读取数据，这里假设读取csv且列名为'fund'
+# df = pd.read_csv('你的课程数据文件.csv') 
+# fund_returns = df['fund']
+
+# --- 以下是核心计算逻辑 ---
+rf_annual = 0.021
+trading_days = 252
+
+# 计算日无风险利率
+rf_daily = rf_annual / trading_days
+
+# 计算基金日收益的均值和标准差（pandas的std默认为样本标准差 ddof=1）
+mean_daily = fund_returns.mean()
+std_daily = fund_returns.std()
+
+# 计算年化 Sharpe Ratio
+sharpe_daily = (mean_daily - rf_daily) / std_daily
+sharpe_annual = sharpe_daily * np.sqrt(trading_days)
+
+# 按照“输出契约”存入字典
+result = {'sharpe_annual': sharpe_annual}
+
+print(result)
+```
+
+**注意事项**：
+如果你的数据中基金的日收益是**百分比形式**（例如2.1%表示为2.1而不是0.021），那么在计算前需要将无风险利率也统一量纲，即 `rf_annual = 2.1`，或者将基金收益除以100转化为小数。一般金融数据中日收益多以小数形式存在，上述代码按小数形式处理。

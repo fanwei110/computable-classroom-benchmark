@@ -1,0 +1,87 @@
+我将为您编写一个计算全局最小方差组合（MVP）的Python脚本。
+
+```python
+import numpy as np
+from scipy.optimize import minimize
+import pandas as pd
+
+# 设定资产年化波动率
+vol_1 = 0.187
+vol_2 = 0.243
+vol_3 = 0.312
+
+# 设定相关系数
+corr_12 = 0.21
+corr_13 = -0.13
+corr_23 = 0.37
+
+# 构建协方差矩阵
+var_1 = vol_1 ** 2
+var_2 = vol_2 ** 2
+var_3 = vol_3 ** 2
+
+cov_12 = corr_12 * vol_1 * vol_2
+cov_13 = corr_13 * vol_1 * vol_3
+cov_23 = corr_23 * vol_2 * vol_3
+
+# 协方差矩阵
+cov_matrix = np.array([
+    [var_1, cov_12, cov_13],
+    [cov_12, var_2, cov_23],
+    [cov_13, cov_23, var_3]
+])
+
+# 定义目标函数：组合方差
+def portfolio_variance(weights, cov_matrix):
+    return weights.T @ cov_matrix @ weights
+
+# 定义约束条件：权重和为1（全部投出）
+constraints = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1})
+
+# 初始权重（等权重）
+initial_weights = np.array([1/3, 1/3, 1/3])
+
+# 优化求解全局最小方差组合
+result_optimization = minimize(
+    portfolio_variance,
+    initial_weights,
+    args=(cov_matrix,),
+    method='SLSQP',
+    constraints=constraints
+)
+
+# 提取最优权重
+mvp_weights = result_optimization.x
+
+# 计算MVP的年化波动率
+mvp_variance = mvp_weights.T @ cov_matrix @ mvp_weights
+mvp_vol_annual = np.sqrt(mvp_variance)
+
+# 输出结果
+print("全局最小方差组合的权重：")
+print(f"资产1: {mvp_weights[0]:.4f}")
+print(f"资产2: {mvp_weights[1]:.4f}")
+print(f"资产3: {mvp_weights[2]:.4f}")
+print(f"年化波动率: {mvp_vol_annual:.4f}")
+
+# 输出契约：存入result字典
+result = {
+    'mvp_weights': mvp_weights,
+    'mvp_vol_annual': mvp_vol_annual
+}
+
+# 验证：确保权重和为1
+print(f"\n权重和: {np.sum(mvp_weights):.6f}")
+```
+
+这个脚本使用 `scipy.optimize.minimize` 通过 SLSQP 方法求解带线性约束（权重和为1）的二次规划问题，得到全局最小方差组合的权重和年化波动率。
+
+运行结果示例：
+- MVP 权重：各资产的配置比例
+- MVP 年化波动率：最小化后的组合波动率
+
+关键点：
+1. 协方差矩阵通过给定的波动率和相关系数构建
+2. 目标函数是最小化组合方差
+3. 约束条件是权重之和为1（资金全部投出）
+4. 允许卖空（权重可以为负）

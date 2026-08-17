@@ -1,0 +1,74 @@
+我将按照您的要求计算并绘制有效前沿图。以下是详细的步骤和结果：
+
+### 1. 计算最小方差组合 (MVP) 和有效前沿
+对于两资产组合，给定：
+- 资产1：期望收益 \( \mu_1 = 0.071 \)，波动率 \( \sigma_1 = 0.163 \)
+- 资产2：期望收益 \( \mu_2 = 0.124 \)，波动率 \( \sigma_2 = 0.289 \)
+- 相关系数 \( \rho \in \{0.15, 0.45, 0.75\} \)
+
+组合的期望收益和波动率公式为：
+\[
+\mu_p = w \mu_1 + (1 - w) \mu_2
+\]
+\[
+\sigma_p = \sqrt{w^2 \sigma_1^2 + (1 - w)^2 \sigma_2^2 + 2 w (1 - w) \sigma_1 \sigma_2 \rho}
+\]
+
+最小方差组合的权重 \( w_{mvp} \) 为：
+\[
+w_{mvp} = \frac{\sigma_2^2 - \sigma_1 \sigma_2 \rho}{\sigma_1^2 + \sigma_2^2 - 2 \sigma_1 \sigma_2 \rho}
+\]
+
+### 2. 计算 \( \rho = 0.45 \) 时的 MVP 波动率
+代入 \( \rho = 0.45 \)：
+\[
+w_{mvp} = \frac{0.289^2 - 0.163 \times 0.289 \times 0.45}{0.163^2 + 0.289^2 - 2 \times 0.163 \times 0.289 \times 0.45} \approx 0.7206
+\]
+\[
+\sigma_{mvp} = \sqrt{0.7206^2 \times 0.163^2 + (1 - 0.7206)^2 \times 0.289^2 + 2 \times 0.7206 \times (1 - 0.7206) \times 0.163 \times 0.289 \times 0.45} \approx 0.1496
+\]
+
+### 3. 计算目标收益 \( \mu_p = 10\% \) 时的最小波动率
+对于 \( \rho = 0.45 \)，解方程：
+\[
+0.10 = w \times 0.071 + (1 - w) \times 0.124
+\]
+\[
+w \approx 0.4630
+\]
+\[
+\sigma_p = \sqrt{0.4630^2 \times 0.163^2 + (1 - 0.4630)^2 \times 0.289^2 + 2 \times 0.4630 \times (1 - 0.4630) \times 0.163 \times 0.289 \times 0.45} \approx 0.1789
+\]
+
+### 4. 绘制有效前沿图
+以下是 Python 代码实现：
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 参数
+mu = np.array([0.071, 0.124])
+sigma = np.array([0.163, 0.289])
+rho_values = [0.15, 0.45, 0.75]
+target_return = 0.10
+
+# 计算 MVP 和有效前沿
+def calculate_frontier(mu, sigma, rho):
+    cov = rho * sigma[0] * sigma[1]
+    sigma_squared = np.array([sigma[0]**2, sigma[1]**2])
+    w_mvp = (sigma_squared[1] - cov) / (sigma_squared[0] + sigma_squared[1] - 2 * cov)
+    mu_mvp = w_mvp * mu[0] + (1 - w_mvp) * mu[1]
+    sigma_mvp = np.sqrt(w_mvp**2 * sigma_squared[0] + (1 - w_mvp)**2 * sigma_squared[1] + 2 * w_mvp * (1 - w_mvp) * cov)
+
+    # 生成有效前沿
+    w_range = np.linspace(0, 1, 100)
+    mu_p = w_range * mu[0] + (1 - w_range) * mu[1]
+    sigma_p = np.sqrt(w_range**2 * sigma_squared[0] + (1 - w_range)**2 * sigma_squared[1] + 2 * w_range * (1 - w_range) * cov)
+
+    return mu_mvp, sigma_mvp, mu_p, sigma_p
+
+# 绘图
+plt.figure(figsize=(10, 6))
+for rho in rho_values:
+    mu

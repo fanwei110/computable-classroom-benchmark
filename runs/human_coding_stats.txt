@@ -1,0 +1,19 @@
+================================================================
+PHASE-D HUMAN VALIDATION OF ERROR CODING
+================================================================
+coders: A=coder_C.xlsx  B=coder_D.xlsx
+
+sheet rows: 286 ; coded by BOTH humans: 286
+analysis subset: condition=C1 ; n=266
+
+[A vs B, n=266] percent agreement=45.1%  Cohen kappa=0.028  Gwet AC1=0.324
+  class distribution (A / B):
+    CD: 3 / 3
+    CV: 138 / 125
+    CN: 109 / 122
+    VZ: 16 / 16
+
+146 disagreements written to coding/human_disagreements.csv
+
+[human-consensus vs automated-final, n=120] percent=40.8%  kappa=-0.030
+  -> this is the human-validation number for the manuscript (SS IV.D / V.B).

@@ -1,0 +1,27 @@
+VaR 公式（正态假设）：  
+\[
+\text{VaR}_{95\%,1d} = P \times \sigma_{daily} \times 1.645
+\]  
+其中：  
+- \( P = 2,700,000 \)  
+- 年化波动率 \( \sigma_{annual} = 0.24 \)  
+- \( \sigma_{daily} = \frac{0.24}{\sqrt{252}} \approx \frac{0.24}{15.8745} \approx 0.015118 \)  
+- 计算：  
+\[
+\text{VaR} = 2,700,000 \times 0.015118 \times 1.645 \approx 67,188.89
+\]  
+四舍五入保留两位小数：67188.89 元。
+
+```python
+import math
+
+P = 2_700_000
+sigma_annual = 0.24
+sigma_daily = sigma_annual / math.sqrt(252)
+z_95 = 1.645
+var_95_1d = round(P * sigma_daily * z_95, 2)
+
+result = {
+    'var_95_1d': var_95_1d
+}
+```

@@ -1,0 +1,40 @@
+```python
+import pandas as pd
+import numpy as np
+
+# ===================== 配置 =====================
+RISK_FREE_RATE = 0.021          # 年化无风险利率（小数）
+TRADING_DAYS = 252              # 年交易日数
+FILE_PATH = 'data/market_snapshot_v1.csv'
+
+# ===================== 1. 读取数据 =====================
+df = pd.read_csv(FILE_PATH)
+
+# 提取 fund 列，假定其为日收益率（小数）
+# 如果数据实际是净值，则自动转换为日收益率
+fund_series = df['fund'].dropna()
+
+# 稳健性判断：如果最大值远大于1，大概率是净值（价格）而非收益率
+if fund_series.max() > 1.5:   # 净值通常大于1，收益率通常小于0.2
+    print('检测到 fund 列为净值，正在转换为日收益率...')
+    returns = fund_series.pct_change().dropna()
+else:
+    print('假定 fund 列为日收益率（小数）。')
+    returns = fund_series.copy()
+
+# ===================== 2. 计算超额收益 =====================
+daily_rf = RISK_FREE_RATE / TRADING_DAYS
+excess_returns = returns - daily_rf
+
+# ===================== 3. 计算年化夏普比率 =====================
+mean_excess = excess_returns.mean()
+std_excess = excess_returns.std(ddof=1)       # 样本标准差
+sharpe_annual = np.sqrt(TRADING_DAYS) * mean_excess / std_excess
+
+# ===================== 4. 存储结果 =====================
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+print(f'年化夏普比率: {sharpe_annual:.6f}')
+```

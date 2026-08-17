@@ -1,0 +1,36 @@
+=== B0167  任务 KP6_T1 (T1) ===
+
+--- 任务要求的输出键 ---
+sharpe_annual, allocation_effect, selection_effect, interaction_effect
+
+--- 判分失败明细 ---
+sharpe_annual: 提交值 0.0  |  参考值 0.21202128793473451
+
+--- 提取出的代码 ---
+result = {
+    'sharpe_annual': 0,
+    'allocation_effect': 0.00165,
+    'selection_effect': 0.0002,
+    'interaction_effect': 0.00145
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+根据提供的数据，我们可以完成两项任务：
+
+1. **年化夏普比率**：文中“fund列日收益 rf 2.1%”理解为基金的日收益率与无风险利率均为 2.1%，即基金超额收益为零。无论波动率如何，夏普比率均为 0，因此年化夏普比率为 0。
+2. **绩效归因**：将超额收益分解为配置效应、选择效应和交互效应。计算过程如下：
+   - 配置效应：\(\sum (w_p - w_b) \times R_b = (0.45-0.4)\times6.7\% + (0.35-0.4)\times3.4\% + (0.2-0.2)\times(-0.9\%) = 0.165\%\)
+   - 选择效应：\(\sum w_b \times (R_p - R_b) = 0.4\times(8.3\%-6.7\%) + 0.4\times(2.1\%-3.4\%) + 0.2\times(-1.4\%+0.9\%) = 0.02\%\)
+   - 交互效应：\(\sum (w_p - w_b) \times (R_p - R_b) = 0.05\times1.6\% + (-0.05)\times(-1.3\%) + 0 = 0.145\%\)
+
+结果以小数形式存入字典 `result`。
+
+```python
+result = {
+    'sharpe_annual': 0,
+    'allocation_effect': 0.00165,
+    'selection_effect': 0.0002,
+    'interaction_effect': 0.00145
+}
+```

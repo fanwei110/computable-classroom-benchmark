@@ -1,0 +1,39 @@
+缺少日收益数据，无法计算出具体的年化夏普值。但我可以给出计算逻辑与代码，您只需读入数据即可得到 `result` 字典。
+
+```python
+import pandas as pd
+import numpy as np
+
+# ---------- 读取数据 ----------
+# 假设数据文件为 csv/excel，包含 'fund' 列，代表日收益（小数形式）
+# df = pd.read_csv('your_file.csv')   # 或 pd.read_excel(...)
+# daily_returns = df['fund']
+
+# ---------- 参数 ----------
+rf_annual = 0.021          # 无风险利率 2.1%（年复利）
+trading_days = 252
+
+# ---------- 计算 ----------
+# 日收益均值与标准差（ddof=1 即样本标准差）
+mu_daily = daily_returns.mean()
+sigma_daily = daily_returns.std(ddof=1)
+
+# 年化
+mu_annual = mu_daily * trading_days
+sigma_annual = sigma_daily * np.sqrt(trading_days)
+
+# 年化夏普比率
+sharpe_annual = (mu_annual - rf_annual) / sigma_annual
+
+# ---------- 输出 ----------
+result = {'sharpe_annual': sharpe_annual}
+print(result)
+```
+
+**计算要点**：
+- 日收益均值年化：直接乘 252。
+- 日波动年化：乘 √252。
+- 无风险利率使用 0.021（小数），与年化收益率直接相减。
+- 标准差使用 `ddof=1`（样本标准差）。
+
+请把数据文件加载为 `daily_returns`，运行即可得到结果。如果需要我帮您计算具体数值，请提供文件或数据样本。

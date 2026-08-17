@@ -1,0 +1,25 @@
+import math
+
+# 输入参数
+vol_A = 0.184  # A波动率
+vol_B = 0.297  # B波动率
+w_A = 0.6      # A权重（六成）
+w_B = 0.4      # B权重（四成）
+rho_before = 0.3
+rho_after = 0.8
+
+# 计算组合方差和波动率
+def portfolio_vol(rho):
+    var = (w_A**2 * vol_A**2) + (w_B**2 * vol_B**2) + (2 * w_A * w_B * vol_A * vol_B * rho)
+    return math.sqrt(var)
+
+vol_before = portfolio_vol(rho_before)
+vol_after = portfolio_vol(rho_after)
+
+# 存入字典
+result = {
+    'vol_before_annual': vol_before,
+    'vol_after_annual': vol_after
+}
+
+result

@@ -1,0 +1,58 @@
+要计算该债券在收益率上行80bp（即0.8%）后的价格跌幅，我们可以使用久期（Duration）近似估计。以下是步骤和结果：
+
+### 1. 债券基本信息
+- 面值：100元
+- 票面利率：4.6%
+- 当前到期收益率（YTM）：5.3%
+- 剩余期限：7年
+- 付息频率：假设每年付息一次（默认）
+
+### 2. 计算修正久期（Modified Duration）
+修正久期公式为：
+\[
+\text{Modified Duration} = \frac{\text{Macaulay Duration}}{1 + \frac{YTM}{m}}
+\]
+其中，\( m \) 为每年付息次数（这里为1）。
+
+首先计算麦考利久期（Macaulay Duration）：
+\[
+\text{Macaulay Duration} = \frac{1}{P} \sum_{t=1}^{N} \frac{t \cdot C}{(1 + YTM)^t} + \frac{N \cdot F}{(1 + YTM)^N}
+\]
+其中：
+- \( P \) 为债券当前价格（需先计算）
+- \( C \) 为每期票息（\( 100 \times 4.6\% = 4.6 \)元）
+- \( F \) 为面值（100元）
+- \( N \) 为剩余期限（7年）
+
+#### 计算当前价格 \( P \)：
+\[
+P = \sum_{t=1}^{7} \frac{4.6}{(1 + 0.053)^t} + \frac{100}{(1 + 0.053)^7}
+\]
+计算得：
+\[
+P \approx 95.89 \text{元}
+\]
+
+#### 计算麦考利久期：
+\[
+\text{Macaulay Duration} = \frac{1}{95.89} \left( \sum_{t=1}^{7} \frac{t \cdot 4.6}{(1.053)^t} + \frac{7 \cdot 100}{(1.053)^7} \right) \approx 5.96
+\]
+
+#### 计算修正久期：
+\[
+\text{Modified Duration} = \frac{5.96}{1 + 0.053} \approx 5.66
+\]
+
+### 3. 估计价格跌幅
+收益率上行80bp（即0.8%），价格变化百分比近似为：
+\[
+\Delta P \approx -\text{Modified Duration} \times \Delta YTM = -5.66 \times 0.8\% \approx -4.53\%
+\]
+
+### 4. 结果
+将结果存入字典 `result`：
+```python
+result = {
+    'price_drop_pct': -4.53
+}
+```

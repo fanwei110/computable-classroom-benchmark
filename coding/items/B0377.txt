@@ -1,0 +1,149 @@
+=== B0377  任务 KP6_T2 (T2) ===
+
+--- 任务要求的输出键 ---
+rolling_sharpe_last
+
+--- 判分失败明细 ---
+rolling_sharpe_last: 提交值 6.182802532092341  |  参考值 -0.09079893488821339
+
+--- 提取出的代码 ---
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+def calculate_rolling_sharpe(fund_data, rf=0.021, window=60):
+    """
+    计算滚动年化夏普比率
+
+    参数:
+    fund_data: Series, 基金的日收益率数据
+    rf: float, 无风险收益率（年化）
+    window: int, 滚动窗口天数
+
+    返回:
+    Series, 滚动夏普比率
+    """
+    # 计算日超额收益率
+    excess_returns = fund_data - rf/252
+
+    # 计算滚动年化夏普比率
+    rolling_mean = excess_returns.rolling(window=window).mean()
+    rolling_std = excess_returns.rolling(window=window).std()
+    rolling_sharpe = (rolling_mean / rolling_std) * np.sqrt(252)
+
+    return rolling_sharpe
+
+# 示例数据（假设您有实际的fund数据）
+# 这里创建一个示例数据集，实际使用时请替换为您的数据
+np.random.seed(42)
+dates = pd.date_range(start='2020-01-01', end='2023-12-31')
+fund_returns = pd.Series(np.random.normal(0.0005, 0.01, len(dates)), index=dates)
+
+# 计算滚动夏普比率
+window = 60  # 可调窗口大小
+rolling_sharpe = calculate_rolling_sharpe(fund_returns, rf=0.021, window=window)
+
+# 获取最后一个窗口的数值
+last_sharpe_value = rolling_sharpe.dropna().iloc[-1]
+
+# 绘制图形
+plt.figure(figsize=(12, 6))
+rolling_sharpe.plot(title=f'{window}日滚动年化夏普比率 (rf={2.1}%)')
+plt.ylabel('夏普比率')
+plt.grid(True)
+
+# 保存图形
+figure_path = 'rolling_sharpe_plot.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 创建结果字典
+result = {
+    'rolling_sharpe_last': last_sharpe_value,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+# 输出结果（在实际使用中可能不需要print）
+print(result)
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+以下是满足您要求的Python代码实现，计算60日滚动年化夏普比率，并绘制可调窗口的曲线图：
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+def calculate_rolling_sharpe(fund_data, rf=0.021, window=60):
+    """
+    计算滚动年化夏普比率
+
+    参数:
+    fund_data: Series, 基金的日收益率数据
+    rf: float, 无风险收益率（年化）
+    window: int, 滚动窗口天数
+
+    返回:
+    Series, 滚动夏普比率
+    """
+    # 计算日超额收益率
+    excess_returns = fund_data - rf/252
+
+    # 计算滚动年化夏普比率
+    rolling_mean = excess_returns.rolling(window=window).mean()
+    rolling_std = excess_returns.rolling(window=window).std()
+    rolling_sharpe = (rolling_mean / rolling_std) * np.sqrt(252)
+
+    return rolling_sharpe
+
+# 示例数据（假设您有实际的fund数据）
+# 这里创建一个示例数据集，实际使用时请替换为您的数据
+np.random.seed(42)
+dates = pd.date_range(start='2020-01-01', end='2023-12-31')
+fund_returns = pd.Series(np.random.normal(0.0005, 0.01, len(dates)), index=dates)
+
+# 计算滚动夏普比率
+window = 60  # 可调窗口大小
+rolling_sharpe = calculate_rolling_sharpe(fund_returns, rf=0.021, window=window)
+
+# 获取最后一个窗口的数值
+last_sharpe_value = rolling_sharpe.dropna().iloc[-1]
+
+# 绘制图形
+plt.figure(figsize=(12, 6))
+rolling_sharpe.plot(title=f'{window}日滚动年化夏普比率 (rf={2.1}%)')
+plt.ylabel('夏普比率')
+plt.grid(True)
+
+# 保存图形
+figure_path = 'rolling_sharpe_plot.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 创建结果字典
+result = {
+    'rolling_sharpe_last': last_sharpe_value,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+# 输出结果（在实际使用中可能不需要print）
+print(result)
+```
+
+**输出契约说明：**
+1. `result['rolling_sharpe_last']` - 存储最后一个滚动窗口的夏普比率数值
+2. `result['figure_path']` - 存储保存的图形文件的绝对路径
+
+**注意事项：**
+1. 代码中使用了示例数据，实际使用时请替换为您的真实基金收益率数据
+2. 窗口大小默认为60日，可以通过修改`window`参数调整
+3. 无风险收益率默认为2.1%（年化）
+4. 图形保存为当前目录下的'rolling_sharpe_plot.png'文件
+
+如果您有具体的基金数据文件，可以将其读入并替换示例数据部分。例如：
+```python
+fund_data = pd.read_csv('your_fund_data.csv', index_col=0, parse_dates=True)['return_column']
+```

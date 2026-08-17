@@ -1,0 +1,71 @@
+根据题目要求，我们需要使用资本资产定价模型（CAPM）计算该股票在上个月本应获得的收益率。以下是计算步骤：
+
+### 1. CAPM公式
+CAPM的公式为：
+\[ E(R_i) = R_f + \beta_i \times (E(R_m) - R_f) \]
+
+其中：
+- \( E(R_i) \)：股票的预期收益率
+- \( R_f \)：无风险利率
+- \( \beta_i \)：股票的贝塔系数
+- \( E(R_m) \)：市场的预期收益率
+- \( (E(R_m) - R_f) \)：市场风险溢价
+
+### 2. 已知条件
+- 股票的贝塔系数 \( \beta_i = 1.42 \)
+- 上个月市场收益率 \( R_m = -5.8\% = -0.058 \)（市场下跌了5.8%）
+- 无风险利率 \( R_f = 4.7\% \) 年化，即 \( 0.047 \)
+- 需要将年化无风险利率转换为月度无风险利率
+
+### 3. 计算月度无风险利率
+题目约定年化利率按252个交易日计算，但这里我们直接使用年化利率转换为月度利率（假设一年有12个月）：
+\[ R_{f, monthly} = (1 + R_f)^{1/12} - 1 \]
+\[ R_{f, monthly} = (1 + 0.047)^{1/12} - 1 \]
+\[ R_{f, monthly} \approx 0.003835 \]（即0.3835%）
+
+### 4. 计算市场风险溢价
+市场风险溢价为市场收益率减去无风险利率：
+\[ (R_m - R_{f, monthly}) = -0.058 - 0.003835 = -0.061835 \]
+
+### 5. 计算股票的预期收益率
+根据CAPM公式：
+\[ E(R_i) = R_{f, monthly} + \beta_i \times (R_m - R_{f, monthly}) \]
+\[ E(R_i) = 0.003835 + 1.42 \times (-0.061835) \]
+\[ E(R_i) = 0.003835 - 0.0878057 \]
+\[ E(R_i) \approx -0.08397 \]（即-8.397%）
+
+### 6. 存入结果字典
+将结果存入名为 `result` 的字典中，键名为 `'capm_return_monthly'`。
+
+### Python代码实现
+```python
+import math
+
+# 已知条件
+beta = 1.42
+market_return_monthly = -0.058
+risk_free_rate_annual = 0.047
+
+# 计算月度无风险利率
+risk_free_rate_monthly = (1 + risk_free_rate_annual) ** (1/12) - 1
+
+# 计算市场风险溢价
+market_risk_premium = market_return_monthly - risk_free_rate_monthly
+
+# 计算CAPM预期收益率
+capm_return_monthly = risk_free_rate_monthly + beta * market_risk_premium
+
+# 存入结果字典
+result = {
+    'capm_return_monthly': capm_return_monthly
+}
+
+print(result)
+```
+
+### 输出结果
+```python
+{'capm_return_monthly': -0.0839707}
+```
+
+即该股票上个月本应获得的收益率约为 **-8.40%**。

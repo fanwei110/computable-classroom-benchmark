@@ -1,0 +1,72 @@
+以下是计算结果和代码。由于无法在对话中直接保存图片，我提供生成图表的代码，并假设图片已保存至指定路径。
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 资产参数
+r1 = 0.071
+r2 = 0.124
+sig1 = 0.163
+sig2 = 0.289
+rhos = [0.15, 0.45, 0.75]
+target_return = 0.10
+
+# 计算最小方差组合波动率（rho=0.45）
+rho = 0.45
+cov = rho * sig1 * sig2
+w_mvp = (sig2**2 - cov) / (sig1**2 + sig2**2 - 2*cov)
+var_mvp = w_mvp**2 * sig1**2 + (1-w_mvp)**2 * sig2**2 + 2*w_mvp*(1-w_mvp)*cov
+mvp_vol = np.sqrt(var_mvp)
+
+# 计算目标收益10%下的最小波动率（rho=0.45）
+w_target = (target_return - r2) / (r1 - r2)  # 两资产下唯一确定权重
+var_target = w_target**2 * sig1**2 + (1-w_target)**2 * sig2**2 + 2*w_target*(1-w_target)*cov
+target_vol = np.sqrt(var_target)
+
+# 生成图表
+ws = np.linspace(-1, 2, 500)  # 权重范围，涵盖卖空
+plt.figure(figsize=(8,6))
+colors = ['blue', 'orange', 'green']
+for rho, c in zip(rhos, colors):
+    cov_ = rho * sig1 * sig2
+    rp = ws * r1 + (1-ws) * r2
+    vp = ws**2 * sig1**2 + (1-ws)**2 * sig2**2 + 2*ws*(1-ws)*cov_
+    sp = np.sqrt(vp)
+    plt.plot(sp, rp, color=c, label=f'ρ={rho}')
+    # 标记最小方差点
+    w_m = (sig2**2 - cov_) / (sig1**2 + sig2**2 - 2*cov_)
+    r_m = w_m * r1 + (1-w_m) * r2
+    v_m = w_m**2 * sig1**2 + (1-w_m)**2 * sig2**2 + 2*w_m*(1-w_m)*cov_
+    s_m = np.sqrt(v_m)
+    plt.scatter(s_m, r_m, color=c, marker='o', zorder=5)
+plt.xlabel('Volatility (σ)')
+plt.ylabel('Expected Return')
+plt.title('Efficient Frontiers for Two Assets')
+plt.legend()
+plt.grid(True)
+fig_path = './efficient_frontier.png'
+plt.savefig(fig_path, dpi=150)
+plt.close()
+
+result = {
+    'mvp_vol_at_rho45': round(mvp_vol, 6),
+    'frontier_vol_at_target': round(target_vol, 6),
+    'figure_path': fig_path
+}
+print(result)
+```
+
+计算结果：
+- 在 ρ=0.45 时，最小方差组合波动率 **mvp_vol_at_rho45** = `0.161688`（约 16.17%）
+- 目标收益 10% 对应的最小波动率（即该收益下有效前沿上的波动率）**frontier_vol_at_target** = `0.202379`（约 20.24%）
+- 图表保存路径设为 `"./efficient_frontier.png"`
+
+最终 `result` 字典为：
+```python
+{
+  'mvp_vol_at_rho45': 0.161688,
+  'frontier_vol_at_target': 0.202379,
+  'figure_path': './efficient_frontier.png'
+}
+```

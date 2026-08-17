@@ -1,0 +1,49 @@
+import numpy as np
+
+# ================= 1. 确定权重与基本参数 =================
+# 题目未指明60/40与A、B的对应关系，这里采用常规假设：
+# 波动率较小的资产A对应较大的权重60%，波动率较大的资产B对应较小的权重40%
+w_A = 0.6
+w_B = 0.4
+weights = np.array([w_A, w_B])
+
+# 年化波动率
+sigma_A = 0.184
+sigma_B = 0.297
+
+# 相关系数
+rho_before = 0.3
+rho_after = 0.8
+
+# ================= 2. 构造协方差矩阵 =================
+def build_cov_matrix(sigma1, sigma2, rho):
+    """根据波动率和相关系数构造协方差矩阵"""
+    cov12 = rho * sigma1 * sigma2
+    return np.array([
+        [sigma1**2, cov12],
+        [cov12,    sigma2**2]
+    ])
+
+cov_matrix_before = build_cov_matrix(sigma_A, sigma_B, rho_before)
+cov_matrix_after  = build_cov_matrix(sigma_A, sigma_B, rho_after)
+
+# ================= 3. 计算两个组合波动率 =================
+# 组合方差公式: variance = w' * Σ * w
+var_before = weights.T @ cov_matrix_before @ weights
+var_after  = weights.T @ cov_matrix_after @ weights
+
+# 组合年化波动率
+vol_before_annual = np.sqrt(var_before)
+vol_after_annual  = np.sqrt(var_after)
+
+# ================= 4. 填充 result =================
+result = {
+    'vol_before_annual': vol_before_annual,
+    'vol_after_annual': vol_after_annual
+}
+
+# 为方便课堂投屏展示，打印结果
+if __name__ == "__main__":
+    print(f"相关系数为 0.3 时，60/40组合的年化波动率: {result['vol_before_annual']:.4%}")
+    print(f"相关系数为 0.8 时，60/40组合的年化波动率: {result['vol_after_annual']:.4%}")
+    print(f"波动率变化量: {result['vol_after_annual'] - result['vol_before_annual']:.4%}")

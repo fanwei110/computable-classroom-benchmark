@@ -1,0 +1,90 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# --- 1. 参数设定 ---
+mu1, mu2 = 0.071, 0.124       # 期望年收益
+sig1, sig2 = 0.163, 0.289     # 年化波动率
+rhos = [0.15, 0.45, 0.75]     # 相关系数
+target_ret = 0.10             # 目标收益
+
+# --- 2. 核心计算函数 ---
+def get_portfolio_stats(w, rho):
+    """根据权重和相关系数计算组合的期望收益和波动率"""
+    mu_p = w * mu1 + (1 - w) * mu2
+    var_p = w**2 * sig1**2 + (1 - w)**2 * sig2**2 + 2 * w * (1 - w) * rho * sig1 * sig2
+    sig_p = np.sqrt(var_p)
+    return mu_p, sig_p
+
+def get_mvp_weight(rho):
+    """计算最小方差组合(MVP)中资产1的权重"""
+    w1 = (sig2**2 - rho * sig1 * sig2) / (sig1**2 + sig2**2 - 2 * rho * sig1 * sig2)
+    return w1
+
+# --- 3. 计算特定数值 ---
+# 计算 rho=0.45 时的最小方差组合波动率
+rho_45 = 0.45
+w_mvp_45 = get_mvp_weight(rho_45)
+_, mvp_vol_45 = get_portfolio_stats(w_mvp_45, rho_45)
+
+# 计算目标收益为10%且rho=0.45时的最小波动率
+# mu_target = w * mu1 + (1 - w) * mu2  =>  w = (mu_target - mu2) / (mu1 - mu2)
+w_target = (target_ret - mu2) / (mu1 - mu2)
+_, target_vol_45 = get_portfolio_stats(w_target, rho_45)
+
+# --- 4. 绘制有效前沿图 ---
+fig, ax = plt.subplots(figsize=(10, 7))
+colors = ['#1f77b4', '#ff7f0e', '#2ca02c']
+
+# 设定权重范围（包含卖空情况以展现完整的双曲线）
+weights = np.linspace(-0.5, 1.5, 500)
+
+for i, rho in enumerate(rhos):
+    # 计算前沿曲线
+    mu_p, sig_p = get_portfolio_stats(weights, rho)
+    
+    # 绘制前沿曲线
+    ax.plot(sig_p, mu_p, label=f'ρ = {rho}', color=colors[i], lw=2)
+    
+    # 计算并标记最小方差组合(MVP)
+    w_mvp = get_mvp_weight(rho)
+    mu_mvp, sig_mvp = get_portfolio_stats(w_mvp, rho)
+    ax.scatter(sig_mvp, mu_mvp, color=colors[i], s=60, zorder=5, edgecolors='black')
+    
+    # 添加MVP注释
+    ax.annotate(f'MVP (ρ={rho})\nσ={sig_mvp:.2%}, μ={mu_mvp:.2%}',
+                xy=(sig_mvp, mu_mvp),
+                xytext=(sig_mvp + 0.02, mu_mvp - 0.006 - i * 0.007),
+                arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=6),
+                fontsize=9,
+                bbox=dict(boxstyle="round,pad=0.3", fc="white", alpha=0.8))
+
+# 标记目标收益10%在rho=0.45前沿上的点
+ax.scatter(target_vol_45, target_ret, marker='*', color='red', s=200, zorder=6, 
+           label=f'Target 10% (ρ=0.45, σ={target_vol_45:.2%})')
+ax.axhline(y=target_ret, color='gray', linestyle='--', alpha=0.5)
+
+# 图表格式设置
+ax.set_title('Efficient Frontier of Two Assets', fontsize=14)
+ax.set_xlabel('Annualized Volatility (σ)', fontsize=12)
+ax.set_ylabel('Annualized Expected Return (μ)', fontsize=12)
+ax.legend(fontsize=10, loc='upper left')
+ax.grid(True, linestyle='--', alpha=0.6)
+ax.set_xlim(0, 0.45)
+ax.set_ylim(0.04, 0.16)
+
+# 保存图表
+figure_path = 'efficient_frontier.png'
+plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# --- 5. 封装输出结果 ---
+result = {
+    'mvp_vol_at_rho45': mvp_vol_45,
+    'frontier_vol_at_target': target_vol_45,
+    'figure_path': figure_path
+}
+
+# 打印结果以供查看
+print(f"ρ=0.45时最小方差组合的波动率: {result['mvp_vol_at_rho45']:.4%}")
+print(f"目标收益10%且ρ=0.45时的最小波动率: {result['frontier_vol_at_target']:.4%}")
+print(f"图表已保存至: {result['figure_path']}")

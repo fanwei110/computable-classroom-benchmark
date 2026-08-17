@@ -1,0 +1,27 @@
+import numpy as np
+from scipy.stats import norm
+
+# 给定参数
+position = 1_850_000      # 仓位
+annual_vol = 0.218        # 年化波动率
+trading_days = 252        # 每年交易日
+
+# 日波动率
+daily_vol = annual_vol / np.sqrt(trading_days)
+
+# 分位数
+z_95 = norm.ppf(0.95)     # 95% 置信度
+z_99 = norm.ppf(0.99)     # 99% 置信度
+
+# 1 天 95% VaR
+var_95_1d = position * daily_vol * z_95
+
+# 10 天 99% VaR
+ten_day_vol = annual_vol * np.sqrt(10 / trading_days)
+var_99_10d = position * ten_day_vol * z_99
+
+result = {
+    'var_95_1d': round(var_95_1d, 2),
+    'var_99_10d': round(var_99_10d, 2)
+}
+result

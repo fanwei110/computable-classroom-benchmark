@@ -1,0 +1,28 @@
+根据Black-Scholes-Merton模型 for欧式无分红看涨期权，计算过程如下：
+
+**已知参数：**
+* 标的现价 ($S$) = 103.7
+* 行权价 ($K$) = 97.5
+* 隐含波动率 ($\sigma$) = 27.6% = 0.276
+* 无风险利率 ($r$) = 4.3% = 0.043
+* 到期时间 ($T$) = 0.58 年
+
+**计算中间变量：**
+1. $d_1 = \frac{\ln(S/K) + (r + \sigma^2/2)T}{\sigma\sqrt{T}} = \frac{\ln(103.7/97.5) + (0.043 + 0.276^2/2) \times 0.58}{0.276 \times \sqrt{0.58}} \approx 0.5174$
+2. $d_2 = d_1 - \sigma\sqrt{T} = 0.5174 - 0.276 \times \sqrt{0.58} \approx 0.3072$
+
+**计算期权价格与希腊字母：**
+1. **Call Price** = $S \cdot N(d_1) - K \cdot e^{-rT} \cdot N(d_2) \approx 103.7 \times 0.6976 - 97.5 \times e^{-0.043 \times 0.58} \times 0.6207 \approx 13.3209$
+2. **Call Delta** = $N(d_1) \approx 0.6976$
+3. **Call Vega** = $S \cdot \sqrt{T} \cdot N'(d_1) \approx 103.7 \times \sqrt{0.58} \times 0.3490 \approx 27.5549$ 
+*(注：此处Vega为数学标准定义，即波动率变化1单位(100%)引起的期权价格变化；若习惯看波动率变化1%(0.01)的价格变动，则需除以100，即0.2755)*
+
+按照契约要求，结果存入字典 `result`：
+
+```python
+result = {
+    'call_price': 13.3209,
+    'call_delta': 0.6976,
+    'call_vega': 27.5549
+}
+```

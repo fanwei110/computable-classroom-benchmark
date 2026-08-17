@@ -1,0 +1,66 @@
+以下脚本可直接运行，它从当前目录下的 `snapshot.csv` 中读取基金净值序列（列名须为 `fund`），按日频计算年化夏普比率。无风险利率取 2.1%，年化时假设一年包含 252 个交易日。所有结果存入字典 `result`，并在运行结束时打印。
+```python
+import numpy as np
+import pandas as pd
+
+# =========================
+# 可在此修改文件名
+# =========================
+CSV_FILE = 'snapshot.csv'          # 快照 CSV 文件路径
+FUND_COL = 'fund'                  # 基金净值所在列名
+RF_ANNUAL = 0.021                  # 无风险利率（年化）
+TRADING_DAYS = 252                 # 一年交易日数，用于年化
+# =========================
+
+def load_data(filepath, col):
+    """读取 CSV 并返回基金净值序列（去除缺失值）"""
+    df = pd.read_csv(filepath)
+    if col not in df.columns:
+        raise ValueError(f"缺少 '{col}' 列，实际列名：{list(df.columns)}")
+    series = pd.to_numeric(df[col], errors='coerce').dropna()
+    if len(series) < 2:
+        raise ValueError("有效数据不足两行，无法计算收益率。")
+    return series
+
+def compute_annual_sharpe(net_values, rf_annual, trading_days):
+    """
+    根据净值序列计算年化夏普比率
+    net_values : 基金净值（等间隔，假设为日频）
+    rf_annual  : 年化无风险利率
+    trading_days: 年交易日数（用于年化）
+    """
+    # 日简单收益率
+    returns = net_values.pct_change().dropna()
+    
+    # 日化无风险利率
+    rf_daily = rf_annual / trading_days
+    
+    # 超额收益
+    excess = returns - rf_daily
+    
+    # 平均超额收益与标准差（样本标准差，ddof=1）
+    mean_ex = excess.mean()
+    std_ex = excess.std(ddof=1)   # 等价于 np.std(excess, ddof=1)
+    
+    if std_ex == 0:
+        raise ValueError("超额收益标准差为零，无法计算夏普比率。")
+    
+    # 年化夏普比率
+    sharpe = np.sqrt(trading_days) * mean_ex / std_ex
+    return sharpe
+
+def main():
+    # 1. 读取数据
+    nav = load_data(CSV_FILE, FUND_COL)
+    
+    # 2. 计算年化夏普
+    sharpe_annual = compute_annual_sharpe(nav, RF_ANNUAL, TRADING_DAYS)
+    
+    # 3. 输出结果
+    global result
+    result = {'sharpe_annual': sharpe_annual}
+    print(result)
+
+if __name__ == "__main__":
+    main()
+```

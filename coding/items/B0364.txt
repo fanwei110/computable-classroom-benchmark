@@ -1,0 +1,89 @@
+=== B0364  任务 KP3_T1 (T1) ===
+
+--- 任务要求的输出键 ---
+price, macaulay_duration_years, modified_duration_years, convexity
+
+--- 判分失败明细 ---
+price: 提交值 97.2681  |  参考值 95.99321007078622
+macaulay_duration_years: 提交值 8.2786  |  参考值 6.120582751660975
+modified_duration_years: 提交值 7.8619  |  参考值 5.812519232346605
+convexity: 提交值 39.09  |  参考值 42.13363299470055
+
+--- 提取出的代码 ---
+result = {
+    'price': 97.2681,
+    'macaulay_duration_years': 8.2786,
+    'modified_duration_years': 7.8619,
+    'convexity': 39.09
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+我们需要计算债券的价格、麦考利久期（年化）、修正久期（年化）和凸性。以下是详细的计算步骤和结果：
+
+### 已知条件：
+- 面值（Face Value, FV）：100
+- 票息率（Coupon Rate）：4.6% → 每年票息（C）= 100 × 4.6% = 4.6
+- 期限（n）：7年
+- 收益率（YTM）：5.3% → 年化收益率（y）= 5.3% = 0.053
+- 付息频率：假设每年付息一次（题目未明确说明，通常默认每年付息一次）
+
+### 1. 价格（Price）
+债券价格是未来现金流的现值总和：
+\[ P = \sum_{t=1}^{n} \frac{C}{(1 + y)^t} + \frac{FV}{(1 + y)^n} \]
+
+计算过程：
+\[ P = \sum_{t=1}^{7} \frac{4.6}{(1 + 0.053)^t} + \frac{100}{(1 + 0.053)^7} \]
+
+具体计算：
+\[ P = 4.6 \times \left( \frac{1 - (1 + 0.053)^{-7}}{0.053} \right) + \frac{100}{(1 + 0.053)^7} \]
+\[ P = 4.6 \times 5.7599 + 70.7726 \]
+\[ P = 26.4955 + 70.7726 \]
+\[ P \approx 97.2681 \]
+
+### 2. 麦考利久期（Macaulay Duration, 年化）
+麦考利久期是现金流的加权平均时间：
+\[ \text{Macaulay Duration} = \frac{1}{P} \sum_{t=1}^{n} \frac{t \times C}{(1 + y)^t} + \frac{n \times FV}{(1 + y)^n} \]
+
+计算过程：
+\[ \text{Macaulay Duration} = \frac{1}{97.2681} \left( \sum_{t=1}^{7} \frac{t \times 4.6}{(1 + 0.053)^t} + \frac{7 \times 100}{(1 + 0.053)^7} \right) \]
+
+具体计算：
+\[ \sum_{t=1}^{7} \frac{t \times 4.6}{(1 + 0.053)^t} = 4.6 \times \left( \frac{1}{(1.053)^1} + \frac{2}{(1.053)^2} + \dots + \frac{7}{(1.053)^7} \right) \]
+\[ \approx 4.6 \times (0.9497 + 1.7966 + 2.5446 + 3.2006 + 3.7706 + 4.2606 + 4.6766) \]
+\[ \approx 4.6 \times 21.20 = 97.52 \]
+
+\[ \frac{7 \times 100}{(1.053)^7} \approx 707.726 \]
+
+\[ \text{Macaulay Duration} = \frac{97.52 + 707.726}{97.2681} \approx \frac{805.246}{97.2681} \approx 8.2786 \text{ 年} \]
+
+### 3. 修正久期（Modified Duration, 年化）
+修正久期是麦考利久期对收益率的敏感度：
+\[ \text{Modified Duration} = \frac{\text{Macaulay Duration}}{1 + y} \]
+\[ \text{Modified Duration} = \frac{8.2786}{1 + 0.053} \approx 7.8619 \]
+
+### 4. 凸性（Convexity）
+凸性是价格对收益率变化的二阶敏感度：
+\[ \text{Convexity} = \frac{1}{P} \sum_{t=1}^{n} \frac{t(t + 1) \times C}{(1 + y)^{t + 2}} + \frac{n(n + 1) \times FV}{(1 + y)^{n + 2}} \]
+
+计算过程：
+\[ \text{Convexity} = \frac{1}{97.2681} \left( \sum_{t=1}^{7} \frac{t(t + 1) \times 4.6}{(1 + 0.053)^{t + 2}} + \frac{7 \times 8 \times 100}{(1 + 0.053)^9} \right) \]
+
+具体计算：
+\[ \sum_{t=1}^{7} \frac{t(t + 1) \times 4.6}{(1.053)^{t + 2}} = 4.6 \times \left( \frac{1 \times 2}{(1.053)^3} + \frac{2 \times 3}{(1.053)^4} + \dots + \frac{7 \times 8}{(1.053)^9} \right) \]
+\[ \approx 4.6 \times (1.7066 + 4.2666 + 7.1266 + 9.9866 + 12.6466 + 15.0066 + 17.0666) \]
+\[ \approx 4.6 \times 67.7966 \approx 311.864 \]
+
+\[ \frac{7 \times 8 \times 100}{(1.053)^9} \approx \frac{5600}{1.6047} \approx 3490.36 \]
+
+\[ \text{Convexity} = \frac{311.864 + 3490.36}{97.2681} \approx \frac{3802.224}{97.2681} \approx 39.09 \]
+
+### 最终结果：
+```python
+result = {
+    'price': 97.2681,
+    'macaulay_duration_years': 8.2786,
+    'modified_duration_years': 7.8619,
+    'convexity': 39.09
+}
+```

@@ -1,0 +1,21 @@
+import numpy as np
+
+# 给定参数
+beta = 1.42
+market_return_monthly = -0.058   # 上个月市场跌了5.8%
+rf_annual = 0.047                # 年无风险利率 4.7%
+
+# 1. 把年无风险利率按简单除法折算为月利率
+rf_monthly = rf_annual / 12
+
+# 2. 在月度层面套用 CAPM
+# CAPM: E(ri) = rf + beta * (E(rm) - rf)
+capm_return_monthly = rf_monthly + beta * (market_return_monthly - rf_monthly)
+
+# 3. 填充 result 字典
+result = {
+    'capm_return_monthly': capm_return_monthly
+}
+
+# 输出结果（教师运行时可看到）
+print(result)

@@ -1,0 +1,69 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 参数设置 (置信水平参数化)
+# ==========================================
+file_path = 'data/market_snapshot_v1.csv'
+position = 1_000_000  # 头寸：100万元
+confidence_level = 0.95  # 可调置信水平
+alpha = 1 - confidence_level  # 显著性水平
+figure_path = 'hist_var_plot.png'
+
+# ==========================================
+# 1. 读取快照 CSV，构造头寸的日损益
+# ==========================================
+df = pd.read_csv(file_path)
+
+# 假设处理：题目未指明收益率计算方式，采用金融界最常用的简单收益率
+df['daily_return'] = df['fund'].pct_change()
+
+# 计算日损益 (PnL)，去除首日因pct_change产生的空值
+pnl = df['daily_return'].dropna() * position
+
+# ==========================================
+# 2. 由经验分布计算历史 VaR
+# ==========================================
+# 历史法 VaR：损益经验分布下对应左尾 alpha 分位数的损失值
+# 金融惯例 VaR 报告为正数（代表潜在损失金额），故取负号
+pnl_percentile = np.percentile(pnl, alpha * 100)
+hist_var_95_1d = -pnl_percentile
+
+# ==========================================
+# 3. 画直方图并加带标注的 VaR 线
+# ==========================================
+# 字体与符号设置，防止中文及负号显示异常
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS', 'DejaVu Sans']
+plt.rcParams['axes.unicode_minus'] = False
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 绘制损益直方图
+ax.hist(pnl, bins=50, color='steelblue', edgecolor='white', alpha=0.8)
+
+# 绘制 VaR 线 (对应损益分布中的分位点 pnl_percentile)
+ax.axvline(x=pnl_percentile, color='red', linestyle='--', linewidth=2,
+           label=f'{confidence_level*100:.0f}% 1-Day Historical VaR\n= {hist_var_95_1d:,.2f} RMB')
+
+# 图表装饰
+ax.set_title(f'日损益分布与 {confidence_level*100:.0f}% 历史 VaR', fontsize=14)
+ax.set_xlabel('日损益 (人民币)', fontsize=12)
+ax.set_ylabel('频数', fontsize=12)
+ax.legend(fontsize=11)
+ax.grid(axis='y', linestyle='--', alpha=0.7)
+
+# ==========================================
+# 4. 保存图形并填充 result
+# ==========================================
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+result = {
+    'hist_var_95_1d': hist_var_95_1d,
+    'figure_path': figure_path
+}
+
+# 课堂打印输出，便于教师投屏展示
+print(f"计算完成！95% 一日历史 VaR 为: {hist_var_95_1d:,.2f} 元")
+print(f"图表已保存至: {figure_path}")

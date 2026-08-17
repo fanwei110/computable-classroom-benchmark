@@ -1,0 +1,37 @@
+import numpy as np
+import pandas as pd
+
+def main():
+    # 1. 读取数据
+    path = "data/market_snapshot_v1.csv"
+    df = pd.read_csv(path)
+
+    # 假设 fund 列代表日收益率（小数形式）
+    fund_returns = df["fund"].values  # numpy array
+
+    # 2. 参数设定
+    rf_annual = 0.021                # 年化无风险利率
+    trading_days = 252               # 一年交易日数
+    rf_daily = rf_annual / trading_days  # 日无风险利率
+
+    # 3. 计算日超额收益
+    excess_daily = fund_returns - rf_daily
+
+    # 4. 全样本统计量
+    mean_excess_daily = np.mean(excess_daily)
+    std_excess_daily = np.std(excess_daily, ddof=1)  # 样本标准差
+
+    # 5. 年化
+    mean_excess_annual = mean_excess_daily * trading_days
+    std_excess_annual = std_excess_daily * np.sqrt(trading_days)
+
+    # 6. 夏普比率
+    sharpe_annual = mean_excess_annual / std_excess_annual if std_excess_annual != 0 else np.nan
+
+    # 7. 输出结果
+    result = {'sharpe_annual': sharpe_annual}
+    print(result)
+    return result
+
+if __name__ == "__main__":
+    main()

@@ -1,0 +1,50 @@
+```python
+import numpy as np
+
+# 债券参数
+face_value = 100.0
+coupon_rate = 0.046
+years_to_maturity = 7
+yield_to_maturity = 0.053
+
+# 计算年度现金流
+annual_coupon = face_value * coupon_rate
+t = np.arange(1, years_to_maturity + 1)
+cash_flows = np.full(years_to_maturity, annual_coupon)
+cash_flows[-1] += face_value  # 在到期年份加入面值
+
+# 计算折现因子
+discount_factors = (1 + yield_to_maturity) ** (-t)
+
+# 计算现金流现值
+present_values = cash_flows * discount_factors
+
+# 1. 计算债券价格
+price = np.sum(present_values)
+
+# 2. 计算麦考利久期 (Macaulay Duration)
+# MacD = Σ [t * PV(CF_t)] / Price
+macaulay_duration = np.sum(t * present_values) / price
+
+# 3. 计算修正久期 (Modified Duration)
+# ModD = MacD / (1 + y)
+modified_duration = macaulay_duration / (1 + yield_to_maturity)
+
+# 4. 计算凸性 (Convexity)
+# Convexity = (1 / Price) * Σ [t * (t+1) * PV(CF_t)] / (1 + y)^2
+# 这等价于 (1 / Price) * Σ [t * (t+1) * CF_t / (1 + y)^(t+2)]
+convexity = np.sum(t * (t + 1) * present_values) / (price * (1 + yield_to_maturity) ** 2)
+
+# 按照输出契约要求，将结果存入字典
+result = {
+    'price': price,
+    'macaulay_duration_years': macaulay_duration,
+    'modified_duration_years': modified_duration,
+    'convexity': convexity
+}
+
+if __name__ == "__main__":
+    # 打印结果以供验证
+    for key, value in result.items():
+        print(f"{key}: {value:.6f}")
+```

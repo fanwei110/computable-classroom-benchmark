@@ -1,0 +1,33 @@
+import pandas as pd
+import numpy as np
+
+# 1. 读取快照 CSV 数据
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 提取 fund 列（假设为日频净值序列）
+fund_nav = df['fund']
+
+# 计算日度简单收益率，并去除首行NaN
+daily_returns = fund_nav.pct_change().dropna()
+
+# 2. 计入 2.1% 的无风险利率
+# 假设：无风险利率为年化2.1%，按每年252个交易日折算为日度无风险利率
+rf_annual = 0.021
+rf_daily = rf_annual / 252
+
+# 计算日度收益率均值与标准差（样本标准差，ddof=1）
+mean_daily_return = daily_returns.mean()
+std_daily_return = daily_returns.std()
+
+# 计算全样本年化夏普比率
+# 公式：Sharpe_annual = (Mean_daily - Rf_daily) / Std_daily * sqrt(252)
+sharpe_annual = (mean_daily_return - rf_daily) / std_daily_return * np.sqrt(252)
+
+# 3. 把结果存入 result 字典
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+# 供课堂投屏展示打印
+print(f"全样本年化夏普比率: {sharpe_annual:.4f}")
+print(f"Result字典: {result}")

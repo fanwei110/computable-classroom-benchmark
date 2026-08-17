@@ -1,0 +1,39 @@
+import numpy as np
+
+# 已知数据
+sigma1, sigma2, sigma3 = 0.187, 0.243, 0.312
+rho12, rho13, rho23 = 0.21, -0.13, 0.37
+
+# 计算协方差矩阵
+cov11 = sigma1**2
+cov22 = sigma2**2
+cov33 = sigma3**2
+cov12 = rho12 * sigma1 * sigma2
+cov13 = rho13 * sigma1 * sigma3
+cov23 = rho23 * sigma2 * sigma3
+
+cov_matrix = np.array([
+    [cov11, cov12, cov13],
+    [cov12, cov22, cov23],
+    [cov13, cov23, cov33]
+])
+
+# 求解最小方差组合
+# 公式推导: w = Σ^-1 * 1 / (1^T * Σ^-1 * 1)
+ones = np.ones(3)
+cov_inv = np.linalg.inv(cov_matrix)
+
+w_mvp = cov_inv @ ones / (ones @ cov_inv @ ones)
+
+# 计算组合年化波动率
+# σ_p^2 = w^T * Σ * w
+port_var = w_mvp.T @ cov_matrix @ w_mvp
+port_vol_annual = np.sqrt(port_var)
+
+# 按要求组装字典，权重和波动率均用小数表示
+result = {
+    'mvp_weights': w_mvp.tolist(),
+    'mvp_vol_annual': port_vol_annual
+}
+
+print(result)

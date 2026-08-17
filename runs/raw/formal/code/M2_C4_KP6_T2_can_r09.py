@@ -1,0 +1,92 @@
+import os
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ============================================================
+# 参数设定（可调节）
+# ============================================================
+WINDOW = 60                # 滚动窗口长度（交易日）
+RISK_FREE_RATE = 0.021     # 年化无风险利率
+ANNUAL_DAYS = 252          # 每年交易日数
+FIG_FILENAME = "rolling_sharpe.png"   # 保存图形文件名
+
+# ============================================================
+# 1. 读取数据并准备序列
+# ============================================================
+DF_PATH = "data/market_snapshot_v1.csv"
+if not os.path.exists(DF_PATH):
+    raise FileNotFoundError(f"数据文件不存在: {DF_PATH}")
+
+df = pd.read_csv(DF_PATH)
+
+# --- 自动检测日期列 ------------------------------------------
+possible_date_cols = ['date', 'Date', 'trade_date', 'time', 'timestamp']
+date_col = None
+for col in possible_date_cols:
+    if col in df.columns:
+        date_col = col
+        break
+
+if date_col is not None:
+    df[date_col] = pd.to_datetime(df[date_col], errors='coerce')
+    df = df.set_index(date_col).sort_index()
+    date_index = df.index
+else:
+    # 若无日期列，使用自然数索引
+    date_index = df.index
+
+# --- 提取基金日收益率 ----------------------------------------
+if 'fund' not in df.columns:
+    raise KeyError("数据中缺少 'fund' 列")
+returns = pd.to_numeric(df['fund'], errors='coerce').dropna()
+
+# --- 计算日超额收益 ------------------------------------------
+rf_daily = RISK_FREE_RATE / ANNUAL_DAYS
+excess_returns = returns - rf_daily
+
+# ============================================================
+# 2. 计算滚动年化夏普比率
+# ============================================================
+rolling_mean = excess_returns.rolling(window=WINDOW).mean()
+rolling_std = excess_returns.rolling(window=WINDOW).std(ddof=1)
+rolling_sharpe = (rolling_mean / rolling_std) * np.sqrt(ANNUAL_DAYS)
+rolling_sharpe = rolling_sharpe.dropna()
+
+if rolling_sharpe.empty:
+    raise ValueError("滚动窗口长度超过数据长度，无法计算夏普比率。")
+
+# ============================================================
+# 3. 提取最后一个窗口的夏普值
+# ============================================================
+rolling_sharpe_last = round(rolling_sharpe.iloc[-1], 6)
+
+# ============================================================
+# 4. 绘制时间序列并保存图形
+# ============================================================
+plt.figure(figsize=(10, 5))
+plt.plot(rolling_sharpe.index, rolling_sharpe.values, linewidth=1.2, color='teal')
+plt.title(f"{WINDOW}-Day Rolling Annualized Sharpe Ratio (Fund)", fontsize=13)
+plt.xlabel("Date")
+plt.ylabel("Sharpe Ratio")
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.tight_layout()
+plt.savefig(FIG_FILENAME, dpi=150)
+plt.close()
+
+figure_path = os.path.abspath(FIG_FILENAME)  # 可复现的绝对路径
+
+# ============================================================
+# 输出契约：result 字典
+# ============================================================
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': figure_path
+}
+
+# 屏幕输出便于教师投屏查看
+print("=" * 50)
+print("计算完成，结果如下：")
+for k, v in result.items():
+    print(f"  {k}: {v}")
+print("=" * 50)

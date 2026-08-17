@@ -1,0 +1,22 @@
+=== B0553  任务 KP1_T1 (T1) ===
+
+--- 任务要求的输出键 ---
+mvp_vol_annual, mvp_weights
+
+--- 判分失败明细 ---
+mvp_weights: weights sum to 1.0004
+
+--- 提取出的代码 ---
+result = {
+    'mvp_weights': [0.620128, 0.157281, 0.222990],
+    'mvp_vol_annual': 0.146558
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+```python
+result = {
+    'mvp_weights': [0.620128, 0.157281, 0.222990],
+    'mvp_vol_annual': 0.146558
+}
+```

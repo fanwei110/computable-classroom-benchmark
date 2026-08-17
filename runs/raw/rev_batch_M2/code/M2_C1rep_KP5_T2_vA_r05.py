@@ -1,0 +1,52 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ------------------------------ 参数 ------------------------------
+FILE_PATH = "data/market_snapshot_v1.csv"
+POSITION = 1_000_000          # 头寸（元）
+CONF_LEVEL = 0.95             # 置信水平（可调）
+# -----------------------------------------------------------------
+
+# 1. 读取数据
+data = pd.read_csv(FILE_PATH)
+
+# 2. 获取 fund 列的日收益
+#    如果 fund 列是价格（净值），需要计算日收益率；如果已经是收益率则直接使用。
+#    这里通过判断列内数值范围自动处理：绝对值普遍 < 0.5 视为收益率，否则视为价格。
+fund_series = data['fund']
+if fund_series.abs().max() > 0.5:   # 更像是价格
+    print("检测到 fund 列为价格序列，自动计算日收益率...")
+    returns = fund_series.pct_change().dropna()
+else:
+    returns = fund_series.dropna()  # 已经是收益率
+
+# 3. 计算每日损益（元）
+pnl = returns * POSITION
+
+# 4. 历史 VaR（95%）
+var_95 = np.percentile(pnl, 100 * (1 - CONF_LEVEL))  # 损益分位数（负值）
+var_value = abs(var_95)  # VaR 通常用正数表示损失金额
+
+# 5. 绘制直方图并标注 VaR
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.hist(pnl, bins=50, color='skyblue', edgecolor='white', alpha=0.7, label='日损益')
+ax.axvline(var_95, color='red', linestyle='dashed', linewidth=2,
+           label=f'{int(CONF_LEVEL*100)}% 一日历史 VaR = {var_value:,.2f} 元')
+ax.set_xlabel('日损益（元）')
+ax.set_ylabel('频数')
+ax.set_title('历史模拟法 VaR')
+ax.legend()
+
+# 6. 保存图片
+figure_path = "var_hist.png"
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close(fig)
+
+# 7. 按要求存入结果字典
+result = {
+    'hist_var_95_1d': var_value,
+    'figure_path': figure_path,
+}
+
+print(result)

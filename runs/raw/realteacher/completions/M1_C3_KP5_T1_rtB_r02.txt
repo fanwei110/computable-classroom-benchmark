@@ -1,0 +1,55 @@
+我们按照题目要求计算 **95% 的一日 VaR** 和 **99% 的十日 VaR**，并将结果存入字典 `result`。
+
+---
+
+### **已知条件：**
+- 头寸规模（Portfolio Value）：185 万元
+- 年化波动率（Annualized Volatility）：21.8% = 0.218
+- 置信水平：
+  - 95% VaR（一日）
+  - 99% VaR（十日）
+- 交易日：每年 252 天
+- 波动率为样本标准差（ddof=1），但题目已给出年化波动率，无需调整自由度
+- VaR 报告为正的损失金额
+
+---
+
+### **计算步骤：**
+
+#### 1. **一日收益率的标准差（日波动率）**
+年化波动率 $\sigma_{annual} = 0.218$，则日波动率为：
+$$
+\sigma_{daily} = \frac{\sigma_{annual}}{\sqrt{252}} = \frac{0.218}{\sqrt{252}} \approx 0.01371
+$$
+
+#### 2. **十日收益率的标准差**
+十日波动率为：
+$$
+\sigma_{10d} = \sigma_{daily} \times \sqrt{10} \approx 0.01371 \times \sqrt{10} \approx 0.04335
+$$
+
+#### 3. **95% 一日 VaR**
+95% 置信水平对应的标准正态分位数（单尾）为 $z_{0.95} = 1.644854$。
+
+$$
+\text{VaR}_{95\%,1d} = \text{Portfolio Value} \times z_{0.95} \times \sigma_{daily} = 185 \times 1.644854 \times 0.01371 \approx 4.17 \text{ 万元}
+$$
+
+#### 4. **99% 十日 VaR**
+99% 置信水平对应的标准正态分位数（单尾）为 $z_{0.99} = 2.326348$。
+
+$$
+\text{VaR}_{99\%,10d} = \text{Portfolio Value} \times z_{0.99} \times \sigma_{10d} = 185 \times 2.326348 \times 0.04335 \approx 18.66 \text{ 万元}
+$$
+
+---
+
+### **结果输出：**
+```python
+result = {
+    'var_95_1d': 4.17,
+    'var_99_10d': 18.66
+}
+```
+
+> 注：计算结果保留两位小数，单位为万元。

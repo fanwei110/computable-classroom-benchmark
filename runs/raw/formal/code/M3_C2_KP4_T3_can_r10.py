@@ -1,0 +1,35 @@
+import numpy as np
+from scipy.stats import norm
+
+def black_scholes_call_price(S, K, T, r, sigma):
+    """
+    欧式看涨期权的 Black-Scholes 闭式定价公式
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    
+    call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    return call_price
+
+# 给定的参数
+S = 103.7      # 标的资产现价
+K = 97.5       # 行权价
+T = 0.58       # 剩余到期时间（年）
+r = 0.043      # 无风险利率
+sigma = 0.276  # 当前波动率（隐含波动率）
+
+# 1. 推算期权价格对这一个百分点波动率变化的响应
+# 计算当前波动率下的期权价格
+price_original = black_scholes_call_price(S, K, T, r, sigma)
+
+# 波动率上升一个百分点（1% = 0.01）
+sigma_up = sigma + 0.01
+price_up = black_scholes_call_price(S, K, T, r, sigma_up)
+
+# 价格的变化量
+price_change = price_up - price_original
+
+# 2. 把价格变化存入 result
+result = {
+    'price_change': price_change
+}

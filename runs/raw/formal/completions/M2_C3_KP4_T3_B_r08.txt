@@ -1,0 +1,27 @@
+```python
+import numpy as np
+from math import log, sqrt, exp, pi
+
+# 给定参数
+S = 103.7
+K = 97.5
+sigma = 0.276
+r = 0.043
+T = 0.58
+
+# 计算 d1
+d1 = (log(S / K) + (r + sigma**2 / 2) * T) / (sigma * sqrt(T))
+# 计算 n(d1)
+n_d1 = exp(-d1**2 / 2) / sqrt(2 * pi)
+# 计算 Vega（对波动率1单位变化的价格变化）
+vega = S * n_d1 * sqrt(T) * exp(-r * T)
+
+# IV涨1个点，即波动率 +0.01，价格变化
+price_change = vega * 0.01
+
+result = {'price_change': round(price_change, 4)}
+print(result)
+```
+```json
+{'price_change': 0.2688}
+```

@@ -1,0 +1,95 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 1. 参数化设置 (教师可在此处调整参数)
+# ==========================================
+rf = 0.023      # 无风险利率 2.3%
+erm = 0.094     # 市场期望收益 9.4%
+
+# ==========================================
+# 2. 核心计算
+# ==========================================
+# SML斜率 (市场风险溢价)
+sml_slope = erm - rf
+
+# Beta = 1.27 对应的期望收益 (依据 CAPM 公式)
+beta_target = 1.27
+er_at_beta_127 = rf + beta_target * sml_slope
+
+# ==========================================
+# 3. 绘制证券市场线 (SML)
+# ==========================================
+betas = np.linspace(0, 2, 200)
+er_sml = rf + betas * sml_slope
+
+plt.figure(figsize=(10, 6), dpi=120)
+
+# 绘制 SML 直线
+plt.plot(betas, er_sml * 100, label='SML', color='royalblue', linewidth=2.5)
+
+# 标出无风险利率和市场组合点
+plt.scatter(0, rf * 100, color='black', zorder=5)
+plt.text(0.02, rf * 100 + 0.2, f'rf = {rf*100:.1f}%', fontsize=11)
+plt.scatter(1, erm * 100, color='royalblue', zorder=5)
+plt.text(1.02, erm * 100 + 0.2, f'M = {erm*100:.1f}%', fontsize=11)
+
+# 定义三只股票的数据
+stocks = {
+    'X': (0.62, 0.081),
+    'Y': (1.18, 0.131),
+    'Z': (1.51, 0.099)
+}
+
+# 绘制股票点并标出 Alpha 偏离
+for name, (beta_i, er_i) in stocks.items():
+    # 实际收益点
+    plt.scatter(beta_i, er_i * 100, color='red', zorder=5, marker='D')
+    
+    # 计算 SML 上的均衡收益
+    er_sml_i = rf + beta_i * sml_slope
+    
+    # 绘制 Alpha 偏离线 (偏离SML的部分即Alpha)
+    plt.vlines(beta_i, er_sml_i * 100, er_i * 100, colors='gray', linestyles='--', linewidth=1.5)
+    
+    # 标注股票名称、数据及Alpha值
+    alpha_val = er_i - er_sml_i
+    if er_i >= er_sml_i:
+        plt.text(beta_i + 0.02, er_i * 100 + 0.2, 
+                 f'{name}(\u03B2={beta_i}, E(r)={er_i*100:.1f}%)\nAlpha={alpha_val*100:.2f}%', 
+                 va='bottom', fontsize=10, color='red')
+    else:
+        plt.text(beta_i + 0.02, er_i * 100 - 0.2, 
+                 f'{name}(\u03B2={beta_i}, E(r)={er_i*100:.1f}%)\nAlpha={alpha_val*100:.2f}%', 
+                 va='top', fontsize=10, color='red')
+
+plt.title('Security Market Line (SML) & Alpha Deviation', fontsize=14)
+plt.xlabel('Beta (\u03B2)', fontsize=12)
+plt.ylabel('Expected Return (%)', fontsize=12)
+plt.grid(True, linestyle=':', alpha=0.6)
+plt.legend(fontsize=12)
+plt.xlim(0, 2)
+# Y轴范围适当放宽，确保所有点及标注清晰可见
+plt.ylim((rf - 0.02) * 100, (erm + 0.06) * 100) 
+
+# ==========================================
+# 4. 保存图形与输出结果
+# ==========================================
+fig_path = 'sml_plot.png'
+plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# 按输出契约组装 result 字典
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': fig_path
+}
+
+# 控制台输出，便于课堂投屏展示与讲解
+print(f"======== 课堂演示输出 ========")
+print(f"SML斜率 (市场风险溢价): {sml_slope:.4f} ({sml_slope*100:.2f}%)")
+print(f"Beta=1.27 对应的期望收益: {er_at_beta_127:.4f} ({er_at_beta_127*100:.2f}%)")
+print(f"图形已保存至: {fig_path}")
+print(f"==============================\n")
+print(f"result字典内容:\n{result}")

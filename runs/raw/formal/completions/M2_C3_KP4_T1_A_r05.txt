@@ -1,0 +1,38 @@
+```python
+import math
+
+# 输入参数
+S = 103.7                # 标的现价
+K = 97.5                 # 行权价
+sigma = 0.276            # 隐含波动率（小数）
+r_annual_comp = 0.043    # 年复利无风险利率
+T = 0.58                 # 剩余期限（年）
+
+# 转换年复利为连续复利
+r = math.log(1 + r_annual_comp)
+
+# 计算 d1 和 d2
+d1 = (math.log(S / K) + (r + sigma**2 / 2) * T) / (sigma * math.sqrt(T))
+d2 = d1 - sigma * math.sqrt(T)
+
+# 正态分布 CDF 和 PDF
+def norm_cdf(x):
+    return 0.5 * (1 + math.erf(x / math.sqrt(2)))
+
+def norm_pdf(x):
+    return math.exp(-x**2 / 2) / math.sqrt(2 * math.pi)
+
+# 期权价格与希腊字母
+call_price = S * norm_cdf(d1) - K * math.exp(-r * T) * norm_cdf(d2)
+call_delta = norm_cdf(d1)
+call_vega = S * norm_pdf(d1) * math.sqrt(T)   # 对波动率（小数）的偏导数
+
+# 保留合理精度
+result = {
+    'call_price': round(call_price, 4),
+    'call_delta': round(call_delta, 4),
+    'call_vega': round(call_vega, 4)
+}
+
+result
+```

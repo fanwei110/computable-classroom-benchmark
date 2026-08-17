@@ -1,0 +1,43 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+# ---------------------------
+# Black-Scholes 欧式看涨期权定价
+# ---------------------------
+def bs_call_price(S, K, T, r, sigma):
+    """计算欧式看涨期权价格（无股息）"""
+    if T <= 0:
+        return max(S - K, 0.0)
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    return price
+
+# ---------------------------
+# 给定参数
+# ---------------------------
+S0 = 103.7       # 标的资产价格
+K = 97.5         # 执行价格
+sigma0 = 0.276   # 初始波动率 (27.6%)
+r = 0.043        # 无风险利率 (4.3%)
+T = 0.58         # 剩余期限（年）
+delta_sigma = 0.01  # IV 上涨 1 个百分点（0.01）
+
+# 计算两个波动率下的看涨期权价格
+price_initial = bs_call_price(S0, K, T, r, sigma0)
+price_new = bs_call_price(S0, K, T, r, sigma0 + delta_sigma)
+
+# 价格变化
+price_change = price_new - price_initial
+
+# 结果存入字典
+result = {'price_change': price_change}
+
+# 输出结果（投屏用）
+print("期权参数：S=103.7, K=97.5, σ₀=27.6%, r=4.3%, T=0.58年")
+print(f"初始IV下的理论价格：{price_initial:.4f}")
+print(f"IV上涨1个百分点后的理论价格：{price_new:.4f}")
+print(f"价格变化（vega效应）：{price_change:.4f}")
+print("\n结果字典：", result)
+```

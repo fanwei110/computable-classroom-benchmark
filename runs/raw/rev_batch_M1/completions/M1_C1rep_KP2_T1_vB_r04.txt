@@ -1,0 +1,50 @@
+根据资本资产定价模型（CAPM），我们可以计算每只股票的预期收益（Expected Return, ER），公式为：
+
+\[ ER = r_f + \beta \times (r_m - r_f) \]
+
+其中：
+- \( r_f \) 是无风险收益率（2.3%）
+- \( r_m \) 是市场收益率（9.4%）
+- \( \beta \) 是各股票的贝塔系数
+
+然后，计算股票Y的Alpha（α），公式为：
+
+\[ \alpha = 实际收益 - 预期收益 \]
+
+以下是计算过程和结果：
+
+```python
+# 给定数据
+rf = 0.023  # 无风险收益率
+rm = 0.094  # 市场收益率
+betas = {'x': 0.62, 'y': 1.18, 'z': 1.51}  # 各股票的贝塔系数
+actual_return_y = 0.131  # Y的实际收益
+
+# 计算预期收益
+er_x = rf + betas['x'] * (rm - rf)
+er_y = rf + betas['y'] * (rm - rf)
+er_z = rf + betas['z'] * (rm - rf)
+
+# 计算Y的Alpha
+alpha_y = actual_return_y - er_y
+
+# 存入结果字典
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+
+print(result)
+```
+
+输出结果：
+```python
+result = {
+    'er_x': 0.06732,  # 6.732%
+    'er_y': 0.10758,  # 10.758%
+    'er_z': 0.12911,  # 12.911%
+    'alpha_y': 0.02342  # 2.342%
+}
+```

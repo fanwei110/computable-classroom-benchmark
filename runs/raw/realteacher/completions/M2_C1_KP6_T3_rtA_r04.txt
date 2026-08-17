@@ -1,0 +1,35 @@
+由于您没有提供数据文件的具体内容或样本，我无法直接计算出实际的年化夏普比率。为了完成计算，我需要包含 `fund` 列的日收益率数据（例如 CSV 文件、数组等）。  
+
+不过，我可以给出标准的计算逻辑和 Python 代码，您只需将您的数据填入即可得到结果。  
+
+假设您有一个包含日收益率（小数形式，如 0.001 代表 0.1%）的列表或数组 `daily_returns`，无风险年化利率为 2.1%（即 0.021），按以下步骤计算年化夏普：  
+
+1. 计算日超额收益：`excess = daily_returns - daily_rf`  
+2. 日无风险利率通常按单利或复利转换。常见做法按单利：`daily_rf = 0.021 / 252`（假设一年 252 个交易日）  
+3. 年化夏普 = √252 × (日超额收益均值 / 日超额收益标准差)  
+
+代码示例：  
+```python
+import numpy as np
+
+# 这里用 daily_returns 代表 fund 列的日收益率序列，您需要替换为实际数据
+# daily_returns = df['fund'].values
+
+# 假设您已经有 daily_returns 数据，例如：
+# daily_returns = np.array([...])   # 请用实际数据替代
+
+# 无风险年化利率
+rf_annual = 0.021
+trading_days = 252
+rf_daily = rf_annual / trading_days
+
+# 计算日超额收益
+excess_returns = daily_returns - rf_daily
+
+# 计算年化夏普
+sharpe_annual = np.sqrt(trading_days) * (np.mean(excess_returns) / np.std(excess_returns, ddof=1))
+
+result = {'sharpe_annual': sharpe_annual}
+```
+
+如果您能提供数据文件的内容（或部分样本），我可以帮您算出具体的数值，并直接输出 `result` 字典。

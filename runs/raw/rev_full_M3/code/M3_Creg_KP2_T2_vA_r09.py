@@ -1,0 +1,89 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import PercentFormatter
+
+# ==========================================
+# 可调参数
+# ==========================================
+rf = 0.023       # 无风险利率 (2.3%)
+rm = 0.094       # 市场期望收益 (9.4%)
+
+# ==========================================
+# SML 计算与指标提取
+# ==========================================
+# SML 斜率即为市场风险溢价
+sml_slope = rm - rf
+
+# 计算 Beta = 1.27 处的 CAPM 期望收益
+target_beta = 1.27
+er_at_beta_127 = rf + target_beta * sml_slope
+
+# ==========================================
+# 股票数据
+# ==========================================
+stocks = {
+    'X': {'beta': 0.62, 'return': 0.081},
+    'Y': {'beta': 1.18, 'return': 0.131},
+    'Z': {'beta': 1.51, 'return': 0.099},
+}
+
+# ==========================================
+# 绘制证券市场线 (SML) 及股票点
+# ==========================================
+# 生成 Beta 范围与对应的 SML 期望收益
+betas = np.linspace(0, 2, 200)
+sml_returns = rf + betas * sml_slope
+
+# 初始化图像
+fig, ax = plt.subplots(figsize=(10, 7))
+
+# 绘制 SML 线
+ax.plot(betas, sml_returns, label='Security Market Line (SML)', color='blue', linewidth=2.5)
+
+# 绘制无风险利率点与市场组合点
+ax.scatter(0, rf, color='black', zorder=5)
+ax.annotate(f'Rf ({rf:.1%})', xy=(0, rf), xytext=(10, -15), textcoords='offset points', fontsize=10)
+ax.scatter(1, rm, color='blue', zorder=5)
+ax.annotate(f'Market ({rm:.1%})', xy=(1, rm), xytext=(10, 5), textcoords='offset points', fontsize=10)
+
+# 绘制股票 X, Y, Z 并标注
+for stock_name, data in stocks.items():
+    ax.scatter(data['beta'], data['return'], color='red', s=60, zorder=5)
+    ax.annotate(f"Stock {stock_name}\n(β={data['beta']}, E={data['return']:.1%})",
+                xy=(data['beta'], data['return']),
+                xytext=(15, 10),
+                textcoords='offset points',
+                fontsize=10,
+                arrowprops=dict(arrowstyle='->', color='gray'))
+
+# 图表格式设置
+ax.set_title('Security Market Line (SML) with Stocks X, Y, Z', fontsize=14, fontweight='bold')
+ax.set_xlabel('Beta (β)', fontsize=12)
+ax.set_ylabel('Expected Return', fontsize=12)
+ax.yaxis.set_major_formatter(PercentFormatter(xmax=1, decimals=1))
+ax.xaxis.set_major_locator(plt.MultipleLocator(0.2))
+ax.xlim(0, 2)
+ax.grid(True, linestyle='--', alpha=0.6)
+ax.legend(loc='upper left', fontsize=11)
+
+# 保存图像
+figure_path = 'sml_plot.png'
+plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# ==========================================
+# 输出契约结果
+# ==========================================
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': figure_path
+}
+
+# 打印结果供验证
+print("Result Dictionary:")
+for k, v in result.items():
+    if isinstance(v, float):
+        print(f"  '{k}': {v:.5f}")
+    else:
+        print(f"  '{k}': {v}")

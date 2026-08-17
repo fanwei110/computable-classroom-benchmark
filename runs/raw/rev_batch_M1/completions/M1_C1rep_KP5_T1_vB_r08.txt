@@ -1,0 +1,29 @@
+根据参数法VaR的计算公式，我们可以按照以下步骤计算95%置信水平下的1天VaR和99%置信水平下的10天VaR。
+
+### 计算公式：
+1. **单日VaR**：
+   \[
+   \text{VaR} = \text{Position} \times z \times \sigma \times \sqrt{\Delta t}
+   \]
+   - Position：仓位（185万元）
+   - \( z \)：标准正态分布的分位数（95%置信水平对应1.645，99%置信水平对应2.326）
+   - \( \sigma \)：年化波动率（21.8%）
+   - \( \Delta t \)：时间跨度（1天对应 \( \frac{1}{252} \)，10天对应 \( \frac{10}{252} \)）
+
+2. **具体计算**：
+   - **95%置信水平1天VaR**：
+     \[
+     \text{VaR}_{95,1d} = 185 \times 1.645 \times 0.218 \times \sqrt{\frac{1}{252}} \approx 4.17 \text{万元}
+     \]
+   - **99%置信水平10天VaR**：
+     \[
+     \text{VaR}_{99,10d} = 185 \times 2.326 \times 0.218 \times \sqrt{\frac{10}{252}} \approx 18.56 \text{万元}
+     \]
+
+### 输出契约：
+```python
+result = {
+    'var_95_1d': 4.17,
+    'var_99_10d': 18.56
+}
+```

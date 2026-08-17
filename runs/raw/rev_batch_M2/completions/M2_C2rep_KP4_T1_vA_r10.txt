@@ -1,0 +1,65 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+def black_scholes_call(S, K, T, r, sigma):
+    """
+    计算欧式看涨期权价格、delta 与 vega（无股利）。
+
+    参数：
+        S     : 标的资产现价
+        K     : 行权价
+        T     : 剩余期限（年）
+        r     : 无风险利率（年化，连续复利）
+        sigma : 波动率（年化）
+
+    返回：
+        price : 期权价格
+        delta : Delta
+        vega  : Vega（对波动率的偏导数，即 sigma 变动 1 单位时的价格变化）
+    """
+    # 步骤1: 计算 d1 和 d2
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+
+    # 步骤2: 计算期权价格与 delta
+    price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    delta = norm.cdf(d1)
+
+    # 步骤3: 计算 vega（标准 Black-Scholes vega）
+    vega = S * norm.pdf(d1) * np.sqrt(T)
+
+    return price, delta, vega
+
+# 给定参数
+S = 103.7
+K = 97.5
+sigma = 0.276
+r = 0.043
+T = 0.58
+
+# 计算
+call_price, call_delta, call_vega = black_scholes_call(S, K, T, r, sigma)
+
+# 填入结果字典
+result = {
+    'call_price': call_price,
+    'call_delta': call_delta,
+    'call_vega': call_vega
+}
+
+# 输出结果，确保可复现
+print("欧式看涨期权 Black-Scholes 计算结果:")
+print(f"标的现价 S        = {S}")
+print(f"行权价 K          = {K}")
+print(f"年化波动率 σ      = {sigma}")
+print(f"无风险利率 r      = {r}")
+print(f"剩余期限 T (年)   = {T}")
+print("-" * 40)
+print(f"d1                = { (np.log(S/K) + (r + 0.5*sigma**2)*T) / (sigma*np.sqrt(T)) :.6f}")
+print(f"d2                = { (np.log(S/K) + (r - 0.5*sigma**2)*T) / (sigma*np.sqrt(T)) :.6f}")
+print(f"期权价格 (price)  = {call_price:.6f}")
+print(f"Delta             = {call_delta:.6f}")
+print(f"Vega              = {call_vega:.6f}")
+print("\n结果字典 result =", result)
+```

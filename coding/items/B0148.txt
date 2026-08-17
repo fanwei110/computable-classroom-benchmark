@@ -1,0 +1,39 @@
+=== B0148  任务 KP6_T1 (T1) ===
+
+--- 任务要求的输出键 ---
+sharpe_annual, allocation_effect, selection_effect, interaction_effect
+
+--- 判分失败明细 ---
+sharpe_annual: 提交值 None  |  参考值 0.21202128793473451
+
+--- 提取出的代码 ---
+result = {
+    'sharpe_annual': None,
+    'allocation_effect': 0.00165,
+    'selection_effect': 0.0002,
+    'interaction_effect': 0.00145
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+由于没有提供课程数据文件中 `fund` 列的日收益数据，无法计算年化夏普比率。下面仅完成业绩归因，同时将第一问结果保留为缺失值。  
+计算过程如下：  
+
+**业绩归因**  
+- 组合权重 \(w_p = [0.45, 0.35, 0.20]\)，组合收益 \(r_p = [8.3\%, 2.1\%, -1.4\%]\)  
+- 基准权重 \(w_b = [0.40, 0.40, 0.20]\)，基准收益 \(r_b = [6.7\%, 3.4\%, -0.9\%]\)  
+
+配置效应：\(\sum (w_p - w_b) \times r_b = 0.05\times6.7\% + (-0.05)\times3.4\% + 0\times(-0.9\%) = 0.165\%\)  
+选择效应：\(\sum w_b \times (r_p - r_b) = 0.40\times(8.3\%-6.7\%) + 0.40\times(2.1\%-3.4\%) + 0.20\times(-1.4\%+0.9\%) = 0.02\%\)  
+交互效应：\(\sum (w_p - w_b) \times (r_p - r_b) = 0.05\times1.6\% + (-0.05)\times(-1.3\%) + 0\times(-0.5\%) = 0.145\%\)  
+
+转换为小数形式后，按要求存入字典：
+
+```python
+result = {
+    'sharpe_annual': None,
+    'allocation_effect': 0.00165,
+    'selection_effect': 0.0002,
+    'interaction_effect': 0.00145
+}
+```

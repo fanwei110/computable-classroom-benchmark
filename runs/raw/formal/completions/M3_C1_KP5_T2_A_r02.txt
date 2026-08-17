@@ -1,0 +1,92 @@
+11. **执行代码并提供结果组装**：```python
+import pandas as pd
+import numpy as np
+# 解决中文显示问题，设置中中文字格式
+plt.rcParams['font.sans-serif'] = [' # 正常显示中文标签
+plt.rcParams['axes.unicode_minus'] = False # 用来正常显示中文标签
+
+# 1. 读取数据
+try:
+df = pd.read_csv('data/market_snapshot_v1.csv')
+# 2如果计算日收益率（假设fund列为基金净值，计算百分比收益率；如果是日收益率，pct_change().dropna())
+# 4. 计算日损益
+pnl = daily_returns * position
+# 5. 计算历史VaR (95%置信水平对应损益分布的5%分位数)
+var_quantile_val = np.percentile(pnl, 5)
+var_value = -var_quantile_val
+
+# 6. 绘图
+plt.figure(figsize=(10, 6))
+plt.hist(pnl, bins=50, alpha=0.75, edgecolor='black')
+plt.axvline(var_quantile, color='r', linestyle='--', linewidth=2,
+plt.title('Daily P&L Distribution & Historical VaR')
+plt.xlabel('Daily P&L (CNY)')
+plt.grid(True, alpha=0.3)
+
+# 7. 保存图片
+figure_path = 'hist_var_pnl.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 8. 返回结果
+result = {
+    'hist_var_95_1d': var_value,
+    'figure_path': figure_path
+}
+```python
+print(f"95% 1-Day HistoricalVaR的 The round到小数点4位为 {var_value:.2f} 元")
+print(f"历史模拟法VaR数值为 {var_value:.2f} 万元")
+print(f"95% 1-Day历史VaR: {var_value:.2f} 万元")
+``12. **最终检查**：确认输出格式与要求完全符合契约。字典键名正确，代码可运行并输出正确的结果```python
+import pandas as pd
+import numpy as np
+# 配置参数
+confidence_level = 0.95  # 可调置信水平
+position = 1_000000  # 100万元头寸
+
+# 读取数据
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 像fund列是常见的是为基金净值，如果是已是日收益率，则使用 pct_change()
+daily_returns = df['fund'].pct_change().dropna()
+# 如果fund列已经是日收益率数据，需根据列名特征直接作为日收益率列处理
+daily_returns = daily_returns * position
+
+# 计算日损益 ( 头寸 * 日收益率
+position = 100000 0
+pnl = daily_returns * position
+
+#  算历史VaR
+alpha = 1 - confidence_level  # 左尾概率
+ VaR 取损益分布的5%分位数
+var_line_x = np.percentile(pnl, alpha *100) # VaR分位数的线所在x坐标
+plt.axvline(var_line_x, color='r', linestyle='--', 
+                label=f'{confidence_level*100:.0f}% 1-Day Hist VaR: {var_value:.2f} 元',
+                loc=f'{confidence_level}_VaR线位置'
+ plt.text(f'VaR线位置: x = -np.percentile(pnl, alpha * 100). 在5%分位数，pnl[ - 2处）
+不可能非常55分分位数
+VaR_value = -np.percentile(pnl, alpha*100)
+plt.axvline(var_line_x, color='r', linestyle='--', linewidth=2)
+plt.title('Daily P&L Distribution & Historical VaR')
+plt.xlabel('Daily P&L (CNY)')
+plt.grid(True, alpha=0.3)
+
+# 保存图片
+figure_path = 'hist_var_pnl.png'
+plt.savefig(figure_path)
+
+plt.close()
+
+# 构建输出字典
+result = {
+    'hist_var_95_1d': var_value,
+    'figure_path': figure_path
+}
+    是输出结果
+print(f"95% 1-Day历史VaR为 {var_value:.2f} 元")
+
+# 打印VaR值
+print(f"Historical VaR at {var_value:.2f} RMB")
+print(" 提示：95%置信水平下，头寸100万对应的的1日历史VaR为 {var_value:.2f} RMB")
+")
+``

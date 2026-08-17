@@ -1,0 +1,29 @@
+import numpy as np
+
+# 债券参数
+face_value = 100.0        # 面值
+coupon_rate = 0.046       # 票息率
+yield_rate = 0.053        # 初始收益率
+maturity = 7              # 剩余年限
+yield_change = 0.008      # 收益率上升 80 个基点
+
+def bond_price(face, coupon, ytm, n):
+    """计算债券价格（按年付息）"""
+    coupon_pmt = face * coupon
+    # 票息现值
+    pv_coupons = coupon_pmt * (1 - (1 + ytm) ** -n) / ytm
+    # 本金现值
+    pv_face = face / (1 + ytm) ** n
+    return pv_coupons + pv_face
+
+# 计算初始价格与新价格
+price_old = bond_price(face_value, coupon_rate, yield_rate, maturity)
+price_new = bond_price(face_value, coupon_rate, yield_rate + yield_change, maturity)
+
+# 价格下跌百分比（正数表示跌幅）
+price_drop_pct = (price_old - price_new) / price_old * 100.0
+
+# 输出契约
+result = {
+    'price_drop_pct': price_drop_pct
+}

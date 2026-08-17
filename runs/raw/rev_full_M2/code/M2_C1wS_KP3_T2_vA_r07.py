@@ -1,0 +1,83 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ------------------------------ 债券参数 ------------------------------
+FACE = 100.0                # 面值
+COUPON_RATE = 0.046         # 票面利率（年化）
+MATURITY = 7                # 剩余期限（年）
+Y0 = 0.053                  # 当前到期收益率
+C = FACE * COUPON_RATE      # 每年票息 = 4.6
+
+# ------------------------------ 可调参数 ------------------------------
+SHOCK_BP = 100              # 收益率上升幅度（基点），可任意调整
+DELTA_Y = SHOCK_BP / 10000  # 转换为小数
+
+# ====================== 1. 定价函数 ======================
+def bond_price(ytm):
+    """计算年付息债券的全价（假设刚刚付息）"""
+    pv = 0.0
+    for t in range(1, MATURITY + 1):
+        cf = C + (FACE if t == MATURITY else 0.0)
+        pv += cf / (1 + ytm) ** t
+    return pv
+
+# ====================== 2. 精确价格与久期计算 ======================
+P0 = bond_price(Y0)
+
+# 麦考利久期与修正久期（解析式）
+mac_dur = 0.0
+for t in range(1, MATURITY + 1):
+    cf = C + (FACE if t == MATURITY else 0.0)
+    pv_cf = cf / (1 + Y0) ** t
+    mac_dur += t * pv_cf
+mac_dur /= P0
+mod_dur = mac_dur / (1 + Y0)
+
+# ====================== 3. 收益率网格与精确价格曲线 ======================
+y_grid = np.linspace(0.02, 0.09, 500)
+prices_exact = np.array([bond_price(y) for y in y_grid])
+
+# 久期近似：直线 P(y) ≈ P0 * (1 - mod_dur * (y - Y0))
+prices_approx = P0 * (1 - mod_dur * (y_grid - Y0))
+
+# ====================== 4. 收益率+100bp的精确价格与久期估计的相对变化 ======================
+price_up100 = bond_price(Y0 + DELTA_Y)                    # 精确价格
+dur_relative_change = -mod_dur * DELTA_Y                  # 久期估计的相对价格变化 ΔP/P
+
+# ====================== 5. 画图 ======================
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.plot(y_grid * 100, prices_exact, label='Exact Price', linewidth=2)
+ax.plot(y_grid * 100, prices_approx, '--', label='Duration Approximation', linewidth=2)
+
+# 标注当前收益率点
+ax.axvline(Y0 * 100, color='gray', linestyle=':', alpha=0.7)
+ax.plot(Y0 * 100, P0, 'ko', markersize=5)
+ax.text(Y0 * 100 + 0.1, P0 + 0.5, f'Current YTM {Y0*100:.1f}%', fontsize=9)
+
+# 标注冲击后的精确价格点
+ax.axvline((Y0 + DELTA_Y) * 100, color='gray', linestyle=':', alpha=0.7)
+ax.plot((Y0 + DELTA_Y) * 100, price_up100, 'rs', markersize=6, label=f'Price at +{SHOCK_BP}bp')
+ax.text((Y0 + DELTA_Y) * 100 + 0.1, price_up100 + 0.5, f'{price_up100:.2f}', fontsize=9, color='red')
+
+ax.set_xlabel('Yield to Maturity (%)')
+ax.set_ylabel('Bond Price')
+ax.set_title('Bond Price vs Yield: Exact & Duration Approximation')
+ax.legend()
+ax.grid(True, linestyle='--', alpha=0.6)
+fig.tight_layout()
+
+# 保存图形
+figure_path = 'bond_price_duration.png'
+fig.savefig(figure_path, dpi=150)
+plt.close(fig)
+
+# ====================== 6. 输出契约 ======================
+result = {
+    'price_at_up100bp': round(price_up100, 6),
+    'dur_approx_change_up100bp': round(dur_relative_change, 6),
+    'figure_path': figure_path
+}
+
+# 控制台简要输出（教师投屏使用，可观察）
+print("=== 结果字典 ===")
+print(result)

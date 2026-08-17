@@ -1,0 +1,56 @@
+我需要先说明：由于对话中没有提供具体数据，我无法直接计算出数值。以下是一个完整的可执行 Python 脚本，它会从包含 `fund` 列的数据框 `df` 中计算 60 天滚动夏普比率，绘制并保存图表，并按要求输出 `result` 字典。你只需将数据加载为 `df`（日期为索引，包含 `fund` 列）后运行即可。
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ========== 参数设置（可调整）==========
+window = 60          # 滚动窗口，可调
+rf = 0.021           # 无风险利率 2.1%
+# ====================================
+
+# 假设 df 已经存在，包含 'fund' 列，索引为日期
+# df = pd.read_csv('your_data.csv', index_col=0, parse_dates=True)
+
+# 计算日收益率
+returns = df['fund'].pct_change().dropna()
+
+# 滚动年化收益率与波动率
+roll_mean = returns.rolling(window).mean() * 252
+roll_std = returns.rolling(window).std() * np.sqrt(252)
+
+# 滚动夏普比率
+rolling_sharpe = (roll_mean - rf) / roll_std
+
+# 最后一个窗口的值
+rolling_sharpe_last = rolling_sharpe.iloc[-1]
+
+# 绘制滚动夏普曲线
+plt.figure(figsize=(10, 5))
+plt.plot(rolling_sharpe, label=f'{window}-Day Rolling Sharpe', color='b')
+plt.axhline(y=0, color='r', linestyle='--', linewidth=1)
+plt.title(f'Rolling Sharpe Ratio ({window}-day window, rf={rf*100}%)')
+plt.xlabel('Date')
+plt.ylabel('Sharpe Ratio')
+plt.legend()
+plt.tight_layout()
+figure_path = 'rolling_sharpe.png'
+plt.savefig(figure_path, dpi=150)
+plt.close()
+
+# 按要求输出字典
+result = {
+    'rolling_sharpe_last': round(rolling_sharpe_last, 6),
+    'figure_path': figure_path
+}
+
+print(result)
+```
+
+**运行后的输出示例**（实际数值取决于数据）：
+```python
+{'rolling_sharpe_last': 0.523456, 'figure_path': 'rolling_sharpe.png'}
+```
+
+请你将实际数据装载为 DataFrame 并运行上述代码，即可得到真实的 `result` 字典。如果你能把数据贴出来或描述数据来源，我可以帮你直接输出具体数值。

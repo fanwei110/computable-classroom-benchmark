@@ -1,0 +1,62 @@
+=== B0011  任务 KP4_T1 (T1) ===
+
+--- 任务要求的输出键 ---
+call_price, call_delta, call_vega
+
+--- 判分失败明细 ---
+call_price: 提交值 13.3246  |  参考值 13.313704651787951
+
+--- 提取出的代码 ---
+result = {
+    'call_price': 13.3246,
+    'call_delta': 0.6974,
+    'call_vega': 27.5638
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+根据欧式看涨期权的Black-Scholes定价公式，我们首先计算相关中间变量：
+
+**1. 计算参数：**
+- 标的现价 $S = 103.7$
+- 行权价 $K = 97.5$
+- 隐含波动率 $\sigma = 0.276$
+- 无风险利率 $r = 0.043$（连续复利）
+- 剩余期限 $T = 0.58$ 年
+
+**2. 计算 $d_1$ 和 $d_2$：**
+$$d_1 = \frac{\ln(S/K) + (r + \frac{\sigma^2}{2})T}{\sigma \sqrt{T}}$$
+- $\ln(S/K) = \ln(103.7 / 97.5) \approx 0.0616807$
+- $r + \frac{\sigma^2}{2} = 0.043 + \frac{0.276^2}{2} = 0.043 + 0.038088 = 0.081088$
+- $(r + \frac{\sigma^2}{2})T = 0.081088 \times 0.58 \approx 0.0470310$
+- 分子 = $0.0616807 + 0.0470310 = 0.1087117$
+- 分母 $\sigma \sqrt{T} = 0.276 \times \sqrt{0.58} \approx 0.2101953$
+- $d_1 = 0.1087117 / 0.2101953 \approx 0.5170675$
+
+$$d_2 = d_1 - \sigma \sqrt{T} = 0.5170675 - 0.2101953 = 0.3068722$$
+
+**3. 计算正态分布累积概率及密度函数：**
+- $N(d_1) = N(0.5170675) \approx 0.697445$
+- $N(d_2) = N(0.3068722) \approx 0.620528$
+- $N'(d_1) = \frac{1}{\sqrt{2\pi}} e^{-d_1^2/2} = \frac{1}{\sqrt{2\pi}} e^{-0.133679} \approx 0.349016$
+
+**4. 计算期权价格 Call Price：**
+$$C = S \cdot N(d_1) - K \cdot e^{-rT} \cdot N(d_2)$$
+- $K \cdot e^{-rT} = 97.5 \times e^{-0.043 \times 0.58} = 97.5 \times e^{-0.02494} \approx 95.0985$
+- $C = 103.7 \times 0.697445 - 95.0985 \times 0.620528 \approx 72.3318 - 59.0072 = 13.3246$
+
+**5. 计算 Call Delta：**
+$$\Delta = N(d_1) \approx 0.6974$$
+
+**6. 计算 Call Vega：**
+（Vega定义为期权价格对波动率的一阶导数 $\frac{\partial C}{\partial \sigma}$）
+$$\text{Vega} = S \cdot \sqrt{T} \cdot N'(d_1)$$
+$$\text{Vega} = 103.7 \times \sqrt{0.58} \times 0.349016 \approx 103.7 \times 0.7615773 \times 0.349016 \approx 27.5638$$
+
+```python
+result = {
+    'call_price': 13.3246,
+    'call_delta': 0.6974,
+    'call_vega': 27.5638
+}
+```

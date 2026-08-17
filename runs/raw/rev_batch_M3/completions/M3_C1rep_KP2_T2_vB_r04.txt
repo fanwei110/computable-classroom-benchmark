@@ -1,0 +1,99 @@
+```python
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+import numpy as np
+
+# 1. 初始参数与计算
+rf_init = 2.3  # %
+rm_init = 9.4  # %
+betas_assets = [0.62, 1.18, 1.51]
+er_assets = [8.1, 13.1, 9.9]
+names = ['X', 'Y', 'Z']
+
+# SML斜率 (市场风险溢价) = E(Rm) - rf
+sml_slope = (rm_init - rf_init) / 100.0  # 转换为小数 0.071
+
+# beta = 1.27 时的预期收益
+# E(R) = rf + beta * (E(Rm) - rf)
+er_at_beta_127 = (rf_init + 1.27 * (rm_init - rf_init)) / 100.0  # 转换为小数 0.11317
+
+# 2. 绘图设置
+fig, ax = plt.subplots(figsize=(10, 7))
+plt.subplots_adjust(bottom=0.25)
+
+beta_line = np.linspace(0, 2, 100)
+er_line = rf_init + beta_line * (rm_init - rf_init)
+
+# 画 SML 线
+sml_line, = ax.plot(beta_line, er_line, 'b-', lw=2, label='SML')
+
+# 画资产点 X, Y, Z
+colors = ['red', 'orange', 'purple']
+for i, name in enumerate(names):
+    ax.plot(betas_assets[i], er_assets[i], 'o', color=colors[i], markersize=8, 
+            label=f'Asset {name} (β={betas_assets[i]}, E(R)={er_assets[i]}%)')
+    ax.text(betas_assets[i] + 0.02, er_assets[i] + 0.2, name, fontsize=12, color=colors[i])
+
+# 标出无风险利率和市场组合点
+rf_point, = ax.plot(0, rf_init, 'go', markersize=8, label=f'rf ({rf_init}%)')
+rm_point, = ax.plot(1, rm_init, 'b*', markersize=12, label=f'Market ({rm_init}%)')
+
+ax.set_xlabel('Beta', fontsize=12)
+ax.set_ylabel('Expected Return (%)', fontsize=12)
+ax.set_title('Security Market Line (SML)', fontsize=14)
+ax.legend(loc='upper left')
+ax.grid(True, linestyle='--', alpha=0.7)
+ax.set_xlim(-0.1, 2.1)
+ax.set_ylim(0, 18)
+
+# 3. 添加交互式滑动条 (可拖动)
+axcolor = 'lightgoldenrodyellow'
+ax_rf = plt.axes([0.2, 0.1, 0.6, 0.03], facecolor=axcolor)
+ax_rm = plt.axes([0.2, 0.15, 0.6, 0.03], facecolor=axcolor)
+
+s_rf = Slider(ax_rf, 'rf(%)', 0.0, 8.0, valinit=rf_init)
+s_rm = Slider(ax_rm, 'E(Rm)(%)', 2.0, 18.0, valinit=rm_init)
+
+def update(val):
+    rf = s_rf.val
+    rm = s_rm.val
+    slope = rm - rf
+    # 更新SML线
+    sml_line.set_ydata(rf + beta_line * slope)
+    # 更新rf和Market点
+    rf_point.set_ydata([rf])
+    rm_point.set_ydata([rm])
+    fig.canvas.draw_idle()
+
+s_rf.on_changed(update)
+s_rm.on_changed(update)
+
+# 4. 保存图片
+figure_path = 'sml_plot.png'
+plt.savefig(figure_path)
+
+# 5. 严格按照输出契约生成结果字典
+result = {
+    'sml_slope': sml_slope,          # 0.071
+    'er_at_beta_127': er_at_beta_127, # 0.11317
+    'figure_path': figure_path
+}
+
+print(result)
+```
+
+### 计算结果与输出契约
+
+执行上述代码后，将生成带有可拖动滑块的交互式图表（保存为 `sml_plot.png` 记录初始状态），并且要求的输出字典 `result` 如下：
+
+```python
+result = {
+    'sml_slope': 0.071,
+    'er_at_beta_127': 0.11317,
+    'figure_path': 'sml_plot.png'
+}
+```
+
+**关键计算说明：**
+*   **SML斜率**：$E(R_m) - r_f = 9.4\% - 2.3\% = 7.1\%$，即 `0.071`。
+*   **Beta 1.27 对应收益**：$E(R) = r_f + \beta \times (E(R_m) - r_f) = 2.3\% + 1.27 \times 7.1\% = 2.3\% + 9.017\% = 11.317\%$，即 `0.11317`。

@@ -1,0 +1,58 @@
+=== B0436  任务 KP3_T1 (T1) ===
+
+--- 任务要求的输出键 ---
+price, macaulay_duration_years, modified_duration_years, convexity
+
+--- 判分失败明细 ---
+price: 提交值 96.0718  |  参考值 95.99321007078622
+macaulay_duration_years: 提交值 6.1195  |  参考值 6.120582751660975
+modified_duration_years: 提交值 5.8115  |  参考值 5.812519232346605
+
+--- 提取出的代码 ---
+result = {
+    'price': 96.0718,
+    'macaulay_duration_years': 6.1195,
+    'modified_duration_years': 5.8115,
+    'convexity': 42.1363
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+为了计算这只债券的各项指标，我们首先明确基本参数（假设按年付息）：
+- 面值 ($F$) = 100
+- 票面利率 ($c$) = 4.6%，即年利息 ($C$) = 100 × 4.6% = 4.6
+- 期限 ($n$) = 7年
+- 到期收益率 ($y$) = 5.3% = 0.053
+- 折现因子 $v = 1 / (1+y) = 1 / 1.053$
+
+**1. 债券价格**
+价格是未来所有现金流（利息+本金）的现值之和：
+$$P = \sum_{t=1}^{7} \frac{4.6}{1.053^t} + \frac{100}{1.053^7}$$
+$$P = 4.6 \times \frac{1 - 1.053^{-7}}{0.053} + 100 \times 1.053^{-7} \approx 26.3400 + 69.7318 = 96.0718$$
+
+**2. Macaulay久期**
+Macaulay久期是现金流收回时间的加权平均：
+$$MacD = \frac{1}{P} \sum_{t=1}^{7} \frac{t \times CF_t}{1.053^t}$$
+计算各项时间加权的现值之和为 588.1009，除以价格：
+$$MacD = \frac{588.1009}{96.0718} \approx 6.1195 \text{ 年}$$
+
+**3. 修正久期**
+修正久期衡量价格对收益率变动的线性敏感度：
+$$ModD = \frac{MacD}{1+y} = \frac{6.1195}{1.053} \approx 5.8115 \text{ 年}$$
+
+**4. 凸性**
+凸性衡量价格-收益率曲线的弯曲程度（二阶导数性质）：
+$$Conv = \frac{1}{P} \sum_{t=1}^{7} \frac{t(t+1) \times CF_t}{(1+y)^{t+2}}$$
+计算 $t(t+1) \times CF_t \times v^t$ 的加权和为 4489.0935，除以 $P \times (1+y)^2$ (即 $96.0718 \times 1.053^2 = 106.5270$)：
+$$Conv = \frac{4489.0935}{106.5270} \approx 42.1363$$
+
+按照您的输出契约，结果存入字典如下：
+
+```python
+result = {
+    'price': 96.0718,
+    'macaulay_duration_years': 6.1195,
+    'modified_duration_years': 5.8115,
+    'convexity': 42.1363
+}
+```

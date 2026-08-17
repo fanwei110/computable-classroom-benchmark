@@ -1,0 +1,63 @@
+=== B0447  任务 KP2_T1 (T1) ===
+
+--- 任务要求的输出键 ---
+er_x, er_y, er_z, alpha_y
+
+--- 判分失败明细 ---
+er_x: 提交值 6.702  |  参考值 0.06702
+er_y: 提交值 10.678  |  参考值 0.10678000000000001
+er_z: 提交值 13.021  |  参考值 0.13021000000000002
+alpha_y: 提交值 2.421999999999999  |  参考值 0.02421999999999999
+
+--- 提取出的代码 ---
+# CAPM计算
+rf = 2.3
+market_return = 9.4
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+actual_y = 13.1
+
+market_premium = market_return - rf
+
+er_x = rf + beta_x * market_premium
+er_y = rf + beta_y * market_premium
+er_z = rf + beta_z * market_premium
+alpha_y = actual_y - er_y
+
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+
+result
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+```python
+# CAPM计算
+rf = 2.3
+market_return = 9.4
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+actual_y = 13.1
+
+market_premium = market_return - rf
+
+er_x = rf + beta_x * market_premium
+er_y = rf + beta_y * market_premium
+er_z = rf + beta_z * market_premium
+alpha_y = actual_y - er_y
+
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+
+result
+```

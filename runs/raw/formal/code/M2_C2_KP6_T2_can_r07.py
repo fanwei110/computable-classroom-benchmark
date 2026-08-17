@@ -1,0 +1,62 @@
+import numpy as np
+import pandas as pd
+import matplotlib
+matplotlib.use('Agg')   # 非交互式后端，确保在无 GUI 环境下保存图片
+import matplotlib.pyplot as plt
+
+# ---------- 可调参数 ----------
+WINDOW = 60                # 滚动窗口长度（可调整为任意正整数）
+ANNUAL_RF = 0.021          # 年化无风险利率
+TRADING_DAYS = 252         # 一年交易天数
+# -----------------------------
+
+def main():
+    # 1. 读取课程数据快照
+    # 假设第一列为日期，'fund' 列为日收益（小数形式，如 0.01 代表 1%）
+    df = pd.read_csv('data/market_snapshot_v1.csv', index_col=0, parse_dates=True)
+    
+    # 确保存在 'fund' 列
+    if 'fund' not in df.columns:
+        raise KeyError("CSV 文件中缺少 'fund' 列，请检查数据格式。")
+    
+    # 2. 计算日超额收益
+    rf_daily = ANNUAL_RF / TRADING_DAYS          # 简单单利日化无风险利率
+    excess_returns = df['fund'] - rf_daily
+    
+    # 3. 计算滚动年化夏普比率
+    roll_mean = excess_returns.rolling(window=WINDOW, min_periods=WINDOW).mean()
+    roll_std  = excess_returns.rolling(window=WINDOW, min_periods=WINDOW).std()
+    rolling_sharpe = np.sqrt(TRADING_DAYS) * roll_mean / roll_std
+    
+    df['rolling_sharpe'] = rolling_sharpe
+    
+    # 4. 提取最近一个窗口的年化夏普值
+    last_sharpe = rolling_sharpe.dropna().iloc[-1]
+    
+    # 5. 绘图并保存
+    fig, ax = plt.subplots(figsize=(10, 6))
+    ax.plot(df.index, rolling_sharpe, linewidth=1.5, color='steelblue')
+    ax.set_title(f'{WINDOW}-Day Rolling Annualized Sharpe Ratio', fontsize=14)
+    ax.set_xlabel('Date')
+    ax.set_ylabel('Rolling Sharpe')
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    figure_path = 'rolling_sharpe.png'
+    fig.savefig(figure_path, dpi=150)
+    plt.close(fig)
+    
+    # 6. 按要求组织输出字典
+    result = {
+        'rolling_sharpe_last': round(last_sharpe, 6),
+        'figure_path': figure_path
+    }
+    
+    # 可选打印，便于教师查看
+    print(f"最后一个 {WINDOW} 日窗口的年化夏普比率：{result['rolling_sharpe_last']:.6f}")
+    print(f"图形已保存至：{result['figure_path']}")
+    
+    return result
+
+# 执行并暴露 result 至全局命名空间（若作为脚本直接运行）
+if __name__ == '__main__':
+    result = main()

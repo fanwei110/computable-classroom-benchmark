@@ -1,0 +1,79 @@
+以下是一个自包含的Python脚本，满足您的所有要求：
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+def calculate_rolling_sharpe():
+    # 设置随机种子以确保可复现性
+    np.random.seed(42)
+
+    # 生成模拟数据（因为题目没有提供实际数据文件）
+    # 实际应用中应替换为读取真实的fund数据
+    n_days = 200
+    dates = pd.date_range(end=pd.Timestamp.today(), periods=n_days, freq='D')
+    daily_returns = np.random.normal(loc=0.0005, scale=0.01, size=n_days)  # 模拟日收益率
+
+    # 创建DataFrame
+    fund_data = pd.DataFrame({
+        'date': dates,
+        'fund': daily_returns
+    }).set_index('date')
+
+    # 无风险利率（年化）
+    annual_risk_free_rate = 0.021
+    daily_risk_free_rate = annual_risk_free_rate / 252  # 假设252个交易日
+
+    # 可调窗口长度（题目要求60日，但做成可调参数）
+    window_length = 60
+
+    # 计算超额收益
+    excess_returns = fund_data['fund'] - daily_risk_free_rate
+
+    # 计算滚动年化夏普比率
+    rolling_mean = excess_returns.rolling(window=window_length).mean()
+    rolling_std = excess_returns.rolling(window=window_length).std()
+    rolling_sharpe = (rolling_mean / rolling_std) * np.sqrt(252)  # 年化
+
+    # 获取最后一个窗口的夏普值
+    last_sharpe = rolling_sharpe.iloc[-1]
+
+    # 绘制时间序列图
+    plt.figure(figsize=(12, 6))
+    rolling_sharpe.plot(title=f'{window_length}-Day Rolling Annualized Sharpe Ratio')
+    plt.ylabel('Sharpe Ratio')
+    plt.grid(True)
+
+    # 保存图片
+    figure_path = Path('rolling_sharpe_ratio.png')
+    plt.savefig(figure_path)
+    plt.close()
+
+    # 准备结果字典
+    result = {
+        'rolling_sharpe_last': last_sharpe,
+        'figure_path': str(figure_path.absolute())
+    }
+
+    return result
+
+# 执行计算并输出结果
+result = calculate_rolling_sharpe()
+print(result)
+```
+
+注意事项：
+1. 由于题目没有提供实际的课程数据快照，我使用了模拟数据。在实际应用中，您需要将`fund_data`替换为从文件读取的真实数据。
+2. 脚本中使用了252个交易日作为年化因子，这是金融行业的常见做法。
+3. 窗口长度设置为60日，但做成了可调参数（通过修改`window_length`变量）。
+4. 图片保存为当前目录下的'rolling_sharpe_ratio.png'文件。
+5. 结果字典`result`包含了最后一个60日窗口的夏普值和图片路径。
+
+如果您有实际的数据文件，可以将数据读取部分替换为类似以下代码：
+```python
+# 读取实际数据的示例代码（需根据实际文件格式调整）
+# fund_data = pd.read_csv('your_data_file.csv', parse_dates=['date']).set_index('date')
+# fund_data = fund_data[['fund']]  # 确保只有fund列
+```

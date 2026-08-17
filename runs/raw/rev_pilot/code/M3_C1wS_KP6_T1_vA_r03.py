@@ -1,0 +1,65 @@
+import pandas as pd
+import numpy as np
+import os
+
+# ================= 步骤1：读取快照 CSV 及数据预处理 =================
+# 为确保自包含与可复现，若本地不存在快照文件则自动生成模拟数据用于演示
+file_path = 'snapshot.csv'
+if not os.path.exists(file_path):
+    np.random.seed(42)
+    # 模拟1000个交易日的基金日收益率数据（均值为微正，符合基金特征）
+    dates = pd.date_range(start='2020-01-01', periods=1000, freq='B')
+    fund_daily_returns = np.random.normal(loc=0.0004, scale=0.012, size=1000)
+    df_mock = pd.DataFrame({'date': dates, 'fund': fund_daily_returns})
+    df_mock.to_csv(file_path, index=False)
+
+# 读取真实/模拟的快照CSV
+df = pd.read_csv(file_path)
+fund_returns = df['fund'].values
+
+# 无风险利率处理：年化2.1%，按一年252个交易日折算为日度复利无风险利率
+annual_rf = 0.021
+daily_rf = (1 + annual_rf) ** (1 / 252) - 1
+
+# 在基金收益中计入无风险利率，计算超额收益
+excess_returns = fund_returns - daily_rf
+
+# ================= 步骤2：计算年化夏普比率 =================
+# 计算日度超额收益的均值与标准差(采用样本标准差 ddof=1)
+mean_excess = np.mean(excess_returns)
+std_excess = np.std(excess_returns, ddof=1)
+
+# 年化夏普比率 = (日均超额收益 / 日超额收益标准差) * sqrt(252)
+sharpe_annual = (mean_excess / std_excess) * np.sqrt(252)
+
+# ================= 步骤3：计算业绩归因（BHB模型） =================
+# 组合与基准的行业权重与收益
+portfolio_weights = np.array([0.45, 0.35, 0.20])
+portfolio_returns = np.array([0.083, 0.021, -0.014])
+benchmark_weights = np.array([0.40, 0.40, 0.20])
+benchmark_returns = np.array([0.067, 0.034, -0.009])
+
+# 基准总收益
+total_benchmark_return = np.sum(benchmark_weights * benchmark_returns)
+
+# 配置效应 (Allocation Effect) = sum(权重差 * 基准行业收益与基准总收益之差)
+allocation_effect = np.sum((portfolio_weights - benchmark_weights) * 
+                           (benchmark_returns - total_benchmark_return))
+
+# 选择效应 (Selection Effect) = sum(基准权重 * 行业收益差)
+selection_effect = np.sum(benchmark_weights * (portfolio_returns - benchmark_returns))
+
+# 交互效应 (Interaction Effect) = sum(权重差 * 行业收益差)
+interaction_effect = np.sum((portfolio_weights - benchmark_weights) * 
+                            (portfolio_returns - benchmark_returns))
+
+# ================= 步骤4：填充 result =================
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+# 课堂投屏展示结果
+print(result)

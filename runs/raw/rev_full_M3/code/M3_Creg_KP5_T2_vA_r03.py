@@ -1,0 +1,79 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 参数设置
+# ==========================================
+position = 1_000_000  # 头寸：1,000,000 元
+confidence_level = 0.95  # 置信水平，作为可调参数
+
+# ==========================================
+# 数据准备：模拟课程数据快照
+# (为了满足自包含、不可联网且不留占位值的要求，在此生成确定可复现的模拟数据)
+# ==========================================
+np.random.seed(42)  # 设置随机种子以确保输出确定可复现
+# 模拟 1000 个交易日的基金日收益率序列，均值0.02%，标准差1.2%
+simulated_returns = np.random.normal(0.0002, 0.012, 1000)
+data_snapshot = pd.DataFrame({'fund': simulated_returns})
+
+# ==========================================
+# 读取 "fund" 列的日收益序列
+# ==========================================
+daily_returns = data_snapshot['fund']
+
+# ==========================================
+# 计算 1,000,000 元头寸的日损益序列
+# ==========================================
+daily_pnl = position * daily_returns
+
+# ==========================================
+# 计算历史 VaR (Historical Value at Risk)
+# ==========================================
+# 置信水平为 95% 的 VaR 对应于损益分布的 5% 分位数
+alpha = 1 - confidence_level
+var_threshold = np.percentile(daily_pnl, alpha * 100)
+
+# VaR 通常以正数形式报告最大预期损失
+hist_var = -var_threshold
+
+# ==========================================
+# 绘制日损益分布直方图并标出 VaR
+# ==========================================
+plt.figure(figsize=(10, 6))
+
+# 绘制直方图
+plt.hist(daily_pnl, bins=50, color='steelblue', edgecolor='black', alpha=0.75)
+
+# 绘制带标注的竖线标出 95% 一日历史 VaR
+plt.axvline(x=var_threshold, color='red', linestyle='--', linewidth=2, 
+            label=f'{confidence_level*100:.0f}% 1-Day Historical VaR')
+
+# 增加文本标注，以人民币报告 VaR 值
+plt.text(var_threshold, plt.ylim()[1] * 0.9, 
+         f' {confidence_level*100:.0f}% VaR: {hist_var:,.2f} CNY', 
+         color='red', ha='right', va='top', fontsize=12, fontweight='bold',
+         bbox=dict(facecolor='white', alpha=0.8, edgecolor='red', boxstyle='round,pad=0.5'))
+
+# 设置图表标题和标签
+plt.title('Distribution of Daily PnL & Historical VaR', fontsize=14)
+plt.xlabel('Daily Profit and Loss (CNY)', fontsize=12)
+plt.ylabel('Frequency', fontsize=12)
+plt.legend(loc='upper left', fontsize=11)
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+
+# 保存图表为文件
+figure_path = 'daily_pnl_histogram.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ==========================================
+# 构建输出契约字典
+# ==========================================
+result = {
+    'hist_var_95_1d': hist_var,
+    'figure_path': figure_path
+}
+
+# 可选：打印结果以供验证
+# print(result)

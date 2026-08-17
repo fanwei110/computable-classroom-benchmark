@@ -1,0 +1,21 @@
+import numpy as np
+
+# 债券参数
+face = 100.0
+coupon = 4.6
+y0 = 0.053        # 初始年收益率（小数）
+y1 = 0.061        # 上升80个基点后的年收益率
+n = 7             # 期限（年）
+
+# 按年付息（默认）
+cashflows = np.array([coupon] * (n-1) + [coupon + face])
+years = np.arange(1, n+1)
+
+# 计算价格
+pv0 = np.sum(cashflows / (1 + y0) ** years)
+pv1 = np.sum(cashflows / (1 + y1) ** years)
+
+# 价格跌幅百分比（正数，以小数表示，与利率收益率一致）
+price_drop_pct = (pv0 - pv1) / pv0
+
+result = {'price_drop_pct': price_drop_pct}

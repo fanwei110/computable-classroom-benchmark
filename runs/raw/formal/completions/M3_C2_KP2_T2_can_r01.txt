@@ -1,0 +1,77 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import PercentFormatter
+
+# ==========================================
+# 1. 参数设置 (可调参数)
+# ==========================================
+rf = 0.023  # 无风险利率 2.3%
+rm = 0.094  # 市场期望收益 9.4%
+
+# ==========================================
+# 2. 计算 SML 斜率与 beta=1.27 处的期望收益
+# ==========================================
+sml_slope = rm - rf
+er_at_beta_127 = rf + 1.27 * sml_slope
+
+# ==========================================
+# 3. 定义股票数据
+# ==========================================
+stocks = {
+    'X': (0.62, 0.081),
+    'Y': (1.18, 0.131),
+    'Z': (1.51, 0.099)
+}
+
+# ==========================================
+# 4. 绘制证券市场线 (SML) 与股票标注点
+# ==========================================
+plt.figure(figsize=(10, 6))
+plt.rcParams.update({'font.size': 12})
+
+# 生成 beta 从 0 到 2 的序列
+beta_range = np.linspace(0, 2, 100)
+sml_returns = rf + beta_range * sml_slope
+
+# 绘制 SML 线
+plt.plot(beta_range, sml_returns, 
+         label=f'SML (Rf={rf:.1%}, Rm={rm:.1%})', 
+         color='royalblue', linewidth=2)
+
+# 绘制三只股票的点并添加标注
+for name, (beta, ret) in stocks.items():
+    plt.scatter(beta, ret, color='crimson', zorder=5, s=80)
+    plt.annotate(f'{name} (β={beta}, E={ret:.1%})', 
+                 xy=(beta, ret), 
+                 xytext=(15, 10), 
+                 textcoords='offset points',
+                 arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=5),
+                 fontsize=11)
+
+# 设置图表格式
+plt.title('Security Market Line (SML) and Stock Positions', fontsize=14)
+plt.xlabel('Beta (β)', fontsize=12)
+plt.ylabel('Expected Return', fontsize=12)
+plt.gca().yaxis.set_major_formatter(PercentFormatter(xmax=1, decimals=1))
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.legend(fontsize=12)
+plt.xlim(0, 2)
+plt.ylim(0, 0.18)
+
+# ==========================================
+# 5. 保存图形并填充 result 字典
+# ==========================================
+figure_path = 'sml_plot.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': figure_path
+}
+
+# 打印结果以供核验
+print(result)
+```

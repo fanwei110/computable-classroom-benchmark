@@ -1,0 +1,42 @@
+import pandas as pd
+import numpy as np
+
+# ----- 配置区（可根据实际文件名修改） -----
+DATA_FILE = 'snapshot.csv'          # 快照 CSV 文件
+RF = 0.021                         # 无风险利率 2.1%
+# ----------------------------------------
+
+def main():
+    # 1. 读取数据
+    df = pd.read_csv(DATA_FILE, parse_dates=['Date'])
+    df.set_index('Date', inplace=True)
+
+    # 假定 'fund' 列是基金净值，计算简单收益率
+    fund = df['fund'].dropna()
+    returns = fund.pct_change().dropna()
+
+    if len(returns) < 2:
+        raise ValueError("收益率序列过短，无法计算夏普比率。")
+
+    # 2. 计算年化因子（根据实际时间跨度）
+    total_days = (returns.index.max() - returns.index.min()).days
+    total_years = total_days / 365.25            # 考虑闰年
+    periods_per_year = len(returns) / total_years
+
+    # 3. 年化收益率与年化波动率
+    annual_return = returns.mean() * periods_per_year
+    annual_vol = returns.std() * np.sqrt(periods_per_year)
+
+    # 4. 年化超额收益
+    excess_return = annual_return - RF
+
+    # 5. 年化夏普比率
+    sharpe_annual = excess_return / annual_vol
+
+    # 6. 存入结果字典（严格键名）
+    result = {'sharpe_annual': sharpe_annual}
+    return result
+
+if __name__ == "__main__":
+    result = main()
+    print(result)   # 投屏展示结果

@@ -1,0 +1,148 @@
+我来帮你编写这个自包含的Python脚本，用于计算三只风险资产的全局最小方差组合及其年化波动率。
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.optimize import minimize
+
+# ============================================
+# 输入数据
+# ============================================
+# 三只风险资产的年化波动率（小数形式）
+vol_1 = 0.187  # 18.7%
+vol_2 = 0.243  # 24.3%
+vol_3 = 0.312  # 31.2%
+
+# 相关系数矩阵
+corr_12 = 0.21
+corr_13 = -0.13
+corr_23 = 0.37
+
+# ============================================
+# 构建协方差矩阵
+# ============================================
+# 只使用numpy构建协方差矩阵
+cov_matrix = np.array([
+    [vol_1**2,                  vol_1 * vol_2 * corr_12,   vol_1 * vol_3 * corr_13],
+    [vol_1 * vol_2 * corr_12,   vol_2**2,                  vol_2 * vol_3 * corr_23],
+    [vol_1 * vol_3 * corr_13,   vol_2 * vol_3 * corr_23,   vol_3**2]
+])
+
+print("协方差矩阵：")
+print(cov_matrix)
+
+# ============================================
+# 定义组合方差函数
+# ============================================
+def portfolio_variance(weights, cov_matrix):
+    """
+    计算投资组合的方差
+    weights: 权重向量
+    cov_matrix: 协方差矩阵
+    """
+    return weights @ cov_matrix @ weights
+
+# ============================================
+# 求解全局最小方差组合
+# ============================================
+# 目标函数：最小化组合方差
+def objective(weights):
+    return portfolio_variance(weights, cov_matrix)
+
+# 约束条件：满仓约束（权重之和为1）
+constraints = {'type': 'eq', 'fun': lambda w: np.sum(w) - 1.0}
+
+# 权重边界：允许卖空，所以无下界和上界限制
+bounds = [(None, None)] * 3
+
+# 初始猜测：等权重
+initial_guess = np.array([1/3, 1/3, 1/3])
+
+# 使用BFGS算法进行优化
+result = minimize(objective, initial_guess, method='SLSQP',
+                  bounds=bounds, constraints=constraints)
+
+# ============================================
+# 输出结果
+# ============================================
+mvp_weights = result.x
+mvp_variance = result.fun
+mvp_vol_annual = np.sqrt(mvp_variance)
+
+print("\n" + "="*50)
+print("全局最小方差组合结果：")
+print("="*50)
+print(f"资产1权重: {mvp_weights[0]:.6f} ({mvp_weights[0]*100:.4f}%)")
+print(f"资产2权重: {mvp_weights[1]:.6f} ({mvp_weights[1]*100:.4f}%)")
+print(f"资产3权重: {mvp_weights[2]:.6f} ({mvp_weights[2]*100:.4f}%)")
+print(f"权重之和: {np.sum(mvp_weights):.6f}")
+print(f"组合年化波动率: {mvp_vol_annual:.6f} ({mvp_vol_annual*100:.4f}%)")
+
+# ============================================
+# 将结果存入字典
+# ============================================
+result = {
+    'mvp_weights': mvp_weights,
+    'mvp_vol_annual': mvp_vol_annual
+}
+
+print("\n结果字典：")
+print(f"mvp_weights: {result['mvp_weights']}")
+print(f"mvp_vol_annual: {result['mvp_vol_annual']:.6f}")
+
+# ============================================
+# 可选：绘制有效前沿（教学展示用）
+# ============================================
+# 生成一系列目标收益率，计算对应的最小方差组合
+target_returns = np.linspace(-0.1, 0.30, 100)
+portfolio_vols = []
+portfolio_returns = []
+
+for target in target_returns:
+    # 约束：权重和为1且达到目标收益率
+    constraints_frontier = [
+        {'type': 'eq', 'fun': lambda w: np.sum(w) - 1.0},
+        {'type': 'eq', 'fun': lambda w: w @ np.mean(cov_matrix, axis=1) * 0 - target + np.sum(w * np.array([0.08, 0.12, 0.15]))}  # 假设期望收益
+    ]
+    
+    result_frontier = minimize(objective, initial_guess, 
+                               method='SLSQP', bounds=bounds, 
+                               constraints=constraints_frontier)
+    
+    if result_frontier.success:
+        portfolio_vols.append(np.sqrt(result_frontier.fun))
+        portfolio_returns.append(target)
+
+# 绘制有效前沿
+plt.figure(figsize=(10, 6))
+plt.plot(portfolio_vols, portfolio_returns, 'b-', linewidth=2, label='有效前沿')
+plt.scatter(mvp_vol_annual, np.sum(mvp_weights * np.array([0.08, 0.12, 0.15])), 
+            color='red', s=100, marker='*', label='全局最小方差组合', zorder=5)
+plt.xlabel('年化波动率', fontsize=12)
+plt.ylabel('期望收益率', fontsize=12)
+plt.title('马科维茨有效前沿', fontsize=14)
+plt.grid(True, alpha=0.3)
+plt.legend()
+plt.tight_layout()
+
+# 保存图像（教室展示用）
+plt.savefig('efficient_frontier.png', dpi=150)
+plt.show()
+
+print("\n注意：有效前沿基于假设的期望收益率绘制，实际教学演示时需要根据实际课程数据调整。")
+```
+
+这个脚本实现了以下功能：
+
+1. **数据输入**：使用给定的波动率和相关系数构建协方差矩阵
+2. **最小方差组合求解**：
+   - 目标函数：最小化组合方差
+   - 约束条件：满仓约束（权重之和为1）
+   - 允许卖空（无上下界限制）
+3. **结果输出**：
+   - `result['mvp_weights']`：全局最小方差组合的权重向量
+   - `result['mvp_vol_annual']`：对应的年化波动率
+4. **可视化**：绘制有效前沿，标注全局最小方差组合
+
+运行该脚本后，你将会得到精确的数值结果，可以直接在课堂上展示。

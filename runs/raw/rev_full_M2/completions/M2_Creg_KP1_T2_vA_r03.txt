@@ -1,0 +1,106 @@
+```python
+import os
+import numpy as np
+import matplotlib.pyplot as plt
+
+# =========================
+# 1. 资产基本参数
+# =========================
+r1 = 0.071      # 资产1 期望年收益
+r2 = 0.124      # 资产2 期望年收益
+sig1 = 0.163    # 资产1 年化波动率
+sig2 = 0.289    # 资产2 年化波动率
+
+rhos = [0.15, 0.45, 0.75]   # 考察的三个相关系数
+R_TARGET = 0.10             # 目标期望收益
+
+# =========================
+# 2. 准备绘图
+# =========================
+fig, ax = plt.subplots(figsize=(10, 7))
+# 用于画前沿的权重范围（覆盖足够宽，保证双曲线形状完整）
+w1_vals = np.linspace(-3, 4, 5000)
+
+for rho in rhos:
+    # 用权重参数方程生成整条前沿
+    w2_vals = 1.0 - w1_vals
+    r_p = w1_vals * r1 + w2_vals * r2
+    var_p = (
+        w1_vals**2 * sig1**2 +
+        w2_vals**2 * sig2**2 +
+        2 * w1_vals * w2_vals * rho * sig1 * sig2
+    )
+    sigma_p = np.sqrt(var_p)
+
+    # 绘制该相关系数对应的曲线
+    line = ax.plot(sigma_p, r_p, label=f'ρ = {rho}')
+    color = line[0].get_color()
+
+    # 计算最小方差组合 (MVP)
+    w1_mvp = (sig2**2 - rho * sig1 * sig2) / (sig1**2 + sig2**2 - 2 * rho * sig1 * sig2)
+    w2_mvp = 1.0 - w1_mvp
+    r_mvp = w1_mvp * r1 + w2_mvp * r2
+    var_mvp = (
+        w1_mvp**2 * sig1**2 +
+        w2_mvp**2 * sig2**2 +
+        2 * w1_mvp * w2_mvp * rho * sig1 * sig2
+    )
+    sigma_mvp = np.sqrt(var_mvp)
+
+    # 在前沿上标出 MVP 点
+    ax.scatter(sigma_mvp, r_mvp, color=color, s=64, zorder=5,
+               edgecolors='black', linewidth=0.8, label=f'MVP ρ={rho}')
+
+# =========================
+# 3. 图形标注
+# =========================
+ax.set_xlabel('Annualized Volatility (σ)', fontsize=12)
+ax.set_ylabel('Expected Annual Return', fontsize=12)
+ax.set_title('Mean-Variance Frontier for Two Risky Assets', fontsize=14)
+ax.legend(fontsize=9)
+ax.grid(True, alpha=0.3)
+ax.set_xlim(left=0)   # 波动率非负
+
+# 保存图片
+figure_path = os.path.abspath('mean_variance_frontier.png')
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close(fig)
+
+# =========================
+# 4. 计算题目要求的数值 (相关系数 0.45)
+# =========================
+rho45 = 0.45
+
+# ---- 4.1 最小方差组合 (MVP) 年化波动率 ----
+w1_mvp_45 = (sig2**2 - rho45 * sig1 * sig2) / (sig1**2 + sig2**2 - 2 * rho45 * sig1 * sig2)
+w2_mvp_45 = 1.0 - w1_mvp_45
+var_mvp_45 = (
+    w1_mvp_45**2 * sig1**2 +
+    w2_mvp_45**2 * sig2**2 +
+    2 * w1_mvp_45 * w2_mvp_45 * rho45 * sig1 * sig2
+)
+mvp_vol_at_rho45 = float(np.sqrt(var_mvp_45))
+
+# ---- 4.2 目标期望收益 10% 的最小年化波动率 ----
+# 期望收益固定时，两资产组合权重唯一确定（卖空允许）
+w1_target = (R_TARGET - r2) / (r1 - r2)
+w2_target = 1.0 - w1_target
+var_target = (
+    w1_target**2 * sig1**2 +
+    w2_target**2 * sig2**2 +
+    2 * w1_target * w2_target * rho45 * sig1 * sig2
+)
+frontier_vol_at_target = float(np.sqrt(var_target))
+
+# =========================
+# 5. 输出结果字典
+# =========================
+result = {
+    'mvp_vol_at_rho45': mvp_vol_at_rho45,
+    'frontier_vol_at_target': frontier_vol_at_target,
+    'figure_path': figure_path
+}
+
+# 打印确认
+print(result)
+```

@@ -1,0 +1,31 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 给定参数
+S = 103.7          # 标的价
+K = 97.5           # 行权价
+sigma = 0.276      # 波动率（小数）
+r = 0.043          # 连续复利利率（小数）
+T = 0.58           # 剩余年限
+
+# 计算 d1
+d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+# 标准正态密度函数 N'(d1)
+nd1 = norm.pdf(d1)
+# Vega：波动率每变动1个单位（即100个百分点）期权价格的变动
+vega = S * np.sqrt(T) * nd1
+# 隐含波动率涨1个百分点（0.01）带来的价格变动
+price_change = vega * 0.01
+
+# 存入结果字典
+result = {'price_change': round(price_change, 6)}
+print(result)
+```
+
+运行上述代码，可得：
+```python
+{'price_change': 0.275666}
+```
+
+即隐含波动率上涨1个百分点，该期权价格约上涨 **0.2757**（与标的价格单位一致）。

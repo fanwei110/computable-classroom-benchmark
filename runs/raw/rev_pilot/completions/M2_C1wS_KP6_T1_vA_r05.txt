@@ -1,0 +1,70 @@
+下面是一个自包含的 Python 脚本，读取指定的快照 CSV 文件（假设文件名为 `snapshot.csv`，包含 `fund` 列的小数日收益），计算年化夏普比率，并完成业绩归因，最后将结果存入 `result` 字典。
+
+```python
+import pandas as pd
+import numpy as np
+
+# ==================================================
+# 1. 年化夏普比率计算
+# ==================================================
+# 读取快照CSV（请确保文件路径正确，列名包含 'fund'）
+df = pd.read_csv('snapshot.csv')          # 根据实际情况修改文件名
+fund_returns = df['fund'].dropna().values # 日收益序列，假设为小数形式（如0.01表示1%）
+
+# 无风险利率参数
+rf_annual = 0.021          # 年化无风险利率2.1%
+trading_days = 252         # 一年交易日数
+rf_daily = rf_annual / trading_days
+
+# 日超额收益
+excess_returns = fund_returns - rf_daily
+
+# 计算年化夏普比率（样本标准差，ddof=1）
+mean_excess = np.mean(excess_returns)
+std_excess = np.std(excess_returns, ddof=1)
+sharpe_annual = np.sqrt(trading_days) * mean_excess / std_excess
+
+# ==================================================
+# 2. 业绩归因（Brinson 模型）
+# ==================================================
+# 组合权重与行业收益
+w_p = np.array([0.45, 0.35, 0.20])
+r_p = np.array([0.083, 0.021, -0.014])   # 已转换为小数
+
+# 基准权重与行业收益
+w_b = np.array([0.40, 0.40, 0.20])
+r_b = np.array([0.067, 0.034, -0.009])
+
+# 组合与基准总收益
+R_p = np.sum(w_p * r_p)
+R_b = np.sum(w_b * r_b)
+
+# 配置效应: sum_i (w_pi - w_bi) * (r_bi - R_b)
+allocation_effect = np.sum((w_p - w_b) * (r_b - R_b))
+
+# 选择效应: sum_i w_bi * (r_pi - r_bi)
+selection_effect = np.sum(w_b * (r_p - r_b))
+
+# 交互效应: sum_i (w_pi - w_bi) * (r_pi - r_bi)
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+
+# ==================================================
+# 3. 输出结果
+# ==================================================
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+# 投屏展示
+print(result)
+```
+
+**重要假设与说明**
+- 数据文件名为 `snapshot.csv`，列 `fund` 包含基金日收益率（小数，如 0.005 代表 0.5%）。若实际为百分比，可在读取后除以 100。
+- 无风险利率以单利方式转换为日利率（`0.021/252`）；年化夏普比率使用 `sqrt(252)` 乘以日超额收益的均值/标准差，标准差采用样本标准差（`ddof=1`）。
+- 业绩归因遵循 Brinson 分解，三部分之和等于组合与基准的总收益差（`R_p - R_b`），验证无误。
+
+运行该脚本后，变量 `result` 即包含题目要求的四项结果，可直接用于投屏。

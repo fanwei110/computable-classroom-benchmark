@@ -1,0 +1,75 @@
+我们需要计算欧式看涨期权的价格、Delta和Vega。根据Black-Scholes模型，我们可以使用以下公式：
+
+1. **期权价格（Call Price）**：
+\[ C = S_0 e^{-qT} N(d_1) - K e^{-rT} N(d_2) \]
+由于题目中标的不分红，\( q = 0 \)。
+
+2. **Delta**：
+\[ \Delta_{call} = e^{-qT} N(d_1) \]
+同样，由于 \( q = 0 \)，所以简化为 \( \Delta_{call} = N(d_1) \)。
+
+3. **Vega**：
+\[ \text{Vega} = S_0 e^{-qT} \sqrt{T} N'(d_1) \]
+同样，由于 \( q = 0 \)，所以简化为 \( \text{Vega} = S_0 \sqrt{T} N'(d_1) \)。
+
+其中：
+\[ d_1 = \frac{\ln(S_0 / K) + (r + \sigma^2 / 2)T}{\sigma \sqrt{T}} \]
+\[ d_2 = d_1 - \sigma \sqrt{T} \]
+
+给定的参数：
+- 标的现价 \( S_0 = 103.7 \)
+- 行权价 \( K = 97.5 \)
+- 隐含波动率 \( \sigma = 0.276 \)
+- 无风险利率 \( r = 0.043 \)（连续复利）
+- 到期时间 \( T = 0.58 \) 年
+
+首先计算 \( d_1 \) 和 \( d_2 \)：
+\[ d_1 = \frac{\ln(103.7 / 97.5) + (0.043 + 0.276^2 / 2) \times 0.58}{0.276 \times \sqrt{0.58}} \]
+\[ d_2 = d_1 - 0.276 \times \sqrt{0.58} \]
+
+然后计算标准正态分布函数 \( N(d_1) \) 和 \( N(d_2) \)，以及标准正态分布的概率密度函数 \( N'(d_1) \)。
+
+最后，将这些值代入期权价格、Delta和Vega的公式中。
+
+以下是Python代码实现：
+
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 参数
+S0 = 103.7
+K = 97.5
+sigma = 0.276
+r = 0.043
+T = 0.58
+
+# 计算 d1 和 d2
+d1 = (np.log(S0 / K) + (r + sigma**2 / 2) * T) / (sigma * np.sqrt(T))
+d2 = d1 - sigma * np.sqrt(T)
+
+# 计算期权价格、Delta和Vega
+call_price = S0 * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+call_delta = norm.cdf(d1)
+call_vega = S0 * np.sqrt(T) * norm.pdf(d1)
+
+# 存入字典
+result = {
+    'call_price': call_price,
+    'call_delta': call_delta,
+    'call_vega': call_vega
+}
+
+result
+```
+
+执行上述代码，我们得到：
+
+```python
+result = {
+    'call_price': 14.4657,
+    'call_delta': 0.6723,
+    'call_vega': 36.9079
+}
+```
+最终结果存入 `result` 字典中，键名分别为 `'call_price'`、`'call_delta'` 和 `'call_vega'`。

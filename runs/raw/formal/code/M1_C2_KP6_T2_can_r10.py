@@ -1,0 +1,76 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+# 1. 读取数据并计入无风险利率
+def load_and_preprocess_data(file_path, annual_rf_rate=0.021):
+    df = pd.read_csv(file_path, parse_dates=['date'])
+    df = df.sort_values('date').reset_index(drop=True)
+
+    # 计算日无风险利率
+    daily_rf_rate = (1 + annual_rf_rate) ** (1/252) - 1
+
+    # 提取fund列收益率，减去无风险利率得到超额收益
+    excess_returns = df['fund'] - daily_rf_rate
+
+    return df['date'], excess_returns
+
+# 2. 计算滚动年化夏普比率
+def calculate_rolling_sharpe(excess_returns, window=60):
+    # 计算滚动均值和标准差
+    rolling_mean = excess_returns.rolling(window=window).mean()
+    rolling_std = excess_returns.rolling(window=window).std()
+
+    # 年化夏普比率 (日收益年化因子为sqrt(252))
+    annualized_sharpe = rolling_mean / rolling_std * np.sqrt(252)
+
+    return annualized_sharpe
+
+# 3. 绘制时间序列图并报告最后一个窗口值
+def plot_and_report(date_series, sharpe_series, window=60):
+    plt.figure(figsize=(12, 6))
+    plt.plot(date_series, sharpe_series, label=f'{window}-day Rolling Annualized Sharpe Ratio')
+    plt.title(f'{window}-Day Rolling Annualized Sharpe Ratio')
+    plt.xlabel('Date')
+    plt.ylabel('Sharpe Ratio')
+    plt.grid(True)
+    plt.legend()
+
+    # 保存图形
+    figure_path = Path('rolling_sharpe_ratio.png')
+    plt.savefig(figure_path)
+    plt.close()
+
+    # 获取最后一个窗口的夏普值
+    last_sharpe = sharpe_series.dropna().iloc[-1]
+
+    return last_sharpe, figure_path
+
+# 主流程
+def main():
+    # 设置参数
+    data_path = 'data/market_snapshot_v1.csv'
+    window_length = 60  # 可调窗口长度
+
+    # 1. 加载数据
+    dates, excess_returns = load_and_preprocess_data(data_path)
+
+    # 2. 计算滚动夏普比率
+    rolling_sharpe = calculate_rolling_sharpe(excess_returns, window=window_length)
+
+    # 3. 绘图并报告结果
+    last_sharpe, figure_path = plot_and_report(dates, rolling_sharpe, window=window_length)
+
+    # 4. 填充result字典
+    result = {
+        'rolling_sharpe_last': last_sharpe,
+        'figure_path': str(figure_path)
+    }
+
+    return result
+
+# 执行主流程
+if __name__ == '__main__':
+    result = main()
+    print(result)

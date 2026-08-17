@@ -1,0 +1,50 @@
+以下是一个自包含的 Python 脚本，假定课程数据文件为当前目录下的 `data.csv`，且包含列名 `fund`。脚本读取净值数据，计算对数收益率，使用年化无风险利率 2.1%，按年交易日 252 天计算年化夏普比率，并将结果存入字典 `result`。
+
+```python
+import numpy as np
+import pandas as pd
+
+# ============================
+# 配置：数据文件路径与参数
+# ============================
+DATA_FILE = "data.csv"        # 课程数据文件（包含 fund 列）
+RISK_FREE_RATE = 0.021        # 年化无风险利率
+TRADING_DAYS = 252            # 年交易日数，用于年化
+
+# ============================
+# 1. 读取数据
+# ============================
+df = pd.read_csv(DATA_FILE)
+# 确保 fund 列存在
+if 'fund' not in df.columns:
+    raise ValueError("数据文件中缺少 'fund' 列")
+
+# 假设 fund 列为日频净值（若已是收益率则可跳过此步，以下按净值处理）
+# 计算对数收益率
+log_returns = np.log(df['fund'] / df['fund'].shift(1)).dropna()
+
+# ============================
+# 2. 计算年化夏普比率
+# ============================
+# 日化无风险利率（连续复利近似）
+daily_rf = RISK_FREE_RATE / TRADING_DAYS
+
+# 超额收益率
+excess_returns = log_returns - daily_rf
+
+# 年化夏普比率
+sharpe_annual = np.sqrt(TRADING_DAYS) * excess_returns.mean() / excess_returns.std()
+
+# ============================
+# 3. 输出结果字典
+# ============================
+result = {'sharpe_annual': sharpe_annual}
+
+print(result)
+```
+
+**说明**：
+- 脚本假定 `data.csv` 中的 `fund` 列为净值序列；若已是收益率序列，可将对数收益率计算行替换为直接读取列值。
+- 无风险利率按 2.1% 年化，简单折算为日利率；采用对数收益率与连续复利保持一致。
+- 年化系数使用 √252，适用于日频数据；若为周频或月频，需相应调整 `TRADING_DAYS` 的值（例如月频改为 12）。
+- 结果字典 `result` 的键名为 `'sharpe_annual'`，可直接在其他模块中引用。

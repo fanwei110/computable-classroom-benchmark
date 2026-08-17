@@ -1,0 +1,32 @@
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+S = 103.7      # 标的资产现价
+K = 97.5       # 行权价
+sigma = 0.276  # 年化波动率（27.6%）
+r = 0.043      # 无风险利率（4.3%，连续复利）
+T = 0.58       # 剩余期限（年）
+
+# 计算 d1 和 d2
+d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+d2 = d1 - sigma * np.sqrt(T)
+
+# 计算期权价格
+call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+
+# 计算 delta (N(d1))
+call_delta = norm.cdf(d1)
+
+# 计算 vega (每单位波动率，即 dC/dσ)
+call_vega = S * np.sqrt(T) * norm.pdf(d1) * 0.01  # 乘以0.01将百分比转换为小数单位
+
+# 结果存储
+result = {
+    'call_price': round(call_price, 4),
+    'call_delta': round(call_delta, 4),
+    'call_vega': round(call_vega, 6)  # vega通常保留更多小数位
+}
+
+# 输出结果（可选，便于调试）
+print(result)

@@ -1,0 +1,31 @@
+你的描述主要是关于基金分析的计算约定，但缺少**基金收益数据**（如每日收益率或价格序列）。你提供了无风险利率（rf = 2.1% 即 0.021），要计算年化夏普比率，需要收益数据。
+
+不过，我假设你会在实际代码环境中执行，我先把正确的**Python计算逻辑**给你，并在内部模拟情况中构建符合要求的 `result` 字典。
+
+**计算步骤（标准流程）：**
+1. 加载基金收益率序列（`fund`）
+2. 年化平均收益 = mean(收益率) × 252
+3. 年化标准差 = std(收益率, ddof=1) × √252
+4. 年化夏普 = (年化平均收益 - rf) / 年化标准差
+5. rf = 0.021
+
+**模拟代码示例及输出契约：**
+```python
+import numpy as np
+
+# 假设 fund 是基金日收益率序列（示例用随机正态替代）
+np.random.seed(42)
+fund_returns = np.random.normal(0.001, 0.02, 1000)  # 日收益率，实际请替换
+
+# 计算
+rf = 0.021
+annual_ret = np.mean(fund_returns) * 252
+annual_std = np.std(fund_returns, ddof=1) * np.sqrt(252)
+sharpe_annual = (annual_ret - rf) / annual_std if annual_std != 0 else None
+
+result = {'sharpe_annual': sharpe_annual}
+```
+
+**最终答案结构：**
+- `'sharpe_annual'`: 根据实际基金数据计算的年化夏普比率（数值）。
+- 若无数据，则无法计算，但字典键仍须为此名。

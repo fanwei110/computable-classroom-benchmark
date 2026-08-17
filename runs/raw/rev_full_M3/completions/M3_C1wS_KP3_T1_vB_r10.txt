@@ -1,0 +1,73 @@
+```python
+import numpy as np
+
+# ==========================================
+# 债券参数与假设
+# ==========================================
+# 假设：题目未指明付息频率，默认采用市场常见的半年付息（Semi-annual）进行计算
+face_value = 100.0          # 面值
+coupon_rate = 0.046         # 票息率 4.6%
+years_to_maturity = 7       # 期限 7年
+ytm = 0.053                 # 收益率 5.3%
+freq = 2                    # 付息频率（每年2次）
+
+# 推导周期参数
+n_periods = int(years_to_maturity * freq)        # 总期数 14
+coupon_pmt = face_value * coupon_rate / freq    # 每期票息 2.3
+periodic_ytm = ytm / freq                       # 周期收益率 0.0265
+
+# ==========================================
+# 1. 计算债券价格
+# ==========================================
+# 生成时间序列与现金流
+t = np.arange(1, n_periods + 1)
+cash_flows = np.full(n_periods, coupon_pmt)
+cash_flows[-1] += face_value  # 最后一期加上面值
+
+# 贴现因子与现值
+discount_factors = (1 + periodic_ytm) ** -t
+pv_cash_flows = cash_flows * discount_factors
+
+# 价格 = 现金流贴现之和
+price = np.sum(pv_cash_flows)
+
+# ==========================================
+# 2. 计算麦考利久期与修正久期
+# ==========================================
+# 麦考利久期(按期) = Sum[ t * PV(CF_t) ] / Price
+macaulay_duration_periods = np.sum(t * pv_cash_flows) / price
+
+# 麦考利久期(按年) = 麦考利久期(按期) / 付息频率
+macaulay_duration_years = macaulay_duration_periods / freq
+
+# 修正久期(按年) = 麦考利久期(按年) / (1 + 周期收益率)
+modified_duration_years = macaulay_duration_years / (1 + periodic_ytm)
+
+# ==========================================
+# 3. 计算凸性
+# ==========================================
+# 凸性(按期) = Sum[ t*(t+1) * PV(CF_t) ] / [ Price * (1 + 周期收益率)^2 ]
+convexity_periods = np.sum(t * (t + 1) * pv_cash_flows) / (price * (1 + periodic_ytm) ** 2)
+
+# 凸性(按年) = 凸性(按期) / 付息频率^2
+convexity = convexity_periods / (freq ** 2)
+
+# ==========================================
+# 4. 填充结果
+# ==========================================
+result = {
+    'price': price,
+    'macaulay_duration_years': macaulay_duration_years,
+    'modified_duration_years': modified_duration_years,
+    'convexity': convexity
+}
+
+# 课堂投屏展示打印
+print("=" * 45)
+print("《证券投资学》- 债券定价与久期、凸性计算")
+print(f"假设: 面值{int(face_value)}, 票息{coupon_rate*100}%, {years_to_maturity}年, 收益率{ytm*100}%, 半年付息")
+print("=" * 45)
+for key, value in result.items():
+    print(f"{key:<28}: {value:.6f}")
+print("=" * 45)
+```

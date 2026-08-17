@@ -1,0 +1,22 @@
+# 债券参数
+face_value = 100
+coupon_rate = 0.046
+coupon = face_value * coupon_rate  # 年票息
+years = 7
+ytm_current = 0.053
+ytm_new = 0.061
+frequency = 1  # 年付息，若半年付息改为2
+
+def bond_price(ytm):
+    # 按年付息计算
+    pv_coupons = sum([coupon / (1 + ytm)**t for t in range(1, years + 1)])
+    pv_face = face_value / (1 + ytm)**years
+    return pv_coupons + pv_face
+
+price0 = bond_price(ytm_current)
+price1 = bond_price(ytm_new)
+price_drop = price0 - price1
+price_drop_pct = (price_drop / price0) * 100
+
+result = {'price_drop_pct': round(price_drop_pct, 2)}
+print(result)

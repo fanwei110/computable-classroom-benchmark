@@ -1,0 +1,28 @@
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+value = 1_850_000.0          # 头寸价值（元）
+sigma_annual = 0.218         # 年化收益波动率
+trading_days = 252           # 年交易日数假设
+
+# 期限缩放
+sigma_daily = sigma_annual / np.sqrt(trading_days)       # 日波动率
+sigma_10d = sigma_annual * np.sqrt(10 / trading_days)    # 10日波动率
+
+# 正态分位数（损失侧分位数）
+z_95 = norm.ppf(0.05)   # 95% 置信水平对应的 z 值（负数）
+z_99 = norm.ppf(0.01)   # 99% 置信水平对应的 z 值
+
+# VaR 计算（报告为绝对损失值，因此取绝对值）
+var_95_1d = value * sigma_daily * abs(z_95)
+var_99_10d = value * sigma_10d * abs(z_99)
+
+# 存储结果
+result = {
+    'var_95_1d': round(var_95_1d, 2),    # 四舍五入到分
+    'var_99_10d': round(var_99_10d, 2)
+}
+
+# 输出供检查
+print(result)

@@ -1,0 +1,74 @@
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 1. 参数设置 (参数化波动率)
+# ==========================================
+K = 97.5          # 行权价
+r = 0.043         # 无风险利率 (连续复利)
+T = 0.58          # 剩余期限 (年)
+q = 0.0           # 标的资产分红率 (题目标明不分红)
+
+# 波动率可调参数
+sigma_list = [0.15, 0.276, 0.40]
+
+# 标的价格网格
+S_min, S_max = 70, 140
+S_grid = np.linspace(S_min, S_max, 500)
+
+# ==========================================
+# 2. 定义 Black-Scholes Delta 计算函数
+# ==========================================
+def bs_call_delta(S, K, r, T, sigma, q=0.0):
+    """
+    计算欧式看涨期权的 Delta (连续复利)
+    Delta = e^(-qT) * N(d1)
+    """
+    d1 = (np.log(S / K) + (r - q + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    delta = np.exp(-q * T) * norm.cdf(d1)
+    return delta
+
+# ==========================================
+# 3. 计算特定点的 Delta (标的110，波动率27.6%)
+# ==========================================
+S_target = 110
+sigma_target = 0.276
+delta_at_s110 = bs_call_delta(S_target, K, r, T, sigma_target, q)
+
+# ==========================================
+# 4. 绘图
+# ==========================================
+plt.figure(figsize=(10, 6))
+
+# 对每个波动率计算并绘制曲线
+for sigma in sigma_list:
+    delta_grid = bs_call_delta(S_grid, K, r, T, sigma, q)
+    plt.plot(S_grid, delta_grid, label=f'σ = {sigma*100:.1f}%', linewidth=2)
+
+# 图表修饰
+plt.title('European Call Option Delta vs Underlying Price', fontsize=14)
+plt.xlabel('Underlying Price (S)', fontsize=12)
+plt.ylabel('Delta (Δ)', fontsize=12)
+plt.axhline(0, color='black', linewidth=0.8, linestyle='--')
+plt.axhline(1, color='black', linewidth=0.8, linestyle='--')
+plt.legend(fontsize=11)
+plt.grid(True, linestyle='--', alpha=0.7)
+
+# 保存图形
+figure_path = 'bs_call_delta_plot.png'
+plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# ==========================================
+# 5. 填充输出契约字典
+# ==========================================
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': figure_path
+}
+
+# 打印结果供课堂投屏展示
+print(f"标的110、波动率27.6%时的Delta: {delta_at_s110:.6f}")
+print(f"图形已保存至: {figure_path}")
+print(f"Result Dictionary: {result}")

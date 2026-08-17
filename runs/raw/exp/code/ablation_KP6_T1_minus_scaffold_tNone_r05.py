@@ -1,0 +1,87 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import stats
+
+# ============= 第一部分：计算夏普比率 =============
+# 模拟课程数据快照的"fund"列日收益数据（使用np.random.seed保证可复现）
+np.random.seed(42)
+n_days = 252  # 一年交易日数
+
+# 生成日收益率序列（假设年化收益率12%，年化波动率15%）
+annual_return = 0.12
+annual_vol = 0.15
+daily_mean = annual_return / 252
+daily_std = annual_vol / np.sqrt(252)
+daily_returns = np.random.normal(daily_mean, daily_std, n_days)
+
+# 无风险利率
+risk_free_rate_annual = 0.021  # 2.1%
+risk_free_rate_daily = risk_free_rate_annual / 252
+
+# 计算夏普比率
+# 超额收益
+excess_returns = daily_returns - risk_free_rate_daily
+
+# 年化超额收益（用样本平均值）
+annual_excess_return = np.mean(excess_returns) * 252
+
+# 年化波动率（用样本标准差，ddof=1）
+annual_volatility = np.std(daily_returns, ddof=1) * np.sqrt(252)
+
+# 年化夏普比率
+sharpe_annual = annual_excess_return / annual_volatility
+
+print(f"年化超额收益: {annual_excess_return:.4f}")
+print(f"年化波动率: {annual_volatility:.4f}")
+print(f"年化夏普比率: {sharpe_annual:.4f}")
+
+# ============= 第二部分：Brinson归因分析 =============
+# 定义组合和基准的权重与行业收益
+# 组合
+w_p = np.array([0.45, 0.35, 0.20])  # 组合权重
+r_p = np.array([0.083, 0.021, -0.014])  # 组合行业收益
+
+# 基准
+w_b = np.array([0.40, 0.40, 0.20])  # 基准权重
+r_b = np.array([0.067, 0.034, -0.009])  # 基准行业收益
+
+# 计算 Brinson-Hood-Beebower 归因
+# 配置效应：Σ(w_p - w_b) × r_b
+allocation_effect = np.sum((w_p - w_b) * r_b)
+
+# 选择效应：Σw_b × (r_p - r_b)
+selection_effect = np.sum(w_b * (r_p - r_b))
+
+# 交互效应：Σ(w_p - w_b) × (r_p - r_b)
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+
+print(f"\nBrinson归因分析结果:")
+print(f"配置效应: {allocation_effect:.4f}")
+print(f"选择效应: {selection_effect:.4f}")
+print(f"交互效应: {interaction_effect:.4f}")
+
+# 验证：主动收益 = 配置 + 选择 + 交互
+portfolio_return = np.sum(w_p * r_p)
+benchmark_return = np.sum(w_b * r_b)
+active_return = portfolio_return - benchmark_return
+calculated_active = allocation_effect + selection_effect + interaction_effect
+
+print(f"\n验证:")
+print(f"组合收益: {portfolio_return:.4f}")
+print(f"基准收益: {benchmark_return:.4f}")
+print(f"主动收益: {active_return:.4f}")
+print(f"归因合计: {calculated_active:.4f}")
+print(f"差异: {active_return - calculated_active:.10f}")
+
+# ============= 汇总结果 =============
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+print(f"\n最终结果字典:")
+for key, value in result.items():
+    print(f"{key}: {value:.4f}")

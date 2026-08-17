@@ -1,0 +1,33 @@
+根据您的要求，我将使用课程数据中的fund列，以无风险利率2.1%来计算整个样本的年化夏普比率，并将结果存入字典。
+
+```python
+import pandas as pd
+import numpy as np
+
+# 假设已经加载了课程数据，fund列包含基金收益率数据
+# 这里用示例数据演示计算过程
+# 实际应用中应使用课程提供的完整fund数据
+
+# 计算年化收益率
+# 假设数据为日收益率
+annual_return = fund.mean() * 252  # 年化平均收益率
+
+# 计算年化波动率
+annual_volatility = fund.std() * np.sqrt(252)  # 年化标准差
+
+# 计算年化夏普比率
+risk_free_rate = 0.021  # 2.1%无风险利率
+sharpe_annual = (annual_return - risk_free_rate) / annual_volatility
+
+# 存储结果
+result = {
+    'sharpe_annual': sharpe_annual
+}
+```
+
+由于我没有实际的课程数据，无法给出具体的数值结果。在实际应用中，您需要：
+1. 获取fund列的所有收益率数据
+2. 确定数据的频率（日/周/月）以选择正确的年化因子
+3. 计算年化收益率、年化波动率，然后代入公式计算夏普比率
+
+年化夏普比率的计算公式为：(年化收益率 - 无风险利率) / 年化波动率

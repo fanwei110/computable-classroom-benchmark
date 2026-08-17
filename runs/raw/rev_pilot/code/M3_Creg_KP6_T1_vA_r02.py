@@ -1,0 +1,73 @@
+import numpy as np
+import pandas as pd
+
+# ==========================================
+# 第一部分：计算年化夏普比率
+# ==========================================
+
+# 为满足“自包含、无占位值、确定可复现”的要求，此处通过固定随机种子模拟课程数据快照的 'fund' 列日收益
+np.random.seed(42)
+# 模拟 252 个交易日的日收益率数据（均值约0.03%，标准差约1%）
+daily_returns_data = np.random.normal(loc=0.0003, scale=0.01, size=252)
+fund_snapshot = pd.DataFrame({'fund': daily_returns_data})
+
+# 参数设置
+rf_annual = 0.021  # 无风险利率每年 2.1%
+trading_days = 252 # 一年的交易日
+
+# 计算日无风险利率（业界通常按单利折算日度）
+rf_daily = rf_annual / trading_days
+
+# 计算日超额收益的均值与标准差
+daily_excess_returns = fund_snapshot['fund'] - rf_daily
+mean_excess_daily = daily_excess_returns.mean()
+std_daily = daily_excess_returns.std(ddof=1) # 使用样本标准差 (ddof=1)
+
+# 计算年化夏普比率：Sharpe_annual = (Mean_Excess_Daily / Std_Daily) * sqrt(252)
+sharpe_daily = mean_excess_daily / std_daily
+sharpe_annual = sharpe_daily * np.sqrt(trading_days)
+
+
+# ==========================================
+# 第二部分：计算 Brinson 归因分析（配置、选择与交互效应）
+# ==========================================
+
+# 组合与基准的行业权重与收益
+w_p = np.array([0.45, 0.35, 0.20])       # 组合权重
+r_p = np.array([0.083, 0.021, -0.014])    # 组合行业收益
+
+w_b = np.array([0.40, 0.40, 0.20])        # 基准权重
+r_b = np.array([0.067, 0.034, -0.009])    # 基准行业收益
+
+# 计算基准总收益 R_b
+R_b_total = np.sum(w_b * r_b)
+
+# 1. 配置效应: sum((W_p - W_b) * (R_b - R_b_total))
+allocation_effect = np.sum((w_p - w_b) * (r_b - R_b_total))
+
+# 2. 选择效应: sum(W_b * (R_p - R_b))
+selection_effect = np.sum(w_b * (r_p - r_b))
+
+# 3. 交互效应: sum((W_p - W_b) * (R_p - R_b))
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+
+# 注: 配置效应 + 选择效应 + 交互效应 = 组合总收益 - 基准总收益
+# 验证: R_p_total - R_b_total = np.sum(w_p * r_p) - R_b_total
+
+
+# ==========================================
+# 输出契约
+# ==========================================
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+# 打印结果以便验证
+if __name__ == "__main__":
+    print(f"年化夏普比率: {result['sharpe_annual']:.6f}")
+    print(f"配置效应: {result['allocation_effect']:.6f}")
+    print(f"选择效应: {result['selection_effect']:.6f}")
+    print(f"交互效应: {result['interaction_effect']:.6f}")

@@ -1,0 +1,87 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 资产参数
+r1, r2 = 0.071, 0.124
+s1, s2 = 0.163, 0.289
+
+# 相关系数列表
+rhos = [0.15, 0.45, 0.75]
+
+# 创建权重范围（允许卖空以展示完整的前沿曲线）
+weights = np.linspace(-0.5, 1.5, 500)
+
+# 初始化结果字典
+result = {}
+
+# 计算 rho = 0.45 时的特定指标
+rho_45 = 0.45
+
+# 1. rho = 0.45 时的最小方差组合（MVP）波动率
+w1_mvp_45 = (s2**2 - rho_45 * s1 * s2) / (s1**2 + s2**2 - 2 * rho_45 * s1 * s2)
+w2_mvp_45 = 1 - w1_mvp_45
+mvp_vol_45 = np.sqrt(w1_mvp_45**2 * s1**2 + w2_mvp_45**2 * s2**2 + 2 * w1_mvp_45 * w2_mvp_45 * rho_45 * s1 * s2)
+result['mvp_vol_at_rho45'] = mvp_vol_45
+
+# 2. 目标收益10%时的最小波动率（rho = 0.45）
+target_ret = 0.10
+w1_target = (target_ret - r2) / (r1 - r2)
+w2_target = 1 - w1_target
+vol_target = np.sqrt(w1_target**2 * s1**2 + w2_target**2 * s2**2 + 2 * w1_target * w2_target * rho_45 * s1 * s2)
+result['frontier_vol_at_target'] = vol_target
+
+# 绘图
+plt.figure(figsize=(10, 6))
+
+for rho in rhos:
+    w2_arr = 1 - weights
+    # 组合期望收益
+    port_ret = weights * r1 + w2_arr * r2
+    # 组合波动率
+    port_vol = np.sqrt(weights**2 * s1**2 + w2_arr**2 * s2**2 + 2 * weights * w2_arr * rho * s1 * s2)
+    
+    # 计算当前 rho 下的 MVP
+    w1_mvp = (s2**2 - rho * s1 * s2) / (s1**2 + s2**2 - 2 * rho * s1 * s2)
+    w2_mvp = 1 - w1_mvp
+    mvp_ret = w1_mvp * r1 + w2_mvp * r2
+    mvp_vol = np.sqrt(w1_mvp**2 * s1**2 + w2_mvp**2 * s2**2 + 2 * w1_mvp * w2_mvp * rho * s1 * s2)
+    
+    # 绘制前沿曲线
+    plt.plot(port_vol, port_ret, label=f'ρ = {rho:.2f}')
+    
+    # 标出最小方差组合点
+    plt.scatter(mvp_vol, mvp_ret, marker='o', s=60, zorder=5)
+    plt.annotate(f'MVP (ρ={rho:.2f})\nVol={mvp_vol:.2%}', 
+                 xy=(mvp_vol, mvp_ret), 
+                 xytext=(10, -10 if rho==0.15 else 10), 
+                 textcoords='offset points',
+                 bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.8))
+
+# 在 rho=0.45 的曲线上标出目标收益10%的点
+plt.scatter(vol_target, target_ret, marker='*', s=150, color='red', zorder=5)
+plt.annotate(f'Target 10% (ρ=0.45)\nVol={vol_target:.2%}', 
+             xy=(vol_target, target_ret), 
+             xytext=(15, 10), 
+             textcoords='offset points',
+             arrowprops=dict(arrowstyle="->", connectionstyle="arc3,rad=.2"),
+             bbox=dict(boxstyle="round,pad=0.3", fc="lightyellow", ec="gray", alpha=0.8))
+
+# 图表修饰
+plt.title('Efficient Frontier for Different Correlations', fontsize=14)
+plt.xlabel('Annualized Volatility', fontsize=12)
+plt.ylabel('Expected Annual Return', fontsize=12)
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.7)
+plt.xlim(0.10, 0.50)
+plt.ylim(0.00, 0.20)
+
+# 保存图表
+fig_path = 'efficient_frontier.png'
+plt.savefig(fig_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# 将图表路径存入结果字典
+result['figure_path'] = fig_path
+
+# 打印最终结果
+print(result)

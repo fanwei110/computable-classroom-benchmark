@@ -1,0 +1,14 @@
+import numpy as np
+
+# 给定数据
+beta = 1.42
+Rm_monthly = -0.058
+Rf_annual = 0.047
+
+# 按年复利报价，转换为月度无风险利率
+Rf_monthly = (1 + Rf_annual) ** (1/12) - 1
+
+# CAPM 理论月度收益
+capm_return_monthly = Rf_monthly + beta * (Rm_monthly - Rf_monthly)
+
+result = {'capm_return_monthly': capm_return_monthly}

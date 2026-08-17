@@ -1,0 +1,28 @@
+根据债券定价公式及久期、凸性的定义，假定该债券按年付息，具体计算过程如下：
+
+**1. 债券价格**
+价格 $P$ 为未来所有现金流（每年利息及到期本金）按到期收益率折现的现值总和：
+$$P = \sum_{t=1}^{7} \frac{4.6}{(1+0.053)^t} + \frac{100}{(1+0.053)^7} \approx 96.0465$$
+
+**2. Macaulay久期**
+Macaulay久期为现金流收回时间的加权平均值：
+$$MacD = \frac{1}{P} \left[ \sum_{t=1}^{7} \frac{t \times 4.6}{(1+0.053)^t} + \frac{7 \times 100}{(1+0.053)^7} \right] \approx 6.1222 \text{ 年}$$
+
+**3. 修正久期**
+修正久期衡量价格对收益率变动的敏感度：
+$$ModD = \frac{MacD}{1+y} = \frac{6.1222}{1.053} \approx 5.8046 \text{ 年}$$
+
+**4. 凸性**
+凸性是价格-收益率曲线的二阶导数，计算公式为：
+$$Conv = \frac{1}{P \times (1+y)^2} \left[ \sum_{t=1}^{7} \frac{t(t+1) \times 4.6}{(1+0.053)^t} + \frac{7 \times 8 \times 100}{(1+0.053)^7} \right] \approx 42.1700$$
+
+按照输出契约，结果存入字典如下：
+
+```python
+result = {
+    'price': 96.0465,
+    'macaulay_duration_years': 6.1222,
+    'modified_duration_years': 5.8046,
+    'convexity': 42.1700
+}
+```

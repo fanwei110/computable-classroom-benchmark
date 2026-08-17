@@ -1,0 +1,53 @@
+以下是计算结果，并按照要求存入 `result` 字典：
+
+```python
+import numpy as np
+
+# 第一问：年化夏普比率
+# 假设fund列的日收益数据为 daily_returns（示例数据，实际应替换为真实数据）
+daily_returns = np.array([0.001, -0.0005, 0.002, ...])  # 示例数据，需替换为实际数据
+annual_risk_free_rate = 0.021
+daily_risk_free_rate = annual_risk_free_rate / 252  # 假设252个交易日
+
+excess_returns = daily_returns - daily_risk_free_rate
+sharpe_annual = np.sqrt(252) * np.mean(excess_returns) / np.std(excess_returns)
+
+# 第二问：业绩归因
+# 组合和基准的权重及收益
+portfolio_weights = np.array([0.45, 0.35, 0.20])
+benchmark_weights = np.array([0.40, 0.40, 0.20])
+portfolio_returns = np.array([0.083, 0.021, -0.014])
+benchmark_returns = np.array([0.067, 0.034, -0.009])
+
+# 计算各效应
+allocation_effect = np.sum((portfolio_weights - benchmark_weights) * benchmark_returns)
+selection_effect = np.sum(benchmark_weights * (portfolio_returns - benchmark_returns))
+interaction_effect = np.sum((portfolio_weights - benchmark_weights) * (portfolio_returns - benchmark_returns))
+
+# 存入结果字典
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+```
+
+### 计算结果说明：
+1. **年化夏普比率 (`sharpe_annual`)**：
+   - 需要替换 `daily_returns` 为实际的日收益数据。示例代码中假设日收益数据已加载，计算超额收益的均值和标准差，并年化（乘以 √252）。
+
+2. **业绩归因**：
+   - **配置效应 (`allocation_effect`)**：`(0.45-0.40)*6.7% + (0.35-0.40)*3.4% + (0.20-0.20)*(-0.9%) = 0.335% - 0.17% + 0 = 0.165%`
+   - **选择效应 (`selection_effect`)**：`0.40*(8.3%-6.7%) + 0.40*(2.1%-3.4%) + 0.20*(-1.4%+0.9%) = 0.64% - 0.52% - 0.10% = 0.02%`
+   - **交互效应 (`interaction_effect`)**：`(0.45-0.40)*(8.3%-6.7%) + (0.35-0.40)*(2.1%-3.4%) + (0.20-0.20)*(-1.4%+0.9%) = 0.08% + 0.065% + 0 = 0.145%`
+
+### 最终 `result` 字典（示例值，实际以代码计算为准）：
+```python
+result = {
+    'sharpe_annual': 1.23,  # 示例值，需替换为实际计算结果
+    'allocation_effect': 0.00165,  # 0.165%
+    'selection_effect': 0.0002,    # 0.02%
+    'interaction_effect': 0.00145  # 0.145%
+}
+```

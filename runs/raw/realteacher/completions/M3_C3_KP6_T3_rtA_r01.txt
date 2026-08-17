@@ -1,0 +1,46 @@
+为了计算整个样本期的年化夏普比率，我们需要遵循题目给定的计算约定。以下是计算的逻辑与Python代码实现：
+
+### 计算逻辑
+1. **日均无风险利率转换**：根据约定“债券收益率按年复利报价”，给定的2.1%是年复利报价，需将其转化为日复利利率以匹配日收益数据。
+   $$R_{f,daily} = (1 + R_{f,annual})^{1/252} - 1 = (1 + 0.021)^{1/252} - 1$$
+2. **日超额收益均值**：计算基金日收益列 `fund` 的均值，减去日均无风险利率。
+3. **日收益率标准差**：使用样本估计量（自由度 `ddof=1`）计算日收益率的标准差。
+4. **年化夏普比率**：根据约定的252个交易日进行年化，夏普比率年化公式为：
+   $$Sharpe_{annual} = \frac{E[R_{daily} - R_{f,daily}]}{\sigma_{daily}} \times \sqrt{252}$$
+
+### Python 代码实现
+
+```python
+import pandas as pd
+import numpy as np
+
+# 假设数据已经加载到名为 df 的 DataFrame 中，且包含 'fund' 列
+# df = pd.read_csv('your_data_file.csv') 
+
+# 1. 提取日收益率
+r_daily = df['fund']
+
+# 2. 无风险利率处理 (按年复利报价转化为日复利)
+rf_annual = 0.021
+rf_daily = (1 + rf_annual) ** (1 / 252) - 1
+
+# 3. 计算日超额收益的均值
+mean_excess_daily = r_daily.mean() - rf_daily
+
+# 4. 计算日收益率的标准差 (样本估计量，ddof=1)
+std_daily = r_daily.std(ddof=1)
+
+# 5. 计算年化夏普比率
+sharpe_annual = (mean_excess_daily / std_daily) * np.sqrt(252)
+
+# 6. 按照输出契约存入字典
+result = {'sharpe_annual': sharpe_annual}
+
+# 输出结果
+print(result)
+```
+
+**要点说明：**
+- 题目明确“债券收益率按年复利报价”，因此不可简单使用 `0.021 / 252` 进行单利折算，必须使用 `(1+0.021)^(1/252)-1` 转换为日度复利。
+- 标准差使用了 `ddof=1` 严格遵循“样本估计量”的约定。
+- 所有的利率与最终结果均以小数形式（如0.05代表5%）呈现，符合题目约定。

@@ -1,0 +1,51 @@
+import numpy as np
+
+# ==================== 债券参数设定 ====================
+face_value = 100.0       # 面值
+coupon_rate = 0.046      # 票息率 (4.6%)
+ytm = 0.053              # 收益率 (5.3%)
+maturity = 7             # 期限（年）
+dy = 0.008               # 收益率上升幅度 (80个基点)
+
+# ==================== 现金流构造 ====================
+# 每年支付的票息
+coupon_payment = face_value * coupon_rate
+
+# 时间点与现金流
+times = np.arange(1, maturity + 1)
+cash_flows = np.full(maturity, coupon_payment)
+cash_flows[-1] += face_value  # 最后一期归还本金
+
+# ==================== 第1步：计算修正久期 ====================
+# 贴现因子
+discount_factors = (1 + ytm) ** times
+
+# 现金流现值
+pv_cash_flows = cash_flows / discount_factors
+
+# 债券价格
+price = np.sum(pv_cash_flows)
+
+# 麦考利久期 (Macaulay Duration) = Σ[t * CF_t / (1+y)^t] / P
+macaulay_duration = np.sum(times * pv_cash_flows) / price
+
+# 修正久期 (Modified Duration) = 麦考利久期 / (1+y)
+modified_duration = macaulay_duration / (1 + ytm)
+
+# ==================== 第2步：一阶近似估算跌幅 ====================
+# 经验法则: dP/P = -D_mod × dy
+dp_over_p = -modified_duration * dy
+
+# ==================== 第3步：提取跌幅大小并输出 ====================
+# 取绝对值获取跌幅大小，作为正的小数
+price_drop_pct = abs(dp_over_p)
+
+# 按照输出契约存入字典
+result = {'price_drop_pct': price_drop_pct}
+
+# 打印结果供课堂投屏验证
+print(f"债券价格: {price:.4f}")
+print(f"麦考利久期: {macaulay_duration:.4f} 年")
+print(f"修正久期: {modified_duration:.4f} 年")
+print(f"预计价格变化率: {dp_over_p:.4%}")
+print(f"输出结果字典: {result}")

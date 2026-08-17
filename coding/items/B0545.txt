@@ -1,0 +1,73 @@
+=== B0545  任务 KP2_T1 (T1) ===
+
+--- 任务要求的输出键 ---
+er_x, er_y, er_z, alpha_y
+
+--- 判分失败明细 ---
+er_x: 提交值 6.702  |  参考值 0.06702
+er_y: 提交值 10.678  |  参考值 0.10678000000000001
+er_z: 提交值 13.021  |  参考值 0.13021000000000002
+alpha_y: 提交值 2.422  |  参考值 0.02421999999999999
+
+--- 提取出的代码 ---
+# 已知条件
+rf = 2.3
+rm = 9.4
+market_premium = rm - rf  # 7.1
+
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+
+actual_return_y = 13.1
+
+# CAPM 预期收益计算
+er_x = rf + beta_x * market_premium
+er_y = rf + beta_y * market_premium
+er_z = rf + beta_z * market_premium
+
+# Alpha 计算
+alpha_y = actual_return_y - er_y
+
+# 按要求整理结果（保留合理的小数位数，这里以浮点数存储）
+result = {
+    'er_x': round(er_x, 3),    # 6.702
+    'er_y': round(er_y, 3),    # 10.678
+    'er_z': round(er_z, 3),    # 13.021
+    'alpha_y': round(alpha_y, 3) # 2.422
+}
+
+result
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+```python
+# 已知条件
+rf = 2.3
+rm = 9.4
+market_premium = rm - rf  # 7.1
+
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+
+actual_return_y = 13.1
+
+# CAPM 预期收益计算
+er_x = rf + beta_x * market_premium
+er_y = rf + beta_y * market_premium
+er_z = rf + beta_z * market_premium
+
+# Alpha 计算
+alpha_y = actual_return_y - er_y
+
+# 按要求整理结果（保留合理的小数位数，这里以浮点数存储）
+result = {
+    'er_x': round(er_x, 3),    # 6.702
+    'er_y': round(er_y, 3),    # 10.678
+    'er_z': round(er_z, 3),    # 13.021
+    'alpha_y': round(alpha_y, 3) # 2.422
+}
+
+result
+```

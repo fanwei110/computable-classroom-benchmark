@@ -1,0 +1,57 @@
+```python
+import numpy as np
+
+# ==================== 1. 参数设定 ====================
+# 无风险利率与市场期望收益（以小数形式表示）
+rf = 0.023      # 2.3%
+rm = 0.094      # 9.4%
+
+# 股票 X, Y, Z 的 Beta 值
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+
+# 股票 Y 的实际收益
+actual_ry = 0.131 # 13.1%
+
+# ==================== 2. CAPM 期望收益计算 ====================
+# 市场风险溢价
+market_premium = rm - rf
+
+# 套用 CAPM 公式: E[Ri] = rf + beta * (E[Rm] - rf)
+er_x = rf + beta_x * market_premium
+er_y = rf + beta_y * market_premium
+er_z = rf + beta_z * market_premium
+
+# ==================== 3. Alpha 计算 ====================
+# Alpha 定义为实际收益减去 CAPM 预测的期望收益
+alpha_y = actual_ry - er_y
+
+# ==================== 4. 结果封装 ====================
+# 按照输出契约要求存入 result 字典
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+
+# ==================== 5. 课堂投屏展示打印 ====================
+print("="*40)
+print("《证券投资学》CAPM 与 Alpha 计算结果")
+print("="*40)
+print(f"无风险利率 (rf): {rf:.1%}")
+print(f"市场期望收益 (rm): {rm:.1%}")
+print(f"市场风险溢价 (rm-rf): {market_premium:.1%}")
+print("-"*40)
+print(f"股票 X (Beta = {beta_x}): E[Rx] = {er_x:.4%}")
+print(f"股票 Y (Beta = {beta_y}): E[Ry] = {er_y:.4%}")
+print(f"股票 Z (Beta = {beta_z}): E[Rz] = {er_z:.4%}")
+print("-"*40)
+print(f"股票 Y 实际收益: {actual_ry:.4%}")
+print(f"股票 Y Alpha (实际 - CAPM期望): {alpha_y:.4%}")
+print("="*40)
+print("\n输出字典 result 验证：")
+for k, v in result.items():
+    print(f"{k}: {v:.6f}")
+```

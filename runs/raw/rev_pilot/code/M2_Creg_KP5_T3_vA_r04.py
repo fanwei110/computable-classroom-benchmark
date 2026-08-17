@@ -1,0 +1,26 @@
+import numpy as np
+from scipy.stats import norm
+
+# 交易台参数
+position_value = 2_700_000          # 头寸价值（元）
+annual_volatility = 0.24            # 年化波动率
+confidence_level = 0.95             # 置信水平
+trading_days = 252                  # 一年交易日数
+
+# 年化波动率转换为日波动率
+daily_volatility = annual_volatility / np.sqrt(trading_days)
+
+# 95% 置信水平对应的 z 值（单尾）
+z_score = norm.ppf(confidence_level)
+
+# 95% 一日 VaR（参数法，假设零均值）
+var_95_1d = position_value * z_score * daily_volatility
+
+# 输出契约：所有结果存入 result 字典
+result = {
+    'var_95_1d': var_95_1d
+}
+
+# 脚本可独立运行并打印结果（仅供验证，不影响输出契约）
+if __name__ == "__main__":
+    print(f"95% 一日 VaR: {var_95_1d:,.2f} 元")

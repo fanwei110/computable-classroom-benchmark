@@ -1,0 +1,36 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+def bs_call_price(S, K, T, r, sigma):
+    """Black-Scholes call option price with continuous compounding."""
+    if T <= 0:
+        return max(S - K, 0)
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    C = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    return C
+
+# Given data
+S = 103.7
+K = 97.5
+r = 0.043
+T = 0.58
+sigma1 = 0.276
+sigma2 = 0.286
+
+# Pricing at the two volatility levels
+price1 = bs_call_price(S, K, T, r, sigma1)
+price2 = bs_call_price(S, K, T, r, sigma2)
+
+# Exact price change
+price_change = price2 - price1
+
+# Store results according to output contract
+result = {
+    'price_change': price_change
+}
+
+# For classroom projection — print the result clearly
+print(result)
+```

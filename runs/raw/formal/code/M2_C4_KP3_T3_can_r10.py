@@ -1,0 +1,39 @@
+import numpy as np
+
+# 债券参数
+face_value = 100.0
+coupon_rate = 0.046
+yield_rate = 0.053
+maturity = 7
+dy = 0.008  # 收益率上升 80 个基点
+
+# 计算现金流：前6年票息，最后一年票息+面值
+coupon = face_value * coupon_rate
+cash_flows = np.array([coupon] * (maturity - 1) + [coupon + face_value])
+t = np.arange(1, maturity + 1)
+
+# 贴现因子
+discount_factors = (1 + yield_rate) ** t
+pv_cash_flows = cash_flows / discount_factors
+
+# 债券价格
+price = np.sum(pv_cash_flows)
+
+# 麦考利久期：以年为单位（时间加权现值 / 价格）
+mac_duration = np.sum(t * pv_cash_flows) / price
+
+# 修正久期：麦考利久期 / (1 + y)
+mod_duration = mac_duration / (1 + yield_rate)
+
+# 一阶近似：价格变动比例 dP/P = -D_mod * dy
+# 跌幅大小为正的小数
+price_drop_pct = mod_duration * dy
+
+# 输出结果
+result = {'price_drop_pct': price_drop_pct}
+
+print(f"债券价格: {price:.4f}")
+print(f"麦考利久期: {mac_duration:.4f} 年")
+print(f"修正久期: {mod_duration:.4f}")
+print(f"收益率上升 80bp 时，预估价格跌幅（小数）: {price_drop_pct:.6f}")
+print(f"结果字典: {result}")

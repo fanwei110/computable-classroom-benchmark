@@ -1,0 +1,37 @@
+import numpy as np
+from scipy.stats import norm
+
+# ==================== 参数设定 ====================
+S = 103.7        # 标的资产现价
+K = 97.5         # 行权价
+sigma = 0.276    # 波动率 27.6%
+r = 0.043        # 无风险利率 4.3%
+T = 0.58         # 剩余期限（年）
+
+# 隐含波动率上升一个百分点 (1% = 0.01)
+delta_sigma = 0.01
+
+# ==================== 计算 d1 ====================
+# Black-Scholes 模型下的 d1 闭式解（不连续红利）
+d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+
+# ==================== 计算 Vega ====================
+# 欧式看涨期权的 Vega 闭式解（看涨与看跌的 Vega 相同）
+# Vega = S * N'(d1) * sqrt(T)
+vega = S * norm.pdf(d1) * np.sqrt(T)
+
+# ==================== 推算价格变化 ====================
+# 利用希腊字母推算：期权价格变化 ≈ Vega * Δσ
+price_change = vega * delta_sigma
+
+# ==================== 存储结果 ====================
+result = {
+    'price_change': price_change
+}
+
+# ==================== 课堂展示输出 (可选) ====================
+print(f"--- Black-Scholes 期权希腊字母推算 ---")
+print(f"当前参数: S={S}, K={K}, sigma={sigma*100:.1f}%, r={r*100:.1f}%, T={T}")
+print(f"d1 计算值: {d1:.6f}")
+print(f"Vega 计算值: {vega:.4f}")
+print(f"隐含波动率上升 1% 时，期权价格推算上涨: {price_change:.4f}")

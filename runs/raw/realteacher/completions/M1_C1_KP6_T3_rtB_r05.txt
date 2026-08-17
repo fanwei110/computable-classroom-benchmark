@@ -1,0 +1,46 @@
+要计算整个样本期的年化夏普比率（Sharpe Ratio），我们需要按照以下步骤进行：
+
+1. 计算每日超额收益（日收益 - 无风险收益率的日化值）。
+2. 计算超额收益的均值和标准差。
+3. 年化均值和标准差（均值乘以252，标准差乘以√252）。
+4. 计算年化夏普比率 = 年化均值 / 年化标准差。
+
+无风险收益率为2.1%，日化无风险收益率 = (1 + 0.021)^(1/252) - 1 ≈ 0.0000826（约0.00826%）。
+
+以下是Python代码实现：
+
+```python
+import numpy as np
+import pandas as pd
+
+# 假设df是包含fund列的DataFrame，fund列为日收益率
+# 示例代码（请替换为实际数据加载方式）
+# df = pd.read_csv('your_course_data.csv')
+
+# 计算日超额收益
+risk_free_daily = (1 + 0.021) ** (1/252) - 1
+excess_return = df['fund'] - risk_free_daily
+
+# 计算均值和标准差
+mean_excess_return = excess_return.mean()
+std_excess_return = excess_return.std()
+
+# 年化处理
+annualized_mean = mean_excess_return * 252
+annualized_std = std_excess_return * np.sqrt(252)
+
+# 计算年化夏普比率
+sharpe_annual = annualized_mean / annualized_std
+
+# 存入result字典
+result = {
+    'sharpe_annual': sharpe_annual
+}
+```
+
+请确保：
+1. `df['fund']` 是日收益率（例如0.01表示1%）。
+2. 样本期足够长（通常至少几个月的数据才有意义）。
+3. 如果数据有缺失值，需要提前处理（如 `df.dropna()`）。
+
+最终结果会存储在 `result['sharpe_annual']` 中。

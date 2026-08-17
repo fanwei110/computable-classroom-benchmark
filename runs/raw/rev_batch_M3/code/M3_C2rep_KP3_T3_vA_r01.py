@@ -1,0 +1,51 @@
+import numpy as np
+
+# ==================== 债券参数设定 ====================
+face_value = 100          # 面值
+coupon_rate = 0.046       # 票息率 4.6%
+n = 7                     # 期限 7 年
+y = 0.053                 # 当前收益率 5.3%
+delta_y = 0.008           # 收益率上升 80 个基点 (0.8%)
+
+# ==================== 现金流构建 ====================
+# 假设每年付息一次，第1至6年支付票息，第7年支付票息+本金
+cash_flows = np.array([face_value * coupon_rate] * (n - 1) + [face_value * (1 + coupon_rate)])
+times = np.arange(1, n + 1)
+
+# 贴现因子
+discount_factors = (1 + y) ** times
+
+# ==================== 1. 计算当前收益率下的利率敏感性 ====================
+# 债券当前价格 (现金流贴现之和)
+price = np.sum(cash_flows / discount_factors)
+
+# 麦考利久期
+mac_duration = np.sum(times * cash_flows / discount_factors) / price
+
+# 修正久期
+mod_duration = mac_duration / (1 + y)
+
+# 凸性
+convexity = np.sum(cash_flows * times * (times + 1) / (1 + y) ** (times + 2)) / price
+
+# ==================== 2. 估算收益率上升80个基点的价格影响 ====================
+# 使用久期和凸性估算价格变动百分比：
+# ΔP/P ≈ -修正久期 × Δy + 0.5 × 凸性 × (Δy)^2
+price_drop_pct = -mod_duration * delta_y + 0.5 * convexity * (delta_y ** 2)
+
+# ==================== 3. 存入结果 ====================
+result = {
+    'price_drop_pct': price_drop_pct
+}
+
+# ==================== 控制台输出验证（投屏展示用） ====================
+print(f"债券当前价格: {price:.4f} 元")
+print(f"麦考利久期: {mac_duration:.4f} 年")
+print(f"修正久期: {mod_duration:.4f}")
+print(f"凸性: {convexity:.4f}")
+print("-" * 30)
+print(f"收益率上升 {delta_y*100:.1f} 个基点后:")
+print(f"预计价格跌幅(小数形式): {price_drop_pct:.6f}")
+print(f"预计价格跌幅(百分比形式): {price_drop_pct * 100:.4f}%")
+print("-" * 30)
+print(f"result = {result}")

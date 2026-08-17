@@ -1,0 +1,69 @@
+=== Revision-1 crossing: wording x scaffold, no-convention row ===
+ANALYSIS SET: four cells collected in adjacent August 2026 windows;
+this reduces temporal separation but does not eliminate date/routing imbalance.
+n per cell: {'C1rep': 540, 'C1wS': 540, 'C2rep': 540, 'Creg': 540}; tasks: 18; models: 3
+observed UTC timestamp ranges:
+  C1rep: 2026-08-06 04:21:59+00:00 to 2026-08-06 22:31:10+00:00
+  C1wS: 2026-08-04 22:37:33+00:00 to 2026-08-05 08:29:49+00:00
+  C2rep: 2026-08-06 04:24:39+00:00 to 2026-08-06 22:41:48+00:00
+  Creg: 2026-08-04 22:29:59+00:00 to 2026-08-05 08:36:54+00:00
+
+--- strict correctness, adjacent-window cells (cluster-bootstrap 95% CI) ---
+C1rep  [improvised  x none    ]:  33.9  [21.5, 46.9]  (n=540)
+C1wS   [improvised  x scaffold]:  54.3  [36.7, 70.7]  (n=540)
+Creg   [regularized x none    ]:  56.9  [38.1, 75.2]  (n=540)
+C2rep  [regularized x scaffold]:  69.8  [57.8, 80.2]  (n=540)
+
+--- simple effects (pp, paired task-cluster bootstrap 95% CI) ---
+wording  | no scaffold  (Creg  - C1rep): +23.0  [+8.3, +38.0]
+wording  | + scaffold   (C2rep - C1wS) : +15.6  [+5.6, +26.9]
+scaffold | improvised   (C1wS  - C1rep): +20.4  [+8.3, +32.0]
+scaffold | regularized  (C2rep - Creg) : +13.0  [-0.4, +27.8]
+bundle                  (C2rep - C1rep): +35.9  [+23.1, +47.8]
+interaction (difference-in-differences)  :  -7.4  [-27.8, +14.3]
+
+--- MIXED-EFFECTS LOGISTIC: variational approximation, task random
+    intercept and model fixed effects; specification mirrors mixed_logit.py ---
+wording_reg           : OR= 4.56  [3.87, 5.36]  (variational posterior mean, approximate 95% interval)
+scaffold              : OR= 3.82  [3.25, 4.49]  (variational posterior mean, approximate 95% interval)
+wording_reg:scaffold  : OR= 0.70  [0.55, 0.89]  (variational posterior mean, approximate 95% interval)
+
+--- ROBUSTNESS: GEE logit, exchangeable, task clusters, model FE ---
+wording_reg           : OR= 2.66  [1.41, 5.03]  p=0.0026
+scaffold              : OR= 2.38  [1.44, 3.94]  p=0.0007
+wording_reg:scaffold  : OR= 0.76  [0.33, 1.77]  p=0.5235
+
+--- POST-HOC ROUTING SENSITIVITY: GEE with model-provider fixed effects ---
+condition x requested-model/provider counts:
+model_provider  M1::Mistral  M2::Alibaba  M2::AtlasCloud  M2::Baidu  M2::BaseTen  M2::Cloudflare  M2::CoreWeave  M2::DigitalOcean  M2::GMICloud  M2::Ionstream  M2::Novita  M2::Parasail  M2::SiliconFlow  M2::StreamLake  M2::Together  M2::Venice  M3::Alibaba  M3::AtlasCloud  M3::Baidu  M3::Chutes  M3::Crusoe  M3::DeepInfra  M3::DigitalOcean  M3::Friendli  M3::GMICloud  M3::Nebius  M3::Novita  M3::Parasail  M3::Phala  M3::SiliconFlow  M3::StreamLake  M3::Venice  M3::Wafer  M3::Z.AI
+condition                                                                                                                                                                                                                                                                                                                                                                                                                                                                                          
+C1rep                   180            8              19          9            5              11              1                13            17              8          23             3                5              54             3           1           10              12         10           4          15             24                12             6            20           9          11             8          2                8              10           4         11         4
+C1wS                    180           17               8          5            0               4              6                17            15             13          14             7                3              61             4           6            4               8         15          14           7             23                12            11            15           1           8             3         10                8              11           8         16         6
+C2rep                   180           51               2          1            1               2              2                 9            33              6          17             2                6              44             2           2            4              12         10           3           5             54                19             7             7           3           2             3          2                6              12          23          6         2
+Creg                    180           19               9          5            0               3              2                 6            28             10          20             2                2              69             3           2            8               8         10          15          12             17                 7            11            11           7          10             6         14                5              18           8          7         6
+wording_reg           : OR= 2.68  [1.38, 5.18]  p=0.0035
+scaffold              : OR= 2.48  [1.51, 4.07]  p=0.0004
+wording_reg:scaffold  : OR= 0.75  [0.32, 1.76]  p=0.5044
+
+--- DRIFT CHECK: June 2026 formal cells vs August 2026 replays ---
+C1 (June)  34.3  vs  C1rep (Aug)  33.9   diff  -0.4 pp  [-2.8, +2.2]
+C2 (June)  63.9  vs  C2rep (Aug)  69.8   diff  +5.9 pp  [+1.5, +10.7]
+(These are descriptive drift-audit intervals; including zero does not establish absence of drift.)
+
+--- per model (strict correctness %, adjacent-window cells) ---
+model    C1rep    C1wS    Creg   C2rep
+M1        18.3    39.4    48.3    55.6
+M2        40.6    66.1    57.2    79.4
+M3        42.8    57.2    65.0    74.4
+
+--- per task type (strict correctness %, adjacent-window cells) ---
+type    C1rep    C1wS    Creg   C2rep
+T1       27.2    66.7    71.1    80.6
+T2       50.6    62.8    47.2    78.3
+T3       23.9    33.3    52.2    50.6
+
+--- executability / bucket mix, all August cells ---
+C1rep : exec_ok= 89.1%  buckets={'numeric_wrong': 277, 'correct': 183, 'format_failure': 46, 'code_error': 34}
+C1wS  : exec_ok= 92.4%  buckets={'correct': 293, 'numeric_wrong': 179, 'code_error': 39, 'defensible': 18, 'format_failure': 11}
+Creg  : exec_ok= 92.4%  buckets={'correct': 307, 'numeric_wrong': 176, 'code_error': 34, 'format_failure': 17, 'defensible': 6}
+C2rep : exec_ok= 98.0%  buckets={'correct': 377, 'numeric_wrong': 126, 'defensible': 16, 'code_error': 11, 'format_failure': 10}

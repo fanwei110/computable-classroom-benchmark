@@ -1,0 +1,47 @@
+由于没有提供具体的数据文件，无法计算出确切的年化夏普比率数值。以下是通用的计算方法和 Python 代码，若提供数据即可得到结果。
+
+### 计算步骤
+
+1. **读取数据**：从数据文件中读取 `fund` 列的每日收益率（小数形式）。
+2. **计算平均日超额收益**：
+   - 无风险年利率 2.1%，按年复利报价，折算为日无风险收益率：  
+     \( r_f^{\text{daily}} = (1 + 0.021)^{1/252} - 1 \)
+   - 日超额收益 = 每日收益率 - 日无风险收益率
+3. **年化**：
+   - 年化超额收益 = 平均日超额收益 × 252
+   - 年化波动率 = 日超额收益的样本标准差（ddof=1）× √252
+4. **夏普比率** = 年化超额收益 / 年化波动率
+
+### Python 代码示例
+
+```python
+import pandas as pd
+import numpy as np
+
+# 假设数据文件为 'data.csv'，包含 'fund' 列
+# df = pd.read_csv('data.csv')
+# daily_returns = df['fund'] / 100  # 如果原数据是百分数，需转换；若已是小数则直接使用
+
+# 示例：生成随机数据测试
+# np.random.seed(42)
+# daily_returns = np.random.normal(0.001, 0.02, 1000)
+
+# 无风险利率
+rf_annual = 0.021
+rf_daily = (1 + rf_annual) ** (1/252) - 1
+
+# 超额收益
+excess_returns = daily_returns - rf_daily
+
+# 年化计算
+annual_excess_return = excess_returns.mean() * 252
+annual_volatility = excess_returns.std(ddof=1) * np.sqrt(252)
+
+# 夏普比率
+sharpe_annual = annual_excess_return / annual_volatility
+
+result = {'sharpe_annual': sharpe_annual}
+print(result)
+```
+
+请将实际数据文件导入为 `df`，提取 `fund` 列的日收益率，代入上述代码即可得到 `'sharpe_annual'` 的数值。如果提供数据，我可以立即给出计算结果。

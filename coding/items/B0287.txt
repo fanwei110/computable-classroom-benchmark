@@ -1,0 +1,134 @@
+=== B0287  任务 KP5_T2 (T2) ===
+
+--- 任务要求的输出键 ---
+hist_var_95_1d
+
+--- 判分失败明细 ---
+hist_var_95_1d: 提交值 9446542.082597183  |  参考值 17801.665499999996
+
+--- 提取出的代码 ---
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ==================== 1. 数据读取与预处理 ====================
+file_path = 'data/market_snapshot_v1.csv'
+df = pd.read_csv(file_path)
+
+# 提取fund列并计算日收益率（简单收益率）
+# 去除第一日的NaN值
+returns = df['fund'].pct_change().dropna()
+
+# ==================== 2. 核心参数设置 ====================
+position = 1000000  # 头寸100万
+confidence_level = 0.95  # 置信度（可调）
+
+# 计算日损益 (P&L)
+pnl = returns * position
+
+# ==================== 3. 历史法 VaR 计算 ====================
+# VaR对应左尾分位数，即 (1 - 置信度) 的分位点
+percentile_q = (1 - confidence_level) * 100
+
+# 提取左尾分位数，取负号使其表示为正的损失金额
+var_95_1d = -np.percentile(pnl, percentile_q)
+
+# ==================== 4. 绘制损益直方图及VaR标线 ====================
+plt.figure(figsize=(10, 6))
+# 绘制直方图
+plt.hist(pnl, bins=50, alpha=0.75, edgecolor='black', color='steelblue')
+
+# 画出95%一日VaR标根线
+# 注意：VaR是正的损失金额，对应的P&L数值为 -var_95_1d
+plt.axvline(x=-var_95_1d, color='red', linestyle='--', linewidth=2, 
+            label=f'95% 1-day VaR = {var_95_1d:,.2f}')
+
+plt.title('P&L Histogram with Historical VaR', fontsize=14)
+plt.xlabel('Profit and Loss (P&L)', fontsize=12)
+plt.ylabel('Frequency', fontsize=12)
+plt.legend(fontsize=12)
+plt.grid(axis='y', alpha=0.5)
+
+# 保存图片
+figure_path = 'hist_var_pnl.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ==================== 5. 封装输出结果 ====================
+result = {
+    'hist_var_95_1d': var_95_1d,
+    'figure_path': figure_path
+}
+
+# 打印VaR数值报告
+print(f"--- 历史法 VaR 计算结果 ---")
+print(f"头寸金额: {position:,.0f}")
+print(f"置信度: {confidence_level * 100:.0f}%")
+print(f"95% 一日 VaR (损失金额): {result['hist_var_95_1d']:,.2f}")
+print(f"直方图已保存至: {result['figure_path']}")
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ==================== 1. 数据读取与预处理 ====================
+file_path = 'data/market_snapshot_v1.csv'
+df = pd.read_csv(file_path)
+
+# 提取fund列并计算日收益率（简单收益率）
+# 去除第一日的NaN值
+returns = df['fund'].pct_change().dropna()
+
+# ==================== 2. 核心参数设置 ====================
+position = 1000000  # 头寸100万
+confidence_level = 0.95  # 置信度（可调）
+
+# 计算日损益 (P&L)
+pnl = returns * position
+
+# ==================== 3. 历史法 VaR 计算 ====================
+# VaR对应左尾分位数，即 (1 - 置信度) 的分位点
+percentile_q = (1 - confidence_level) * 100
+
+# 提取左尾分位数，取负号使其表示为正的损失金额
+var_95_1d = -np.percentile(pnl, percentile_q)
+
+# ==================== 4. 绘制损益直方图及VaR标线 ====================
+plt.figure(figsize=(10, 6))
+# 绘制直方图
+plt.hist(pnl, bins=50, alpha=0.75, edgecolor='black', color='steelblue')
+
+# 画出95%一日VaR标根线
+# 注意：VaR是正的损失金额，对应的P&L数值为 -var_95_1d
+plt.axvline(x=-var_95_1d, color='red', linestyle='--', linewidth=2, 
+            label=f'95% 1-day VaR = {var_95_1d:,.2f}')
+
+plt.title('P&L Histogram with Historical VaR', fontsize=14)
+plt.xlabel('Profit and Loss (P&L)', fontsize=12)
+plt.ylabel('Frequency', fontsize=12)
+plt.legend(fontsize=12)
+plt.grid(axis='y', alpha=0.5)
+
+# 保存图片
+figure_path = 'hist_var_pnl.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ==================== 5. 封装输出结果 ====================
+result = {
+    'hist_var_95_1d': var_95_1d,
+    'figure_path': figure_path
+}
+
+# 打印VaR数值报告
+print(f"--- 历史法 VaR 计算结果 ---")
+print(f"头寸金额: {position:,.0f}")
+print(f"置信度: {confidence_level * 100:.0f}%")
+print(f"95% 一日 VaR (损失金额): {result['hist_var_95_1d']:,.2f}")
+print(f"直方图已保存至: {result['figure_path']}")
+```

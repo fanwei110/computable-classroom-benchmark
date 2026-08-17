@@ -1,0 +1,63 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 1. 数据准备 (此处生成虚拟数据以保证代码可运行，实际使用时替换为真实数据即可)
+# 假设原数据包含名为 'fund' 的列，代表基金净值
+# ==========================================
+np.random.seed(42)
+dates = pd.date_range(start='2022-01-01', periods=500, freq='B')
+sim_returns = np.random.normal(loc=0.0005, scale=0.015, size=len(dates))
+fund_nav = 100 * (1 + sim_returns).cumprod()
+df = pd.DataFrame({'fund': fund_nav}, index=dates)
+
+# ==========================================
+# 2. 参数设置与滚动夏普计算
+# ==========================================
+rf = 0.021          # 无风险利率 2.1%，小数表示
+window = 60         # 滚动窗口大小（可调）
+trading_days = 252  # 每年交易日
+
+# 计算日收益率
+df['daily_return'] = df['fund'].pct_change()
+
+# 滚动计算均值与样本标准差 (ddof=1)
+rolling_mean = df['daily_return'].rolling(window=window).mean()
+rolling_std = df['daily_return'].rolling(window=window).std(ddof=1)
+
+# 年化：收益率按 252 乘，标准差按 252 开方乘
+rolling_ann_return = rolling_mean * trading_days
+rolling_ann_std = rolling_std * np.sqrt(trading_days)
+
+# 计算滚动夏普比率
+df['rolling_sharpe'] = (rolling_ann_return - rf) / rolling_ann_std
+
+# 提取最后一个窗口的值
+rolling_sharpe_last = df['rolling_sharpe'].iloc[-1]
+
+# ==========================================
+# 3. 绘图并保存
+# ==========================================
+plt.figure(figsize=(12, 6))
+plt.plot(df.index, df['rolling_sharpe'], label=f'{window}-Day Rolling Sharpe', color='blue')
+plt.axhline(y=0, color='black', linestyle='--', linewidth=0.8)
+plt.title(f'{window}-Day Rolling Sharpe Ratio (rf={rf*100}%)')
+plt.xlabel('Date')
+plt.ylabel('Sharpe Ratio')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+figure_path = 'rolling_sharpe.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ==========================================
+# 4. 输出契约
+# ==========================================
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': figure_path
+}
+
+print(result)

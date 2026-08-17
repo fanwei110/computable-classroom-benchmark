@@ -1,0 +1,90 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ================= 基础参数设置 =================
+F = 100.0            # 面值
+c_rate = 0.046       # 票息率 4.6%
+C = F * c_rate       # 票息金额
+T = 7                # 期限 7 年
+y0 = 0.053           # 当前收益率 5.3%
+dy_up = 0.01         # 收益率上升 100 个基点
+
+# 可调参数：收益率变动幅度（控制近似曲线在 y0 附近的展示范围）
+# 教师可在课堂修改此参数以展示近似有效范围
+dy_range = 0.05      # 近似曲线的展示范围为中心收益率上下 5%
+
+# 时间与现金流数组
+t_arr = np.arange(1, T + 1)
+CF_arr = np.full(T, C)
+CF_arr[-1] += F      # 最后一期加入面值
+
+# ================= 核心计算函数 =================
+def bond_price(y, CF, t):
+    """
+    计算债券精确价格（支持 y 为标量或数组）
+    基于年复利贴现：P = Σ CF_t / (1+y)^t
+    """
+    y = np.asarray(y).reshape(-1, 1)
+    return np.sum(CF / (1 + y)**t, axis=1)
+
+# 计算 y0 处的精确价格、麦考利久期、修正久期和凸性
+P0 = bond_price(np.array([y0]), CF_arr, t_arr)[0]
+
+pv_cf = CF_arr / (1 + y0)**t_arr
+MacD = np.sum(t_arr * pv_cf) / P0
+ModD = MacD / (1 + y0)
+Conv = np.sum(t_arr * (t_arr + 1) * CF_arr / (1 + y0)**(t_arr + 2)) / P0
+
+# ================= 步骤 1：精确价格-收益率曲线 =================
+# 在 2% 到 9% 的收益率网格上为精确曲线定价
+y_grid = np.linspace(0.02, 0.09, 1000)
+P_exact_grid = bond_price(y_grid, CF_arr, t_arr)
+
+# ================= 步骤 2：久期与凸性近似曲线 =================
+# 在当前收益率 y0 附近创建网格
+y_near_min = max(0.02, y0 - dy_range)
+y_near_max = min(0.09, y0 + dy_range)
+y_near_grid = np.linspace(y_near_min, y_near_max, 500)
+dy_near_grid = y_near_grid - y0
+
+# 一阶久期近似：dP/P = -D_mod * dy  =>  P_approx = P0 * (1 - D_mod * dy)
+P_dur_approx = P0 * (1 - ModD * dy_near_grid)
+
+# 二阶久期+凸性近似：dP/P = -D_mod * dy + 0.5 * Conv * dy^2
+P_dur_conv_approx = P0 * (1 - ModD * dy_near_grid + 0.5 * Conv * dy_near_grid**2)
+
+# ================= 步骤 3：报告 +100bp 相关计算 =================
+y_up = y0 + dy_up
+price_at_up100bp = bond_price(np.array([y_up]), CF_arr, t_arr)[0]
+
+# 久期法估计的一阶相对变化（下跌为负）
+dur_approx_change_up100bp = -ModD * dy_up
+
+# ================= 步骤 4：绘图与保存 =================
+plt.figure(figsize=(10, 6))
+plt.plot(y_grid * 100, P_exact_grid, label='Exact Price-Yield Curve', color='blue', linewidth=2)
+plt.plot(y_near_grid * 100, P_dur_approx, label='Duration Approx (1st Order)', color='red', linestyle='--', linewidth=2)
+plt.plot(y_near_grid * 100, P_dur_conv_approx, label='Duration+Convexity Approx (2nd Order)', color='green', linestyle=':', linewidth=2)
+
+# 标出当前定价点与当前收益率参考线
+plt.axvline(x=y0 * 100, color='gray', linestyle='-', alpha=0.5, label=f'Current Yield ({y0*100:.1f}%)')
+plt.scatter([y0 * 100], [P0], color='black', zorder=5, label=f'Current Price ({P0:.2f})')
+
+plt.xlabel('Yield to Maturity (%)')
+plt.ylabel('Bond Price')
+plt.title('Bond Price-Yield Curve and Approximations')
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.7)
+
+fig_path = 'bond_price_yield_curve.png'
+plt.savefig(fig_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# ================= 结果输出填充 =================
+result = {
+    'price_at_up100bp': price_at_up100bp,
+    'dur_approx_change_up100bp': dur_approx_change_up100bp,
+    'figure_path': fig_path
+}
+```

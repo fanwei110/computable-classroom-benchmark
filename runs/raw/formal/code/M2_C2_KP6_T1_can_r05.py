@@ -1,0 +1,53 @@
+import pandas as pd
+import numpy as np
+
+# -------------------------------------------------------------------
+# ç¬¬ä¸é¨åï¼å¹´åå¤æ®æ¯ç
+# -------------------------------------------------------------------
+# è¯»åæ°æ®ï¼åè®¾ CSV ä¸­å 'fund' åï¼ä¸ºæ¥æ¶çï¼å°æ°å½¢å¼ï¼
+data = pd.read_csv('data/market_snapshot_v1.csv')
+fund_returns = data['fund'].dropna()   # åé¤ç¼ºå¤±å¼
+
+# æ é£é©å©çç¸ååè®¾
+rf_annual = 0.021
+trading_days = 252                # å¹´äº¤ææ¥åè®¾
+rf_daily = rf_annual / trading_days
+
+# è®¡ç®æ¥è¶æ¶ç
+excess_daily = fund_returns - rf_daily
+
+# å¹´åå¤æ®æ¯ç
+sharpe_annual = np.sqrt(trading_days) * (excess_daily.mean() / excess_daily.std())
+
+# -------------------------------------------------------------------
+# ç¬¬äºé¨åï¼ä¸ç»©å½å  (Brinson æ¨¡å)
+# -------------------------------------------------------------------
+# ç»åä¸åºåçæéåè¡ä¸æ¶ç
+w_p = np.array([0.45, 0.35, 0.20])
+r_p = np.array([0.083, 0.021, -0.014])
+w_b = np.array([0.40, 0.40, 0.20])
+r_b = np.array([0.067, 0.034, -0.009])
+
+# éæåº (Allocation Effect)
+allocation_effect = np.sum((w_p - w_b) * r_b)
+
+# éæ©æåº (Selection Effect)
+selection_effect = np.sum(w_b * (r_p - r_b))
+
+# äº¤äºæåº (Interaction Effect)
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+
+# -------------------------------------------------------------------
+# è¾åºç»æ
+# -------------------------------------------------------------------
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+# ä»æå¸è¿è¡æ¶æ¥çï¼ä¸å½±å result åé
+if __name__ == "__main__":
+    for k, v in result.items():
+        print(f"{k}: {v:.6f}")

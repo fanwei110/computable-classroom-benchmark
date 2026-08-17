@@ -1,0 +1,147 @@
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# 查找数据文件
+data_files = [f for f in os.listdir('.') if f.endswith(('.csv', '.xlsx', '.xls', '.parquet'))]
+print("Available files:", data_files)
+```
+
+```python
+# 读取数据 - 尝试多种格式
+for f in data_files:
+    try:
+        if f.endswith('.csv'):
+            df = pd.read_csv(f)
+        elif f.endswith(('.xlsx', '.xls')):
+            df = pd.read_excel(f)
+        elif f.endswith('.parquet'):
+            df = pd.read_parquet(f)
+        print(f"Loaded: {f}")
+        print(f"Columns: {df.columns.tolist()}")
+        print(df.head())
+        print(df.shape)
+        break
+    except Exception as e:
+        print(f"Error loading {f}: {e}")
+```
+
+```python
+# 查看数据详情
+print(df.info())
+print(df.describe())
+print("Columns:", df.columns.tolist())
+# 查找fund列
+fund_cols = [c for c in df.columns if 'fund' in c.lower()]
+print("Fund-related columns:", fund_cols)
+```
+
+```python
+# ============================================================
+# 计算60日滚动年化夏普比率
+# ============================================================
+
+# 确定fund列
+fund_col = None
+for c in df.columns:
+    if 'fund' in c.lower():
+        fund_col = c
+        break
+
+if fund_col is None:
+    # 尝试其他净值/价格列
+    for c in df.columns:
+        if any(kw in c.lower() for kw in ['nav', 'price', 'value', 'close', '净值', '净值']):
+            fund_col = c
+            break
+
+print(f"Using fund column: {fund_col}")
+
+# 参数设置
+rf = 0.021  # 无风险利率 2.1%
+window = 60   # 滚动窗口（可调）
+
+# 确保有日期索引
+if 'date' in df.columns:
+    df['date'] = pd.to_datetime(df['date'])
+    df = df.set_index('date').sort_index()
+elif 'datetime' in df.columns:
+    df['datetime'] = pd.to_datetime(df['datetime'])
+    df = df.set_index('datetime').sort_index()
+
+# 计算日收益率
+df['daily_return'] = df[fund_col].pct_change()
+
+# 计算滚动均值和标准差（基于日收益率）
+rolling_mean = df['daily_return'].rolling(window=window).mean()
+rolling_std = df['daily_return'].rolling(window=window).std()
+
+# 年化
+annualized_mean = rolling_mean * 252
+annualized_std = rolling_std * np.sqrt(252)
+
+# 滚动年化夏普比率
+df['rolling_sharpe'] = (annualized_mean - rf) / annualized_std
+
+# 最后一个窗口的数值
+rolling_sharpe_last = df['rolling_sharpe'].dropna().iloc[-1]
+print(f"滚动窗口={window}日, 最后一个窗口的滚动年化夏普值: {rolling_sharpe_last:.6f}")
+print(f"最后日期: {df['rolling_sharpe'].dropna().index[-1]}")
+```
+
+```python
+# ============================================================
+# 绘制曲线图
+# ============================================================
+
+plt.figure(figsize=(14, 7))
+plt.plot(df.index, df['rolling_sharpe'], color='#2E86DE', linewidth=1.2, label=f'{window}-Day Rolling Annualized Sharpe')
+plt.axhline(y=0, color='gray', linestyle='--', linewidth=0.8, alpha=0.7)
+plt.xlabel('Date', fontsize=12)
+plt.ylabel('Rolling Annualized Sharpe Ratio', fontsize=12)
+plt.title(f'{window}-Day Rolling Annualized Sharpe Ratio (rf={rf*100}%)', fontsize=14, fontweight='bold')
+plt.legend(fontsize=11)
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+
+# 保存图片
+figure_path = 'rolling_sharpe_curve.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.show()
+print(f"Figure saved to: {figure_path}")
+```
+
+```python
+# ============================================================
+# 输出契约
+# ============================================================
+
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': figure_path
+}
+
+print("=" * 60)
+print("RESULT:")
+print(f"  rolling_sharpe_last = {result['rolling_sharpe_last']:.6f}")
+print(f"  figure_path = {result['figure_path']}")
+print("=" * 60)
+```
+
+**执行说明：**
+
+1. **计算逻辑**：
+   - 先计算基金净值的日收益率 `pct_change()`
+   - 对日收益率做 `window=60` 天的滚动均值和滚动标准差
+   - 年化处理：均值×252，标准差×√252
+   - 滚动年化夏普 = (年化均值 - rf) / 年化标准差
+
+2. **窗口可调**：代码中 `window = 60` 可直接修改为其他天数（如30、90、120等）
+
+3. **最后窗口数值**：`rolling_sharpe_last` 为最后一个有效（非NaN）窗口的滚动年化夏普比率值
+
+4. **输出字典 `result`** 包含两个键：
+   - `'rolling_sharpe_last'`：最后一个窗口的数值
+   - `'figure_path'`：保存的图片路径

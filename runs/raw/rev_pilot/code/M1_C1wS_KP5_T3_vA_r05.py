@@ -1,0 +1,26 @@
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+annualized_volatility = 0.24  # 年化波动率 24%
+position_size = 2_700_000     # 头寸 270 万元
+confidence_level = 0.95       # 置信水平 95%
+
+# 1. 年化波动率换算为一日波动率
+# 假设一年有 252 个交易日（金融市场常用假设）
+trading_days_per_year = 252
+daily_volatility = annualized_volatility / np.sqrt(trading_days_per_year)
+
+# 2. 计算 95% 正态分位数（单尾）
+z_score = norm.ppf(1 - confidence_level)
+
+# 3. 计算 VaR
+var_95_1d = position_size * daily_volatility * z_score
+
+# 存储结果
+result = {
+    'var_95_1d': round(var_95_1d, 2)  # 保留两位小数，单位为元
+}
+
+# 输出结果（可选，便于调试）
+print(result)

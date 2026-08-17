@@ -1,0 +1,27 @@
+import numpy as np
+
+# 给定数据
+sigma = np.array([0.187, 0.243, 0.312])
+rho = np.array([
+    [1.0,  0.21, -0.13],
+    [0.21, 1.0,   0.37],
+    [-0.13,0.37,  1.0]
+])
+
+# 协方差矩阵
+cov = np.diag(sigma) @ rho @ np.diag(sigma)
+
+# 求最小方差组合权重：w = Σ^{-1} 1 / (1^T Σ^{-1} 1)
+ones = np.ones(3)
+inv_cov = np.linalg.inv(cov)
+v = inv_cov @ ones
+w_mvp = v / v.sum()
+var_mvp = w_mvp @ cov @ w_mvp
+vol_mvp = np.sqrt(var_mvp)
+
+result = {
+    'mvp_weights': np.round(w_mvp, 4).tolist(),
+    'mvp_vol_annual': round(vol_mvp, 4)
+}
+
+result

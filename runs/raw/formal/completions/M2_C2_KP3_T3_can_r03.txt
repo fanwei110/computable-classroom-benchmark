@@ -1,0 +1,91 @@
+```python
+import numpy as np
+
+# ==============================================
+# 债券参数
+# ==============================================
+face = 100.0                # 面值
+coupon_rate = 0.046         # 票面利率 4.6%
+y0 = 0.053                  # 当前到期收益率 5.3%
+n = 7                       # 剩余年限（年）
+delta_y = 0.008             # 收益率上升 80 个基点 => 0.008
+
+coupon = face * coupon_rate # 年票息 = 4.6
+
+# ==============================================
+# 1. 计算当前价格 P0 和利率敏感性（久期与凸性）
+# ==============================================
+# 现金流向量（最后一期包含本金）
+cf = np.full(n, coupon)    # 前 n-1 期：票息
+cf[-1] += face             # 最后一期：票息 + 面值
+
+# 时间索引（年）
+t = np.arange(1, n + 1)
+
+# 折现因子
+disc0 = (1 + y0) ** -t
+
+# 当前价格
+P0 = np.sum(cf * disc0)
+
+# 麦考利久期 Macaulay Duration
+mac_d = np.sum(t * cf * disc0) / P0
+
+# 修正久期 Modified Duration
+mod_d = mac_d / (1 + y0)
+
+# 凸性 Convexity
+# 凸性 = (1/P) * sum( t*(t+1)*CF / (1+y)^(t+2) ) / (1+y)^2 的常见形式：
+# 常用的近似凸性公式： C = 1/(P*(1+y)^2) * sum( t*(t+1)*CF / (1+y)^t )
+# 这里使用通用定义： sum(t*(t+1)*cf*df) / (P * (1+y)^2)
+convexity = np.sum(t * (t + 1) * cf * disc0) / (P0 * (1 + y0)**2)
+
+# ==============================================
+# 2. 估算与精确计算收益率上升 80 个基点的价格影响
+# ==============================================
+# 收益率变为 6.1%
+y1 = y0 + delta_y
+disc1 = (1 + y1) ** -t
+P1 = np.sum(cf * disc1)               # 新价格（精确重定价）
+
+# 精确跌幅（百分比，正数表示价格下跌）
+price_drop_pct_exact = (P0 - P1) / P0 * 100
+
+# 仅用久期的一阶近似
+approx_drop_duration = mod_d * delta_y * 100  # 百分比跌幅（仅久期）
+
+# 用久期 + 凸性的二阶近似
+# dP/P ≈ -mod_d * dy + 0.5 * convexity * (dy)^2  => 跌幅为正时用 +mod_d*dy - 0.5*C*dy^2
+approx_drop_duration_convexity = (mod_d * delta_y - 0.5 * convexity * delta_y**2) * 100
+
+# ==============================================
+# 3. 存储结果
+# ==============================================
+result = {
+    'price_drop_pct': price_drop_pct_exact   # 精确重定价跌幅
+}
+
+# ==============================================
+# 输出展示（用于课堂投屏）
+# ==============================================
+print("====== 债券基本信息 ======")
+print(f"面值: {face}, 票息率: {coupon_rate*100}%, 剩余年限: {n}年")
+print(f"当前到期收益率: {y0*100}%")
+print()
+
+print("====== 当前价格与利率敏感性 ======")
+print(f"当前价格 P0 = {P0:.6f}")
+print(f"麦考利久期 = {mac_d:.4f} 年")
+print(f"修正久期   = {mod_d:.4f}")
+print(f"凸性       = {convexity:.4f}")
+print()
+
+print("====== 收益率上升 80 bps 的影响 ======")
+print(f"新收益率 = {y1*100}%")
+print(f"精确新价格 P1 = {P1:.6f}")
+print(f"精确价格跌幅 = {price_drop_pct_exact:.4f}%")
+print(f"仅用久期估算跌幅 = {approx_drop_duration:.4f}%")
+print(f"久期+凸性估算跌幅 = {approx_drop_duration_convexity:.4f}%")
+print()
+print("result =", result)
+```

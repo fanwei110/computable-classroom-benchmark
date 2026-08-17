@@ -1,0 +1,111 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ---------- 参数设置（可调） ----------
+FACE = 100.0                # 面值
+COUPON_RATE = 0.046         # 票息率（年化）
+MATURITY = 7                # 到期年限（年）
+YTM_CURRENT = 0.053         # 当前收益率（年化）
+
+YIELD_SHIFT_BPS = 100       # 收益率变动点数（基点），可调
+DELTA_Y = YIELD_SHIFT_BPS / 10000.0   # 转换为小数
+
+YIELD_START = 0.02          # 图形收益率下限
+YIELD_END = 0.09            # 图形收益率上限
+NUM_POINTS = 500            # 图形点数
+
+# ---------- 债券定价函数（每年付息一次） ----------
+def bond_price(ytm):
+    """计算面值100、年付息一次债券的价格，ytm可以是单个数值或数组"""
+    ytm = np.asarray(ytm, dtype=float)
+    scalar_input = ytm.ndim == 0
+    ytm = np.atleast_1d(ytm)
+    
+    t = np.arange(1, MATURITY + 1)        # 现金流时点
+    coupon = FACE * COUPON_RATE           # 每年票息
+    
+    # 形状 (len(ytm), len(t))
+    ytm_grid = ytm[:, np.newaxis]
+    t_grid = t[np.newaxis, :]
+    
+    pv_coupons = coupon / (1 + ytm_grid) ** t_grid
+    pv_face = FACE / (1 + ytm) ** MATURITY
+    
+    price = np.sum(pv_coupons, axis=1) + pv_face
+    if scalar_input:
+        return price.item()
+    return price
+
+def macaulay_duration(ytm):
+    """计算麦考利久期（年）"""
+    ytm = np.asarray(ytm, dtype=float).item()
+    t = np.arange(1, MATURITY + 1)
+    coupon = FACE * COUPON_RATE
+    
+    pv_coupons = coupon / (1 + ytm) ** t
+    pv_face = FACE / (1 + ytm) ** MATURITY
+    price = np.sum(pv_coupons) + pv_face
+    
+    weighted_t = np.sum(t * pv_coupons) + MATURITY * pv_face
+    return weighted_t / price
+
+# ---------- 计算当前指标 ----------
+P0 = bond_price(YTM_CURRENT)
+D_mac = macaulay_duration(YTM_CURRENT)
+D_mod = D_mac / (1 + YTM_CURRENT)          # 修正久期（年付息一次）
+
+# ---------- 收益率网格上的精确价格 ----------
+y_grid = np.linspace(YIELD_START, YIELD_END, NUM_POINTS)
+P_exact = bond_price(y_grid)
+
+# ---------- 基于久期的近似价格（切线） ----------
+# P_approx(y) = P0 - P0 * D_mod * (y - y0)
+P_approx = P0 - P0 * D_mod * (y_grid - YTM_CURRENT)
+
+# ---------- 收益率上升 DELTA_Y 后的精确价格与久期估计 ----------
+P_up = bond_price(YTM_CURRENT + DELTA_Y)
+exact_rel_change = (P_up - P0) / P0
+dur_approx_rel_change = -D_mod * DELTA_Y   # 久期法估计的相对价格变化
+
+# ---------- 绘图 ----------
+plt.figure(figsize=(8, 5))
+plt.plot(y_grid * 100, P_exact, label='Exact Price', linewidth=2)
+plt.plot(y_grid * 100, P_approx, '--', label='Duration Approximation', linewidth=2)
+plt.axvline(YTM_CURRENT * 100, color='gray', linestyle=':', alpha=0.7)
+plt.axhline(P0, color='gray', linestyle=':', alpha=0.7)
+plt.xlabel('Yield to Maturity (%)')
+plt.ylabel('Bond Price')
+plt.title('Bond Price vs Yield (Annual Coupon)')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+
+figure_filename = 'price_yield_curve.png'
+plt.savefig(figure_filename, dpi=150)
+plt.close()
+
+# ---------- 结果输出 ----------
+result = {
+    'price_at_up100bp': round(P_up, 4),
+    'dur_approx_change_up100bp': round(dur_approx_rel_change, 6),
+    'figure_path': figure_filename
+}
+
+# 打印结果以便课堂投屏展示
+print("=== Bond Pricing & Duration Report ===")
+print(f"Assumption: Annual coupon payment")
+print(f"Face Value = {FACE}, Coupon Rate = {COUPON_RATE*100}%, Maturity = {MATURITY} years")
+print(f"Current YTM = {YTM_CURRENT*100}%")
+print(f"Current Price (P0) = {P0:.4f}")
+print(f"Macaulay Duration = {D_mac:.4f} years")
+print(f"Modified Duration = {D_mod:.4f}")
+print(f"Yield increase by {YIELD_SHIFT_BPS} bps -> new YTM = {(YTM_CURRENT+DELTA_Y)*100:.2f}%")
+print(f"Exact Price at +{YIELD_SHIFT_BPS}bp = {P_up:.4f}")
+print(f"Exact relative change = {exact_rel_change*100:.4f}%")
+print(f"Duration approx relative change = {dur_approx_rel_change*100:.4f}%")
+print(f"Figure saved to: {figure_filename}")
+print("\n{'price_at_up100bp':", result['price_at_up100bp'],
+      ", 'dur_approx_change_up100bp':", result['dur_approx_change_up100bp'],
+      ", 'figure_path': '", result['figure_path'], "'}", sep="")
+```

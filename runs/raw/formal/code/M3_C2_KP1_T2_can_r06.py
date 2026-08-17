@@ -1,0 +1,105 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 1. 定义资产参数与假设
+# ==========================================
+mu1 = 0.071       # 资产1期望年收益
+mu2 = 0.124       # 资产2期望年收益
+sigma1 = 0.163    # 资产1年化波动率
+sigma2 = 0.289    # 资产2年化波动率
+
+rhos = [0.15, 0.45, 0.75]  # 需要绘制的 相关系数列表
+target_return = 0.10       # 针对 rho=0.45 的目标期望收益
+
+# ==========================================
+# 2. 在组合权重上扫描计算并画出前沿
+# ==========================================
+# 允许卖空，满仓约束下 w1 + w2 = 1，扫描 w1
+w1 = np.linspace(-0.5, 1.5, 1000)
+w2 = 1 - w1
+
+# 组合期望收益
+port_ret = w1 * mu1 + w2 * mu2
+
+# 设置画布
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 用于存储特定条件下的结果
+mvp_vol_at_rho45 = None
+frontier_vol_at_target = None
+
+# 绘制每个相关系数下的前沿
+for rho in rhos:
+    # 构造协方差项
+    cov12 = rho * sigma1 * sigma2
+    
+    # 组合方差与波动率
+    port_var = (w1 * sigma1)**2 + (w2 * sigma2)**2 + 2 * w1 * w2 * cov12
+    port_vol = np.sqrt(port_var)
+    
+    # 画出前沿曲线 (横轴波动率，纵轴期望收益)
+    ax.plot(port_vol, port_ret, label=f'rho = {rho:.2f}', linewidth=2)
+    
+    # ------------------------------------------
+    # 解析求解最小方差组合 (MVP) 的权重与特征
+    # 对 sigma_p^2 求导令其为0: d(sigma_p^2)/dw1 = 0
+    # ------------------------------------------
+    w1_mvp = (sigma2**2 - cov12) / (sigma1**2 + sigma2**2 - 2 * cov12)
+    w2_mvp = 1 - w1_mvp
+    
+    mvp_ret = w1_mvp * mu1 + w2_mvp * mu2
+    mvp_vol = np.sqrt((w1_mvp * sigma1)**2 + (w2_mvp * sigma2)**2 + 2 * w1_mvp * w2_mvp * cov12)
+    
+    # 在每条曲线上标出最小方差组合
+    ax.scatter(mvp_vol, mvp_ret, marker='*', s=300, zorder=5, edgecolors='black', linewidths=0.8)
+    
+    # ------------------------------------------
+    # 3. 计算相关系数 0.45 时的特定指标
+    # ------------------------------------------
+    if rho == 0.45:
+        # 记录 0.45 时的最小方差组合年化波动率
+        mvp_vol_at_rho45 = float(mvp_vol)
+        
+        # 目标期望收益 10% 下的权重与最小波动率
+        # mu_target = w1 * mu1 + (1 - w1) * mu2  =>  w1 = (mu_target - mu2) / (mu1 - mu2)
+        w1_target = (target_return - mu2) / (mu1 - mu2)
+        w2_target = 1 - w1_target
+        
+        target_vol = np.sqrt((w1_target * sigma1)**2 + (w2_target * sigma2)**2 + 2 * w1_target * w2_target * cov12)
+        frontier_vol_at_target = float(target_vol)
+        
+        # 在图上标出目标收益点(红色菱形)
+        ax.scatter(target_vol, target_return, marker='D', s=120, color='red', zorder=6, 
+                   edgecolors='black', linewidths=0.8, label=f'Target 10% (rho=0.45)')
+
+# ==========================================
+# 图形修饰与保存
+# ==========================================
+ax.set_xlabel('Volatility (Annualized)', fontsize=12)
+ax.set_ylabel('Expected Return (Annualized)', fontsize=12)
+ax.set_title('Markowitz Mean-Variance Frontier (Short Selling Allowed)', fontsize=14)
+ax.legend(fontsize=10)
+ax.grid(True, linestyle='--', alpha=0.6)
+ax.set_xlim(0, 0.50)
+ax.set_ylim(0.04, 0.16)
+
+# 添加一个特殊的图例说明五角星代表MVP
+ax.scatter([], [], marker='*', s=200, edgecolors='black', label='Minimum Variance Portfolio (MVP)')
+ax.legend(fontsize=10)
+
+figure_path = 'markowitz_frontier.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ==========================================
+# 4. 填充结果字典
+# ==========================================
+result = {
+    'mvp_vol_at_rho45': mvp_vol_at_rho45,
+    'frontier_vol_at_target': frontier_vol_at_target,
+    'figure_path': figure_path
+}
+
+# 打印结果以供核对
+print(f"Result Dictionary: {result}")

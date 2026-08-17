@@ -1,0 +1,41 @@
+import numpy as np
+
+# ===================== 1. 构造协方差矩阵 =====================
+# 给定的年化波动率
+vols = np.array([0.187, 0.243, 0.312])
+
+# 给定的相关系数矩阵
+corr = np.array([
+    [1.0,  0.21, -0.13],
+    [0.21, 1.0,   0.37],
+    [-0.13, 0.37, 1.0 ]
+])
+
+# 协方差矩阵 Σ = diag(σ) @ Corr @ diag(σ)
+cov_matrix = np.outer(vols, vols) * corr
+
+# ===================== 2. 求最小方差权重 =====================
+# 全局最小方差组合 (MVP) 闭式解: w_mvp = (Σ^-1 @ 1) / (1^T @ Σ^-1 @ 1)
+ones = np.ones_like(vols)
+cov_inv = np.linalg.inv(cov_matrix)
+
+# 计算 Σ^-1 @ 1
+cov_inv_ones = cov_inv @ ones
+
+# 归一化使其和为1
+w_mvp = cov_inv_ones / np.sum(cov_inv_ones)
+
+# ===================== 3. 组合波动率 =====================
+# 组合方差 = w'Σw，组合波动率 = sqrt(w'Σw)
+var_mvp = w_mvp @ cov_matrix @ w_mvp
+vol_mvp = np.sqrt(var_mvp)
+
+# ===================== 4. 填充结果 =====================
+result = {
+    'mvp_weights': w_mvp.tolist(),
+    'mvp_vol_annual': vol_mvp
+}
+
+# 课堂投屏输出，方便验证
+print(f"全局最小方差组合权重: {result['mvp_weights']}")
+print(f"组合年化波动率: {result['mvp_vol_annual']:.4%}")

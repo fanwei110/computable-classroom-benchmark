@@ -1,0 +1,30 @@
+import math
+
+# 已知参数
+vol_A = 18.4
+vol_B = 29.7
+w_A = 0.6
+w_B = 0.4
+
+# 计算投资组合方差的通用项
+term_A = w_A**2 * vol_A**2
+term_B = w_B**2 * vol_B**2
+cross_term_base = 2 * w_A * w_B * vol_A * vol_B
+
+# 相关性变化前 (rho = 0.3)
+rho_before = 0.3
+var_before = term_A + term_B + cross_term_base * rho_before
+vol_before = math.sqrt(var_before)
+
+# 相关性变化后 (rho = 0.8)
+rho_after = 0.8
+var_after = term_A + term_B + cross_term_base * rho_after
+vol_after = math.sqrt(var_after)
+
+# 按照输出契约要求存入字典，数值保留4位小数（百分比形式）
+result = {
+    'vol_before_annual': round(vol_before, 4),
+    'vol_after_annual': round(vol_after, 4)
+}
+
+result

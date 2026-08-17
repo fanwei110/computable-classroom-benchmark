@@ -1,0 +1,70 @@
+由于我无法直接访问您本地的文件系统，我将提供一段完整的 Python 代码来完成您的需求。您只需在相同目录下运行该代码，即可得到计算结果和图表，并生成 `result` 字典。
+
+### 计算逻辑
+1. **读取日收益**：从 `data/market_snapshot_v1.csv` 中读取 `fund` 列，假设其为**小数形式的日收益率**（如 0.01 表示 1%）。
+2. **头寸与日损益**：头寸 100 万元，日损益 = 1,000,000 × 日收益率。
+3. **历史模拟法 VaR**：  
+   - 取日损益序列的 **5% 分位数**（左尾，通常为负值）。  
+   - **VaR（正损失金额）** = −（该分位数）。  
+4. **绘图**：绘制日损益直方图，并用红色竖线标出 95% 一日历史 VaR。置信水平通过变量 `conf_level` 调节。
+5. **输出**：结果存入字典 `result`，包含 `'hist_var_95_1d'` 和 `'figure_path'`。
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# -------------------- 参数设置 --------------------
+DATA_PATH = 'data/market_snapshot_v1.csv'   # 数据路径
+POSITION = 1_000_000                         # 头寸（元）
+CONF_LEVEL = 0.95                            # 置信水平（可调）
+DAYS_PER_YEAR = 252                          # 年交易日数
+OUTPUT_FIG = 'hist_var_figure.png'           # 图片保存路径
+
+# -------------------- 1. 读取数据 --------------------
+df = pd.read_csv(DATA_PATH)
+# 假设 fund 列已经是小数日收益率（如 0.005 代表 0.5%）
+daily_returns = df['fund'].dropna()
+
+# -------------------- 2. 计算日损益 --------------------
+pnl = POSITION * daily_returns   # 损益序列（正为盈利，负为损失）
+
+# -------------------- 3. 历史法 VaR --------------------
+# 左尾分位数（例如 5% 分位数）
+var_cutoff = np.percentile(pnl, 100 * (1 - CONF_LEVEL))
+# VaR 报告为正的损失金额
+hist_var = -var_cutoff
+
+# -------------------- 4. 绘图 --------------------
+plt.figure(figsize=(10, 6))
+plt.hist(pnl, bins=50, edgecolor='black', alpha=0.7, label='Daily P&L')
+plt.axvline(var_cutoff, color='red', linestyle='--', linewidth=2,
+            label=f'{CONF_LEVEL*100:.0f}% 1-Day Historical VaR = {hist_var:,.2f} CNY')
+plt.title('Daily P&L Distribution (Historical Simulation)')
+plt.xlabel('P&L (CNY)')
+plt.ylabel('Frequency')
+plt.legend()
+plt.tight_layout()
+plt.savefig(OUTPUT_FIG)
+plt.close()
+
+# -------------------- 5. 保存结果 --------------------
+result = {
+    'hist_var_95_1d': round(hist_var, 2),
+    'figure_path': OUTPUT_FIG
+}
+
+print(result)
+```
+
+### 预期输出示例
+运行后，控制台会打印：
+```
+{'hist_var_95_1d': 15234.56, 'figure_path': 'hist_var_figure.png'}
+```
+同时会在当前目录生成 `hist_var_figure.png` 图片，直方图中红色虚线位置即为 95% 置信水平下的历史 VaR（正损失金额）。
+
+### 注意事项
+- 请确保 `data/market_snapshot_v1.csv` 存在且包含 `fund` 列，且该列为**小数形式**的日收益率。如果数据是净值或百分比形式，需要先转换为小数收益率。  
+- 置信水平可通过修改 `CONF_LEVEL` 调整（如改为 0.99 计算 99% VaR）。  
+- VaR 结果已转换为**正损失金额**，符合要求。

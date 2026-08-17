@@ -1,0 +1,42 @@
+```python
+import pandas as pd
+import numpy as np
+
+# ---------------- 配置参数 ----------------
+FILE_PATH = 'data.csv'  # 若课程数据文件名不同，请在此修改
+RF_ANNUAL = 0.021       # 年化无风险利率 2.1%
+TRADING_DAYS = 252      # 一年的交易日天数（假设数据为日频数据）
+
+# ---------------- 数据读取 ----------------
+df = pd.read_csv(FILE_PATH)
+
+# 提取 fund 列
+fund_data = df['fund']
+
+# ---------------- 收益率计算 ----------------
+# 启发式判断：如果序列中存在负数，通常认为该序列已经是收益率序列；否则视为净值序列
+if (fund_data < 0).any():
+    returns = fund_data
+else:
+    # 视为净值序列，计算日收益率
+    returns = fund_data.pct_change().dropna()
+
+# ---------------- 夏普比率计算 ----------------
+# 计算日无风险利率（常用单利方式折算）
+rf_daily = RF_ANNUAL / TRADING_DAYS
+
+# 计算日收益率均值与标准差
+mean_daily_return = returns.mean()
+std_daily_return = returns.std()
+
+# 年化夏普比率公式 = (日均值 - 日无风险利率) / 日标准差 * sqrt(252)
+# 等价于 = (年化超额收益) / 年化波动率
+sharpe_annual = (mean_daily_return - rf_daily) / std_daily_return * np.sqrt(TRADING_DAYS)
+
+# ---------------- 结果输出 ----------------
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+print(result)
+```

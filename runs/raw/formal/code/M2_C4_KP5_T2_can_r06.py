@@ -1,0 +1,56 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+# ------------------------------
+# 0. 参数设定（可调参数）
+# ------------------------------
+CONFIDENCE_LEVEL = 0.95               # 置信水平，可调
+POSITION_VALUE  = 1_000_000.0         # 头寸市值（人民币）
+DATA_PATH       = 'data/market_snapshot_v1.csv'
+FIGURE_PATH     = 'var_histogram.png'
+
+# ------------------------------
+# 1. 读取数据并构造日损益
+# ------------------------------
+df = pd.read_csv(DATA_PATH)
+returns = df['fund'].dropna().values          # 基金日收益率（小数）
+daily_pnl = POSITION_VALUE * returns         # 日损益（人民币）
+
+# ------------------------------
+# 2. 计算历史 VaR（报告为正的损失金额）
+# ------------------------------
+# 线性插值经验分位数，1-CONFIDENCE_LEVEL 尾部
+tail_quantile = np.percentile(daily_pnl, 100 * (1 - CONFIDENCE_LEVEL))
+hist_var_95_1d = -tail_quantile              # VaR 为正数
+
+# ------------------------------
+# 3. 绘制直方图并标注 VaR
+# ------------------------------
+plt.figure(figsize=(10, 6))
+plt.hist(daily_pnl, bins=60, edgecolor='black', alpha=0.7, color='steelblue')
+plt.axvline(tail_quantile, color='red', linestyle='dashed', linewidth=2.5,
+            label=f'{CONFIDENCE_LEVEL*100:.0f}% Historical VaR\n{hist_var_95_1d:,.2f} RMB')
+plt.xlabel('Daily P&L (RMB)', fontsize=12)
+plt.ylabel('Frequency', fontsize=12)
+plt.title('Historical VaR - Daily P&L Distribution', fontsize=14)
+plt.legend(loc='upper left')
+plt.grid(axis='y', alpha=0.3)
+plt.tight_layout()
+plt.savefig(FIGURE_PATH, dpi=150)
+plt.close()
+
+# ------------------------------
+# 4. 填充输出结果
+# ------------------------------
+result = {
+    'hist_var_95_1d': round(float(hist_var_95_1d), 2),
+    'figure_path': FIGURE_PATH
+}
+
+# 脚本运行提示（供课堂查看）
+if __name__ == "__main__":
+    print("计算完成。")
+    print(f"95% 一日历史 VaR（人民币）: {result['hist_var_95_1d']:,.2f}")
+    print(f"图形已保存至: {result['figure_path']}")

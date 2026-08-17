@@ -1,0 +1,50 @@
+=== B0087  任务 KP5_T3 (T3) ===
+
+--- 任务要求的输出键 ---
+var_95_1d
+
+--- 判分失败明细 ---
+var_95_1d: 提交值 66622.5  |  参考值 67143.19330310714
+
+--- 提取出的代码 ---
+import math
+
+# 输入参数
+vol_annual = 0.24
+position_value = 2700000  # 270万元
+confidence_level = 0.95
+
+# 95% 置信度对应的标准正态分布分位数
+z_score = 1.645
+
+# 1日波动率（假设256个交易日）
+vol_daily = vol_annual / math.sqrt(256)
+
+# 1日 VaR (95%)
+var_95_1d = position_value * vol_daily * z_score
+
+# 结果存入字典
+result = {'var_95_1d': round(var_95_1d, 2)}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+```python
+import math
+
+# 输入参数
+vol_annual = 0.24
+position_value = 2700000  # 270万元
+confidence_level = 0.95
+
+# 95% 置信度对应的标准正态分布分位数
+z_score = 1.645
+
+# 1日波动率（假设256个交易日）
+vol_daily = vol_annual / math.sqrt(256)
+
+# 1日 VaR (95%)
+var_95_1d = position_value * vol_daily * z_score
+
+# 结果存入字典
+result = {'var_95_1d': round(var_95_1d, 2)}
+```

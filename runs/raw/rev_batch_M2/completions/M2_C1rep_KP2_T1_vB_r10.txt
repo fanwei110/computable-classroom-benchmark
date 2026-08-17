@@ -1,0 +1,47 @@
+```python
+# 给定参数
+rf = 0.023      # 无风险利率
+rm = 0.094      # 市场收益率
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+actual_y = 0.131
+
+# 市场风险溢价
+market_premium = rm - rf  # 0.071
+
+# CAPM期望收益
+er_x = rf + beta_x * market_premium
+er_y = rf + beta_y * market_premium
+er_z = rf + beta_z * market_premium
+
+# Alpha of Y
+alpha_y = actual_y - er_y
+
+# 按要求存入字典
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+
+result
+```
+```output
+{'er_x': 0.06702, 'er_y': 0.10678, 'er_z': 0.13020999999999998, 'alpha_y': 0.024220000000000007}
+```
+稍作修整，避免浮点精度的冗长显示，结果四舍五入到合适位数，但保持数值准确：
+
+```python
+result = {
+    'er_x': 0.06702,
+    'er_y': 0.10678,
+    'er_z': 0.13021,
+    'alpha_y': 0.02422
+}
+result
+```
+```output
+{'er_x': 0.06702, 'er_y': 0.10678, 'er_z': 0.13021, 'alpha_y': 0.02422}
+```

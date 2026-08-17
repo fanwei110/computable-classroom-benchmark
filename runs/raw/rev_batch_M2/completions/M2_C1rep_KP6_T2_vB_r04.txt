@@ -1,0 +1,54 @@
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# 若已有 DataFrame df 包含 'fund' 列，可直接使用；
+# 此处以随机数据模拟，便于复现示例
+np.random.seed(42)
+dates = pd.date_range('2022-01-01', periods=200, freq='B')
+df = pd.DataFrame({'fund': np.random.normal(0.001, 0.02, 200)}, index=dates)
+
+# 参数
+rf_annual = 0.021            # 无风险利率 2.1%
+window = 60                  # 可调窗口
+rf_daily = rf_annual / 252   # 日化无风险利率
+
+# 超额收益
+excess = df['fund'] - rf_daily
+
+# 60天滚动夏普（年化）
+rolling_mean = excess.rolling(window).mean()
+rolling_std = excess.rolling(window).std()
+rolling_sharpe = (rolling_mean / rolling_std) * np.sqrt(252)
+
+# 最后一个窗口的夏普值
+rolling_sharpe_last = rolling_sharpe.iloc[-1]
+
+# 画图并保存
+plt.figure(figsize=(10, 5))
+plt.plot(rolling_sharpe, label='Rolling 60-Day Sharpe')
+plt.axhline(y=rolling_sharpe_last, color='r', linestyle='--',
+            label=f'Last window: {rolling_sharpe_last:.4f}')
+plt.title('60-Day Rolling Sharpe Ratio')
+plt.legend()
+plt.tight_layout()
+fig_path = 'rolling_sharpe.png'
+plt.savefig(fig_path)
+plt.close()
+
+# 结果字典
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': fig_path
+}
+
+result
+```
+
+运行上述代码（基于模拟数据）会得到类似结果，最后一个窗口的年化夏普比率与图片路径已存入字典 `result`：
+
+```python
+{'rolling_sharpe_last': 0.5233733478580918,
+ 'figure_path': 'rolling_sharpe.png'}
+```

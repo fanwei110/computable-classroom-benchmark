@@ -1,0 +1,94 @@
+```python
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+import numpy as np
+
+# ================= 1. 参数设置与计算 =================
+rf = 0.023      # 无风险利率 2.3%
+rm = 0.094      # 市场期望收益 9.4%
+
+# 计算SML斜率 (市场风险溢价)
+sml_slope = rm - rf  # 0.094 - 0.023 = 0.071
+
+# 计算beta=1.27对应的期望收益
+beta_target = 1.27
+er_at_beta_127 = rf + beta_target * sml_slope  # 0.023 + 1.27 * 0.071 = 0.11317
+
+# 给定的三个点
+points = {
+    'X': (0.62, 0.081),
+    'Y': (1.18, 0.131),
+    'Z': (1.51, 0.099)
+}
+
+# ================= 2. 绘图与交互设置 =================
+fig, ax = plt.subplots(figsize=(10, 7))
+plt.subplots_adjust(bottom=0.25)  # 为底部滑块留出空间
+
+beta_range = np.linspace(0, 2, 100)
+sml_line, = ax.plot(beta_range, rf + beta_range * sml_slope, 'b-', lw=2, label='SML')
+
+# 标出三个点
+for name, (b, r) in points.items():
+    ax.scatter(b, r, color='red', s=80, zorder=5)
+    ax.annotate(f'{name}($\\beta$={b}, E={r:.1%})', 
+                xy=(b, r), xytext=(10, 10), textcoords='offset points',
+                fontsize=11, arrowprops=dict(arrowstyle='->', color='gray'))
+
+# 图表装饰
+ax.set_xlabel('Beta ($\\beta$)', fontsize=12)
+ax.set_ylabel('Expected Return (E[R])', fontsize=12)
+ax.set_title('Security Market Line (SML)', fontsize=14)
+ax.set_xlim(0, 2)
+ax.set_ylim(0, 0.20)
+ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: '{:.1%}'.format(y)))
+ax.grid(True, linestyle='--', alpha=0.6)
+ax.legend()
+
+# 添加可以调节参数的滑块 (满足上课调参需求)
+ax_rf = plt.axes([0.15, 0.10, 0.7, 0.03])
+ax_rm = plt.axes([0.15, 0.05, 0.7, 0.03])
+
+slider_rf = Slider(ax_rf, 'Risk-free Rate ($r_f$)', 0.0, 0.10, valinit=rf, valstep=0.001)
+slider_rm = Slider(ax_rm, 'Market Return ($E[R_m]$)', 0.0, 0.20, valinit=rm, valstep=0.001)
+
+# 滑块更新函数
+def update(val):
+    rf_new = slider_rf.val
+    rm_new = slider_rm.val
+    slope_new = rm_new - rf_new
+    sml_line.set_ydata(rf_new + beta_range * slope_new)
+    fig.canvas.draw_idle()
+
+slider_rf.on_changed(update)
+slider_rm.on_changed(update)
+
+# ================= 3. 保存图片与输出结果 =================
+figure_path = 'sml_plot.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+
+# 按照输出契约存入字典
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': figure_path
+}
+
+print(result)
+```
+
+### 计算说明：
+1. **SML斜率**：SML方程为 $E[R] = r_f + \beta \times (E[R_m] - r_f)$，其斜率即为市场风险溢价 $E[R_m] - r_f = 0.094 - 0.023 = 0.071$。
+2. **Beta=1.27时的期望收益**：代入公式得 $E[R] = 0.023 + 1.27 \times 0.071 = 0.11317$（即11.317%）。
+
+### 交互功能说明：
+代码使用了 `matplotlib.widgets.Slider`，运行后会弹出一个交互式图表窗口。你可以直接拖动底部的 **$r_f$** 和 **$E[R_m]$** 滑块来实时调整无风险利率与市场期望收益，SML直线会随之动态变动，方便上课时演示不同参数下的证券估值状况（X、Y、Z三点固定，可以直观看出它们相对于新SML线是高估还是低估）。
+
+### 输出结果 `result` 字典：
+```python
+{
+    'sml_slope': 0.071, 
+    'er_at_beta_127': 0.11317, 
+    'figure_path': 'sml_plot.png'
+}
+```

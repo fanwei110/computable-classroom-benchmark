@@ -1,0 +1,46 @@
+```python
+import numpy as np
+import pandas as pd
+
+# ========== 第一部分：夏普比率 ==========
+# 课程数据快照（fund列日收益率，模拟10个交易日）
+# 实际课堂中会读取真实数据，这里构造一个可复现的示例
+np.random.seed(42)
+dates = pd.date_range('2024-01-05', periods=10, freq='B')
+fund_returns = np.array([0.001, -0.002, 0.003, 0.0015, -0.001, 
+                         0.0025, 0.0005, 0.0018, -0.0005, 0.0012])
+
+# 无风险利率
+risk_free_annual = 0.021
+risk_free_daily = risk_free_annual / 252
+
+# 计算超额收益
+excess_returns = fund_returns - risk_free_daily
+
+# 年化夏普比率
+mean_excess_daily = np.mean(excess_returns)
+std_excess_daily = np.std(excess_returns, ddof=1)
+sharpe_annual = (mean_excess_daily / std_excess_daily) * np.sqrt(252)
+
+# ========== 第二部分：Brinson归因 ==========
+# 组合与基准数据
+w_p = np.array([0.45, 0.35, 0.20])   # 组合权重
+r_p = np.array([0.083, 0.021, -0.014])  # 组合行业收益
+w_b = np.array([0.40, 0.40, 0.20])   # 基准权重
+r_b = np.array([0.067, 0.034, -0.009])  # 基准行业收益
+
+# Brinson-Hood-Beebower 归因（含交互项）
+allocation_effect = np.sum((w_p - w_b) * r_b)
+selection_effect = np.sum(w_b * (r_p - r_b))
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+
+# 输出契约
+result = {
+    'sharpe_annual': round(sharpe_annual, 6),
+    'allocation_effect': round(allocation_effect, 6),
+    'selection_effect': round(selection_effect, 6),
+    'interaction_effect': round(interaction_effect, 6)
+}
+
+print(result)
+```

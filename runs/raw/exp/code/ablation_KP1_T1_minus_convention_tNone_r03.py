@@ -1,0 +1,37 @@
+import numpy as np
+import pandas as pd
+import scipy.optimize as opt
+import matplotlib.pyplot as plt
+
+# 1. 输入波动率与相关系数
+vols = np.array([0.187, 0.243, 0.312])  # 年化波动率
+corr_matrix = np.array([
+    [1.0,  0.21, -0.13],
+    [0.21, 1.0,   0.37],
+    [-0.13, 0.37,  1.0 ]
+])
+
+# 构造协方差矩阵
+cov_matrix = np.outer(vols, vols) * corr_matrix
+
+# 2. 求解全局最小方差组合权重（允许卖空，满仓约束 sum w = 1）
+# 使用闭式解：w = Σ^{-1} * 1 / (1' Σ^{-1} 1)
+n = len(vols)
+one_vec = np.ones(n)
+inv_cov = np.linalg.inv(cov_matrix)
+mvp_weights = inv_cov @ one_vec / (one_vec @ inv_cov @ one_vec)
+
+# 3. 计算最小方差组合的年化波动率
+mvp_var = mvp_weights @ cov_matrix @ mvp_weights
+mvp_vol_annual = np.sqrt(mvp_var)   # 小数形式
+
+# 4. 填充 result 字典
+result = {
+    'mvp_weights': mvp_weights,
+    'mvp_vol_annual': mvp_vol_annual
+}
+
+# 可选：打印结果
+print("全局最小方差组合权重:", mvp_weights)
+print("年化波动率 (小数):", mvp_vol_annual)
+print("年化波动率 (百分比):", f"{mvp_vol_annual*100:.2f}%")

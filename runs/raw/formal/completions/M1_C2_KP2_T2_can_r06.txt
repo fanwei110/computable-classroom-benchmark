@@ -1,0 +1,80 @@
+以下是自包含的 Python 脚本，满足所有要求：
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# 参数设定
+risk_free_rate = 0.023  # 无风险利率 2.3%
+market_return = 0.094   # 市场期望收益 9.4%
+
+# 证券市场线 (SML) 函数
+def calculate_sml_return(beta, risk_free_rate, market_return):
+    return risk_free_rate + beta * (market_return - risk_free_rate)
+
+# 生成 beta 从 0 到 2 的 SML 数据
+betas = np.linspace(0, 2, 100)
+sml_returns = calculate_sml_return(betas, risk_free_rate, market_return)
+
+# 股票数据
+stocks = {
+    'X': {'beta': 0.62, 'return': 0.081},
+    'Y': {'beta': 1.18, 'return': 0.131},
+    'Z': {'beta': 1.51, 'return': 0.099}
+}
+
+# 创建图形
+plt.figure(figsize=(10, 6))
+plt.plot(betas, sml_returns, label='Security Market Line (SML)', color='blue')
+
+# 绘制股票点
+for stock, data in stocks.items():
+    plt.scatter(data['beta'], data['return'], label=f'Stock {stock}', s=100)
+    plt.annotate(stock,
+                 (data['beta'], data['return']),
+                 textcoords="offset points",
+                 xytext=(10,5),
+                 ha='center')
+
+# 图形设置
+plt.title('Security Market Line (CAPM) with Stocks X, Y, Z')
+plt.xlabel('Beta (β)')
+plt.ylabel('Expected Return')
+plt.grid(True)
+plt.legend()
+plt.xlim(0, 2)
+plt.ylim(0, 0.15)
+
+# 保存图形
+figure_path = 'sml_plot.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 计算结果
+sml_slope = market_return - risk_free_rate
+er_at_beta_127 = calculate_sml_return(1.27, risk_free_rate, market_return)
+
+# 存储结果
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+# 输出结果（供验证）
+print(result)
+```
+
+这个脚本会：
+1. 绘制beta从0到2的证券市场线(SML)
+2. 在图上标出股票X、Y、Z的点并标注
+3. 将无风险利率和市场收益参数化
+4. 计算并报告SML的斜率(市场风险溢价)和beta=1.27处的期望收益
+5. 保存图形为'sml_plot.png'并将绝对路径存入result字典
+6. 所有结果都存入名为result的字典中，键名严格符合要求
+
+输出的result字典将包含：
+- 'sml_slope': SML的斜率(市场风险溢价)
+- 'er_at_beta_127': beta=1.27处的CAPM期望收益
+- 'figure_path': 保存的图形文件的绝对路径

@@ -1,0 +1,64 @@
+ä»¥ä¸æ¯èªåç Python èæ¬ãå®ä½¿ç¨ Black-Scholes åè®¡ç®æ¬§å¼çæ¶¨ææç deltaï¼N(d1)ï¼ï¼æè¦æ±ç»åºä¸æ¡æ³¢å¨çä¸ç delta æ²çº¿ï¼å¹¶æ¥åæå®ç¹ç delta å¼ã
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+
+# ===== åæ°å®ä¹ï¼å¯è°æ´ï¼ =====
+K = 97.5                  # è¡æä»·
+r = 0.043                 # è¿ç»­å¤å©æ é£é©å©ç (4.3%)
+T = 0.58                  # å©ä½æéï¼å¹´ï¼
+q = 0.0                   # æ çè¿ç»­çº¢å©çï¼ä¸åçº¢ï¼
+
+# æ çä»·æ ¼ç½æ ¼
+S_min, S_max, S_points = 70.0, 140.0, 500
+S_array = np.linspace(S_min, S_max, S_points)
+
+# æ³¢å¨çåè¡¨ï¼å¯è°åæ°ï¼
+sigma_list = [0.15, 0.276, 0.40]
+
+# ===== Black-Scholes Delta å½æ° =====
+def delta_call(S, K, r, T, sigma, q=0.0):
+    """æ¬§å¼çæ¶¨ææ delta = N(d1)"""
+    d1 = (np.log(S / K) + (r - q + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# ===== æ¥åæ ç 110ãæ³¢å¨ç 27.6% æ¶ç delta =====
+S_target = 110.0
+sigma_target = 0.276
+delta_at_s110 = delta_call(S_target, K, r, T, sigma_target, q)
+
+# ===== ç»å¾ =====
+plt.figure(figsize=(8, 5))
+for sigma in sigma_list:
+    delta = delta_call(S_array, K, r, T, sigma, q)
+    plt.plot(S_array, delta, linewidth=1.5, label=f'$\sigma = {sigma*100:.1f}\%$')
+
+plt.xlabel('Underlying Price $S$')
+plt.ylabel('Delta $\\Delta$')
+plt.title('Black-Scholes Call Delta vs. Spot Price')
+plt.legend()
+plt.grid(alpha=0.3)
+plt.tight_layout()
+
+# ä¿å­å¾å
+figure_path = 'delta_curves.png'
+plt.savefig(figure_path, dpi=150)
+plt.show()   # è¯¾å æå±æ¶å±ç¤º
+
+# ===== å¡«åç»æå­å =====
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': figure_path
+}
+
+# ä¸ºä¾¿äºæå¸å¨æ§å¶å°æ¥çï¼æå°ç»æ
+print(f"Delta at S={S_target}, sigma={sigma_target*100:.1f}%: {delta_at_s110:.6f}")
+print(f"Figure saved to: {figure_path}")
+```
+
+**è¾åºè¯´æï¼**
+- å¨è¿è¡ç¯å¢ä¸­æ§è¡è¯¥èæ¬ï¼ä¼çæ `delta_curves.png` å¾åæä»¶ï¼å¹¶å¨å±å¹ä¸æ¾ç¤ºå¾å½¢ã
+- æ§å¶å°ä¼æå° `delta_at_s110` çæ°å¼ï¼å°æ°å½¢å¼ï¼ã
+- `result` å­åå·²æçº¦å®å¡«åï¼é®åä¸º `'delta_at_s110'` å `'figure_path'`ã

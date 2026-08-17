@@ -1,0 +1,50 @@
+```python
+import numpy as np
+
+# =========================
+# 1. 确定资产和权重
+# =========================
+# 资产 A 年化波动率约 18.4%，资产 B 约 29.7%
+sigma_A = 0.184
+sigma_B = 0.297
+
+# 60/40 组合约定：A 占 60%，B 占 40%
+w_A = 0.6
+w_B = 0.4
+weights = np.array([w_A, w_B])
+
+# =========================
+# 2. 两种相关系数下的协方差矩阵
+# =========================
+def cov_matrix(sigma1, sigma2, rho):
+    """构建两个资产的协方差矩阵"""
+    cov_12 = rho * sigma1 * sigma2
+    return np.array([[sigma1**2, cov_12],
+                     [cov_12, sigma2**2]])
+
+rho_before = 0.3
+rho_after  = 0.8
+
+Sigma_before = cov_matrix(sigma_A, sigma_B, rho_before)
+Sigma_after  = cov_matrix(sigma_A, sigma_B, rho_after)
+
+# =========================
+# 3. 计算两个组合的波动率（年化）
+# =========================
+# 组合方差 = w' Σ w
+var_before = weights @ Sigma_before @ weights
+var_after  = weights @ Sigma_after  @ weights
+
+vol_before = np.sqrt(var_before)
+vol_after  = np.sqrt(var_after)
+
+# =========================
+# 4. 输出结果
+# =========================
+result = {
+    'vol_before_annual': vol_before,
+    'vol_after_annual':  vol_after
+}
+
+print(result)
+```

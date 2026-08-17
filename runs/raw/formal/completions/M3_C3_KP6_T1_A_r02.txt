@@ -1,0 +1,90 @@
+由于我无法直接读取您本地的“课程数据文件”，我将为您提供**完整的计算代码与逻辑**，您只需运行代码即可得到精确的数字。对于第二问的业绩归因，我已为您计算出了确切结果。
+
+### 一、 计算逻辑与结果
+
+#### 1. 年化夏普比率
+*   **日无风险利率**：根据约定“债券收益率按年复利报价”，2.1%的年化无风险利率转为日利率需采用年复利拆分：$r_{f,daily} = (1 + 0.021)^{1/252} - 1$
+*   **日超额收益**：$R_{ex} = R_{fund} - r_{f,daily}$
+*   **年化夏普比率**：$Sharpe_{annual} = \frac{Mean(R_{ex})}{Std(R_{ex})} \times \sqrt{252}$ （其中标准差使用样本估计量，即自由度 $ddof=1$）
+
+#### 2. 业绩归因（Braginson Fachler 模型）
+根据约定，权重与收益率均用小数表示：
+*   组合权重 $w_p = [0.45, 0.35, 0.20]$
+*   基准权重 $w_b = [0.40, 0.40, 0.20]$
+*   组合行业收益 $R_p = [0.083, 0.021, -0.014]$
+*   基准行业收益 $R_b = [0.067, 0.034, -0.009]$
+
+**计算过程**：
+*   **配置效应 (Allocation Effect)** = $\sum (w_p - w_b) \times R_b$
+    $= (0.05 \times 0.067) + (-0.05 \times 0.034) + (0 \times -0.009) = 0.00335 - 0.00170 + 0 = \mathbf{0.00165}$
+*   **选择效应 (Selection Effect)** = $\sum w_b \times (R_p - R_b)$
+    $= (0.40 \times 0.016) + (0.40 \times -0.013) + (0.20 \times -0.005) = 0.00640 - 0.00520 - 0.00100 = \mathbf{0.00020}$
+*   **交互效应 (Interaction Effect)** = $\sum (w_p - w_b) \times (R_p - R_b)$
+    $= (0.05 \times 0.016) + (-0.05 \times -0.013) + (0 \times -0.005) = 0.00080 + 0.00065 + 0 = \mathbf{0.00145}$
+*(验证：总超额收益 = 组合收益 0.0419 - 基准收益 0.0386 = 0.0033，三个效应之和 0.00165 + 0.0002 + 0.00145 = 0.0033，完全吻合)*
+
+---
+
+### 二、 生成 `result` 字典的 Python 代码
+
+您可以直接运行以下代码，它会自动读取您的数据文件并输出符合所有约定的 `result` 字典：
+
+```python
+import pandas as pd
+import numpy as np
+
+# ========== 假设读取课程数据文件 ==========
+# 请根据实际文件格式修改此处，确保列名为 'fund'
+# df = pd.read_csv('your_course_data.csv') 
+# R_fund = df['fund']
+
+# ========== 第一部分：计算年化夏普比率 ==========
+# 按约定：年化与去年化按252个交易日，债券收益率按年复利，标准差ddof=1
+def calculate_annualized_sharpe(R_fund, annual_rf=0.021):
+    # 1. 日无风险利率（年复利报价转日频）
+    rf_daily = (1 + annual_rf) ** (1 / 252) - 1
+    
+    # 2. 日超额收益
+    excess_returns = R_fund - rf_daily
+    
+    # 3. 均值与样本标准差(ddof=1)
+    mean_excess = excess_returns.mean()
+    std_excess = excess_returns.std(ddof=1)
+    
+    # 4. 年化夏普比率
+    sharpe_annual = (mean_excess / std_excess) * np.sqrt(252)
+    return sharpe_annual
+
+# sharpe_annual_val = calculate_annualized_sharpe(R_fund)
+
+# ========== 第二部分：业绩归因 ==========
+wp = np.array([0.45, 0.35, 0.20])
+wb = np.array([0.40, 0.40, 0.20])
+Rp = np.array([0.083, 0.021, -0.014])
+Rb = np.array([0.067, 0.034, -0.009])
+
+allocation_effect = np.sum((wp - wb) * Rb)
+selection_effect = np.sum(wb * (Rp - Rb))
+interaction_effect = np.sum((wp - wb) * (Rp - Rb))
+
+# ========== 构建输出字典 ==========
+# 请将下方 sharpe_annual 的占位符替换为实际计算运行后的值
+result = {
+    'sharpe_annual': None,  # 运行代码后替换为 calculate_annualized_sharpe(R_fund) 的结果
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+print(result)
+```
+
+**最终 `result` 字典的归因部分数值应为**：
+```python
+{
+    'sharpe_annual': [您的数据计算结果],
+    'allocation_effect': 0.00165,
+    'selection_effect': 0.00020,
+    'interaction_effect': 0.00145
+}
+```

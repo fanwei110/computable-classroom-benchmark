@@ -1,0 +1,35 @@
+以下是一个自包含的 Python 脚本，根据 CAPM 模型计算给定 beta 的股票在上个月本应获得的收益率：
+
+```python
+import numpy as np
+
+# 输入参数
+beta = 1.42
+market_return_monthly = -0.058  # 市场上个月跌了5.8%
+risk_free_rate_annual = 0.047   # 年化无风险利率4.7%
+
+# 将年化无风险利率转换为月度无风险利率
+risk_free_rate_monthly = (1 + risk_free_rate_annual) ** (1/12) - 1
+
+# CAPM 公式计算月度预期收益率
+# E(R_i) = R_f + beta * (E(R_m) - R_f)
+capm_return_monthly = risk_free_rate_monthly + beta * (market_return_monthly - risk_free_rate_monthly)
+
+# 结果存储
+result = {
+    'capm_return_monthly': capm_return_monthly
+}
+
+# 输出结果（可选，用于验证）
+print(result)
+```
+
+这个脚本：
+1. 使用了 numpy 进行基本的数值计算（虽然这里没直接用到 numpy 的函数，但符合要求允许的库）
+2. 严格按照 CAPM 公式计算
+3. 将年化无风险利率正确转换为月度利率
+4. 结果存储在名为 `result` 的字典中，键名严格为 `'capm_return_monthly'`
+5. 输出确定可复现，没有占位值
+6. 变量命名清晰
+
+运行后，`result['capm_return_monthly']` 将包含该股票上个月本应获得的 CAPM 预期收益率。

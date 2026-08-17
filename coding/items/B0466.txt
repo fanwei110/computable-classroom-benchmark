@@ -1,0 +1,141 @@
+=== B0466  任务 KP5_T2 (T2) ===
+
+--- 任务要求的输出键 ---
+hist_var_95_1d
+
+--- 判分失败明细 ---
+hist_var_95_1d: 提交值 9446542.082597183  |  参考值 17801.665499999996
+
+--- 提取出的代码 ---
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+def calculate_historical_var(confidence_level=0.95):
+    # 读取数据
+    df = pd.read_csv('data/market_snapshot_v1.csv')
+
+    # 计算日收益率
+    returns = df['fund'].pct_change().dropna()
+
+    # 计算日损益（头寸100万元）
+    position = 1_000_000
+    pnl = returns * position
+
+    # 计算历史VaR
+    var = -np.percentile(pnl, 100 * (1 - confidence_level))
+
+    # 绘制直方图
+    plt.figure(figsize=(10, 6))
+    plt.hist(pnl, bins=50, alpha=0.75, color='blue', edgecolor='black')
+
+    # 添加VaR线
+    plt.axvline(x=-var, color='red', linestyle='--', label=f'{confidence_level*100:.0f}% 1-day Historical VaR: {var:,.2f}')
+
+    plt.title('Daily P&L Distribution with Historical VaR')
+    plt.xlabel('Daily P&L (RMB)')
+    plt.ylabel('Frequency')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+
+    # 保存图片
+    if not os.path.exists('output'):
+        os.makedirs('output')
+    figure_path = 'output/historical_var_plot.png'
+    plt.savefig(figure_path)
+    plt.close()
+
+    # 准备结果
+    result = {
+        'hist_var_95_1d': var,
+        'figure_path': figure_path
+    }
+
+    return result
+
+# 计算95%置信水平的VaR
+result = calculate_historical_var(confidence_level=0.95)
+
+# 输出结果
+print(f"95% 1-day Historical VaR: {result['hist_var_95_1d']:,.2f} RMB")
+print(f"Figure saved to: {result['figure_path']}")
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+我将按照您的要求计算历史法VaR，并生成相应的输出。以下是完整的代码实现：
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+def calculate_historical_var(confidence_level=0.95):
+    # 读取数据
+    df = pd.read_csv('data/market_snapshot_v1.csv')
+
+    # 计算日收益率
+    returns = df['fund'].pct_change().dropna()
+
+    # 计算日损益（头寸100万元）
+    position = 1_000_000
+    pnl = returns * position
+
+    # 计算历史VaR
+    var = -np.percentile(pnl, 100 * (1 - confidence_level))
+
+    # 绘制直方图
+    plt.figure(figsize=(10, 6))
+    plt.hist(pnl, bins=50, alpha=0.75, color='blue', edgecolor='black')
+
+    # 添加VaR线
+    plt.axvline(x=-var, color='red', linestyle='--', label=f'{confidence_level*100:.0f}% 1-day Historical VaR: {var:,.2f}')
+
+    plt.title('Daily P&L Distribution with Historical VaR')
+    plt.xlabel('Daily P&L (RMB)')
+    plt.ylabel('Frequency')
+    plt.legend()
+    plt.grid(True, alpha=0.3)
+
+    # 保存图片
+    if not os.path.exists('output'):
+        os.makedirs('output')
+    figure_path = 'output/historical_var_plot.png'
+    plt.savefig(figure_path)
+    plt.close()
+
+    # 准备结果
+    result = {
+        'hist_var_95_1d': var,
+        'figure_path': figure_path
+    }
+
+    return result
+
+# 计算95%置信水平的VaR
+result = calculate_historical_var(confidence_level=0.95)
+
+# 输出结果
+print(f"95% 1-day Historical VaR: {result['hist_var_95_1d']:,.2f} RMB")
+print(f"Figure saved to: {result['figure_path']}")
+```
+
+这个代码会完成以下工作：
+
+1. 读取数据文件`data/market_snapshot_v1.csv`
+2. 计算fund列的日收益率
+3. 基于100万元头寸计算日损益(P&L)
+4. 使用历史模拟法计算95%置信水平的1日VaR
+5. 绘制日损益的直方图，并标出VaR线
+6. 将结果保存到result字典中，包括：
+   - 'hist_var_95_1d': 95%置信水平1日历史VaR的数值
+   - 'figure_path': 保存的图片路径
+
+注意事项：
+- 请确保数据文件路径正确（data/market_snapshot_v1.csv）
+- 代码会自动创建output目录用于保存图片
+- VaR报告为正的损失金额（例如VaR=5000表示可能损失5000元）
+- 置信水平默认为95%，但可以通过修改confidence_level参数调整
+
+如果您需要不同的置信水平，可以调用`calculate_historical_var(confidence_level=0.99)`来计算99%置信水平的VaR。

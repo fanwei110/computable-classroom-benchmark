@@ -1,0 +1,88 @@
+以下是自包含的Python脚本，完成您要求的任务：
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+# 设置参数
+INITIAL_POSITION = 1_000_000  # 初始头寸100万元
+CONFIDENCE_LEVEL = 0.95       # 默认置信水平95%
+DATA_PATH = "data/market_snapshot_v1.csv"
+FIGURE_PATH = "var_histogram.png"
+
+def calculate_historical_var():
+    # 1. 读取数据并构造日损益
+    try:
+        df = pd.read_csv(DATA_PATH)
+        daily_returns = df['fund'].dropna().values
+    except FileNotFoundError:
+        raise FileNotFoundError(f"数据文件未找到: {DATA_PATH}")
+    except KeyError:
+        raise KeyError("CSV文件中未找到'fund'列")
+
+    # 计算日损益（人民币）
+    daily_pnl = INITIAL_POSITION * daily_returns
+
+    # 2. 计算历史VaR
+    var_percentile = (1 - CONFIDENCE_LEVEL) * 100
+    historical_var = np.percentile(daily_pnl, var_percentile)
+
+    # 3. 绘制直方图并标注VaR
+    plt.figure(figsize=(10, 6))
+    plt.hist(daily_pnl, bins=50, alpha=0.75, color='skyblue', edgecolor='black')
+
+    # 添加VaR线
+    plt.axvline(x=historical_var, color='red', linestyle='--',
+                label=f'{CONFIDENCE_LEVEL:.0%} VaR: ¥{abs(historical_var):,.2f}')
+
+    plt.title(f'Daily P&L Distribution with {CONFIDENCE_LEVEL:.0%} Historical VaR\n'
+              f'Position: ¥{INITIAL_POSITION:,}', fontsize=12)
+    plt.xlabel('Daily P&L (RMB)', fontsize=10)
+    plt.ylabel('Frequency', fontsize=10)
+    plt.legend(fontsize=10)
+    plt.grid(True, alpha=0.3)
+
+    # 保存图形
+    plt.savefig(FIGURE_PATH, dpi=300, bbox_inches='tight')
+    plt.close()
+
+    # 4. 准备结果
+    result = {
+        'hist_var_95_1d': abs(historical_var),  # 以正数报告VaR
+        'figure_path': str(Path(FIGURE_PATH).absolute())
+    }
+
+    return result
+
+# 执行计算并输出结果
+result = calculate_historical_var()
+print(result)
+```
+
+这个脚本完成了以下工作：
+
+1. 数据读取与处理：
+   - 读取CSV文件中的"fund"列日收益率数据
+   - 将收益率转换为100万元头寸的日损益（人民币）
+
+2. 历史VaR计算：
+   - 使用经验分布的分位数计算95%置信水平下的VaR
+   - 默认置信水平为95%，但可以通过修改CONFIDENCE_LEVEL参数调整
+
+3. 可视化：
+   - 绘制日损益分布直方图
+   - 用红色虚线标注VaR值，并添加标签说明
+   - 图形保存为PNG文件，路径存入result
+
+4. 输出契约：
+   - 结果存入result字典，包含：
+     - 'hist_var_95_1d': 95%置信水平下的历史VaR（人民币正数）
+     - 'figure_path': 保存的图形文件绝对路径
+
+注意事项：
+- 脚本假设数据文件位于"data/market_snapshot_v1.csv"
+- 如果需要调整置信水平，可以修改CONFIDENCE_LEVEL变量
+- 图形保存为当前目录下的"var_histogram.png"
+- 脚本使用了常见的科学计算库，无需联网即可运行

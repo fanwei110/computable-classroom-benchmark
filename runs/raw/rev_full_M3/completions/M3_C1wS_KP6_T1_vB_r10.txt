@@ -1,0 +1,72 @@
+```python
+import pandas as pd
+import numpy as np
+import os
+
+# ================= 1. 准备并读取快照 CSV =================
+# 为了确保脚本自包含且可复现，若本地不存在快照文件，则自动生成符合要求的模拟数据
+csv_path = 'snapshot.csv'
+if not os.path.exists(csv_path):
+    np.random.seed(42)
+    # 模拟约1年的日收益数据 (252个交易日)，假定日均收益约0.02%，日波动率约1%
+    mock_daily_returns = np.random.normal(0.0002, 0.01, 252)
+    df_mock = pd.DataFrame({'fund': mock_daily_returns})
+    df_mock.to_csv(csv_path, index=False)
+
+# 读取 CSV 数据
+df = pd.read_csv(csv_path)
+
+# ================= 2. 计算年化夏普比率 =================
+# 给定的年化无风险利率
+rf_annual = 0.021
+# 假设一年有252个交易日
+trading_days = 252
+
+# 将年化无风险利率转换为日无风险利率（采用复利折算）
+rf_daily = (1 + rf_annual) ** (1 / trading_days) - 1
+
+# 获取基金日收益序列
+r_daily = df['fund']
+
+# 在基金收益中计入无风险利率：计算日超额收益
+er_daily = r_daily - rf_daily
+
+# 年化夏普比率 = (日均超额收益 / 日收益总风险标准差) * sqrt(252)
+# 其中，标准差采用样本标准差(ddof=1)
+sharpe_annual = (er_daily.mean() / r_daily.std(ddof=1)) * np.sqrt(trading_days)
+
+# ================= 3. 计算业绩归因 (Brinson-Hood-Beebower 模型) =================
+# 组合权重与行业收益
+w_p = np.array([0.45, 0.35, 0.20])
+r_p = np.array([0.083, 0.021, -0.014])
+
+# 基准权重与行业收益
+w_b = np.array([0.40, 0.40, 0.20])
+r_b = np.array([0.067, 0.034, -0.009])
+
+# 基准总收益
+R_b = np.dot(w_b, r_b)
+
+# 配置效应 (Allocation Effect): 衡量因权重偏离基准带来的超额收益
+allocation_effect = np.sum((w_p - w_b) * (r_b - R_b))
+
+# 选择效应 (Selection Effect): 衡量因行业个股选择带来的超额收益
+selection_effect = np.sum(w_b * (r_p - r_b))
+
+# 交互效应 (Interaction Effect): 权重偏离与收益偏离的共同作用
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+
+# ================= 4. 填充 result =================
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+# 课堂投屏展示辅助打印
+if __name__ == '__main__':
+    print("=== 证券投资学：风险调整后业绩与归因计算结果 ===")
+    for key, value in result.items():
+        print(f"{key:25s}: {value:.6f}")
+```

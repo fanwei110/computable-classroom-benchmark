@@ -1,0 +1,140 @@
+```python
+#!/usr/bin/env python3
+"""
+Rolling Annualized Sharpe Ratio — Fund Daily Returns
+=====================================================
+Reads daily returns from the 'fund' column of the course data snapshot,
+computes the rolling annualized Sharpe ratio (default 60-day window,
+risk-free rate = 2.1% p.a.), plots the time series with an adjustable
+window slider, and reports the latest 60-day window Sharpe value.
+"""
+
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+
+# ============================================================
+# Configurable Parameters
+# ============================================================
+DATA_FILE          = 'snapshot.csv'       # course data snapshot file path
+ANNUAL_RF          = 0.021               # annual risk-free rate (2.1%)
+DEFAULT_WINDOW     = 60                  # default rolling window (trading days)
+TRADING_DAYS       = 252                 # trading days per year
+FIGURE_PATH        = 'rolling_sharpe.png' # output figure file path
+
+# ============================================================
+# 1.  Load data
+# ============================================================
+raw = pd.read_csv(DATA_FILE)
+
+# Identify and set a date-like column as the index if one exists
+_date_col = next(
+    (c for c in raw.columns
+     if any(k in c.lower() for k in ('date', 'time', '日期', '时间'))),
+    None
+)
+if _date_col is not None:
+    raw[_date_col] = pd.to_datetime(raw[_date_col])
+    raw = raw.set_index(_date_col).sort_index()
+
+# Extract the 'fund' column as daily return series
+daily_returns = raw['fund'].dropna().astype(float)
+
+assert 'fund' in raw.columns, \
+    f"Column 'fund' not found. Available columns: {list(raw.columns)}"
+assert len(daily_returns) >= DEFAULT_WINDOW, \
+    f"Need >= {DEFAULT_WINDOW} non-NaN observations, got {len(daily_returns)}"
+
+# ============================================================
+# 2.  Compute rolling annualized Sharpe ratio
+# ============================================================
+DAILY_RF = ANNUAL_RF / TRADING_DAYS      # convert annual rf to daily
+
+
+def rolling_annualized_sharpe(returns: pd.Series, window: int) -> pd.Series:
+    """
+    Rolling annualized Sharpe ratio:
+        S = (mean_daily  - daily_rf) / std_daily  x  sqrt(252)
+    Uses sample standard deviation (ddof=1).
+    """
+    mu    = returns.rolling(window=window).mean()
+    sigma = returns.rolling(window=window).std(ddof=1)
+    return (mu - DAILY_RF) / sigma * np.sqrt(TRADING_DAYS)
+
+
+sharpe_series = rolling_annualized_sharpe(daily_returns, DEFAULT_WINDOW)
+rolling_sharpe_last = float(sharpe_series.iloc[-1])
+
+# ============================================================
+# 3.  Plot with adjustable window slider
+# ============================================================
+fig, ax = plt.subplots(figsize=(14, 6))
+plt.subplots_adjust(bottom=0.22, top=0.92)
+
+line, = ax.plot(sharpe_series.index, sharpe_series.values,
+                lw=0.9, color='#2171b5',
+                label=f'{DEFAULT_WINDOW}-Day Rolling Sharpe')
+ax.axhline(0, color='#999999', ls='--', lw=0.6)
+ax.set_title(f'{DEFAULT_WINDOW}-Day Rolling Annualized Sharpe Ratio (Fund)',
+             fontsize=13, fontweight='bold')
+ax.set_xlabel('Date', fontsize=11)
+ax.set_ylabel('Annualized Sharpe Ratio', fontsize=11)
+ax.legend(loc='upper left', fontsize=9)
+ax.grid(True, alpha=0.2)
+
+# ---- Adjustable window slider ----
+ax_slider = fig.add_axes([0.18, 0.06, 0.65, 0.03])
+slider = Slider(ax_slider, 'Window (days)',
+                valmin=5, valmax=252,
+                valinit=DEFAULT_WINDOW, valstep=1)
+
+
+def _on_slider_change(val):
+    """Redraw the Sharpe series when the slider moves."""
+    w = int(slider.val)
+    s = rolling_annualized_sharpe(daily_returns, w)
+    line.set_ydata(s.values)
+    line.set_label(f'{w}-Day Rolling Sharpe')
+    ax.set_title(f'{w}-Day Rolling Annualized Sharpe Ratio (Fund)',
+                 fontsize=13, fontweight='bold')
+    ax.legend(loc='upper left', fontsize=9)
+    ax.relim()
+    ax.autoscale_view()
+    fig.canvas.draw_idle()
+
+
+slider.on_changed(_on_slider_change)
+
+# Save the figure (initial 60-day window state)
+fig.savefig(FIGURE_PATH, dpi=150, bbox_inches='tight')
+plt.close(fig)
+
+# ============================================================
+# 4.  Result dictionary (output contract)
+# ============================================================
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': FIGURE_PATH,
+}
+
+print(f"Last {DEFAULT_WINDOW}-day rolling annualized Sharpe ratio: "
+      f"{rolling_sharpe_last:.6f}")
+print(f"Figure saved to: {result['figure_path']}")
+```
+
+---
+
+**脚本说明**
+
+| 模块 | 职责 |
+|---|---|
+| **参数区** | `DEFAULT_WINDOW = 60`，`ANNUAL_RF = 0.021`，窗口长度、文件路径等均可直接修改 |
+| **数据加载** | 自动识别日期列并设为索引；从 `fund` 列提取日收益率，`dropna` + `astype(float)` |
+| **Sharpe 计算** | `rolling_annualized_sharpe(returns, window)` — 滚动均值 − 日化无风险利率 / 滚动样本标准差 × √252 |
+| **绘图** | 时间序列折线图 + y=0 参考线；底部嵌入 `Slider`（5–252 天），拖动即可实时更新曲线与标题 |
+| **输出契约** | `result['rolling_sharpe_last']` 为最近 60 日窗口的年化夏普；`result['figure_path']` 为保存路径 |
+
+> **关键公式**：  
+> $$\text{Sharpe}_{\text{ann}} = \frac{\bar{r}_{\text{daily}} - r_f/252}{\hat\sigma_{\text{daily}}} \times \sqrt{252}$$  
+> 其中 $\hat\sigma$ 使用样本标准差（`ddof=1`）。

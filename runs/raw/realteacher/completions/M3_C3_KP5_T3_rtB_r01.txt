@@ -1,0 +1,35 @@
+根据给定的计算约定和参数，95%一日VaR的计算步骤如下：
+
+1. **将年化波动率转换为日波动率**：
+   按每年252个交易日进行转换，日波动率 $\sigma_{daily} = \frac{\sigma_{annual}}{\sqrt{252}}$
+   $\sigma_{daily} = \frac{0.24}{\sqrt{252}} \approx 0.015119$
+
+2. **确定95%置信水平下的Z分数**：
+   标准正态分布下，95%的分位数 $Z_{95\%} \approx 1.64485$ （使用 `scipy.stats.norm.ppf(0.95)` 精确值）
+
+3. **计算1日VaR**：
+   $VaR_{95\%, 1d} = \text{头寸} \times Z_{95\%} \times \sigma_{daily}$
+   $VaR_{95\%, 1d} = 2,700,000 \times 1.64485 \times 0.015119 \approx 67,145.11$
+
+按照输出契约，将结果存入字典：
+
+```python
+import math
+from scipy.stats import norm
+
+position = 2700000
+sigma_annual = 0.24
+trading_days = 252
+
+sigma_daily = sigma_annual / math.sqrt(trading_days)
+z_95 = norm.ppf(0.95)
+var_95_1d = position * z_95 * sigma_daily
+
+result = {'var_95_1d': var_95_1d}
+```
+
+如果仅需要最终字典结果（数值保留两位小数以作展示，实际为浮点数）：
+
+```python
+result = {'var_95_1d': 67145.11}
+```

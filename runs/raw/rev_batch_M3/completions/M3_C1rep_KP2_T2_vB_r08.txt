@@ -1,0 +1,86 @@
+```python
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+import matplotlib.ticker as mtick
+import os
+
+# 1. 初始参数与计算
+rf_init = 0.023  # 2.3%
+mkt_init = 0.094 # 9.4%
+
+# 计算SML斜率
+sml_slope = mkt_init - rf_init  # 0.071
+
+# 计算Beta 1.27对应的收益
+er_at_beta_127 = rf_init + sml_slope * 1.27  # 0.11317
+
+# 2. 初始化结果字典
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': ''
+}
+
+# 3. 绘图
+fig, ax = plt.subplots(figsize=(10, 7))
+plt.subplots_adjust(bottom=0.25)
+
+# 绘制初始SML线
+beta_range = [0, 2]
+er_range = [rf_init, rf_init + sml_slope * 2]
+sml_line, = ax.plot(beta_range, er_range, 'b-', linewidth=2.5, label='SML')
+
+# 标注X, Y, Z三个资产点
+points = {
+    'X': (0.62, 0.081),  # (0.62, 8.1%)
+    'Y': (1.18, 0.131),  # (1.18, 13.1%)
+    'Z': (1.51, 0.099)   # (1.51, 9.9%)
+}
+for label, (beta, ret) in points.items():
+    ax.plot(beta, ret, 'ro', markersize=8)
+    ax.annotate(f'{label}\n(β={beta}, E(R)={ret*100:.1f}%)', 
+                xy=(beta, ret), xytext=(15, 10), 
+                textcoords='offset points', ha='center',
+                bbox=dict(boxstyle="round,pad=0.3", fc="yellow", alpha=0.5),
+                arrowprops=dict(arrowstyle="->", color='black'))
+
+# 标注无风险利率和市场组合点
+ax.plot(0, rf_init, 'go', markersize=8, label=f'Rf (β=0)')
+ax.plot(1, mkt_init, 'mo', markersize=8, label=f'Market (β=1)')
+
+# 设置坐标轴格式
+ax.set_xlim(0, 2)
+ax.set_ylim(0, 0.20)
+ax.set_xlabel('Beta', fontsize=12)
+ax.set_ylabel('Expected Return', fontsize=12)
+ax.set_title('Security Market Line (SML) & Asset Points', fontsize=14)
+ax.legend(loc='upper left')
+ax.grid(True, linestyle='--', alpha=0.7)
+ax.yaxis.set_major_formatter(mtick.PercentFormatter(1.0))
+
+# 4. 添加可拖动的交互滑块
+ax_rf = plt.axes([0.15, 0.1, 0.75, 0.03])
+ax_mkt = plt.axes([0.15, 0.05, 0.75, 0.03])
+
+slider_rf = Slider(ax_rf, 'Rf', 0.0, 0.10, valinit=rf_init, valstep=0.001, valfmt='%1.1f%%')
+slider_mkt = Slider(ax_mkt, 'Market', 0.0, 0.20, valinit=mkt_init, valstep=0.001, valfmt='%1.1f%%')
+
+# 定义滑块更新函数
+def update(val):
+    rf = slider_rf.val
+    mkt = slider_mkt.val
+    slope = mkt - rf
+    # 更新SML线的Y轴数据
+    sml_line.set_ydata([rf, rf + slope * 2])
+    fig.canvas.draw_idle()
+
+slider_rf.on_changed(update)
+slider_mkt.on_changed(update)
+
+# 5. 保存图片并写入路径
+fig_path = 'sml_plot.png'
+fig.savefig(fig_path, dpi=150, bbox_inches='tight')
+plt.close(fig)
+
+result['figure_path'] = os.path.abspath(fig_path)
+```

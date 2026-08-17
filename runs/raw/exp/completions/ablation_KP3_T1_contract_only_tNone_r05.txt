@@ -1,0 +1,80 @@
+我需要先确认一下：这是一个计算债券价格、久期等指标的Python脚本。我将按您的要求编写一个可直接运行、不联网、只使用指定库的脚本。
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import optimize
+
+# 债券参数
+face_value = 100.0          # 面值
+coupon_rate = 0.046         # 票息率 4.6%
+maturity_years = 7          # 7年期
+ytm = 0.053                 # 到期收益率 5.3%
+payment_freq = 1            # 每年付息一次
+
+# 计算各期现金流
+periods = np.arange(1, maturity_years + 1)  # 第1到第7期
+coupon_payment = face_value * coupon_rate   # 每期票息
+
+# 现金流：前6期是票息，最后一期是票息+面值
+cash_flows = np.full(maturity_years, coupon_payment)
+cash_flows[-1] += face_value  # 最后一期加面值
+
+# 1. 计算债券价格 (现值)
+discount_factors = (1 + ytm) ** (-periods)
+price = np.sum(cash_flows * discount_factors)
+
+# 2. 计算麦考利久期 (Macaulay Duration)
+# 定义: 加权平均剩余期限，权重为各期现金流现值占债券价格的比例
+present_values = cash_flows * discount_factors
+weights = present_values / price
+macaulay_duration = np.sum(periods * weights)  # 单位：年
+
+# 3. 计算修正久期 (Modified Duration)
+# 修正久期 = 麦考利久期 / (1 + ytm / m) 其中 m 是每年付息次数
+modified_duration = macaulay_duration / (1 + ytm / payment_freq)
+
+# 4. 计算凸性 (Convexity)
+# 凸性公式: (1/(P*(1+y/m)^2)) * sum(CF_t * t * (t+1) / (1+y/m)^t)
+convexity_numerator = np.sum(cash_flows * periods * (periods + 1) * (1 + ytm) ** (-periods - 2))
+convexity = convexity_numerator / price
+
+# 整理结果
+result = {
+    'price': round(price, 6),
+    'macaulay_duration_years': round(macaulay_duration, 6),
+    'modified_duration_years': round(modified_duration, 6),
+    'convexity': round(convexity, 6)
+}
+
+# 打印结果以供验证
+print("债券价格（每100元面值）:", result['price'])
+print("麦考利久期（年）:", result['macaulay_duration_years'])
+print("修正久期（年）:", result['modified_duration_years'])
+print("凸性:", result['convexity'])
+
+# 可视化：展示债券现金流的时间价值
+plt.figure(figsize=(10, 6))
+plt.bar(periods, present_values, alpha=0.7, label='各期现金流现值')
+plt.axhline(y=0, color='gray', linestyle='--', linewidth=0.8)
+plt.xlabel('剩余期限（年）')
+plt.ylabel('现值')
+plt.title('债券各期现金流现值分布')
+plt.legend()
+plt.grid(alpha=0.3)
+plt.show()
+
+# 显示 DataFrame 格式一览
+df_check = pd.DataFrame({
+    '期数': periods,
+    '现金流': cash_flows,
+    '折现因子': np.round(discount_factors, 6),
+    '现值': np.round(present_values, 6),
+    '权重': np.round(weights, 6)
+})
+print("\n现金流现值明细表：")
+print(df_check)
+```
+
+这个脚本直接计算并返回您要求的四个指标，所有数值都精确保留6位小数，并且可以复现。运行时还会展示图表和明细表以帮助验证。

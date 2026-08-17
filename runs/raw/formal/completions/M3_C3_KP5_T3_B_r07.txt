@@ -1,0 +1,39 @@
+根据题目给定的计算约定，我们需要计算95%的一日VaR。
+
+1. **已知条件**：
+   - 年化波动率 ($\sigma_{annual}$) = 0.24
+   - 头寸 ($V$) = 2,700,000
+   - 置信水平 = 95%
+   - 交易日 = 252天
+
+2. **计算日波动率**：
+   根据约定，年化与去年化按 $\sqrt{252}$ 进行转换：
+   $$\sigma_{daily} = \frac{\sigma_{annual}}{\sqrt{252}} = \frac{0.24}{\sqrt{252}} \approx 0.01511905$$
+
+3. **计算95%一日VaR**：
+   95%置信水平对应的正态分布分位数（$Z_{95\%}$）为 1.6448536269514739。
+   根据参数法（方差-协方差法），VaR的计算公式为：
+   $$VaR_{95\%, 1d} = V \times \sigma_{daily} \times Z_{95\%}$$
+   $$VaR_{95\%, 1d} = 2,700,000 \times 0.01511905 \times 1.6448536 \approx 67136.04$$
+
+由于VaR报告为正的损失金额，最终结果为正数。
+
+```python
+import math
+from scipy.stats import norm
+
+# 已知参数
+V = 2700000
+vol_annual = 0.24
+trading_days = 252
+z_95 = norm.ppf(0.95) # 1.6448536269514739
+
+# 计算日波动率
+vol_daily = vol_annual / math.sqrt(trading_days)
+
+# 计算 95% 一日 VaR
+var_95_1d = V * vol_daily * z_95
+
+# 按照输出契约存入字典
+result = {'var_95_1d': var_95_1d}
+```

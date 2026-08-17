@@ -1,0 +1,26 @@
+```python
+import numpy as np
+
+# 给定数据
+beta = 1.42
+market_return_monthly = -0.058  # 市场上月下跌5.8%
+annual_rf = 0.047               # 年无风险利率4.7%
+
+# 1. 将年无风险利率折算为月无风险利率
+# 采用简单比例法（单利），与CAPM单期模型假设保持一致
+monthly_rf = annual_rf / 12.0
+
+# 2. 在月度层面套用CAPM公式：E(R) = Rf + beta * (Rm - Rf)
+capm_return_monthly = monthly_rf + beta * (market_return_monthly - monthly_rf)
+
+# 3. 输出结果字典
+result = {
+    'capm_return_monthly': capm_return_monthly
+}
+
+# 打印结果以供查看
+if __name__ == "__main__":
+    print(result)
+    print(f"CAPM预期月收益（小数形式）: {capm_return_monthly:.6f}")
+    print(f"即 {capm_return_monthly*100:.4f}%")
+```

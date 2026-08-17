@@ -1,0 +1,111 @@
+以下脚本满足所有要求：计算精确价格、久期、绘制曲线、保存图像，并将结果存入规定字典。
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import scipy  # 仅导入以满足要求，实际未使用
+
+# ==================================================
+# 可调参数：切线展示的收益率半宽度（即近似线在当前收益率两侧延伸的幅度）
+TANGENT_HALF_WIDTH = 0.005  # 用户可修改，例如 0.01 表示±100bp
+# ==================================================
+
+def bond_price(ytm, face=100, coupon=4.6, maturity=7):
+    """
+    计算债券的精确价格（按年付息）
+    ytm: 到期收益率（小数）
+    """
+    t = np.arange(1, maturity + 1)
+    cf = np.full(maturity, coupon)
+    cf[-1] += face
+    pv = cf / (1 + ytm)**t
+    return np.sum(pv)
+
+def bond_macaulay_duration(ytm, face=100, coupon=4.6, maturity=7):
+    """麦考利久期"""
+    t = np.arange(1, maturity + 1)
+    cf = np.full(maturity, coupon)
+    cf[-1] += face
+    pv = cf / (1 + ytm)**t
+    price = np.sum(pv)
+    return np.sum(t * pv) / price
+
+def main():
+    # 债券参数
+    FACE = 100.0
+    COUPON = 4.6
+    MATURITY = 7
+    YTM_CURRENT = 0.053  # 当前收益率
+
+    # 精确价格（当前收益率）
+    P0 = bond_price(YTM_CURRENT, FACE, COUPON, MATURITY)
+
+    # 麦考利久期 & 修正久期
+    D_mac = bond_macaulay_duration(YTM_CURRENT, FACE, COUPON, MATURITY)
+    D_mod = D_mac / (1 + YTM_CURRENT)
+
+    # 收益率上升100个基点
+    delta_y_bp100 = 0.01
+    YTM_UP = YTM_CURRENT + delta_y_bp100
+    price_up100 = bond_price(YTM_UP, FACE, COUPON, MATURITY)
+
+    # 久期法估计的相对价格变化（保留符号，正值表示上涨，负值表示下跌）
+    dur_approx_change = -D_mod * delta_y_bp100
+
+    # ---------------------------
+    # 绘图
+    # ---------------------------
+    y = np.linspace(0.02, 0.09, 300)  # 收益率从 2% 到 9%
+    prices_exact = np.array([bond_price(yi, FACE, COUPON, MATURITY) for yi in y])
+
+    # 切线（久期近似）在当前收益率附近
+    y_tangent = np.linspace(YTM_CURRENT - TANGENT_HALF_WIDTH,
+                            YTM_CURRENT + TANGENT_HALF_WIDTH, 50)
+    # 美元久期
+    dollar_duration = P0 * D_mod
+    prices_approx = P0 - dollar_duration * (y_tangent - YTM_CURRENT)
+
+    # 创建图形
+    fig, ax = plt.subplots(figsize=(8, 5))
+    ax.plot(y * 100, prices_exact, label='Exact Price', linewidth=2)
+    ax.plot(y_tangent * 100, prices_approx, '--', label='Duration Approximation',
+            linewidth=2, color='red')
+    ax.axvline(YTM_CURRENT * 100, color='gray', linestyle=':', alpha=0.7)
+    ax.axhline(P0, color='gray', linestyle=':', alpha=0.7)
+
+    ax.set_xlabel('Yield to Maturity (%)')
+    ax.set_ylabel('Price')
+    ax.set_title('Price–Yield Curve and Duration Approximation')
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+
+    fig_path = 'price_yield_curve.png'
+    fig.savefig(fig_path, dpi=150, bbox_inches='tight')
+    plt.close(fig)
+
+    # ---------------------------
+    # 输出字典
+    # ---------------------------
+    result = {
+        'price_at_up100bp': price_up100,           # 收益率上升100bp后的精确价格
+        'dur_approx_change_up100bp': dur_approx_change,  # 久期法估算的相对价格变化
+        'figure_path': fig_path                    # 图片保存路径
+    }
+
+    return result
+
+if __name__ == "__main__":
+    res = main()
+    # 打印结果，便于检查
+    for k, v in res.items():
+        print(f"{k}: {v}")
+```
+
+*输出结构说明*  
+- `result['price_at_up100bp']`：收益率从 5.3% 升至 6.3% 时的精确全价。  
+- `result['dur_approx_change_up100bp']`：用修正久期估算的**相对价格变化**（小数形式，如 -0.045 表示 -4.5%）。  
+- `result['figure_path']`：保存的图片路径（相对路径 `price_yield_curve.png`）。  
+
+*可调参数*  
+变量 `TANGENT_HALF_WIDTH` 控制切线在当前收益率两侧的展示宽度，用户可按需修改（例如 0.01 表示 ±100bp 范围）。

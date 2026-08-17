@@ -1,0 +1,80 @@
+以下是根据要求编写的自包含 Python 脚本。它计算欧式看涨期权在不同波动率下的 Delta，绘制曲线，输出所需结果并保存图像。
+
+```python
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+
+# =========================
+# 参数设置（可按需调节）
+# =========================
+K = 97.5          # 行权价
+r = 0.043         # 无风险利率
+T = 0.58          # 到期时间
+S_low = 70.0      # 标的价格下界
+S_high = 140.0    # 标的价格上界
+S_target = 110.0  # 需报告Delta的标的价格
+sigma_list = [0.15, 0.276, 0.40]  # 三条波动率曲线
+
+# =========================
+# Black-Scholes Delta 函数
+# =========================
+def bs_call_delta(S, K, r, T, sigma):
+    """
+    计算欧式看涨期权的 Delta：N(d1)
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# =========================
+# 在网格上计算所有曲线
+# =========================
+S_grid = np.linspace(S_low, S_high, 200)  # 200个点足够平滑
+
+plt.figure(figsize=(10, 6))
+for sigma in sigma_list:
+    delta_curve = bs_call_delta(S_grid, K, r, T, sigma)
+    plt.plot(S_grid, delta_curve, label=f'$\sigma$ = {sigma*100:.1f}%')
+
+# 图形标注
+plt.title('欧式看涨期权 Delta 与标的价格的关系 (BS模型)')
+plt.xlabel('标的价格 S')
+plt.ylabel('Delta')
+plt.axhline(0.5, color='gray', linestyle='--', linewidth=0.8, alpha=0.7)
+plt.axvline(K, color='gray', linestyle='--', linewidth=0.8, alpha=0.7)
+plt.grid(True, alpha=0.3)
+plt.legend()
+plt.tight_layout()
+
+# 保存图形
+figure_filename = 'delta_curve.png'
+plt.savefig(figure_filename, dpi=150)
+plt.close()
+
+# =========================
+# 计算要求的单个 Delta 值
+# =========================
+sigma_query = 0.276
+delta_at_110 = bs_call_delta(S_target, K, r, T, sigma_query)
+
+# =========================
+# 组装结果字典
+# =========================
+result = {
+    'delta_at_s110': delta_at_110,
+    'figure_path': figure_filename
+}
+
+# 打印结果以便检查（投屏也可看到）
+print(f"标的 S = {S_target}, 波动率 sigma = {sigma_query*100:.1f}% 时的 Delta = {delta_at_110:.6f}")
+print(f"图形已保存至: {figure_filename}")
+print(f"result 字典内容: {result}")
+```
+
+**脚本说明**  
+- 使用 `scipy.stats.norm.cdf` 计算标准正态累积概率，公式为经典的 Black‑Scholes Δ = N(d₁)。  
+- 波动率 15%、27.6%、40% 三条曲线以不同颜色绘制，图例自动标注。  
+- 要求输出的 Delta 值（S=110, σ=27.6%）通过同一函数计算并存入 `result['delta_at_s110']`。  
+- 图形以 150 dpi 保存为当前目录下的 `delta_curve.png`，路径写入 `result['figure_path']`。
+
+运行该脚本即可得到所有输出，完全自包含且可复现。

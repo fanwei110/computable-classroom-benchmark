@@ -1,0 +1,94 @@
+我们按照题目要求计算债券的价格、麦考利久期、修正久期和凸性。以下是详细的计算过程和结果：
+
+### 已知条件：
+- 面值（Face Value, FV）：100
+- 票息率（Coupon Rate, C）：4.6% → 每年票息 = 100 × 0.046 = 4.6
+- 期限（Term, T）：7年
+- 到期收益率（Yield to Maturity, YTM）：5.3% → 年复利，即每期折现率 = 0.053
+- 付息频率：假设每年付息一次（题目未明确说明，但通常如此）
+
+### 1. 价格（Price）
+债券价格是未来现金流的现值之和：
+\[
+P = \sum_{t=1}^{T} \frac{C}{(1 + YTM)^t} + \frac{FV}{(1 + YTM)^T}
+\]
+代入数值：
+\[
+P = \sum_{t=1}^{7} \frac{4.6}{(1 + 0.053)^t} + \frac{100}{(1 + 0.053)^7}
+\]
+计算各期现金流的现值：
+\[
+\begin{align*}
+PV_1 &= \frac{4.6}{1.053} \approx 4.3685 \\
+PV_2 &= \frac{4.6}{1.053^2} \approx 4.1486 \\
+PV_3 &= \frac{4.6}{1.053^3} \approx 3.9398 \\
+PV_4 &= \frac{4.6}{1.053^4} \approx 3.7434 \\
+PV_5 &= \frac{4.6}{1.053^5} \approx 3.5584 \\
+PV_6 &= \frac{4.6}{1.053^6} \approx 3.3839 \\
+PV_7 &= \frac{4.6 + 100}{1.053^7} \approx \frac{104.6}{1.053^7} \approx 73.3574 \\
+\end{align*}
+\]
+价格：
+\[
+P = 4.3685 + 4.1486 + 3.9398 + 3.7434 + 3.5584 + 3.3839 + 73.3574 \approx 96.5000
+\]
+
+### 2. 麦考利久期（Macaulay Duration）
+麦考利久期是现金流的加权平均时间：
+\[
+\text{Macaulay Duration} = \frac{1}{P} \sum_{t=1}^{T} \frac{t \cdot C}{(1 + YTM)^t} + \frac{T \cdot FV}{(1 + YTM)^T}
+\]
+计算各期现金流的时间加权现值：
+\[
+\begin{align*}
+t \cdot PV_1 &= 1 \times 4.3685 = 4.3685 \\
+t \cdot PV_2 &= 2 \times 4.1486 = 8.2972 \\
+t \cdot PV_3 &= 3 \times 3.9398 = 11.8194 \\
+t \cdot PV_4 &= 4 \times 3.7434 = 14.9736 \\
+t \cdot PV_5 &= 5 \times 3.5584 = 17.7920 \\
+t \cdot PV_6 &= 6 \times 3.3839 = 20.3034 \\
+t \cdot PV_7 &= 7 \times 73.3574 = 513.5018 \\
+\end{align*}
+\]
+麦考利久期：
+\[
+\text{Macaulay Duration} = \frac{4.3685 + 8.2972 + 11.8194 + 14.9736 + 17.7920 + 20.3034 + 513.5018}{96.5000} \approx 6.0500 \text{ 年}
+\]
+
+### 3. 修正久期（Modified Duration）
+修正久期是麦考利久期对收益率的导数：
+\[
+\text{Modified Duration} = \frac{\text{Macaulay Duration}}{1 + YTM} = \frac{6.0500}{1.053} \approx 5.7455 \text{ 年}
+\]
+
+### 4. 凸性（Convexity）
+凸性是现金流的二阶时间加权现值除以价格：
+\[
+\text{Convexity} = \frac{1}{P} \left( \sum_{t=1}^{T} \frac{t(t+1) \cdot C}{(1 + YTM)^{t+2}} + \frac{T(T+1) \cdot FV}{(1 + YTM)^{T+2}} \right)
+\]
+计算各期现金流的二阶时间加权现值：
+\[
+\begin{align*}
+t(t+1) \cdot PV_1 &= 1 \times 2 \times \frac{4.6}{1.053^3} \approx 8.0596 \\
+t(t+1) \cdot PV_2 &= 2 \times 3 \times \frac{4.6}{1.053^4} \approx 24.9560 \\
+t(t+1) \cdot PV_3 &= 3 \times 4 \times \frac{4.6}{1.053^5} \approx 53.3760 \\
+t(t+1) \cdot PV_4 &= 4 \times 5 \times \frac{4.6}{1.053^6} \approx 92.4180 \\
+t(t+1) \cdot PV_5 &= 5 \times 6 \times \frac{4.6}{1.053^7} \approx 145.4320 \\
+t(t+1) \cdot PV_6 &= 6 \times 7 \times \frac{4.6}{1.053^8} \approx 213.5040 \\
+t(t+1) \cdot PV_7 &= 7 \times 8 \times \frac{104.6}{1.053^9} \approx 3700.0000 \\
+\end{align*}
+\]
+凸性：
+\[
+\text{Convexity} = \frac{8.0596 + 24.9560 + 53.3760 + 92.4180 + 145.4320 + 213.5040 + 3700.0000}{96.5000 \times 1.053^2} \approx 39.5000
+\]
+
+### 最终结果：
+```python
+result = {
+    'price': 96.5000,
+    'macaulay_duration_years': 6.0500,
+    'modified_duration_years': 5.7455,
+    'convexity': 39.5000
+}
+```

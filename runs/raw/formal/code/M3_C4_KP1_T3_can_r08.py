@@ -1,0 +1,39 @@
+import numpy as np
+
+# 1. 按资产被提及的顺序对应 60/40 权重（A 占 60%，B 占 40%）
+weights = np.array([0.6, 0.4])
+
+# 给定的资产年化波动率（小数表示）
+vol_A = 0.184
+vol_B = 0.297
+vols = np.array([vol_A, vol_B])
+
+# 2. 构造相关系数 0.3 与 0.8 两个协方差矩阵
+# 协方差矩阵公式：Σ = diag(σ) * C * diag(σ)，其中 C 为相关系数矩阵
+def build_cov_matrix(rho, vols):
+    corr = np.array([[1.0, rho],
+                     [rho, 1.0]])
+    cov = np.outer(vols, vols) * corr
+    return cov
+
+cov_before = build_cov_matrix(0.3, vols)
+cov_after = build_cov_matrix(0.8, vols)
+
+# 3. 计算两个组合波动率，用小数表示
+# 组合方差公式：σ_p^2 = w'Σw
+var_before = weights.T @ cov_before @ weights
+var_after = weights.T @ cov_after @ weights
+
+vol_before_annual = np.sqrt(var_before)
+vol_after_annual = np.sqrt(var_after)
+
+# 4. 填充 result
+result = {
+    'vol_before_annual': vol_before_annual,
+    'vol_after_annual': vol_after_annual
+}
+
+# 打印结果以便课堂投屏展示
+print(f"相关系数为 0.3 时的组合年化波动率: {vol_before_annual:.4%}")
+print(f"相关系数为 0.8 时的组合年化波动率: {vol_after_annual:.4%}")
+print("result =", result)

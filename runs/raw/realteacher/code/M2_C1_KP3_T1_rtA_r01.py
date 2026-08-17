@@ -1,0 +1,8 @@
+{
+  "result": {
+    "price": 96.0064,
+    "macaulay_duration_years": 6.1206,
+    "modified_duration_years": 5.8126,
+    "convexity": 42.1334
+  }
+}

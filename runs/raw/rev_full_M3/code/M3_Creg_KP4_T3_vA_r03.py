@@ -1,0 +1,32 @@
+import numpy as np
+from scipy.stats import norm
+
+# 期权参数
+S = 103.7       # 标的资产现价
+K = 97.5        # 行权价
+T = 0.58        # 剩余期限（年）
+r = 0.043       # 无风险利率
+sigma_1 = 0.276 # 初始隐含波动率
+sigma_2 = 0.286 # 隐含波动率上升1个百分点（27.6% -> 28.6%）
+
+# Black-Scholes 欧式看涨期权定价公式
+def bs_call_price(S, K, T, r, sigma):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    return price
+
+# 计算初始期权价格
+price_initial = bs_call_price(S, K, T, r, sigma_1)
+
+# 计算隐含波动率上升1个百分点后的期权价格
+price_new = bs_call_price(S, K, T, r, sigma_2)
+
+# 计算期权价格变化量
+price_change = price_new - price_initial
+
+# 将结果存入要求的字典中
+result = {'price_change': price_change}
+
+# 输出结果
+print(result)

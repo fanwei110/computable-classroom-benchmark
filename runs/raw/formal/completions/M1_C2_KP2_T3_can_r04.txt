@@ -1,0 +1,34 @@
+以下是自包含的 Python 脚本，按照题目要求计算 CAPM 下的月度预期收益：
+
+```python
+import numpy as np
+
+# 输入参数
+beta = 1.42
+market_return_monthly = -0.058  # 市场上个月跌了5.8%
+risk_free_rate_annual = 0.047   # 年无风险利率4.7%
+
+# 1. 将年无风险利率折算为月利率（连续复利方式）
+risk_free_rate_monthly = (1 + risk_free_rate_annual) ** (1/12) - 1
+
+# 2. 在月度层面套用CAPM公式：E(R_i) = R_f + β_i * (E(R_m) - R_f)
+# 这里使用实际市场收益代替期望市场收益（题目未给出期望值，假设实际即期望）
+capm_return_monthly = risk_free_rate_monthly + beta * (market_return_monthly - risk_free_rate_monthly)
+
+# 3. 存储结果
+result = {
+    'capm_return_monthly': capm_return_monthly
+}
+
+# 输出结果（可选，用于验证）
+print(result)
+```
+
+输出契约说明：
+- `result` 字典中 `'capm_return_monthly'` 键存储的是根据 CAPM 计算得到的该股票上个月的预期收益率（月度值）。
+- 计算过程：
+  1. 年化无风险利率通过 `(1 + r)^(1/12) - 1` 转换为月度利率（复利方式）
+  2. 使用 CAPM 公式计算月度预期收益：`R_f + β*(R_m - R_f)`
+  3. 结果以小数形式表示（例如 -0.0812 表示 -8.12%）
+
+注意：题目未明确市场收益是否为期望值，这里假设实际市场收益即为 CAPM 中的期望市场收益。如果需要更精确处理，可能需要历史数据估计期望市场收益。

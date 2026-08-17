@@ -1,0 +1,170 @@
+以下是满足您要求的Python脚本。它使用马科维茨均值-方差理论，绘制了三种相关系数下的有效前沿，标出了最小方差组合，并计算了相关系数为0.45时的关键波动率。
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import minimize
+
+# ==================== 参数设置 ====================
+# 两只风险资产的期望收益（年化，小数）
+mu = np.array([0.071, 0.124])
+# 两只风险资产的波动率（年化，小数）
+sigma = np.array([0.163, 0.289])
+# 相关系数列表
+rho_list = [0.15, 0.45, 0.75]
+# 目标期望收益（小数）
+target_return = 0.10
+
+# ==================== 辅助函数 ====================
+def portfolio_stats(w, mu, cov):
+    """计算组合的期望收益和波动率"""
+    w = np.asarray(w).flatten()
+    ret = np.dot(w, mu)
+    vol = np.sqrt(np.dot(w.T, np.dot(cov, w)))
+    return ret, vol
+
+def min_variance_portfolio(mu, cov):
+    """计算允许卖空、满仓约束下的最小方差组合（解析解）"""
+    n = len(mu)
+    ones = np.ones(n)
+    inv_cov = np.linalg.inv(cov)
+    # 最小方差组合权重：w = inv_cov @ ones / (ones.T @ inv_cov @ ones)
+    w_mvp = inv_cov @ ones / (ones.T @ inv_cov @ ones)
+    return w_mvp
+
+def min_vol_for_target_return(mu, cov, target):
+    """计算给定目标收益下的最小波动率组合（允许卖空、满仓）"""
+    n = len(mu)
+    # 拉格朗日乘子法构建线性方程组
+    # [ 2*Cov   -mu   -1 ] [w]   [0]
+    # [  mu'     0     0 ] [l1] = [target]
+    # [  1'      0     0 ] [l2]   [1]
+    A = np.zeros((n+2, n+2))
+    A[:n, :n] = 2 * cov
+    A[:n, n] = -mu
+    A[:n, n+1] = -np.ones(n)
+    A[n, :n] = mu
+    A[n+1, :n] = np.ones(n)
+    
+    b = np.zeros(n+2)
+    b[n] = target
+    b[n+1] = 1.0
+    
+    # 求解线性系统
+    sol = np.linalg.solve(A, b)
+    w_opt = sol[:n]
+    ret_opt, vol_opt = portfolio_stats(w_opt, mu, cov)
+    return w_opt, vol_opt
+
+def generate_frontier_points(mu, cov, num_points=100):
+    """生成有效前沿上的点（收益从MVP收益到最大值，以及最小方差组合之前的部分）"""
+    # 先计算最小方差组合
+    w_mvp = min_variance_portfolio(mu, cov)
+    ret_mvp, vol_mvp = portfolio_stats(w_mvp, mu, cov)
+    
+    # 计算最大收益组合（全部投资于高收益资产，但这里我们允许卖空，所以收益无上限？）
+    # 为了绘图，我们取收益范围从 min(mu) 到 max(mu) * 1.5 或更大，但必须包含目标收益
+    min_ret = min(mu)
+    max_ret = max(mu) * 1.5  # 扩大范围以展示卖空效果
+    
+    # 包含目标收益
+    target_returns = np.linspace(min_ret, max_ret, num_points)
+    
+    volatilities = []
+    valid_returns = []
+    for r_target in target_returns:
+        try:
+            _, vol = min_vol_for_target_return(mu, cov, r_target)
+            volatilities.append(vol)
+            valid_returns.append(r_target)
+        except np.linalg.LinAlgError:
+            continue
+    
+    return np.array(valid_returns), np.array(volatilities), ret_mvp, vol_mvp
+
+# ==================== 主计算与绘图 ====================
+plt.figure(figsize=(10, 8))
+
+# 存储关键结果的字典
+result = {}
+
+# 遍历不同的相关系数
+colors = ['blue', 'green', 'red']
+for rho, color in zip(rho_list, colors):
+    # 构造协方差矩阵
+    cov = np.array([[sigma[0]**2, rho*sigma[0]*sigma[1]],
+                    [rho*sigma[0]*sigma[1], sigma[1]**2]])
+    
+    # 生成有效前沿
+    rets, vols, mvp_ret, mvp_vol = generate_frontier_points(mu, cov, num_points=200)
+    
+    # 绘制有效前沿
+    plt.plot(vols, rets, color=color, linewidth=2, label=f'ρ = {rho}')
+    
+    # 标出最小方差组合
+    plt.scatter(mvp_vol, mvp_ret, color=color, marker='o', s=80, zorder=5, 
+                edgecolors='black', linewidth=1.5)
+    # 添加文字标注
+    plt.annotate(f'MVP\n({mvp_vol:.3f}, {mvp_ret:.3f})', 
+                 xy=(mvp_vol, mvp_ret), xytext=(mvp_vol+0.02, mvp_ret-0.01),
+                 arrowprops=dict(arrowstyle='->', color=color), fontsize=9, color=color)
+    
+    # 如果相关系数为0.45，计算所需指标
+    if rho == 0.45:
+        # 保存最小方差组合的波动率
+        result['mvp_vol_at_rho45'] = mvp_vol
+        
+        # 计算目标收益10%下的最小波动率
+        w_opt_target, vol_target = min_vol_for_target_return(mu, cov, target_return)
+        result['frontier_vol_at_target'] = vol_target
+        
+        # 在图上标出组合点（可选，便于演示）
+        plt.scatter(vol_target, target_return, color='purple', marker='*', s=200, zorder=6,
+                    edgecolors='black', linewidth=1.5)
+        plt.annotate(f'Target 10%\nVol: {vol_target:.4f}', 
+                     xy=(vol_target, target_return), xytext=(vol_target+0.02, target_return+0.005),
+                     arrowprops=dict(arrowstyle='->', color='purple'), fontsize=10, color='purple')
+
+# 绘制单个资产点
+plt.scatter(sigma[0], mu[0], color='black', marker='s', s=100, label='Asset 1 (7.1%, 16.3%)')
+plt.scatter(sigma[1], mu[1], color='black', marker='^', s=100, label='Asset 2 (12.4%, 28.9%)')
+
+# 图形装饰
+plt.xlabel('Annualized Volatility (σ)', fontsize=12)
+plt.ylabel('Expected Annual Return', fontsize=12)
+plt.title('Mean-Variance Efficient Frontiers for Different Correlations\n(Short Sales Allowed, Fully Invested)', fontsize=14)
+plt.legend(loc='upper left', fontsize=10)
+plt.grid(True, alpha=0.3)
+plt.xlim(left=0, right=0.6)
+plt.ylim(bottom=0.05, top=0.22)
+
+# 保存图形
+figure_path = 'efficient_frontier.png'
+plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+result['figure_path'] = figure_path
+
+# 打印结果以便检查
+print("计算结果（相关系数 ρ = 0.45）：")
+print(f"最小方差组合的年化波动率: {result['mvp_vol_at_rho45']:.6f} ({result['mvp_vol_at_rho45']*100:.4f}%)")
+print(f"目标期望收益 10% 下的最小年化波动率: {result['frontier_vol_at_target']:.6f} ({result['frontier_vol_at_target']*100:.4f}%)")
+print(f"图形已保存至: {result['figure_path']}")
+
+# 输出最终结果字典（供后续使用）
+print("\nresult 字典内容:")
+print(result)
+```
+
+**输出说明：**
+- `mvp_vol_at_rho45`：相关系数为0.45时，最小方差组合的年化波动率（小数形式）。
+- `frontier_vol_at_target`：相关系数为0.45时，目标期望收益10%下可达到的最小年化波动率（小数形式）。
+- `figure_path`：生成的均值-方差前沿图的文件路径。
+
+**图形包含：**
+- 三条曲线分别对应相关系数0.15、0.45、0.75的有效前沿。
+- 每条曲线上的最小方差组合（MVP）用圆点标出并附有坐标。
+- 相关系数0.45时，目标收益10%的点用紫色星号标出。
+- 两个单独资产点用黑色方块和三角标出。
+
+该脚本完全自包含，使用解析法计算最小方差组合和给定收益下的最小波动率组合，确保结果精确可复现。

@@ -1,0 +1,15 @@
+usage keys: ['prompt_tokens', 'completion_tokens', 'total_tokens', 'cost', 'is_byok', 'prompt_tokens_details', 'cost_details', 'completion_tokens_details']
+n=2160  token-coverage=100.0%
+
+=== Deployment economics by condition (tokens & latency per CORRECT output) ===
+cond   acc%  tok/gen     in/out  tok/correct  gens/correct  medLat ~s/correct
+  C1   34.3     3247  108/3138         9477          2.92    30.4         89  $5.667tot $0.0306/correct
+  C2   63.9     2349  339/2008         3676          1.57    28.5         45  $3.662tot $0.0106/correct
+  C3   35.7     3358  199/3158         9394          2.80    35.6         99  $5.635tot $0.0292/correct
+  C4   88.1     2026  407/1618         2298          1.13    23.4         26  $2.997tot $0.0063/correct
+
+total API cost of the 2,160-generation formal run: $17.96
+
+Read: C4 uses more tokens PER GENERATION (longer template) but the improvised
+condition needs ~C1_gens/C4_gens as many attempts per correct output, so structure
+is cheaper PER CORRECT ANSWER on both tokens and wall-clock.

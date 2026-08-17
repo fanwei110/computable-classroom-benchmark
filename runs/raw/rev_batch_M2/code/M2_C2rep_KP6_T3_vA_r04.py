@@ -1,0 +1,64 @@
+import pandas as pd
+import numpy as np
+
+# -------------------- 1. 读取数据 --------------------
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 自动检测日期列（如果存在）
+date_col = None
+for col in df.columns:
+    if 'date' in col.lower():
+        date_col = col
+        break
+
+if date_col is not None:
+    df[date_col] = pd.to_datetime(df[date_col])
+    df = df.set_index(date_col)
+    # 推断频率，若推断失败则以平均间隔天数确定
+    freq = pd.infer_freq(df.index)
+    if freq is None:
+        delta = df.index.to_series().diff().median()
+        days = delta.days if hasattr(delta, 'days') else 1
+        if days <= 1:
+            ann_factor = 252
+        elif days <= 7:
+            ann_factor = 52
+        elif days <= 31:
+            ann_factor = 12
+        else:
+            ann_factor = 1
+    else:
+        freq_upper = freq.upper()
+        if freq_upper in ['B', 'D']:
+            ann_factor = 252
+        elif 'W' in freq_upper:
+            ann_factor = 52
+        elif 'M' in freq_upper:
+            ann_factor = 12
+        elif 'Q' in freq_upper:
+            ann_factor = 4
+        elif 'A' in freq_upper:
+            ann_factor = 1
+        else:
+            ann_factor = 252   # 默认日频
+else:
+    # 没有日期列，默认日频
+    ann_factor = 252
+
+# -------------------- 2. 提取收益率序列 --------------------
+fund = df['fund'].dropna()
+
+# -------------------- 3. 计算年化夏普比率 --------------------
+rf_annual = 0.021
+rf_period = rf_annual / ann_factor          # 每期无风险利率
+
+excess_returns = fund - rf_period           # 每期超额收益
+mean_excess = excess_returns.mean()
+std_excess = excess_returns.std(ddof=1)     # 使用样本标准差
+
+# 年化夏普比率 = sqrt(年化因子) * (周期平均超额收益 / 周期标准差)
+sharpe_annual = np.sqrt(ann_factor) * mean_excess / std_excess
+
+# -------------------- 4. 输出结果 --------------------
+result = {'sharpe_annual': sharpe_annual}
+print(result)

@@ -1,0 +1,41 @@
+import numpy as np
+
+# 资产年化波动率
+sigma_A = 0.184   # 资产 A
+sigma_B = 0.297   # 资产 B
+
+# 60/40 权重：A 占 60%，B 占 40%
+w = np.array([0.6, 0.4])
+
+# 相关系数变化前后
+rho_before = 0.3
+rho_after  = 0.8
+
+def cov_matrix(sigma_A, sigma_B, rho):
+    """构造协方差矩阵"""
+    cov_ab = rho * sigma_A * sigma_B
+    return np.array([[sigma_A**2, cov_ab],
+                     [cov_ab, sigma_B**2]])
+
+# 计算两个协方差矩阵
+cov_before = cov_matrix(sigma_A, sigma_B, rho_before)
+cov_after  = cov_matrix(sigma_A, sigma_B, rho_after)
+
+# 组合方差与波动率
+var_before = w @ cov_before @ w
+var_after  = w @ cov_after @ w
+
+vol_before = np.sqrt(var_before)
+vol_after  = np.sqrt(var_after)
+
+# 结果字典
+result = {
+    'vol_before_annual': vol_before,
+    'vol_after_annual': vol_after
+}
+
+if __name__ == "__main__":
+    print("组合年化波动率变化：")
+    print(f"相关系数 0.3 时：{vol_before:.4%}")
+    print(f"相关系数 0.8 时：{vol_after:.4%}")
+    print("\nresult 字典：", result)

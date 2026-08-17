@@ -1,0 +1,107 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+def main():
+    # ==================== 1. 参数设定 ====================
+    mu1, mu2 = 0.071, 0.124          # 期望年收益
+    sigma1, sigma2 = 0.163, 0.289    # 年化波动率
+    target_return = 0.10              # 目标期望收益 10%
+    rho_list = [0.15, 0.45, 0.75]    # 给定的三种相关系数
+    
+    # ==================== 2. 权重扫描准备 ====================
+    # 允许卖空、满仓，w1 和 w2 的和为 1
+    w1_scan = np.linspace(-0.5, 1.5, 1000)
+    w2_scan = 1 - w1_scan
+    ret_scan = w1_scan * mu1 + w2_scan * mu2
+    
+    # ==================== 3. 绘图与计算 ====================
+    fig, ax = plt.subplots(figsize=(10, 7))
+    
+    # 初始化结果变量
+    mvp_vol_at_rho45 = None
+    frontier_vol_at_target = None
+    
+    for rho in rho_list:
+        # 构造协方差矩阵
+        cov12 = rho * sigma1 * sigma2
+        Sigma = np.array([[sigma1**2, cov12],
+                          [cov12, sigma2**2]])
+        
+        # 计算扫描方差与波动率
+        var_scan = (w1_scan**2 * Sigma[0,0] + 
+                    w2_scan**2 * Sigma[1,1] + 
+                    2 * w1_scan * w2_scan * Sigma[0,1])
+        vol_scan = np.sqrt(np.maximum(var_scan, 0))
+        
+        # 画前沿曲线
+        ax.plot(vol_scan, ret_scan, label=f'rho = {rho:.2f}', lw=2)
+        
+        # ---------- 解析求解最小方差组合 (MVP) ----------
+        # 由 min w'Σw s.t. w1+w2=1 导出的一阶条件求出
+        w1_mvp = (Sigma[1,1] - Sigma[0,1]) / (Sigma[0,0] + Sigma[1,1] - 2 * Sigma[0,1])
+        w2_mvp = 1 - w1_mvp
+        mvp_ret = w1_mvp * mu1 + w2_mvp * mu2
+        mvp_vol = np.sqrt(w1_mvp**2 * Sigma[0,0] + 
+                          w2_mvp**2 * Sigma[1,1] + 
+                          2 * w1_mvp * w2_mvp * Sigma[0,1])
+        
+        # 在曲线上标出最小方差组合
+        ax.scatter(mvp_vol, mvp_ret, marker='*', s=200, zorder=5, edgecolors='black')
+        ax.annotate(f'MVP (rho={rho})', 
+                    xy=(mvp_vol, mvp_ret), 
+                    xytext=(5, 5), 
+                    textcoords='offset points',
+                    fontsize=9,
+                    weight='bold')
+        
+        # ---------- 针对相关系数 rho = 0.45 的特定计算 ----------
+        if abs(rho - 0.45) < 1e-6:
+            mvp_vol_at_rho45 = mvp_vol
+            
+            # 解析求解目标收益下的最小波动率
+            w1_target = (target_return - mu2) / (mu1 - mu2)
+            w2_target = 1 - w1_target
+            target_var = (w1_target**2 * Sigma[0,0] + 
+                          w2_target**2 * Sigma[1,1] + 
+                          2 * w1_target * w2_target * Sigma[0,1])
+            frontier_vol_at_target = np.sqrt(target_var)
+            
+            # 在图上额外标出 10% 目标收益下的最优点
+            ax.scatter(frontier_vol_at_target, target_return, marker='D', s=80, color='red', zorder=5)
+            ax.annotate('Target 10% (rho=0.45)', 
+                        xy=(frontier_vol_at_target, target_return), 
+                        xytext=(5, -15), 
+                        textcoords='offset points',
+                        fontsize=9,
+                        color='red')
+
+    # ==================== 4. 图形美化与保存 ====================
+    ax.set_xlabel('Volatility (Standard Deviation)', fontsize=12)
+    ax.set_ylabel('Expected Return', fontsize=12)
+    ax.set_title('Mean-Variance Frontiers for Different Correlations', fontsize=14)
+    ax.legend(fontsize=11)
+    ax.grid(True, linestyle='--', alpha=0.6)
+    
+    # 保存图形
+    fig_path = 'markowitz_frontier.png'
+    plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+    plt.close()
+    
+    # ==================== 5. 输出结果 ====================
+    result = {
+        'mvp_vol_at_rho45': mvp_vol_at_rho45,
+        'frontier_vol_at_target': frontier_vol_at_target,
+        'figure_path': fig_path
+    }
+    
+    # 在控制台打印核心结果，便于当堂展示
+    print("========== 计算结果 ==========")
+    print(f"相关系数 0.45 时的最小方差组合年化波动率: {result['mvp_vol_at_rho45']:.6f}")
+    print(f"目标期望收益 10% 下可达到的最小年化波动率: {result['frontier_vol_at_target']:.6f}")
+    print(f"图形已保存至: {result['figure_path']}")
+    print("==============================")
+    
+    return result
+
+if __name__ == '__main__':
+    main()

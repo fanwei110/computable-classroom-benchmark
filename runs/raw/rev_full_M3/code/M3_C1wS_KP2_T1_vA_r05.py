@@ -1,0 +1,87 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 1. 参数设定
+# ==========================================
+rf = 0.023          # 无风险利率 2.3%
+rm = 0.094          # 市场期望收益 9.4%
+beta_x = 0.62       # 股票 X 的 beta
+beta_y = 1.18       # 股票 Y 的 beta
+beta_z = 1.51       # 股票 Z 的 beta
+actual_return_y = 0.131  # 股票 Y 的实际年收益 13.1%
+
+# ==========================================
+# 2. 对每个 beta 套用 CAPM 公式
+# E[Ri] = rf + beta * (E[Rm] - rf)
+# ==========================================
+market_premium = rm - rf
+
+er_x = rf + beta_x * market_premium
+er_y = rf + beta_y * market_premium
+er_z = rf + beta_z * market_premium
+
+# ==========================================
+# 3. 用 Y 的 CAPM 预测计算其 alpha
+# Alpha = 实际收益 - CAPM期望收益
+# ==========================================
+alpha_y = actual_return_y - er_y
+
+# ==========================================
+# 4. 填充 result 字典
+# ==========================================
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+
+# 控制台输出（便于课堂投屏讲解）
+print("="*45)
+print(" CAPM 与证券市场线计算结果")
+print("="*45)
+print(f"市场风险溢价 (E[Rm] - Rf): {market_premium:.4%}\n")
+for key, value in result.items():
+    print(f"{key.upper():<8}: {value:.4%}")
+print("="*45)
+
+# ==========================================
+# 5. 课堂可视化辅助：绘制 SML 与 Alpha 偏离
+# ==========================================
+# 设置字体与支持负号显示（尽量兼容不同系统环境）
+plt.rcParams['font.sans-serif'] = ['Arial Unicode MS', 'SimHei', 'DejaVu Sans']
+plt.rcParams['axes.unicode_minus'] = False
+
+betas = np.linspace(0, 2.0, 100)
+sml = rf + betas * market_premium
+
+fig, ax = plt.subplots(figsize=(9, 6))
+
+# 绘制证券市场线 SML
+ax.plot(betas, sml, label='SML (Security Market Line)', color='blue', linewidth=2)
+
+# 标出三只股票的 CAPM 期望收益点
+ax.scatter(beta_x, er_x, color='green', s=120, zorder=5, label=f'Stock X (E[R]={er_x:.2%})')
+ax.scatter(beta_y, er_y, color='orange', s=120, zorder=5, label=f'Stock Y (CAPM E[R]={er_y:.2%})')
+ax.scatter(beta_z, er_z, color='purple', s=120, zorder=5, label=f'Stock Z (E[R]={er_z:.2%})')
+
+# 标出 Y 的实际收益点并用虚线标出 Alpha
+ax.scatter(beta_y, actual_return_y, color='red', marker='^', s=150, zorder=5, label=f'Stock Y (Actual={actual_return_y:.2%})')
+ax.vlines(beta_y, er_y, actual_return_y, color='red', linestyle='--', linewidth=2)
+ax.annotate(f'Alpha_Y = {alpha_y:.2%}', 
+            xy=(beta_y, (er_y + actual_return_y)/2), 
+            xytext=(beta_y + 0.2, (er_y + actual_return_y)/2),
+            fontsize=12, color='red', fontweight='bold',
+            arrowprops=dict(arrowstyle='->', color='red', lw=1.5))
+
+# 图表格式优化
+ax.set_title('CAPM & Security Market Line (SML)', fontsize=14)
+ax.set_xlabel('Beta (系统性风险)', fontsize=12)
+ax.set_ylabel('Expected Return (期望收益)', fontsize=12)
+ax.legend(loc='upper left', fontsize=10)
+ax.grid(True, linestyle=':', alpha=0.7)
+ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: '{:.1%}'.format(y)))
+
+plt.tight_layout()
+plt.show()

@@ -1,0 +1,72 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ----------------------------------------------------------------------
+# 可调参数
+# ----------------------------------------------------------------------
+rf = 0.023          # 无风险利率（小数）
+rm = 0.094          # 市场期望收益（小数）
+
+# 股票数据
+stocks = {
+    'X': {'beta': 0.62, 'return': 0.081},
+    'Y': {'beta': 1.18, 'return': 0.131},
+    'Z': {'beta': 1.51, 'return': 0.099},
+}
+
+# ----------------------------------------------------------------------
+# 计算
+# ----------------------------------------------------------------------
+sml_slope = rm - rf                     # SML 斜率
+beta_target = 1.27
+er_at_beta_127 = rf + beta_target * sml_slope   # beta=1.27 处 CAPM 期望收益
+
+# ----------------------------------------------------------------------
+# 绘图
+# ----------------------------------------------------------------------
+beta_vals = np.linspace(0, 2, 200)
+sml_vals = rf + beta_vals * sml_slope
+
+plt.figure(figsize=(9, 6))
+plt.plot(beta_vals, sml_vals, 'b-', label='SML', linewidth=2)
+
+# 标记无风险资产
+plt.scatter(0, rf, color='black', s=80, zorder=5)
+plt.annotate('rf', (0, rf), textcoords="offset points", xytext=(5, -10), fontsize=10)
+
+# 绘制股票点
+markers = ['o', 's', '^']
+colors = ['red', 'green', 'purple']
+for i, (name, data) in enumerate(stocks.items()):
+    plt.scatter(data['beta'], data['return'],
+                marker=markers[i], color=colors[i], s=100,
+                label=name, zorder=5)
+    plt.annotate(name,
+                 (data['beta'], data['return']),
+                 textcoords="offset points", xytext=(6, 6),
+                 fontsize=12, fontweight='bold')
+
+plt.xlabel('Beta', fontsize=12)
+plt.ylabel('Expected Return', fontsize=12)
+plt.title('Security Market Line (SML)', fontsize=14)
+plt.legend(fontsize=10)
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.xlim(0, 2)
+# y 轴范围自动适配
+
+# 保存图形
+fig_path = 'sml_plot.png'
+plt.savefig(fig_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# ----------------------------------------------------------------------
+# 结果字典
+# ----------------------------------------------------------------------
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': fig_path
+}
+
+# 可选：打印结果供检查（不影响运行）
+print(result)

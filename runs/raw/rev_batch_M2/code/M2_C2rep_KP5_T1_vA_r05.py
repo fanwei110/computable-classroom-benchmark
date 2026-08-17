@@ -1,0 +1,36 @@
+import numpy as np
+from scipy.stats import norm
+
+# 头寸价值（人民币）
+position_value = 1_850_000
+
+# 年化收益波动率
+sigma_annual = 0.218
+
+# 假设一年包含 252 个交易日
+trading_days_per_year = 252
+
+# 将年化波动率换算为一日波动率
+sigma_daily = sigma_annual / np.sqrt(trading_days_per_year)
+
+# 计算 95% 置信水平对应的一日 VaR
+# 此处使用单尾正态分位数，VaR 定义为损失的正值
+z_95 = norm.ppf(0.95)
+var_95_1d = position_value * sigma_daily * z_95
+
+# 计算 99% 置信水平对应的十日 VaR
+z_99 = norm.ppf(0.99)
+# 十日波动率由一日波动率按平方根缩放
+sigma_10d = sigma_daily * np.sqrt(10)
+var_99_10d = position_value * sigma_10d * z_99
+
+# 按要求填充结果字典
+result = {
+    'var_95_1d': var_95_1d,
+    'var_99_10d': var_99_10d
+}
+
+# 输出结果，便于课堂投屏查看
+print("VaR 计算结果（人民币）：")
+print(f"95% 一日 VaR : {var_95_1d:,.2f} 元")
+print(f"99% 十日 VaR : {var_99_10d:,.2f} 元")

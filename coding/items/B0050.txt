@@ -1,0 +1,45 @@
+=== B0050  任务 KP3_T1 (T1) ===
+
+--- 任务要求的输出键 ---
+price, macaulay_duration_years, modified_duration_years, convexity
+
+--- 判分失败明细 ---
+price: 提交值 96.0346  |  参考值 95.99321007078622
+macaulay_duration_years: 提交值 6.1198  |  参考值 6.120582751660975
+modified_duration_years: 提交值 5.8119  |  参考值 5.812519232346605
+convexity: 提交值 42.128  |  参考值 42.13363299470055
+
+--- 提取出的代码 ---
+result = {
+    'price': 96.0346,
+    'macaulay_duration_years': 6.1198,
+    'modified_duration_years': 5.8119,
+    'convexity': 42.1280
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+根据债券定价与风险指标公式，我们基于**年付息频率（Annual Couponing）**进行计算（通常若无特殊说明，国内债券默认为年付息）。
+
+**已知参数：**
+*   面值 ($F$) = 100
+*   票息率 ($c$) = 4.6% （年票息 $C = 100 \times 4.6\% = 4.6$）
+*   期限 ($n$) = 7 年
+*   收益率 ($y$) = 5.3%
+
+**计算过程：**
+1. **价格**: $P = \sum_{t=1}^{7} \frac{4.6}{(1+0.053)^t} + \frac{100}{(1+0.053)^7} \approx 96.0346$
+2. **麦考利久期**: $MacD = \frac{1}{P} \sum_{t=1}^{7} \frac{t \times CF_t}{(1+0.053)^t} \approx 6.1198$ 年
+3. **修正久期**: $ModD = \frac{MacD}{1+y} = \frac{6.1198}{1.053} \approx 5.8119$ 
+4. **凸性**: $Conv = \frac{1}{P \times (1+y)^2} \sum_{t=1}^{7} \frac{t(t+1) \times CF_t}{(1+0.053)^t} \approx 42.1280$
+
+按照输出契约，结果存入字典 `result`（数值保留4位小数）：
+
+```python
+result = {
+    'price': 96.0346,
+    'macaulay_duration_years': 6.1198,
+    'modified_duration_years': 5.8119,
+    'convexity': 42.1280
+}
+```

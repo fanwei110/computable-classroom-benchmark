@@ -1,0 +1,55 @@
+```python
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+import os
+
+# Black-Scholes European call option delta calculation
+def black_scholes_call_delta(S, K, T, r, sigma):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    delta = norm.cdf(d1)
+    return delta
+
+# Parameters
+K = 97.5          # Strike price
+r = 0.043         # Risk-free rate (4.3%)
+T = 0.58          # Time to maturity in years
+S_range = np.linspace(70, 140, 100)  # Underlying price range
+
+# Volatilities to plot
+volatilities = [0.15, 0.276, 0.40]  # 15%, 27.6%, 40%
+
+# Create figure
+plt.figure(figsize=(10, 6))
+
+# Calculate and plot delta for each volatility
+for sigma in volatilities:
+    delta_values = black_scholes_call_delta(S_range, K, T, r, sigma)
+    plt.plot(S_range, delta_values, label=f'Volatility = {sigma:.1%}')
+
+# Customize plot
+plt.title('European Call Option Delta vs Underlying Price')
+plt.xlabel('Underlying Price')
+plt.ylabel('Delta')
+plt.legend()
+plt.grid(True)
+
+# Save figure
+figure_path = 'bs_delta_plot.png'
+plt.savefig(figure_path)
+plt.close()
+
+# Calculate delta at S=110, sigma=27.6%
+S_target = 110
+sigma_target = 0.276
+delta_at_s110 = black_scholes_call_delta(S_target, K, T, r, sigma_target)
+
+# Prepare result dictionary
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+# For demonstration, print the result (in actual use, this would be returned)
+print(result)
+```

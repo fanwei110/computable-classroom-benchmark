@@ -1,0 +1,123 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import root_scalar
+import os
+
+def calculate_bond_price(yield_to_maturity, face_value, coupon_rate, years_to_maturity, periods_per_year=2):
+    """
+    计算债券精确价格
+    """
+    coupon_payment = face_value * coupon_rate / periods_per_year
+    total_periods = years_to_maturity * periods_per_year
+    discount_rates = (1 + yield_to_maturity / periods_per_year) ** np.arange(1, total_periods + 1)
+
+    # 现金流现值
+    cash_flows = np.full(total_periods, coupon_payment)
+    cash_flows[-1] += face_value  # 最后一期加上面值
+
+    present_values = cash_flows / discount_rates
+    bond_price = np.sum(present_values)
+
+    return bond_price
+
+def calculate_duration(yield_to_maturity, face_value, coupon_rate, years_to_maturity, periods_per_year=2):
+    """
+    计算麦考利久期和修正久期
+    """
+    coupon_payment = face_value * coupon_rate / periods_per_year
+    total_periods = years_to_maturity * periods_per_year
+    ytm_period = yield_to_maturity / periods_per_year
+
+    # 计算每期现金流的现值
+    cash_flows = np.full(total_periods, coupon_payment)
+    cash_flows[-1] += face_value
+    discount_factors = (1 + ytm_period) ** np.arange(1, total_periods + 1)
+    present_values = cash_flows / discount_factors
+
+    # 麦考利久期
+    time_periods = np.arange(1, total_periods + 1) / periods_per_year
+    macaulay_duration = np.sum(time_periods * present_values) / np.sum(present_values)
+
+    # 修正久期
+    modified_duration = macaulay_duration / (1 + ytm_period)
+
+    return macaulay_duration, modified_duration
+
+def plot_price_yield_curve(face_value, coupon_rate, years_to_maturity, current_yield, yield_shift_bps=100):
+    """
+    绘制价格-收益率曲线，并叠加久期近似
+    """
+    # 生成收益率范围
+    yield_min = 0.02
+    yield_max = 0.09
+    yields = np.linspace(yield_min, yield_max, 200)
+
+    # 计算精确价格
+    prices = np.array([calculate_bond_price(y, face_value, coupon_rate, years_to_maturity) for y in yields])
+
+    # 计算当前收益率下的久期
+    _, modified_duration = calculate_duration(current_yield, face_value, coupon_rate, years_to_maturity)
+
+    # 当前价格
+    current_price = calculate_bond_price(current_yield, face_value, coupon_rate, years_to_maturity)
+
+    # 久期近似线
+    approx_prices = current_price * (1 - modified_duration * (yields - current_yield))
+
+    # 创建图形
+    plt.figure(figsize=(10, 6))
+    plt.plot(yields * 100, prices, label='精确价格-收益率曲线', color='blue')
+    plt.plot(yields * 100, approx_prices, '--', label=f'久期近似 (Δ={yield_shift_bps}bps)', color='red')
+
+    # 标记当前点
+    plt.scatter(current_yield * 100, current_price, color='green', zorder=5)
+    plt.annotate(f'当前点 ({current_yield*100:.1f}%, {current_price:.2f})',
+                 xy=(current_yield * 100, current_price),
+                 xytext=(current_yield * 100 + 0.5, current_price - 2),
+                 arrowprops=dict(facecolor='black', shrink=0.05))
+
+    # 设置图形属性
+    plt.title('债券价格-收益率曲线及久期近似')
+    plt.xlabel('收益率 (%)')
+    plt.ylabel('价格')
+    plt.grid(True)
+    plt.legend()
+
+    # 保存图形
+    figure_path = 'bond_price_yield_curve.png'
+    plt.savefig(figure_path)
+    plt.close()
+
+    return figure_path
+
+def main():
+    # 债券参数
+    face_value = 100
+    coupon_rate = 0.046
+    years_to_maturity = 7
+    current_yield = 0.053
+    yield_shift_bps = 100  # 收益率变动幅度（基点）
+
+    # 计算收益率上升100bps后的精确价格
+    new_yield = current_yield + yield_shift_bps / 10000
+    price_at_up100bp = calculate_bond_price(new_yield, face_value, coupon_rate, years_to_maturity)
+
+    # 计算久期法估计的相对价格变化
+    _, modified_duration = calculate_duration(current_yield, face_value, coupon_rate, years_to_maturity)
+    dur_approx_change_up100bp = -modified_duration * (yield_shift_bps / 10000) * 100  # 转换为百分比
+
+    # 绘制图形
+    figure_path = plot_price_yield_curve(face_value, coupon_rate, years_to_maturity, current_yield, yield_shift_bps)
+
+    # 存储结果
+    result = {
+        'price_at_up100bp': price_at_up100bp,
+        'dur_approx_change_up100bp': dur_approx_change_up100bp,
+        'figure_path': os.path.abspath(figure_path)
+    }
+
+    return result
+
+# 运行主函数
+result = main()
+print(result)

@@ -1,0 +1,32 @@
+import numpy as np
+
+# 定义输入参数
+vol_A = 0.184
+vol_B = 0.297
+weight_A = 0.6
+weight_B = 0.4
+corr_before = 0.3
+corr_after = 0.8
+
+# 计算投资组合年化波动率的函数
+def calculate_portfolio_volatility(w_A, w_B, v_A, v_B, corr):
+    # 组合方差公式: Var = w_A^2 * v_A^2 + w_B^2 * v_B^2 + 2 * w_A * w_B * v_A * v_B * corr
+    variance = (w_A**2) * (v_A**2) + \
+               (w_B**2) * (v_B**2) + \
+               2 * w_A * w_B * v_A * v_B * corr
+    return np.sqrt(variance)
+
+# 计算相关系数变化前后的组合波动率
+vol_before_annual = calculate_portfolio_volatility(weight_A, weight_B, vol_A, vol_B, corr_before)
+vol_after_annual = calculate_portfolio_volatility(weight_A, weight_B, vol_A, vol_B, corr_after)
+
+# 按照输出契约存入字典
+result = {
+    'vol_before_annual': vol_before_annual,
+    'vol_after_annual': vol_after_annual
+}
+
+# 打印结果以供验证
+print(f"相关系数为 0.3 时，60/40 组合的年化波动率: {vol_before_annual:.4%}")
+print(f"相关系数为 0.8 时，60/40 组合的年化波动率: {vol_after_annual:.4%}")
+print(f"波动率变化: {(vol_after_annual - vol_before_annual):.4%}")

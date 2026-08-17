@@ -5,3 +5,11 @@ data/market_snapshot_v1.csv -text
 data/SHA256SUMS.txt -text
 *.pdf binary
 *.png binary
+
+# Raw generation logs and the model-written code are stored byte-for-byte.
+# The manuscript states that replays are byte-identical and that the exact
+# request body of every call is archived; these files were recorded with CRLF
+# on Windows, so normalising their line endings on commit would make the
+# published bytes differ from the bytes actually recorded. Never convert them.
+runs/raw/** -text
+coding/** -text

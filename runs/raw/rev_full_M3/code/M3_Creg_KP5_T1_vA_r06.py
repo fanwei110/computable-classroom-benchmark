@@ -1,0 +1,36 @@
+import numpy as np
+from scipy.stats import norm
+
+# ==================== 已知参数 ====================
+portfolio_value = 1_850_000       # 头寸价值 (元)
+annual_vol = 0.218                # 年化收益波动率
+trading_days_per_year = 252       # 一年的交易日数 (金融市场惯例)
+
+# ==================== 模型计算 ====================
+# 1. 将年化波动率转换为日波动率 (使用平方根时间法则)
+daily_vol = annual_vol / np.sqrt(trading_days_per_year)
+
+# 2. 获取正态分布的分位数 (Z-score)
+# 95% 置信水平对应左侧 5% 的分位数
+z_95 = norm.ppf(0.95)
+# 99% 置信水平对应左侧 1% 的分位数
+z_99 = norm.ppf(0.99)
+
+# 3. 计算 95% 一日 VaR
+# VaR = 头寸价值 × 日波动率 × 分位数
+var_95_1d = portfolio_value * daily_vol * z_95
+
+# 4. 计算 99% 十日 VaR
+# 十日波动率 = 日波动率 × sqrt(10)
+# VaR = 头寸价值 × 日波动率 × sqrt(10) × 分位数
+var_99_10d = portfolio_value * daily_vol * np.sqrt(10) * z_99
+
+# ==================== 结果输出 ====================
+result = {
+    'var_95_1d': var_95_1d,
+    'var_99_10d': var_99_10d
+}
+
+# 打印结果以供验证
+print(f"95% 一日 VaR: {result['var_95_1d']:,.2f} 元")
+print(f"99% 十日 VaR: {result['var_99_10d']:,.2f} 元")

@@ -1,0 +1,3 @@
+{"run_id": "M3_C3_KP3_T2_A_r01", "error": "RuntimeError(\"API failed after retries: JSONDecodeError('Expecting value: line 1429 column 1 (char 7854)')\")", "ts": "2026-06-11T01:55:31.951739+00:00"}
+{"run_id": "M2_C3_KP1_T1_A_r02", "error": "RuntimeError(\"API failed after retries: JSONDecodeError('Expecting value: line 1429 column 1 (char 7854)')\")", "ts": "2026-06-11T02:12:40.309482+00:00"}
+{"run_id": "M3_C1_KP4_T3_A_r04", "error": "RuntimeError(\"API failed after retries: JSONDecodeError('Expecting value: line 1429 column 1 (char 7854)')\")", "ts": "2026-06-11T03:04:15.558813+00:00"}

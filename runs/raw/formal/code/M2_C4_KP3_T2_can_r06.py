@@ -1,0 +1,79 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ---------- 债券参数 ----------
+FACE = 100.0            # 面值
+COUPON_RATE = 0.046     # 票息率（年）
+MATURITY = 7            # 期限（年）
+YIELD_CURRENT = 0.053   # 当前收益率（年复利）
+
+# 现金流（每年支付一次）
+coupon = FACE * COUPON_RATE
+CF = np.array([coupon] * (MATURITY - 1) + [coupon + FACE])
+t = np.arange(1, MATURITY + 1, dtype=float)
+
+# ---------- 定价与风险指标 ----------
+def bond_price(y):
+    """给定收益率 y (小数), 返回精确价格."""
+    return np.sum(CF / (1 + y) ** t)
+
+P0 = bond_price(YIELD_CURRENT)
+
+# 麦考利久期
+D_mac = np.sum(t * CF / (1 + YIELD_CURRENT) ** t) / P0
+# 修正久期
+D_mod = D_mac / (1 + YIELD_CURRENT)
+# 凸性（单位：年的平方）
+C = np.sum(t * (t + 1) * CF / (1 + YIELD_CURRENT) ** (t + 2)) / P0
+
+# ---------- +100 bp 情景 ----------
+DY_UP = 0.01                      # 收益率上升 100 个基点
+y_up = YIELD_CURRENT + DY_UP
+P_up = bond_price(y_up)           # 精确价格
+dur_change = -D_mod * DY_UP       # 一阶相对价格变化
+
+# ---------- 精确价格-收益率曲线 ----------
+y_grid = np.linspace(0.02, 0.09, 1000)
+P_grid = bond_price(y_grid)
+
+# ---------- 局部近似（可调范围） ----------
+# 收益率变动幅度做成可调：此变量控制近似线在当前收益率附近的显示宽度
+APPROX_HALF_RANGE = 0.02  # ±200 bp
+y_low = max(0.02, YIELD_CURRENT - APPROX_HALF_RANGE)
+y_high = min(0.09, YIELD_CURRENT + APPROX_HALF_RANGE)
+y_approx = np.linspace(y_low, y_high, 200)
+dy = y_approx - YIELD_CURRENT
+
+P_dur = P0 * (1 - D_mod * dy)                          # 仅久期
+P_dur_conv = P0 * (1 - D_mod * dy + 0.5 * C * dy ** 2) # 久期+凸性
+
+# ---------- 绘图 ----------
+plt.figure(figsize=(10, 6))
+plt.plot(y_grid, P_grid, linewidth=2, label='Exact Price')
+plt.plot(y_approx, P_dur, '--', linewidth=1.5, label='Duration Approximation')
+plt.plot(y_approx, P_dur_conv, ':', linewidth=1.5, label='Duration + Convexity Approximation')
+plt.axvline(YIELD_CURRENT, color='gray', linestyle='dotted', alpha=0.6)
+plt.scatter(YIELD_CURRENT, P0, color='red', zorder=5)
+plt.text(YIELD_CURRENT + 0.001, P0, f'  Current yield {YIELD_CURRENT*100:.1f}%',
+         verticalalignment='bottom', color='red')
+
+plt.xlabel('Yield to Maturity')
+plt.ylabel('Bond Price')
+plt.title('Bond Price-Yield Curve and Local Approximations')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+
+figure_path = 'bond_price_duration.png'
+plt.savefig(figure_path, dpi=150)
+plt.close()
+
+# ---------- 输出契约 ----------
+result = {
+    'price_at_up100bp': round(P_up, 6),
+    'dur_approx_change_up100bp': round(dur_change, 6),
+    'figure_path': figure_path
+}
+
+# 便于教师查看
+print(result)

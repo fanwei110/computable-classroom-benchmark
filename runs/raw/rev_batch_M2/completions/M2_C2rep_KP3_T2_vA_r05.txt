@@ -1,0 +1,95 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# =============================================================================
+# 债券定价与久期凸性 —— 课堂演示脚本
+# 假设：每年付息一次，每年复利（freq = 1）
+# 收益率、票面利率均为名义年利率
+# 当前收益率 5.3% ，票息 4.6% ，面值 100 ，期限 7 年
+# =============================================================================
+
+def bond_price(ytm, coupon, maturity, face=100):
+    """
+    计算债券全价（每年付息一次）
+    ytm: 到期收益率（年化，小数）
+    coupon: 票面利率（年化，小数）
+    maturity: 剩余年限（整数）
+    face: 面值
+    """
+    t = np.arange(1, maturity + 1)          # 现金流发生时点（年）
+    cf = np.full(maturity, coupon * face)   # 各期票息
+    cf[-1] += face                          # 最后一期加上本金
+    disc = (1 + ytm) ** (-t)                # 折现因子
+    return np.sum(cf * disc)
+
+def bond_duration(ytm, coupon, maturity, face=100):
+    """
+    返回：麦考利久期、修正久期、全价
+    """
+    t = np.arange(1, maturity + 1)
+    cf = np.full(maturity, coupon * face)
+    cf[-1] += face
+    disc = (1 + ytm) ** (-t)
+    price = np.sum(cf * disc)
+    mac_dur = np.sum(t * cf * disc) / price   # 麦考利久期
+    mod_dur = mac_dur / (1 + ytm)             # 修正久期
+    return mac_dur, mod_dur, price
+
+# -------------------- 参数设置 --------------------
+FACE      = 100
+COUPON    = 0.046          # 4.6%
+MATURITY  = 7
+Y_CURRENT = 0.053          # 5.3%
+SHIFT_BP  = 100            # [可调] 收益率变动幅度（基点）
+DELTA_Y   = SHIFT_BP / 10000.0   # 转换为小数 (100bp = 0.01)
+
+# -------------------- 计算当前价格与久期 --------------------
+mac_dur, mod_dur, P0 = bond_duration(Y_CURRENT, COUPON, MATURITY, FACE)
+
+# 精确价格 @ Y_CURRENT + DELTA_Y
+P_up_exact = bond_price(Y_CURRENT + DELTA_Y, COUPON, MATURITY, FACE)
+
+# 久期法估计的相对价格变化（收益率上升 DELTA_Y）
+approx_rel_change = -mod_dur * DELTA_Y
+
+# -------------------- 绘图 --------------------
+y_grid = np.linspace(0.02, 0.09, 500)              # 2% ~ 9%
+p_exact_grid = bond_price(y_grid, COUPON, MATURITY, FACE)
+p_tangent = P0 - mod_dur * P0 * (y_grid - Y_CURRENT)   # 切线
+
+plt.figure(figsize=(10, 6))
+plt.plot(y_grid * 100, p_exact_grid, label='精确价格-收益率曲线', linewidth=2)
+plt.plot(y_grid * 100, p_tangent, '--', label='久期近似 (切线)', linewidth=1.5)
+
+# 当前收益率点
+plt.plot(Y_CURRENT * 100, P0, 'ko', label=f'当前收益率 {Y_CURRENT:.1%}')
+
+# +SHIFT_BP 点处的精确价格与久期近似价格
+y_up = Y_CURRENT + DELTA_Y
+plt.plot(y_up * 100, P_up_exact, 'rs', markersize=8,
+         label=f'精确价格 (+{SHIFT_BP} bp)')
+plt.plot(y_up * 100, P0 * (1 + approx_rel_change), 'bx', markersize=8,
+         label=f'久期近似价格 (+{SHIFT_BP} bp)')
+
+plt.xlabel('到期收益率 (%)')
+plt.ylabel('债券价格')
+plt.title(f'债券价格-收益率曲线 (票息={COUPON:.1%}, 期限={MATURITY} 年)')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+
+fig_path = 'bond_price_yield.png'
+plt.savefig(fig_path)
+plt.close()
+
+# -------------------- 输出 --------------------
+result = {
+    'price_at_up100bp': round(P_up_exact, 6),
+    'dur_approx_change_up100bp': round(approx_rel_change, 6),
+    'figure_path': fig_path
+}
+
+print("结果字典:")
+print(result)
+```

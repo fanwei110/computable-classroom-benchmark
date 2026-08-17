@@ -1,0 +1,40 @@
+由于题目中没有提供具体的数据，我将为你提供计算该基金年化夏普比率的完整 Python 代码。代码严格遵守了你的计算约定与输出契约，假设基金的净值数据存放在 DataFrame 的 `fund` 列中。
+
+```python
+import numpy as np
+import pandas as pd
+
+# 假设 df 为包含基金数据的 DataFrame，'fund' 列为基金净值（全样本）
+# df = pd.read_csv(...) 或其他方式导入
+
+# 1. 计算日收益率
+daily_returns = df['fund'].pct_change().dropna()
+
+# 2. 计算日收益率均值与样本标准差（ddof=1）
+mean_daily = daily_returns.mean()
+std_daily = daily_returns.std(ddof=1)
+
+# 3. 年化处理（每年 252 个交易日）
+annual_return = mean_daily * 252
+annual_std = std_daily * np.sqrt(252)
+
+# 4. 无风险利率与年化夏普比率计算
+# 题目给定 rf = 2.1%，按约定用小数表示为 0.021
+rf = 0.021
+
+sharpe_annual = (annual_return - rf) / annual_std
+
+# 5. 按输出契约存入字典
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+# 打印结果查看
+print(result)
+```
+
+### 计算约定执行说明：
+1. **年化按 252 个交易日**：收益率年化为 $\mu \times 252$，波动率年化为 $\sigma \times \sqrt{252}$。
+2. **标准 ddof=1**：使用 `.std(ddof=1)` 计算样本标准差。
+3. **小数表示**：`rf` 严格使用 `0.021` 参与计算。
+4. **输出契约**：结果严格存入字典 `result`，键名为 `'sharpe_annual'`。

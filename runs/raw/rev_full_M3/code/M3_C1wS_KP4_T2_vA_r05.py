@@ -1,0 +1,61 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+
+# ==================== 1. 参数设置 ====================
+K = 97.5                  # 行权价
+r = 0.043                 # 无风险利率 4.3%
+T = 0.58                  # 剩余期限 0.58 年
+S_min = 70                # 标的价格下限
+S_max = 140               # 标的价格上限
+sigma_list = [0.15, 0.276, 0.40]  # 波动率参数化列表 (15%, 27.6%, 40%)
+
+# 标的资产价格网格
+S_grid = np.linspace(S_min, S_max, 500)
+
+# ==================== 2. 计算 Delta ====================
+# 注：未指明看涨/看跌时，默认计算欧式看涨期权的 Delta = N(d1)
+def calculate_call_delta(S, K, T, r, sigma):
+    """
+    计算欧式看涨期权的 Black-Scholes Delta
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    delta = norm.cdf(d1)
+    return delta
+
+# ==================== 3. 绘图 ====================
+# 设置绘图风格
+plt.figure(figsize=(10, 6))
+
+# 对每个波动率在标的网格上计算 delta 并画线
+for sigma in sigma_list:
+    delta_vals = calculate_call_delta(S_grid, K, T, r, sigma)
+    plt.plot(S_grid, delta_vals, linewidth=2, label=f'Vol = {sigma*100:.1f}%')
+
+# 图表标注
+plt.title('European Call Option Delta vs Underlying Price', fontsize=14)
+plt.xlabel('Underlying Price (S)', fontsize=12)
+plt.ylabel('Delta', fontsize=12)
+plt.legend(fontsize=11)
+plt.grid(True, linestyle='--', alpha=0.7)
+
+# 保存图形
+figure_path = 'delta_vs_underlying.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ==================== 4. 计算特定点 Delta 并封装结果 ====================
+# 标的等于110、波动率27.6%时的delta
+S_target = 110
+sigma_target = 0.276
+delta_at_s110 = calculate_call_delta(S_target, K, T, r, sigma_target)
+
+# 按输出契约存入字典
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': figure_path
+}
+
+# 控制台输出验证 (可选，便于教师投屏展示结果)
+print(f"标的=110, 波动率=27.6% 时的看涨期权 Delta: {result['delta_at_s110']:.6f}")
+print(f"图形已保存至: {result['figure_path']}")

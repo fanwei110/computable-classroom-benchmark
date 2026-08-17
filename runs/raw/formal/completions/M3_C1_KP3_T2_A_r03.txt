@@ -1,0 +1,74 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 债券参数
+FV = 100
+coupon_rate = 0.046
+C = FV * coupon_rate
+T = 7
+y0 = 0.053
+
+# 收益率变动幅度（可调参数）
+# 设置最大变动幅度，例如 0.037 表示当前收益率上下变动 3.7%，刚好覆盖 2% 到 9%
+yield_shift_range = 0.037  
+y_min = y0 - (y0 - 0.02)  # 2%
+y_max = y0 + yield_shift_range  # 9%
+
+# 精确价格计算函数
+def bond_price(y, C, FV, T):
+    return C * (1 - (1 + y)**-T) / y + FV * (1 + y)**-T
+
+# 当前价格
+P0 = bond_price(y0, C, FV, T)
+
+# 计算麦考利久期和修正久期
+t_arr = np.arange(1, T + 1)
+cf_arr = np.full(T, C)
+cf_arr[-1] += FV
+pv_cf_arr = cf_arr / (1 + y0)**t_arr
+mac_dur = np.sum(t_arr * pv_cf_arr) / P0
+mod_dur = mac_dur / (1 + y0)
+
+# 生成收益率范围
+y_range = np.linspace(y_min, y_max, 500)
+
+# 精确价格与久期近似价格
+exact_prices = bond_price(y_range, C, FV, T)
+approx_prices = P0 * (1 - mod_dur * (y_range - y0))
+
+# 计算上升100个基点(1%)后的结果
+y_up100 = y0 + 0.01
+price_up100 = bond_price(y_up100, C, FV, T)
+dur_approx_change_up100 = -mod_dur * 0.01
+
+# 绘图设置
+plt.rcParams['font.sans-serif'] = ['simhei']  # 用于正常显示中文标签
+plt.rcParams['axes.unicode_minus'] = False    # 用于正常显示负号
+
+plt.figure(figsize=(10, 6))
+plt.plot(y_range * 100, exact_prices, label='精确价格', color='blue', linewidth=2)
+plt.plot(y_range * 100, approx_prices, label='久期近似', color='red', linestyle='--', linewidth=2)
+plt.axvline(y0 * 100, color='gray', linestyle=':', label=f'当前收益率 (5.3%)')
+plt.scatter([y0 * 100], [P0], color='black', zorder=5)
+
+plt.xlabel('收益率 (%)')
+plt.ylabel('价格')
+plt.title('债券价格随收益率变化曲线及久期近似')
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.6)
+
+# 保存图片
+fig_path = 'bond_price_yield_curve.png'
+plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# 按照输出契约存入字典
+result = {
+    'price_at_up100bp': price_up100,
+    'dur_approx_change_up100bp': dur_approx_change_up100,
+    'figure_path': fig_path
+}
+
+print(result)
+```

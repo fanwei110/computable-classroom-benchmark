@@ -1,0 +1,62 @@
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+import os
+
+def bs_call_delta(S, K, T, r, sigma):
+    """
+    计算不分红欧式看涨期权的 Delta
+    S: 标的价格 (可以是 numpy 数组)
+    K: 行权价
+    T: 剩余期限 (年)
+    r: 无风险利率
+    sigma: 波动率
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    delta = norm.cdf(d1)
+    return delta
+
+# ----------------- 固定参数 -----------------
+K = 97.5
+r = 0.043
+T = 0.58
+
+# ----------------- 可调参数 -----------------
+volatilities = [0.15, 0.276, 0.40]
+
+# ----------------- 标的价格范围 -----------------
+S_min = 70
+S_max = 140
+S_range = np.linspace(S_min, S_max, 500)
+
+# ----------------- 绘制 Delta 曲线 -----------------
+plt.figure(figsize=(10, 6))
+
+for sigma in volatilities:
+    deltas = bs_call_delta(S_range, K, T, r, sigma)
+    plt.plot(S_range, deltas, label=f'Vol = {sigma * 100:.1f}%')
+
+plt.title('European Call Option Delta vs Underlying Price')
+plt.xlabel('Underlying Price (S)')
+plt.ylabel('Delta')
+plt.legend(title='Volatility')
+plt.grid(True, linestyle='--', alpha=0.7)
+
+# 保存图表
+figure_path = 'delta_curve.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ----------------- 计算特定点的 Delta -----------------
+S_target = 110
+sigma_target = 0.276
+delta_at_s110 = bs_call_delta(S_target, K, T, r, sigma_target)
+
+# ----------------- 构造输出字典 -----------------
+result = {
+    'delta_at_s110': float(delta_at_s110),
+    'figure_path': figure_path
+}
+
+# 打印结果以供验证
+print(result)

@@ -1,0 +1,92 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ================== åæ°è®¾ç½® ==================
+FACE_VALUE = 100
+COUPON_RATE = 0.046        # ç¥¨æ¯ç 4.6%
+MATURITY = 7               # å¹´æ 7 å¹´
+Y0 = 0.053                 # å½åæ¶çç 5.3%
+
+# æ¶ççåå¨å¹ï¼åºç¹ï¼ï¼å¯è°
+SHIFT_BP = 100             # ä¸å 100 ä¸ªåºç¹
+DY = SHIFT_BP / 10_000     # Îy = 0.01
+
+# ================== å®ä»·å½æ°ï¼å¹´ä»æ¯ï¼ ==================
+def bond_price(ytm, face=FACE_VALUE, coupon_rate=COUPON_RATE, maturity=MATURITY):
+    """
+    è®¡ç®åºå¸ä»·æ ¼ï¼å¹´ä»æ¯ï¼å¹´å¤å©ï¼
+    æ¯ææ éææ°ç»æ¶çç
+    """
+    ytm = np.asarray(ytm, dtype=float)
+    scalar_input = ytm.ndim == 0
+    ytm = np.atleast_1d(ytm)
+    t = np.arange(1, maturity + 1)
+    # ç°éæµï¼å°æååä¸ºç¥¨æ¯ï¼å°æå¹´åº¦ä¸ºç¥¨æ¯+é¢å¼
+    cf = np.full(maturity, coupon_rate * face)
+    cf[-1] += face
+    # æç°å å­ (1+y)^{-t}ï¼å½¢ç¶ (len(ytm), maturity)
+    discount = (1 + ytm[:, np.newaxis]) ** -t
+    price = np.sum(cf * discount, axis=1)
+    if scalar_input:
+        return price.item()
+    return price
+
+# ================== å½åæ¶ççä¸çä»·æ ¼ & ä¹æ ==================
+P0 = bond_price(Y0)
+
+# éº¦èå©ä¹æ
+t = np.arange(1, MATURITY + 1)
+coupon_cf = np.full(MATURITY, COUPON_RATE * FACE_VALUE)
+coupon_cf[-1] += FACE_VALUE
+pv = coupon_cf / (1 + Y0) ** t
+D_mac = np.sum(t * pv) / P0
+
+# ä¿®æ­£ä¹æ
+MD = D_mac / (1 + Y0)
+
+# ================== ç»å¶ç²¾ç¡®æ²çº¿ & ä¹æè¿ä¼¼ ==================
+y_grid = np.linspace(0.02, 0.09, 500)          # 2% ~ 9%
+price_exact = bond_price(y_grid)
+price_dur_approx = P0 * (1 - MD * (y_grid - Y0))
+
+plt.figure(figsize=(8, 5))
+plt.plot(y_grid * 100, price_exact, label='Exact PriceâYield', linewidth=2)
+plt.plot(y_grid * 100, price_dur_approx, '--', label='Duration Approximation',
+         linewidth=2)
+plt.axvline(Y0 * 100, color='gray', linestyle=':', alpha=0.7,
+            label=f'Current yield ({Y0*100:.2f}%)')
+plt.axvline((Y0 + DY) * 100, color='red', linestyle=':', alpha=0.7,
+            label=f'Up {SHIFT_BP}bp ({(Y0 + DY)*100:.2f}%)')
+plt.xlabel('Yield (%)')
+plt.ylabel('Bond Price')
+plt.title('PriceâYield Curve: 7-Year, 4.6% Coupon')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+fig_path = 'bond_price_yield.png'
+plt.savefig(fig_path, dpi=150)
+plt.close()
+
+# ================== +100bp æè®¡ç® ==================
+y_up = Y0 + DY
+price_up_exact = bond_price(y_up)                # ç²¾ç¡®ä»·æ ¼
+dur_approx_change = -MD * DY                     # ä¹æä¼°è®¡çç¸å¯¹ä»·æ ¼åå (ÎP/P)
+
+# ================== è¾åºåçº¦ ==================
+result = {
+    'price_at_up100bp': price_up_exact,
+    'dur_approx_change_up100bp': dur_approx_change,
+    'figure_path': fig_path
+}
+
+# æå°ç»æä»¥ä¾æ ¸å¯¹
+print("=== è®¡ç®ç»æ ===")
+print(f"å½åæ¶çç: {Y0*100:.2f}%")
+print(f"å½åä»·æ ¼: {P0:.6f}")
+print(f"æ¶ççä¸å {SHIFT_BP} bp åçç²¾ç¡®ä»·æ ¼: {price_up_exact:.6f}")
+print(f"ä¹ææ³ä¼°è®¡çç¸å¯¹ä»·æ ¼åå (ÎP/P): {dur_approx_change:.8f}")
+print(f"å¾å½¢å·²ä¿å­è³: {fig_path}")
+print("\nresult å­å:")
+print(result)
+```

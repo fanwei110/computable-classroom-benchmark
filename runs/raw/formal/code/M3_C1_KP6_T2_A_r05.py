@@ -1,0 +1,59 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ================= 1. 模拟数据 (请替换为您真实的fund数据) =================
+np.random.seed(42)
+dates = pd.date_range(start='2022-01-01', periods=500, freq='B')
+# 假设fund列为日收益率（如果您的fund是净值，请先使用 df['fund'] = df['fund'].pct_change() 转换）
+df = pd.DataFrame({'date': dates, 'fund': np.random.normal(0.001, 0.02, 500)})
+
+# ================= 2. 核心计算函数 (窗口可调) =================
+def calculate_rolling_sharpe(df, window=60, rf_annual=0.021, trading_days=252):
+    """
+    计算滚动年化夏普比率
+    :param df: 包含'fund'列的DataFrame
+    :param window: 滚动窗口大小（可调）
+    :param rf_annual: 年化无风险利率
+    :param trading_days: 年化交易日天数
+    """
+    rf_daily = rf_annual / trading_days
+    
+    # 计算滚动均值与滚动标准差
+    rolling_mean = df['fund'].rolling(window=window).mean()
+    rolling_std = df['fund'].rolling(window=window).std()
+    
+    # 年化夏普比率 = (日均超额收益 / 日标准差) * sqrt(252)
+    rolling_sharpe = ((rolling_mean - rf_daily) / rolling_std) * np.sqrt(trading_days)
+    
+    return rolling_sharpe
+
+# ================= 3. 执行计算与绘图 =================
+# 设置窗口大小（此处为60，可根据需要调整）
+window_size = 60
+df['rolling_sharpe'] = calculate_rolling_sharpe(df, window=window_size)
+
+# 获取最后那个窗口的数值
+last_sharpe_value = df['rolling_sharpe'].iloc[-1]
+
+# 绘制曲线
+fig_path = 'rolling_sharpe_curve.png'
+plt.figure(figsize=(14, 6))
+plt.plot(df['date'], df['rolling_sharpe'], label=f'{window_size}-Day Rolling Annualized Sharpe', color='tab:blue')
+plt.axhline(y=0, color='red', linestyle='--', alpha=0.7)
+plt.title(f'{window_size}-Day Rolling Annualized Sharpe Ratio (rf=2.1%)')
+plt.xlabel('Date')
+plt.ylabel('Sharpe Ratio')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.savefig(fig_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# ================= 4. 严格按照输出契约生成字典 =================
+result = {
+    'rolling_sharpe_last': last_sharpe_value,
+    'figure_path': fig_path
+}
+
+# 打印结果以供查看
+print(result)

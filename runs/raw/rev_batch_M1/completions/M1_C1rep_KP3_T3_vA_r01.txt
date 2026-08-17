@@ -1,0 +1,41 @@
+要计算收益率上升80个基点（即0.8%）时债券价格的下跌幅度，我们可以使用债券久期（Duration）的近似公式。对于7年期、票息4.6%、收益率5.3%的债券，我们可以先估算其修正久期（Modified Duration），然后计算价格变化。
+
+### 步骤：
+1. **计算修正久期（近似值）**：
+   对于票息固定的债券，修正久期可以近似为：
+   \[
+   \text{Modified Duration} \approx \frac{\text{Macaulay Duration}}{1 + \frac{y}{m}}
+   \]
+   其中，\( y \) 是收益率（5.3%），\( m \) 是每年付息次数（假设每年付息1次，\( m = 1 \)）。Macaulay Duration 可以近似为债券期限的加权平均，对于7年期债券，Macaulay Duration 通常略小于7年（因为票息会提前支付）。这里我们粗略估计 Macaulay Duration 为6.5年（具体值需精确计算，但为了简化，我们取近似值）。
+
+   修正久期：
+   \[
+   \text{Modified Duration} \approx \frac{6.5}{1 + 0.053} \approx 6.17
+   \]
+
+2. **计算价格变化**：
+   价格变化的百分比可以用修正久期和收益率变化的乘积近似：
+   \[
+   \Delta P \approx -\text{Modified Duration} \times \Delta y
+   \]
+   其中，\( \Delta y = 0.8\% = 0.008 \)。
+
+   代入数值：
+   \[
+   \Delta P \approx -6.17 \times 0.008 \approx -0.0494 \text{（即-4.94%）}
+   \]
+
+3. **更精确的计算（可选）**：
+   如果使用精确的久期计算（如通过现金流贴现），修正久期可能更接近6.0左右。此时价格变化约为：
+   \[
+   \Delta P \approx -6.0 \times 0.008 = -0.048 \text{（即-4.8%）}
+   \]
+
+   为了简化，我们取中间值 **4.9%** 作为近似结果。
+
+### 输出：
+```python
+result = {
+    'price_drop_pct': 4.9
+}
+```

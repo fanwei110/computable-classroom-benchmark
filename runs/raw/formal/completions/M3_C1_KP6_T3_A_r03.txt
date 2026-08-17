@@ -1,0 +1,41 @@
+由于您没有直接提供具体的课程数据（如CSV文件或DataFrame），我无法直接计算出具体的数值。但我可以为您提供完整的Python计算代码。您只需将您的课程数据代入，即可得到符合输出契约要求的结果。
+
+**计算逻辑说明：**
+1. 假设 `fund` 列为基金的净值（NAV），需先计算日收益率：`daily_returns = fund.pct_change().dropna()`
+2. 无风险利率年化为 2.1%，转化为日化无风险利率通常按 `rf_daily = 0.021 / 252` 计算。
+3. 计算日超额收益：`excess_returns = daily_returns - rf_daily`
+4. 计算日夏普比率：`sharpe_daily = excess_returns.mean() / excess_returns.std()`
+5. 年化夏普比率：`sharpe_annual = sharpe_daily * (252 ** 0.5)` （一年按252个交易日计算）
+
+**Python实现代码：**
+
+```python
+import pandas as pd
+import numpy as np
+
+# 假设您的课程数据已加载为 DataFrame，名为 df
+# df = pd.read_csv('your_course_data.csv') 
+
+# 1. 计算日收益率
+daily_returns = df['fund'].pct_change().dropna()
+
+# 2. 无风险利率年化2.1%，日化处理
+rf_annual = 0.021
+rf_daily = rf_annual / 252
+
+# 3. 计算日超额收益
+excess_returns = daily_returns - rf_daily
+
+# 4. 计算日夏普比率
+sharpe_daily = excess_returns.mean() / excess_returns.std()
+
+# 5. 计算年化夏普比率 (假设一年252个交易日)
+sharpe_annual = sharpe_daily * np.sqrt(252)
+
+# 按照输出契约存入字典
+result = {'sharpe_annual': sharpe_annual}
+
+print(result)
+```
+
+如果您在本地运行上述代码，`result` 字典将输出类似于 `{'sharpe_annual': 1.234}` 的结果（具体数值取决于您的实际数据）。如果您能提供具体的数据，我可以直接为您算出精确数值。

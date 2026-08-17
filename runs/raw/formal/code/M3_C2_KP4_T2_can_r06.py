@@ -1,0 +1,75 @@
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+
+# --------------------
+# 1. 参数设定与假设处理
+# --------------------
+# 题目给定参数
+K = 97.5          # 行权价
+r = 0.043         # 无风险利率 (年化)
+T = 0.58          # 剩余期限 (年)
+q = 0.0           # 标的不分红，股息率设为0
+
+# 波动率参数化设定
+volatilities = [0.15, 0.276, 0.40]
+
+# 标的资产价格网格
+S_grid = np.linspace(70, 140, 500)
+
+# --------------------
+# 2. Black-Scholes Delta 闭式解计算
+# --------------------
+def bs_call_delta(S, K, T, r, sigma, q=0.0):
+    """
+    计算欧式看涨期权的 Delta
+    Delta = exp(-q*T) * N(d1)
+    d1 = [ln(S/K) + (r - q + 0.5*sigma^2)*T] / (sigma*sqrt(T))
+    """
+    d1 = (np.log(S / K) + (r - q + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    delta = np.exp(-q * T) * norm.cdf(d1)
+    return delta
+
+# --------------------
+# 3. 计算不同波动率下的 Delta 曲线
+# --------------------
+delta_curves = {}
+for vol in volatilities:
+    delta_curves[vol] = bs_call_delta(S_grid, K, T, r, vol, q)
+
+# --------------------
+# 4. 报告 S=110, vol=27.6% 时的 Delta
+# --------------------
+delta_s110 = bs_call_delta(110, K, T, r, 0.276, q)
+
+# --------------------
+# 5. 绘图并保存
+# --------------------
+# 设置字体与样式以防中文乱码（此处使用纯英文标注保证自包含与跨平台兼容）
+plt.figure(figsize=(10, 6))
+for vol in volatilities:
+    # 将波动率乘100以百分比显示在图例中，保留1位小数
+    plt.plot(S_grid, delta_curves[vol], label=f'Vol = {vol*100:.1f}%')
+
+plt.xlabel('Underlying Price (S)')
+plt.ylabel('Call Option Delta')
+plt.title('European Call Option Delta vs Underlying Price')
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.7)
+
+# 保存图形
+fig_path = 'delta_curve.png'
+plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# --------------------
+# 6. 填充输出契约结果
+# --------------------
+result = {
+    'delta_at_s110': delta_s110,
+    'figure_path': fig_path
+}
+
+# 为了在课堂投屏时展示可见输出，打印结果（可选）
+print(f"标的110、波动率27.6%时的Delta: {result['delta_at_s110']:.6f}")
+print(f"图形已保存至: {result['figure_path']}")

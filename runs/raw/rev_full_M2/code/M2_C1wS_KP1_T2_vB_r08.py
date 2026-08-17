@@ -1,0 +1,142 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ===================== 参数设置 =====================
+# 资产收益和波动率
+mu = np.array([0.071, 0.124])
+sigma = np.array([0.163, 0.289])
+# 相关系数列表
+rho_list = [0.15, 0.45, 0.75]
+# 扫描组合权重 (等间距)
+num_points = 500
+w1_array = np.linspace(0.0, 1.0, num_points)
+# 目标收益
+target_return = 0.10
+
+# ===================== 辅助函数 =====================
+def portfolio_stats(w, mu, cov):
+    """给定权重，返回组合收益和波动率"""
+    w = np.asarray(w)
+    ret = np.dot(w, mu)
+    vol = np.sqrt(np.dot(w, np.dot(cov, w)))
+    return ret, vol
+
+def min_var_portfolio(mu, cov):
+    """满仓约束下，解析求最小方差组合(不依赖收益)"""
+    # 对于两资产: w1 = (sig2^2 - rho*sig1*sig2) / (sig1^2 + sig2^2 - 2*rho*sig1*sig2)
+    sig1, sig2 = np.sqrt(cov[0,0]), np.sqrt(cov[1,1])
+    rho = cov[0,1] / (sig1 * sig2)
+    w1_star = (sig2**2 - rho*sig1*sig2) / (sig1**2 + sig2**2 - 2*rho*sig1*sig2)
+    w1_star = np.clip(w1_star, 0.0, 1.0)  # 满仓下保证在[0,1]内
+    w_star = np.array([w1_star, 1.0 - w1_star])
+    return w_star
+
+def solve_frontier_for_target(mu, cov, target_ret):
+    """解析求给定收益下的最小方差组合(满仓约束，不借贷)"""
+    # 两资产情况下可以直接解线性方程组
+    # 目标: min w'Σw  s.t. w'1 = 1, w'μ = target_ret
+    # 构造拉格朗日方程
+    ones = np.ones(2)
+    # 系数矩阵
+    A = np.array([[2*cov[0,0], 2*cov[0,1], -mu[0], -1],
+                  [2*cov[1,0], 2*cov[1,1], -mu[1], -1],
+                  [mu[0], mu[1], 0, 0],
+                  [1, 1, 0, 0]])
+    b = np.array([0, 0, target_ret, 1])
+    try:
+        sol = np.linalg.solve(A, b)
+        w = sol[:2]
+    except np.linalg.LinAlgError:
+        # 如果无解(比如目标收益超出可行范围)，返回None
+        return None
+    # 检查是否满足满仓(不应该为负) 
+    if np.any(w < -1e-9) or np.any(w > 1+1e-9):
+        # 理论上有效前沿允许卖空，但本题未明确，通常马科维茨允许卖空。
+        # 这里按无约束条件解出权重，不做限制。
+        pass
+    return w
+
+# ===================== 绘图与计算 =====================
+fig, ax = plt.subplots(figsize=(10, 7))
+
+# 存储各相关系数下的结果
+mvp_vol_rho45 = None
+frontier_vol_target = None
+
+# 标记用颜色
+colors = ['#1f77b4', '#ff7f0e', '#2ca02c']
+
+for idx, rho in enumerate(rho_list):
+    # 构造协方差矩阵
+    cov = np.array([[sigma[0]**2, rho*sigma[0]*sigma[1]],
+                    [rho*sigma[0]*sigma[1], sigma[1]**2]])
+    
+    # 扫描全部权重组合计算收益与波动
+    ret_curve = []
+    vol_curve = []
+    for w1 in w1_array:
+        w = np.array([w1, 1.0 - w1])
+        ret, vol = portfolio_stats(w, mu, cov)
+        ret_curve.append(ret)
+        vol_curve.append(vol)
+    
+    ret_curve = np.array(ret_curve)
+    vol_curve = np.array(vol_curve)
+    
+    # 绘制有效前沿曲线(所有组合)
+    ax.plot(vol_curve, ret_curve, color=colors[idx], lw=2, label=f'ρ = {rho}')
+    
+    # 计算并标注最小方差组合
+    w_mvp = min_var_portfolio(mu, cov)
+    ret_mvp, vol_mvp = portfolio_stats(w_mvp, mu, cov)
+    ax.scatter(vol_mvp, ret_mvp, color=colors[idx], marker='*', s=200, 
+               edgecolor='black', zorder=5)
+    
+    # 记录需要的值
+    if rho == 0.45:
+        mvp_vol_rho45 = vol_mvp
+        
+        # 对目标收益10%求解最小波动组合
+        w_target = solve_frontier_for_target(mu, cov, target_return)
+        if w_target is not None:
+            ret_t, vol_t = portfolio_stats(w_target, mu, cov)
+            frontier_vol_target = vol_t
+            # 在图上标记
+            ax.scatter(vol_t, target_return, color=colors[idx], marker='D', s=100, 
+                       edgecolor='black', zorder=5)
+            ax.annotate(f'Target 10%: vol={vol_t:.3f}', (vol_t, target_return),
+                        textcoords="offset points", xytext=(10,10), fontsize=9,
+                        arrowprops=dict(arrowstyle="->", color='gray'))
+        else:
+            frontier_vol_target = None
+
+# 单独标注资产(不加连线)
+ax.scatter(sigma[0], mu[0], marker='o', color='black', s=100, zorder=5)
+ax.annotate('Asset 1', (sigma[0], mu[0]), textcoords="offset points", xytext=(-15,5))
+ax.scatter(sigma[1], mu[1], marker='o', color='black', s=100, zorder=5)
+ax.annotate('Asset 2', (sigma[1], mu[1]), textcoords="offset points", xytext=(5,5))
+
+ax.set_xlabel('Volatility (Standard Deviation)', fontsize=12)
+ax.set_ylabel('Expected Return', fontsize=12)
+ax.set_title('Two-Asset Efficient Frontiers under Different Correlations', fontsize=14)
+ax.legend()
+ax.grid(True, linestyle='--', alpha=0.6)
+
+# 保存图片
+figure_path = 'efficient_frontier.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ===================== 构造输出 =====================
+result = {
+    'mvp_vol_at_rho45': mvp_vol_rho45,
+    'frontier_vol_at_target': frontier_vol_target,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+# 打印验证
+print("计算结果:")
+print(f"相关系数0.45时，最小方差组合波动率: {mvp_vol_rho45:.4f}")
+print(f"相关系数0.45时，目标收益10%的最小波动率: {frontier_vol_target:.4f}")
+print(f"图片保存至: {result['figure_path']}")

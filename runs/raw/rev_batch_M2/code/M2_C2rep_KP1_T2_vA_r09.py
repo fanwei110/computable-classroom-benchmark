@@ -1,0 +1,79 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# --- 资产参数 ---
+mu = np.array([0.071, 0.124])          # 期望年化收益
+sigma = np.array([0.163, 0.289])       # 年化波动率
+rho_values = [0.15, 0.45, 0.75]        # 需要绘制的相关系数
+target_return = 0.10                   # 目标期望收益 10%
+colors = ['#1f77b4', '#ff7f0e', '#2ca02c']  # 每条曲线的颜色
+
+# --- 用来扫描组合的权重数组（满仓，允许卖空） ---
+w1_range = np.linspace(-2.0, 3.0, 6000)  # 足够密集使曲线光滑
+w2_range = 1.0 - w1_range
+
+plt.figure(figsize=(9, 6))
+
+# 用于保存所需结果的变量
+mvp_vol_at_rho45 = None
+frontier_vol_at_target = None
+
+# --- 对每个相关系数画前沿并标注最小方差组合 ---
+for rho, col in zip(rho_values, colors):
+    # 组合收益和方差
+    ret = w1_range * mu[0] + w2_range * mu[1]
+    var = (w1_range**2 * sigma[0]**2 +
+           w2_range**2 * sigma[1]**2 +
+           2 * w1_range * w2_range * rho * sigma[0] * sigma[1])
+    std = np.sqrt(var)
+
+    # 按波动率排序，使曲线连续
+    order = np.argsort(std)
+    plt.plot(std[order], ret[order], color=col, linewidth=2, label=f'ρ = {rho}')
+
+    # 解析最小方差组合权重（满仓）
+    cov_ij = rho * sigma[0] * sigma[1]
+    w_mvp = (sigma[1]**2 - cov_ij) / (sigma[0]**2 + sigma[1]**2 - 2 * cov_ij)
+    ret_mvp = w_mvp * mu[0] + (1 - w_mvp) * mu[1]
+    var_mvp = (w_mvp**2 * sigma[0]**2 +
+               (1 - w_mvp)**2 * sigma[1]**2 +
+               2 * w_mvp * (1 - w_mvp) * cov_ij)
+    std_mvp = np.sqrt(var_mvp)
+
+    # 在曲线上标出 MVP 点
+    plt.scatter(std_mvp, ret_mvp, color=col, marker='o',
+                s=100, edgecolors='black', linewidth=1.2, zorder=5)
+
+    # 若为 ρ = 0.45，记录所需结果
+    if rho == 0.45:
+        mvp_vol_at_rho45 = std_mvp
+
+        # 目标收益 10% 对应的权重（唯一确定）
+        w_target = (target_return - mu[1]) / (mu[0] - mu[1])
+        var_target = (w_target**2 * sigma[0]**2 +
+                      (1 - w_target)**2 * sigma[1]**2 +
+                      2 * w_target * (1 - w_target) * cov_ij)
+        frontier_vol_at_target = np.sqrt(var_target)
+
+# --- 图形装饰 ---
+plt.xlabel('Annualized Volatility (Standard Deviation)')
+plt.ylabel('Annualized Expected Return')
+plt.title('Mean–Variance Frontier for Different Correlations\n(MVP marked with circles)')
+plt.legend(loc='best')
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.tight_layout()
+
+# 保存图片
+figure_path = 'frontier_plot.png'
+plt.savefig(figure_path, dpi=150)
+plt.close()
+
+# --- 输出结果字典 ---
+result = {
+    'mvp_vol_at_rho45': mvp_vol_at_rho45,
+    'frontier_vol_at_target': frontier_vol_at_target,
+    'figure_path': figure_path
+}
+
+# 为便于课堂查看，打印结果
+print(result)

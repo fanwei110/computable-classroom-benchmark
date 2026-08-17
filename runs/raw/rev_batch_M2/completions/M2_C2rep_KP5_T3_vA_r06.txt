@@ -1,0 +1,38 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+# ------------------------------
+# 参数设定
+# ------------------------------
+position_value = 2_700_000          # 头寸价值（元）
+annual_volatility = 0.24           # 年化波动率
+confidence_level = 0.95            # 置信水平
+trading_days = 252                 # 一年交易天数（市场惯例）
+
+# ------------------------------
+# 1. 年化波动率换算为日波动率
+# ------------------------------
+daily_volatility = annual_volatility / np.sqrt(trading_days)
+
+# ------------------------------
+# 2. 95%置信水平下的正态分位数（单尾）
+#    norm.ppf(0.05) 给出负值，其绝对值即“标准差倍数”
+# ------------------------------
+z_score = norm.ppf(1 - confidence_level)   # 例如 -1.64485...
+var_multiplier = abs(z_score)              # 取正值用于计算损失金额
+
+# ------------------------------
+# 3. 计算一日 VaR（金额，正数表示潜在损失）
+# ------------------------------
+var_95_1d = position_value * daily_volatility * var_multiplier
+
+# ------------------------------
+# 输出结果字典（键名严格按要求）
+# ------------------------------
+result = {
+    'var_95_1d': var_95_1d
+}
+
+print(result)
+```

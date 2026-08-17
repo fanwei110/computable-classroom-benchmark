@@ -1,0 +1,65 @@
+```python
+import os
+import numpy as np
+import pandas as pd
+
+# ==================== 1. 读取数据 ====================
+# 假设存在“快照.csv”，其中包含列名为 'fund' 的基金日收益率
+csv_file = '快照.csv'
+
+if os.path.exists(csv_file):
+    # 读取真实CSV文件
+    df = pd.read_csv(csv_file)
+    fund_returns_daily = df['fund'].values
+else:
+    # 若文件不存在，生成示例数据以保证程序自包含、可运行
+    # 设定随机种子确保每次运行结果一致
+    np.random.seed(42)
+    n_days = 500  # 500个交易日
+    # 模拟基金日收益率：均值略高于无风险利率，标准差约2%
+    fund_returns_daily = np.random.normal(loc=0.001, scale=0.02, size=n_days)
+
+# ==================== 2. 年化夏普比率 ====================
+# 年化无风险利率
+rf_annual = 0.021  # 2.1%
+# 简单换算为日无风险利率（一年按252个交易日）
+rf_daily = rf_annual / 252
+
+# 基金超额日收益（计入无风险利率）
+excess_daily = fund_returns_daily - rf_daily
+
+# 计算平均超额收益与标准差（样本标准差，ddof=1）
+mean_excess = np.mean(excess_daily)
+std_excess = np.std(excess_daily, ddof=1)
+
+# 年化夏普比率（假设收益率独立同分布，√252 调整）
+sharpe_annual = np.sqrt(252) * mean_excess / std_excess
+
+# ==================== 3. 业绩归因 ====================
+# 组合权重与收益率（小数形式）
+w_p = np.array([0.45, 0.35, 0.20])   # 组合行业权重
+r_p = np.array([0.083, 0.021, -0.014])  # 组合中对应行业收益率
+
+# 基准权重与收益率
+w_b = np.array([0.40, 0.40, 0.20])   # 基准行业权重
+r_b = np.array([0.067, 0.034, -0.009])  # 基准中对应行业收益率
+
+# 配置效应： (w_p - w_b) * r_b
+allocation_effect = np.sum((w_p - w_b) * r_b)
+
+# 选择效应： w_b * (r_p - r_b)
+selection_effect = np.sum(w_b * (r_p - r_b))
+
+# 交互效应： (w_p - w_b) * (r_p - r_b)
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+
+# ==================== 4. 结果输出 ====================
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+print(result)
+```

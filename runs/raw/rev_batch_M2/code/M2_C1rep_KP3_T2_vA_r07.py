@@ -1,0 +1,91 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ---------- 债券参数 ----------
+FACE = 100.0
+COUPON_RATE = 0.046
+MATURITY = 7
+Y0 = 0.053          # 初始收益率
+Y_SHIFT_BPS = 100   # 收益率变动幅度（可调，单位：基点）
+
+# ---------- 工具函数 ----------
+def bond_price(ytm):
+    """计算债券精确价格（年付息）"""
+    c = FACE * COUPON_RATE
+    t = np.arange(1, MATURITY + 1)
+    pv_coupons = np.sum(c / (1 + ytm) ** t)
+    pv_face = FACE / (1 + ytm) ** MATURITY
+    return pv_coupons + pv_face
+
+def bond_duration(ytm):
+    """计算麦考利久期和修正久期"""
+    c = FACE * COUPON_RATE
+    t = np.arange(1, MATURITY + 1)
+    cf = np.full(MATURITY, c)
+    cf[-1] += FACE
+    pv = cf / (1 + ytm) ** t
+    price = np.sum(pv)
+    mac_dur = np.sum(t * pv) / price
+    mod_dur = mac_dur / (1 + ytm)
+    return mac_dur, mod_dur, price
+
+# ---------- 核心计算 ----------
+P0 = bond_price(Y0)
+mac_dur, mod_dur, _ = bond_duration(Y0)
+dy = Y_SHIFT_BPS / 10000.0   # 转换为小数
+
+# 收益率上升 100 bp 后的精确价格
+y_up = Y0 + dy
+price_up_exact = bond_price(y_up)
+
+# 久期估计的相对价格变化 (ΔP/P ≈ -D_mod * Δy)
+dur_approx_rel_change = -mod_dur * dy
+
+# ---------- 画图 ----------
+y_range = np.linspace(0.02, 0.09, 300)
+exact_prices = bond_price(y_range)
+
+# 切线近似: P(y) ≈ P0 - P0 * D_mod * (y - Y0)
+approx_prices = P0 - P0 * mod_dur * (y_range - Y0)
+
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.plot(y_range * 100, exact_prices, label='精确价格 (Exact)', linewidth=2)
+ax.plot(y_range * 100, approx_prices, '--', label='久期近似 (Duration Approx.)', linewidth=2)
+
+# 标注初始点
+ax.plot(Y0 * 100, P0, 'ko', markersize=6)
+ax.axvline(Y0 * 100, color='gray', linestyle=':', alpha=0.7)
+ax.axvline((Y0 + dy) * 100, color='gray', linestyle=':', alpha=0.7)
+ax.annotate(f'Y0={Y0*100:.2f}%', xy=(Y0*100, P0), xytext=(Y0*100+0.2, P0+0.5),
+            arrowprops=dict(arrowstyle='->'), fontsize=9)
+ax.annotate(f'Y0+{Y_SHIFT_BPS}bp', xy=((Y0+dy)*100, price_up_exact),
+            xytext=((Y0+dy)*100+0.3, price_up_exact-0.8),
+            arrowprops=dict(arrowstyle='->'), fontsize=9)
+
+ax.set_xlabel('收益率 (%)')
+ax.set_ylabel('价格')
+ax.set_title('债券价格随收益率变化 (含久期近似)')
+ax.legend()
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+
+# 保存图片
+fig_path = './bond_price_duration.png'
+plt.savefig(fig_path, dpi=150)
+plt.close()
+
+# ---------- 输出结果字典 ----------
+result = {
+    'price_at_up100bp': round(price_up_exact, 4),
+    'dur_approx_change_up100bp': round(dur_approx_rel_change, 6),
+    'figure_path': fig_path
+}
+
+# 打印结果（可选）
+print("===== 计算结果 =====")
+print(f"初始收益率 Y0 = {Y0*100}%")
+print(f"初始价格 P0 = {P0:.4f}")
+print(f"修正久期 D_mod = {mod_dur:.4f}")
+print(f"收益率上升 100 bp 后的精确价格: {result['price_at_up100bp']:.4f}")
+print(f"久期估计的相对价格变化 (ΔP/P): {result['dur_approx_change_up100bp']:.6f}  ({result['dur_approx_change_up100bp']*100:.4f}%)")
+print(f"图片保存路径: {result['figure_path']}")

@@ -1,0 +1,59 @@
+要计算整个样本期的年化夏普比率（Sharpe Ratio），我们按照以下步骤进行：
+
+1. **计算日收益率的均值和标准差**：
+   - 日收益率的均值（mean_daily_return）和标准差（std_daily_return）使用样本估计量（ddof=1）。
+
+2. **年化收益率和年化波动率**：
+   - 年化收益率 = mean_daily_return × 252
+   - 年化波动率 = std_daily_return × √252
+
+3. **计算超额收益率**：
+   - 超额收益率 = 年化收益率 - 无风险收益率（2.1%）
+
+4. **计算年化夏普比率**：
+   - 夏普比率 = 超额收益率 / 年化波动率
+
+以下是Python代码实现：
+
+```python
+import numpy as np
+
+# 假设fund列的日收益率数据存储在变量daily_returns中
+# 示例：daily_returns = np.array([...])  # 替换为实际数据
+
+# 计算日收益率的均值和标准差（样本标准差，ddof=1）
+mean_daily_return = np.mean(daily_returns)
+std_daily_return = np.std(daily_returns, ddof=1)
+
+# 年化收益率和波动率
+annualized_return = mean_daily_return * 252
+annualized_volatility = std_daily_return * np.sqrt(252)
+
+# 无风险收益率（2.1%）
+risk_free_rate = 0.021
+
+# 计算超额收益率
+excess_return = annualized_return - risk_free_rate
+
+# 计算年化夏普比率
+sharpe_annual = excess_return / annualized_volatility
+
+# 存入result字典
+result = {
+    'sharpe_annual': sharpe_annual
+}
+```
+
+### 注意事项：
+1. 确保 `daily_returns` 是包含所有日收益率的数组或列表。
+2. 如果 `daily_returns` 是从数据文件中读取的，请先加载数据并提取 `fund` 列的日收益率。
+3. 结果 `sharpe_annual` 可能为负数（表示策略表现不如无风险收益率），但夏普比率通常取绝对值或解释为风险调整后的表现。
+
+### 示例（假设数据）：
+如果 `daily_returns` 的均值为 0.0005，标准差为 0.01：
+- 年化收益率 = 0.0005 × 252 ≈ 0.126（12.6%）
+- 年化波动率 = 0.01 × √252 ≈ 0.1587（15.87%）
+- 超额收益率 = 0.126 - 0.021 = 0.105
+- 夏普比率 = 0.105 / 0.1587 ≈ 0.6616
+
+最终 `result` 字典中的 `sharpe_annual` 即为 0.6616。

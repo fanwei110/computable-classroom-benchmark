@@ -1,0 +1,90 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==================== 1. 参数设定 ====================
+mu = np.array([0.071, 0.124])          # 期望年收益
+sigma = np.array([0.163, 0.289])       # 年化波动率
+rho_list = [0.15, 0.45, 0.75]          # 相关系数列表
+target_return = 0.10                   # 目标期望收益
+
+# ==================== 2. 扫描权重并绘图 ====================
+plt.figure(figsize=(10, 7))
+
+# 生成权重扫描范围（允许卖空，故w1可小于0或大于1）
+w1_range = np.linspace(-0.5, 1.5, 1000)
+w2_range = 1 - w1_range
+W = np.vstack([w1_range, w2_range])    # 形状为 (2, N)
+
+mvp_vol_at_rho45 = None
+frontier_vol_at_target = None
+
+# 遍历每个相关系数
+for rho in rho_list:
+    # 构造协方差矩阵
+    cov_12 = rho * sigma[0] * sigma[1]
+    Sigma = np.array([[sigma[0]**2, cov_12],
+                      [cov_12, sigma[1]**2]])
+    
+    # 计算扫描组合的期望收益与波动率
+    port_mu = W.T @ mu
+    # 计算组合方差 w'Σw：利用广播机制高效计算 N 个组合的方差
+    port_var = np.sum(W * (Sigma @ W), axis=0)
+    port_sigma = np.sqrt(port_var)
+    
+    # 绘制均值-方差前沿
+    plt.plot(port_sigma, port_mu, label=f'ρ = {rho:.2f}', linewidth=2)
+    
+    # ==================== 3. 计算并标出最小方差组合(MVP) ====================
+    ones = np.ones(2)
+    Sigma_inv = np.linalg.inv(Sigma)
+    
+    # 引入通用公式计算所需常数
+    A = mu.T @ Sigma_inv @ mu
+    B = mu.T @ Sigma_inv @ ones
+    C = ones.T @ Sigma_inv @ ones
+    D = A * C - B**2
+    
+    # MVP权重与对应的收益、波动率
+    w_mvp = (Sigma_inv @ ones) / C
+    mu_mvp = w_mvp.T @ mu
+    sigma_mvp = np.sqrt(1 / C)  # MVP方差为 1/C
+    
+    # 在图上标出MVP点
+    plt.scatter(sigma_mvp, mu_mvp, marker='*', s=200, zorder=5, 
+                color='black', edgecolors='white', linewidths=0.8)
+    
+    # ==================== 4. 针对 rho=0.45 的特定计算 ====================
+    if rho == 0.45:
+        mvp_vol_at_rho45 = float(sigma_mvp)
+        
+        # 计算目标期望收益下的最小波动率组合权重与波动率
+        mu_t = target_return
+        w_target = (1 / D) * Sigma_inv @ ((C * mu_t - B) * mu + (A - B * mu_t) * ones)
+        sigma_target = np.sqrt(w_target.T @ Sigma @ w_target)
+        frontier_vol_at_target = float(sigma_target)
+
+# ==================== 5. 图形修饰与保存 ====================
+plt.xlabel('Volatility (Annualized)', fontsize=12)
+plt.ylabel('Expected Return (Annualized)', fontsize=12)
+plt.title('Mean-Variance Frontiers for Different Correlations', fontsize=14)
+plt.legend(fontsize=11)
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.axhline(0, color='black', linewidth=0.8, linestyle='-')
+plt.axvline(0, color='black', linewidth=0.8, linestyle='-')
+
+# 保存图形
+fig_path = 'markowitz_frontier.png'
+plt.savefig(fig_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# ==================== 6. 填充输出契约字典 ====================
+result = {
+    'mvp_vol_at_rho45': mvp_vol_at_rho45,
+    'frontier_vol_at_target': frontier_vol_at_target,
+    'figure_path': fig_path
+}
+
+# 打印结果以便查验
+print(result)
+```

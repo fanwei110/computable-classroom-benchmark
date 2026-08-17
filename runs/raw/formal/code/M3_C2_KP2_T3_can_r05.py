@@ -1,0 +1,31 @@
+import numpy as np
+
+# ==================== 输入参数 ====================
+beta = 1.42                     # 股票的 Beta 值
+market_return_monthly = -0.058  # 上个月市场收益率 (-5.8%)
+risk_free_annual = 0.047        # 年化无风险利率 (4.7%)
+
+# ==================== 步骤 1: 折算无风险利率 ====================
+# 假设年无风险利率为有效年利率(EAR)，采用复利方式折算为月度有效利率
+# 计算公式: R_f_monthly = (1 + R_f_annual)^(1/12) - 1
+risk_free_monthly = (1 + risk_free_annual) ** (1 / 12) - 1
+
+# ==================== 步骤 2: 套用 CAPM 模型 ====================
+# CAPM 月度预期收益公式: E(R_i) = R_f_monthly + Beta * (R_m_monthly - R_f_monthly)
+capm_return_monthly = risk_free_monthly + beta * (market_return_monthly - risk_free_monthly)
+
+# ==================== 步骤 3: 填充 result ====================
+result = {
+    'capm_return_monthly': capm_return_monthly
+}
+
+# ==================== 课堂演示输出 ====================
+print(f"假设条件: 年无风险利率按复利折算为月利率")
+print(f"年无风险利率: {risk_free_annual:.2%}")
+print(f"月无风险利率: {risk_free_monthly:.6%}")
+print(f"股票 Beta: {beta}")
+print(f"市场月收益率: {market_return_monthly:.2%}")
+print("-" * 40)
+print(f"按 CAPM 计算的该股票上月预期收益: {capm_return_monthly:.6%}")
+print("-" * 40)
+print(f"result 字典内容: {result}")

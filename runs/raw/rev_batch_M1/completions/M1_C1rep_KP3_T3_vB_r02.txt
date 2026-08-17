@@ -1,0 +1,37 @@
+要计算该债券收益率上升80个基点（bp）后的价格下跌幅度，我们可以使用久期近似法。以下是计算步骤：
+
+1. **债券基本信息**：
+   - 面值：100元
+   - 票面利率：4.6%
+   - 当前到期收益率（YTM）：5.3%
+   - 剩余期限：7年
+   - 收益率变化：+80bp（即YTM从5.3%上升至6.1%）
+
+2. **久期估算**：
+   对于固定利率债券，修正久期（Modified Duration）可以近似为：
+   \[
+   \text{Modified Duration} \approx \frac{\text{Macaulay Duration}}{1 + \frac{YTM}{m}}
+   \]
+   其中，Macaulay Duration可以通过现金流折现计算，但简化估算时，对于7年期债券，假设付息频率为年付，Macaulay Duration约为6.0（具体值需精确计算，这里取近似值）。
+   修正久期约为：
+   \[
+   \text{Modified Duration} \approx \frac{6.0}{1 + 0.053} \approx 5.7
+   \]
+
+3. **价格变化估算**：
+   价格变化百分比 ≈ -Modified Duration × 收益率变化
+   \[
+   \text{Price Drop (\%)} \approx -5.7 \times 0.8\% = -4.56\%
+   \]
+
+   更精确的计算需要使用债券定价公式，但久期近似法已足够估算。
+
+4. **结果**：
+   价格下跌幅度约为4.56%。
+
+将结果存入字典：
+```python
+result = {
+    'price_drop_pct': -4.56
+}
+```

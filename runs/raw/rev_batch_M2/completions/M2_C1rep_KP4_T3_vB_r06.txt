@@ -1,0 +1,19 @@
+根据给定的参数，标的资产价格 \(S = 103.7\)，行权价 \(K = 97.5\)，隐含波动率 \(\sigma = 27.6\%\)，无风险利率 \(r = 4.3\%\)，到期时间 \(T = 0.58\) 年，假设无股息，且期权为普通欧式看涨或看跌期权（Vega 相同）。  
+计算 BSM 模型下的 Vega 值：  
+\[
+d_1 = \frac{\ln(S/K) + (r + 0.5\sigma^2)T}{\sigma\sqrt{T}} \approx 0.5171
+\]
+\[
+N'(d_1) \approx 0.3490
+\]
+\[
+\text{Vega} = S \cdot N'(d_1) \cdot \sqrt{T} \approx 27.564
+\]
+当 IV 上涨 1 个百分点（即 \(\Delta\sigma = 0.01\)）时，期权价格变化约为：
+\[
+\Delta\text{Price} \approx \text{Vega} \times 0.01 = 0.2756
+\]
+
+```python
+result = {'price_change': 0.2756}
+```

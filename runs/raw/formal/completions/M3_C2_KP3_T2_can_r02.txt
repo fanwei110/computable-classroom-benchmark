@@ -1,0 +1,93 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ================= 债券参数与假设设置 =================
+FV = 100                  # 面值
+coupon_rate = 0.046       # 票息率
+C = FV * coupon_rate      # 每期票息
+T = 7                     # 期限 (年)
+y_curr = 0.053            # 当前收益率
+
+# 假设：计息频率为每年1次（Annual），现金流发生在每年年末
+# 可调参数：绘制久期近似曲线时的收益率变动幅度 (以 y_curr 为中心，左右偏移量)
+YIELD_SHIFT_AMT = 0.035  # 上下偏移 3.5%，即覆盖 1.8% 到 8.8%
+
+# ================= 核心计算函数 =================
+def bond_price(y_arr, C, FV, T):
+    """
+    计算债券精确价格（支持向量化）
+    :param y_arr: 收益率数组
+    :param C: 票息
+    :param FV: 面值
+    :param T: 期限
+    :return: 价格数组
+    """
+    t_arr = np.arange(1, T + 1)
+    # 构建现金流: 1~T-1期为票息C，第T期为票息+面值
+    CF = np.full(T, C)
+    CF[-1] += FV
+    
+    # 广播机制计算现值: y_arr (N,1), t_arr (1,T)
+    pv_cf = CF / (1 + y_arr[:, np.newaxis])**t_arr
+    prices = np.sum(pv_cf, axis=1)
+    return prices
+
+# ================= 1. 计算精确价格-收益率曲线 =================
+# 收益率网格: 2% 到 9%
+y_grid = np.linspace(0.02, 0.09, 300)
+exact_prices = bond_price(y_grid, C, FV, T)
+
+# 计算当前收益率下的精确价格
+P_curr = bond_price(np.array([y_curr]), C, FV, T)[0]
+
+# 计算麦考利久期与修正久期
+t_arr = np.arange(1, T + 1)
+CF = np.full(T, C)
+CF[-1] += FV
+pv_cf_curr = CF / (1 + y_curr)**t_arr
+
+MacDur = np.sum(t_arr * pv_cf_curr) / P_curr   # 麦考利久期
+ModDur = MacDur / (1 + y_curr)                 # 修正久期
+
+# ================= 2. 叠加基于久期的线性近似 =================
+# 近似曲线的收益率范围：当前收益率上下浮动可调参数 YIELD_SHIFT_AMT
+y_approx_grid = np.linspace(y_curr - YIELD_SHIFT_AMT, y_curr + YIELD_SHIFT_AMT, 300)
+# 久期近似公式: P(y) ≈ P_curr * (1 - ModDur * (y - y_curr))
+approx_prices = P_curr * (1 - ModDur * (y_approx_grid - y_curr))
+
+# ================= 3. 计算 +100bp 的精确价格与久期法相对变化 =================
+y_up100bp = y_curr + 0.01
+P_up100bp = bond_price(np.array([y_up100bp]), C, FV, T)[0]
+
+# 久期法估计的相对价格变化 = -ModDur * Δy
+dur_approx_rel_change = -ModDur * 0.01
+
+# ================= 4. 绘图与保存 =================
+# 设置中文字体（尽量兼容不同操作系统，若缺字体会自动降级）
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS', 'DejaVu Sans']
+plt.rcParams['axes.unicode_minus'] = False
+
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.plot(y_grid * 100, exact_prices, label='精确价格-收益率曲线', linewidth=2, color='blue')
+ax.plot(y_approx_grid * 100, approx_prices, label='基于久期的线性近似', linewidth=2, linestyle='--', color='red')
+ax.scatter([y_curr * 100], [P_curr], color='black', zorder=5, label=f'当前状态 (y={y_curr*100:.1f}%)')
+
+ax.set_xlabel('收益率 (%)')
+ax.set_ylabel('债券价格')
+ax.set_title(f'债券价格-收益率曲线与久期近似 (面值={FV}, 票息={coupon_rate*100}%, 期限={T}年)')
+ax.legend()
+ax.grid(True, linestyle=':', alpha=0.7)
+
+# 保存图形
+figure_path = 'price_yield_curve.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close(fig)
+
+# ================= 输出结果拼装 =================
+result = {
+    'price_at_up100bp': round(P_up100bp, 4),
+    'dur_approx_change_up100bp': round(dur_approx_rel_change, 6),
+    'figure_path': figure_path
+}
+```

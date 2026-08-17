@@ -1,0 +1,50 @@
+以下是一个自包含的 Python 脚本，使用指定的库计算股票 X、Y、Z 的 CAPM 期望年收益以及股票 Y 的 alpha 值：
+
+```python
+import numpy as np
+
+# 给定参数
+risk_free_rate = 0.023  # 无风险利率 2.3%
+market_expected_return = 0.094  # 市场期望收益 9.4%
+betas = {
+    'x': 0.62,
+    'y': 1.18,
+    'z': 1.51
+}
+actual_return_y = 0.131  # 股票 Y 当年实际收益 13.1%
+
+# 计算 CAPM 期望收益
+def calculate_capm_er(rf, beta, market_er):
+    return rf + beta * (market_er - rf)
+
+# 计算 alpha
+def calculate_alpha(actual_return, expected_return):
+    return actual_return - expected_return
+
+# 计算各股票的期望收益
+er_x = calculate_capm_er(risk_free_rate, betas['x'], market_expected_return)
+er_y = calculate_capm_er(risk_free_rate, betas['y'], market_expected_return)
+er_z = calculate_capm_er(risk_free_rate, betas['z'], market_expected_return)
+
+# 计算股票 Y 的 alpha
+alpha_y = calculate_alpha(actual_return_y, er_y)
+
+# 存储结果
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+
+# 输出结果（可选，便于查看）
+print(result)
+```
+
+运行此脚本将输出一个名为 `result` 的字典，其中包含以下键值对：
+- `'er_x'`: 股票 X 的 CAPM 期望年收益
+- `'er_y'`: 股票 Y 的 CAPM 期望年收益
+- `'er_z'`: 股票 Z 的 CAPM 期望年收益
+- `'alpha_y'`: 股票 Y 的 alpha 值
+
+输出结果可复现，且不依赖任何外部网络资源。

@@ -1,0 +1,32 @@
+import numpy as np
+
+# 输入参数
+vol_a = 0.184  # 资产 A 的年化波动率
+vol_b = 0.297  # 资产 B 的年化波动率
+w_a = 0.6      # 资产 A 的权重
+w_b = 0.4      # 资产 B 的权重
+corr_before = 0.3  # 变化前的相关系数
+corr_after = 0.8   # 变化后的相关系数
+
+def calculate_portfolio_vol(w_a, vol_a, w_b, vol_b, corr):
+    """
+    计算双边投资组合的年化波动率
+    公式: sigma_p = sqrt(w_a^2 * sigma_a^2 + w_b^2 * sigma_b^2 + 2 * w_a * w_b * sigma_a * sigma_b * corr)
+    """
+    variance_p = (w_a**2 * vol_a**2 + 
+                  w_b**2 * vol_b**2 + 
+                  2 * w_a * w_b * vol_a * vol_b * corr)
+    return np.sqrt(variance_p)
+
+# 计算相关系数变化前后的组合波动率
+vol_before_annual = calculate_portfolio_vol(w_a, vol_a, w_b, vol_b, corr_before)
+vol_after_annual = calculate_portfolio_vol(w_a, vol_a, w_b, vol_b, corr_after)
+
+# 按照输出契约存入字典
+result = {
+    'vol_before_annual': vol_before_annual,
+    'vol_after_annual': vol_after_annual
+}
+
+# 打印结果以供验证
+print(result)

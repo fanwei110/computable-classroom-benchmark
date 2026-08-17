@@ -1,0 +1,69 @@
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 1. 参数设定与网格生成
+# ==========================================
+K = 97.5          # 行权价
+r = 0.043         # 无风险利率 (每年 4.3%)
+T = 0.58          # 剩余期限 (年)
+
+# 标的资产价格网格：从 70 到 140，取 500 个点以保证曲线平滑
+S_grid = np.linspace(70, 140, 500)
+
+# 波动率参数化设定：15%、27.6%、40%
+volatilities = [0.15, 0.276, 0.40]
+
+# ==========================================
+# 2. 定义 Black-Scholes 欧式看涨期权 Delta 函数
+# ==========================================
+def bs_call_delta(S, K, r, T, sigma):
+    """
+    计算欧式看涨期权的 Delta (标的不分红)
+    Delta = N(d1)
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# ==========================================
+# 3. 计算并绘制 Delta 曲线
+# ==========================================
+plt.figure(figsize=(10, 6))
+
+# 遍历波动率参数，计算 Delta 并画图
+for sigma in volatilities:
+    deltas = bs_call_delta(S_grid, K, r, T, sigma)
+    plt.plot(S_grid, deltas, label=f'σ = {sigma*100:.1f}%')
+
+# 图形标注与美化
+plt.title('European Call Option Delta vs Spot Price', fontsize=14)
+plt.xlabel('Spot Price (S)', fontsize=12)
+plt.ylabel('Delta', fontsize=12)
+plt.legend(fontsize=11)
+plt.grid(True, linestyle='--', alpha=0.7)
+plt.tight_layout()
+
+# ==========================================
+# 4. 保存图形
+# ==========================================
+fig_path = 'bs_delta_curve.png'
+plt.savefig(fig_path, dpi=300)
+plt.close()
+
+# ==========================================
+# 5. 报告特定参数下的 Delta (S=110, sigma=27.6%)
+# ==========================================
+delta_at_s110 = bs_call_delta(S=110, K=K, r=r, T=T, sigma=0.276)
+
+# ==========================================
+# 6. 输出契约结果
+# ==========================================
+result = {
+    'delta_at_s110': float(delta_at_s110),
+    'figure_path': fig_path
+}
+
+# 打印确认结果 (可选，便于课堂展示)
+print(f"标的 110、波动率 27.6% 时的 Delta 为: {result['delta_at_s110']:.4f}")
+print(f"图形已保存至: {result['figure_path']}")

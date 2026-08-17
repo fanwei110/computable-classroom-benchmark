@@ -1,0 +1,39 @@
+import numpy as np
+
+# 给定数据：年化波动率
+vol_A = 0.184   # 资产A的年化波动率 18.4%
+vol_B = 0.297   # 资产B的年化波动率 29.7%
+
+# 组合权重
+w_A = 0.6
+w_B = 0.4
+
+# 相关系数情景
+rho_before = 0.3
+rho_after  = 0.8
+
+def portfolio_vol(w1: float, w2: float, v1: float, v2: float, rho: float) -> float:
+    """
+    计算两资产组合的年化波动率。
+    参数：
+        w1, w2: 资产权重
+        v1, v2: 资产年化波动率（标准差）
+        rho: 相关系数
+    返回：
+        float: 组合年化波动率
+    """
+    variance = (w1**2 * v1**2) + (w2**2 * v2**2) + 2 * w1 * w2 * v1 * v2 * rho
+    return np.sqrt(variance)
+
+# 计算相关系数变化前后的组合波动率
+vol_before = portfolio_vol(w_A, w_B, vol_A, vol_B, rho_before)
+vol_after  = portfolio_vol(w_A, w_B, vol_A, vol_B, rho_after)
+
+# 按输出契约构造字典
+result = {
+    'vol_before_annual': vol_before,
+    'vol_after_annual': vol_after
+}
+
+# 打印结果以便查看（不影响字典输出）
+print(result)

@@ -1,0 +1,48 @@
+以下是自包含的Python脚本，按照要求计算全样本年化夏普比率：
+
+```python
+import pandas as pd
+import numpy as np
+
+# 1. 读取数据并设定无风险利率
+file_path = 'data/market_snapshot_v1.csv'
+data = pd.read_csv(file_path)
+
+# 提取fund列（假设fund列代表基金的日收益率）
+daily_returns = data['fund'].dropna()  # 去除缺失值
+
+# 无风险利率（年化2.1%，转换为日利率）
+risk_free_rate_annual = 0.021
+risk_free_rate_daily = (1 + risk_free_rate_annual) ** (1/252) - 1
+
+# 2. 计算超额收益率
+excess_returns = daily_returns - risk_free_rate_daily
+
+# 计算年化夏普比率
+# 夏普比率 = 年化超额收益均值 / 年化超额收益标准差
+mean_excess_return_annual = excess_returns.mean() * 252
+std_excess_return_annual = excess_returns.std() * np.sqrt(252)
+sharpe_ratio_annual = mean_excess_return_annual / std_excess_return_annual
+
+# 3. 存储结果
+result = {
+    'sharpe_annual': sharpe_ratio_annual
+}
+
+# 输出结果（可选，用于验证）
+print(result)
+```
+
+### 说明：
+1. **数据读取**：从CSV文件中读取`fund`列，假设该列代表基金的日收益率。
+2. **无风险利率**：年化2.1%转换为日利率（假设一年有252个交易日）。
+3. **超额收益率**：计算每日收益率减去无风险利率。
+4. **年化夏普比率**：
+   - 年化超额收益均值 = 日超额收益均值 × 252
+   - 年化超额收益标准差 = 日超额收益标准差 × √252
+   - 夏普比率 = 年化超额收益均值 / 年化超额收益标准差
+5. **结果存储**：将结果存入字典`result`，键名为`'sharpe_annual'`。
+
+### 注意：
+- 如果`fund`列不是日收益率，请根据实际含义调整计算逻辑（例如，若是累计净值，需先计算日收益率）。
+- 脚本假设数据文件路径为`data/market_snapshot_v1.csv`，请确保路径正确。

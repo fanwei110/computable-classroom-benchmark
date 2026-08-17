@@ -1,0 +1,52 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+# 模拟fund数据（假设这是日收益率数据）
+np.random.seed(42)
+dates = pd.date_range(start='2020-01-01', end='2023-12-31', freq='D')
+fund_returns = np.random.normal(loc=0.0005, scale=0.01, size=len(dates))  # 日收益率
+fund = pd.Series(fund_returns, index=dates)
+
+# 参数设置
+rf = 0.021  # 无风险收益率2.1%
+window = 60  # 滚动窗口天数
+
+# 计算滚动年化夏普比率
+def calculate_rolling_sharpe(returns, window, rf):
+    # 年化因子
+    annual_factor = np.sqrt(252)
+
+    # 计算滚动均值和标准差
+    rolling_mean = returns.rolling(window=window).mean()
+    rolling_std = returns.rolling(window=window).std()
+
+    # 计算滚动夏普比率（年化）
+    rolling_sharpe = (rolling_mean - rf/252) / rolling_std * annual_factor
+
+    return rolling_sharpe
+
+rolling_sharpe = calculate_rolling_sharpe(fund, window, rf)
+
+# 获取最后一个窗口的数值
+last_sharpe = rolling_sharpe.dropna().iloc[-1]
+
+# 绘制曲线
+plt.figure(figsize=(12, 6))
+rolling_sharpe.plot(title=f'{window}日滚动年化夏普比率 (rf={rf*100}%)')
+plt.ylabel('年化夏普比率')
+plt.grid(True)
+
+# 保存图片
+figure_path = 'rolling_sharpe.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 存入结果字典
+result = {
+    'rolling_sharpe_last': last_sharpe,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+print(result)

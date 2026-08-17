@@ -1,0 +1,31 @@
+import numpy as np
+from scipy.stats import norm
+
+# ==================== 已知参数 ====================
+position = 2_700_000   # 头寸金额（元）
+annual_vol = 0.24      # 年化波动率（小数表示，即24%）
+trading_days = 252     # 一年的交易日数
+
+# ==================== 步骤1：去年化到一日 ====================
+# 波动率按 sqrt(252) 缩放
+daily_vol = annual_vol / np.sqrt(trading_days)
+
+# ==================== 步骤2：计算单尾95%正态分位数 ====================
+# 短期限下均值取零，使用单尾95%分位数
+z_95 = norm.ppf(0.95)
+
+# ==================== 步骤3：计算VaR并报告为正的损失金额 ====================
+# Delta-Normal 参数法 VaR = Z * sigma_daily * Position
+var_95_1d = z_95 * daily_vol * position
+
+# ==================== 结果存储 ====================
+result = {'var_95_1d': var_95_1d}
+
+# ==================== 课堂投屏打印区 ====================
+print(f"头寸金额: {position:,.2f} 元")
+print(f"年化波动率: {annual_vol:.2%}")
+print(f"日波动率: {daily_vol:.4%}")
+print(f"单尾95%正态分位数 (Z值): {z_95:.4f}")
+print("-" * 30)
+print(f"95% 一日 VaR: {var_95_1d:,.2f} 元")
+print("\n输出契约字典 result:", result)

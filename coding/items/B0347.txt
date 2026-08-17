@@ -1,0 +1,123 @@
+=== B0347  任务 KP6_T1 (T1) ===
+
+--- 任务要求的输出键 ---
+sharpe_annual, allocation_effect, selection_effect, interaction_effect
+
+--- 判分失败明细 ---
+sharpe_annual: 提交值 None  |  参考值 0.21202128793473451
+
+--- 提取出的代码 ---
+import pandas as pd
+import numpy as np
+
+# ================= 1. 年化夏普比率 =================
+# 假设你的数据文件读取后存入 df，且日收益列名为 'fund'
+# df = pd.read_csv('你的课程数据文件.csv')
+# daily_returns = df['fund']
+
+# 以下是计算逻辑（因无数据，暂以 None 占位，实际运行时取消注释即可）：
+# mean_daily = daily_returns.mean()
+# std_daily = daily_returns.std(ddof=1)  # 严格遵循ddof=1的样本标准差
+# rf_annual = 0.021
+# sharpe_annual = (mean_daily * 252 - rf_annual) / (std_daily * np.sqrt(252))
+
+# ================= 2. 业绩归因计算 =================
+w_p = np.array([0.45, 0.35, 0.20])
+r_p = np.array([0.083, 0.021, -0.014])
+w_b = np.array([0.40, 0.40, 0.20])
+r_b = np.array([0.067, 0.034, -0.009])
+
+allocation_effect = np.sum((w_p - w_b) * r_b)
+selection_effect = np.sum(w_b * (r_p - r_b))
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+
+# ================= 3. 结果存入字典 =================
+result = {
+    'sharpe_annual': None,  # 替换为上述计算出的 sharpe_annual 变量
+    'allocation_effect': float(allocation_effect),
+    'selection_effect': float(selection_effect),
+    'interaction_effect': float(interaction_effect)
+}
+
+print(result)
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+由于无法直接读取你本地的“课程数据文件”，我为你提供完整的计算代码与逻辑，并直接给出业绩归因（Brinson模型）的精确计算结果。你只需将数据代入代码即可得到完整的 `result` 字典。
+
+### 1. 年化夏普比率计算逻辑
+*   **日超额收益**：组合日收益 - 日无风险利率。由于无风险利率为年化2.1%（即0.021），日无风险利率通常直接按单利折算：$R_{f,daily} = 0.021 / 252$。
+*   **年化收益**：平均日收益 $\times 252$
+*   **年化波动率**：日收益标准差（ddof=1） $\times \sqrt{252}$
+*   **年化夏普比率**：$\frac{\text{平均日收益} \times 252 - 0.021}{\text{日收益标准差(ddof=1)} \times \sqrt{252}}$
+
+### 2. 业绩归因（Brinson模型）精确计算
+已知数据（均转为小数）：
+*   组合权重 $w_p = [0.45, 0.35, 0.20]$，组合收益 $r_p = [0.083, 0.021, -0.014]$
+*   基准权重 $w_b = [0.40, 0.40, 0.20]$，基准收益 $r_b = [0.067, 0.034, -0.009]$
+
+**配置效应** $= \sum (w_p - w_b) \times r_b$
+$= (0.45-0.40)\times0.067 + (0.35-0.40)\times0.034 + (0.20-0.20)\times(-0.009)$
+$= 0.00335 - 0.0017 + 0 = \mathbf{0.00165}$
+
+**选择效应** $= \sum w_b \times (r_p - r_b)$
+$= 0.40\times(0.083-0.067) + 0.40\times(0.021-0.034) + 0.20\times(-0.014 - (-0.009))$
+$= 0.0064 - 0.0052 - 0.0010 = \mathbf{0.0002}$
+
+**交互效应** $= \sum (w_p - w_b) \times (r_p - r_b)$
+$= (0.45-0.40)\times(0.083-0.067) + (0.35-0.40)\times(0.021-0.034) + (0.20-0.20)\times(-0.014 - (-0.009))$
+$= 0.0008 + 0.00065 + 0 = \mathbf{0.00145}$
+
+*(验证：总超额收益 = 配置 + 选择 + 交互 = 0.00165 + 0.0002 + 0.00145 = 0.0033。组合总收益 4.19% - 基准总收益 3.86% = 0.33%，完全吻合)*
+
+### 完整 Python 代码与输出字典
+
+你可以运行以下代码来直接生成符合要求的结果字典：
+
+```python
+import pandas as pd
+import numpy as np
+
+# ================= 1. 年化夏普比率 =================
+# 假设你的数据文件读取后存入 df，且日收益列名为 'fund'
+# df = pd.read_csv('你的课程数据文件.csv')
+# daily_returns = df['fund']
+
+# 以下是计算逻辑（因无数据，暂以 None 占位，实际运行时取消注释即可）：
+# mean_daily = daily_returns.mean()
+# std_daily = daily_returns.std(ddof=1)  # 严格遵循ddof=1的样本标准差
+# rf_annual = 0.021
+# sharpe_annual = (mean_daily * 252 - rf_annual) / (std_daily * np.sqrt(252))
+
+# ================= 2. 业绩归因计算 =================
+w_p = np.array([0.45, 0.35, 0.20])
+r_p = np.array([0.083, 0.021, -0.014])
+w_b = np.array([0.40, 0.40, 0.20])
+r_b = np.array([0.067, 0.034, -0.009])
+
+allocation_effect = np.sum((w_p - w_b) * r_b)
+selection_effect = np.sum(w_b * (r_p - r_b))
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+
+# ================= 3. 结果存入字典 =================
+result = {
+    'sharpe_annual': None,  # 替换为上述计算出的 sharpe_annual 变量
+    'allocation_effect': float(allocation_effect),
+    'selection_effect': float(selection_effect),
+    'interaction_effect': float(interaction_effect)
+}
+
+print(result)
+```
+
+### 最终 `result` 字典的值
+如果你仅需填入数值，归因部分的结果如下（夏普比率需根据你的数据自行算出填入）：
+
+```python
+result = {
+    'sharpe_annual': None,  # 需根据实际基金日收益数据算出
+    'allocation_effect': 0.00165,
+    'selection_effect': 0.0002,
+    'interaction_effect': 0.00145
+}
+```

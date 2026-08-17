@@ -1,0 +1,70 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+# scipy is imported for completeness but not used in this simple calculation
+import scipy
+
+# ---- Input parameters ----
+rf = 0.023          # 2.3% annual risk-free rate
+mkt_return = 0.094  # 9.4% annual expected market return
+mkt_premium = mkt_return - rf   # Equity risk premium
+
+betas = {
+    'X': 0.62,
+    'Y': 1.18,
+    'Z': 1.51
+}
+
+actual_return_Y = 0.131  # 13.1% actual return for stock Y
+
+# ---- CAPM expected returns ----
+expected_returns = {}
+for stock, beta in betas.items():
+    expected_returns[stock] = rf + beta * mkt_premium
+
+# ---- Alpha for stock Y ----
+alpha_Y = actual_return_Y - expected_returns['Y']
+
+# ---- Store results in the required dictionary ----
+result = {
+    'er_x': expected_returns['X'],
+    'er_y': expected_returns['Y'],
+    'er_z': expected_returns['Z'],
+    'alpha_y': alpha_Y
+}
+
+# ---- Print results for the instructor ----
+print("CAPM Expected Returns and Alpha")
+print("-" * 40)
+print(f"Risk-free rate: {rf:.4f} ({rf*100:.2f}%)")
+print(f"Market expected return: {mkt_return:.4f} ({mkt_return*100:.2f}%)")
+print(f"Market risk premium: {mkt_premium:.4f} ({mkt_premium*100:.2f}%)")
+print()
+for stock in ['X', 'Y', 'Z']:
+    er = expected_returns[stock]
+    print(f"Stock {stock}: beta = {betas[stock]:.2f}, "
+          f"Expected return = {er:.6f} ({er*100:.4f}%)")
+print(f"\nStock Y actual return: {actual_return_Y:.4f} ({actual_return_Y*100:.2f}%)")
+print(f"Alpha for Stock Y: {alpha_Y:.6f} ({alpha_Y*100:.4f}%)")
+
+# ---- Optional visualization: Security Market Line ----
+beta_range = np.linspace(0, 2.0, 100)
+sml = rf + beta_range * mkt_premium
+
+plt.figure(figsize=(8, 5))
+plt.plot(beta_range, sml, 'k-', label='SML (Security Market Line)')
+plt.scatter(betas['X'], expected_returns['X'], color='blue', s=100, zorder=5, label='Stock X (CAPM)')
+plt.scatter(betas['Y'], expected_returns['Y'], color='green', s=100, zorder=5, label='Stock Y (CAPM)')
+plt.scatter(betas['Z'], expected_returns['Z'], color='red', s=100, zorder=5, label='Stock Z (CAPM)')
+# Show Stock Y's actual return and alpha
+plt.scatter(betas['Y'], actual_return_Y, color='green', edgecolors='black', s=120, zorder=5, marker='s', label='Stock Y Actual')
+plt.plot([betas['Y'], betas['Y']], [expected_returns['Y'], actual_return_Y], 'g--', alpha=0.7, label=f'Alpha Y = {alpha_Y:.4f}')
+plt.xlabel("Beta")
+plt.ylabel("Expected Return")
+plt.title("Security Market Line (CAPM)")
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.show()
+
+# The result dictionary is now available for inspection

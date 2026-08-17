@@ -1,0 +1,41 @@
+import pandas as pd
+import numpy as np
+
+# 债券参数
+face_value = 100
+coupon_rate = 0.046
+ytm = 0.053
+years = 7
+
+# 现金流发生时间（年）
+times = np.arange(1, years + 1)
+
+# 每期票息与到期本金
+coupon = face_value * coupon_rate
+cash_flows = np.full(years, coupon)
+cash_flows[-1] += face_value  # 最后一期加上本金
+
+# 折现因子
+discount_factors = (1 + ytm) ** (-times)
+pv = cash_flows * discount_factors
+
+# 价格
+price = np.sum(pv)
+
+# 麦考利久期（年）
+macaulay_duration = np.sum(times * pv) / price
+
+# 修正久期（年）
+modified_duration = macaulay_duration / (1 + ytm)
+
+# 凸性
+convexity = np.sum(times * (times + 1) * pv) / (price * (1 + ytm) ** 2)
+
+result = {
+    'price': price,
+    'macaulay_duration_years': macaulay_duration,
+    'modified_duration_years': modified_duration,
+    'convexity': convexity
+}
+
+result

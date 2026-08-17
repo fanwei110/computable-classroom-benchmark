@@ -1,0 +1,139 @@
+我们需要计算以下债券的各项指标：
+
+- **债券参数**：
+  - 面值（Face Value）：100
+  - 票息率（Coupon Rate）：4.6%
+  - 期限（Maturity）：7年
+  - 收益率（Yield to Maturity, YTM）：5.3%
+
+- **要求计算**：
+  - 价格（Price）
+  - 麦考利久期（Macaulay Duration，单位：年）
+  - 修正久期（Modified Duration，单位：年）
+  - 凸性（Convexity）
+
+---
+
+### 1. 计算价格（Price）
+债券价格公式：
+\[
+P = \sum_{t=1}^{T} \frac{C}{(1 + y)^t} + \frac{F}{(1 + y)^T}
+\]
+其中：
+- \( C = 100 \times 4.6\% = 4.6 \)（每年票息）
+- \( F = 100 \)（面值）
+- \( y = 5.3\% \)（收益率）
+- \( T = 7 \)（年限）
+
+计算：
+\[
+P = \sum_{t=1}^{7} \frac{4.6}{(1 + 0.053)^t} + \frac{100}{(1 + 0.053)^7}
+\]
+
+逐年计算现值：
+\[
+\begin{align*}
+PV_1 &= \frac{4.6}{1.053} \approx 4.3685 \\
+PV_2 &= \frac{4.6}{1.053^2} \approx 4.1486 \\
+PV_3 &= \frac{4.6}{1.053^3} \approx 3.9398 \\
+PV_4 &= \frac{4.6}{1.053^4} \approx 3.7415 \\
+PV_5 &= \frac{4.6}{1.053^5} \approx 3.5532 \\
+PV_6 &= \frac{4.6}{1.053^6} \approx 3.3740 \\
+PV_7 &= \frac{4.6}{1.053^7} \approx 3.2038 \\
+PV_{\text{面值}} &= \frac{100}{1.053^7} \approx 70.5206 \\
+\end{align*}
+\]
+
+总价格：
+\[
+P = 4.3685 + 4.1486 + 3.9398 + 3.7415 + 3.5532 + 3.3740 + 3.2038 + 70.5206 \approx 96.8500
+\]
+
+---
+
+### 2. 计算麦考利久期（Macaulay Duration）
+麦考利久期公式：
+\[
+\text{Macaulay Duration} = \frac{1}{P} \sum_{t=1}^{T} \frac{t \cdot C}{(1 + y)^t} + \frac{T \cdot F}{(1 + y)^T}
+\]
+
+计算加权现值：
+\[
+\begin{align*}
+t \cdot PV_1 &= 1 \times 4.3685 = 4.3685 \\
+t \cdot PV_2 &= 2 \times 4.1486 = 8.2972 \\
+t \cdot PV_3 &= 3 \times 3.9398 = 11.8194 \\
+t \cdot PV_4 &= 4 \times 3.7415 = 14.9660 \\
+t \cdot PV_5 &= 5 \times 3.5532 = 17.7660 \\
+t \cdot PV_6 &= 6 \times 3.3740 = 20.2440 \\
+t \cdot PV_7 &= 7 \times 3.2038 = 22.4266 \\
+t \cdot PV_{\text{面值}} &= 7 \times 70.5206 = 493.6442 \\
+\end{align*}
+\]
+
+总和：
+\[
+\sum t \cdot PV = 4.3685 + 8.2972 + 11.8194 + 14.9660 + 17.7660 + 20.2440 + 22.4266 + 493.6442 = 593.5319
+\]
+
+麦考利久期：
+\[
+\text{Macaulay Duration} = \frac{593.5319}{96.8500} \approx 6.1289 \text{ 年}
+\]
+
+---
+
+### 3. 计算修正久期（Modified Duration）
+修正久期公式：
+\[
+\text{Modified Duration} = \frac{\text{Macaulay Duration}}{1 + y}
+\]
+
+计算：
+\[
+\text{Modified Duration} = \frac{6.1289}{1 + 0.053} \approx 5.8204 \text{ 年}
+\]
+
+---
+
+### 4. 计算凸性（Convexity）
+凸性公式：
+\[
+\text{Convexity} = \frac{1}{P} \left[ \sum_{t=1}^{T} \frac{t(t+1) \cdot C}{(1 + y)^{t+2}} + \frac{T(T+1) \cdot F}{(1 + y)^{T+2}} \right]
+\]
+
+计算加权现值（\( t(t+1) \cdot PV \)）：
+\[
+\begin{align*}
+t(t+1) \cdot PV_1 &= 1 \times 2 \times \frac{4.6}{1.053^3} \approx 8.2556 \\
+t(t+1) \cdot PV_2 &= 2 \times 3 \times \frac{4.6}{1.053^4} \approx 24.9240 \\
+t(t+1) \cdot PV_3 &= 3 \times 4 \times \frac{4.6}{1.053^5} \approx 50.7456 \\
+t(t+1) \cdot PV_4 &= 4 \times 5 \times \frac{4.6}{1.053^6} \approx 84.3500 \\
+t(t+1) \cdot PV_5 &= 5 \times 6 \times \frac{4.6}{1.053^7} \approx 128.1520 \\
+t(t+1) \cdot PV_6 &= 6 \times 7 \times \frac{4.6}{1.053^8} \approx 183.5744 \\
+t(t+1) \cdot PV_7 &= 7 \times 8 \times \frac{4.6}{1.053^9} \approx 252.3008 \\
+t(t+1) \cdot PV_{\text{面值}} &= 7 \times 8 \times \frac{100}{1.053^9} \approx 5484.8000 \\
+\end{align*}
+\]
+
+总和：
+\[
+\sum t(t+1) \cdot PV = 8.2556 + 24.9240 + 50.7456 + 84.3500 + 128.1520 + 183.5744 + 252.3008 + 5484.8000 = 6217.1024
+\]
+
+凸性：
+\[
+\text{Convexity} = \frac{6217.1024}{96.8500 \times (1 + 0.053)^2} \approx \frac{6217.1024}{96.8500 \times 1.1088} \approx \frac{6217.1024}{107.3856} \approx 57.89
+\]
+
+---
+
+### 最终结果
+```python
+result = {
+    'price': 96.85,
+    'macaulay_duration_years': 6.13,
+    'modified_duration_years': 5.82,
+    'convexity': 57.89
+}
+```

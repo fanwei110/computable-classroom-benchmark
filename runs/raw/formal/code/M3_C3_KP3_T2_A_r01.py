@@ -1,0 +1,94 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+
+# --- 债券参数 ---
+F = 100            # 面值
+c_rate = 0.046     # 票息率 4.6%
+C = F * c_rate     # 票息金额
+T = 7              # 期限 7年
+y0 = 0.053         # 初始收益率 5.3%
+dy_target = 0.01   # 收益率上升 100 个基点 (1%)
+
+# --- 债券定价及久期计算 ---
+# 按年复利报价计算精确价格
+def bond_price(y, face=F, coupon=C, years=T):
+    t = np.arange(1, years + 1)
+    cf = np.full(years, coupon)
+    cf[-1] += face
+    pv = cf / (1 + y)**t
+    return np.sum(pv)
+
+P0 = bond_price(y0)
+
+# 计算麦考利久期与修正久期
+t_arr = np.arange(1, T + 1)
+cf_arr = np.full(T, C)
+cf_arr[-1] += F
+pv_arr = cf_arr / (1 + y0)**t_arr
+mac_dur = np.sum(t_arr * pv_arr) / P0
+mod_dur = mac_dur / (1 + y0)
+
+# --- 计算 +100bp 后的结果 ---
+y_up = y0 + dy_target
+price_at_up100bp = bond_price(y_up)
+
+# 久期近似估算的相对价格变化: ΔP/P ≈ -D_mod * Δy
+dur_approx_change_up100bp = -mod_dur * dy_target
+
+# --- 绘图：价格-收益率曲线与久期近似 ---
+y_range = np.linspace(0.02, 0.09, 500)
+exact_prices = [bond_price(y) for y in y_range]
+# 久期近似直线：P(y) ≈ P0 - D_mod * P0 * (y - y0)
+approx_prices = [P0 - mod_dur * P0 * (y - y0) for y in y_range]
+
+fig, ax = plt.subplots(figsize=(10, 6))
+plt.subplots_adjust(bottom=0.25)
+
+# 绘制精确曲线和近似直线
+ax.plot(y_range * 100, exact_prices, label='Exact Price', color='blue', lw=2)
+ax.plot(y_range * 100, approx_prices, label='Duration Approximation', color='red', linestyle='--', lw=2)
+
+# 绘制可调的收益率变动幅度对应的标记点
+init_shift_bps = 100
+point_exact, = ax.plot(y0*100 + init_shift_bps, bond_price(y0 + init_shift_bps/10000), 
+                       'bo', markersize=8, label='Exact Point (Movable)')
+point_approx, = ax.plot(y0*100 + init_shift_bps, P0 - mod_dur * P0 * (init_shift_bps/10000), 
+                        'rx', markersize=8, label='Approx Point (Movable)')
+
+ax.axvline(y0*100, color='gray', linestyle=':', label=f'Initial Yield ({y0*100:.1f}%)')
+ax.set_xlabel('Yield (%)')
+ax.set_ylabel('Price')
+ax.set_title('Bond Price vs Yield and Duration Approximation')
+ax.legend()
+ax.grid(True)
+
+# 增加滑动条，使收益率变动幅度可调
+ax_shift = plt.axes([0.2, 0.1, 0.6, 0.03])
+slider_shift = Slider(ax_shift, 'Yield Shift (bps)', -300, 300, valinit=init_shift_bps, valstep=10)
+
+def update(val):
+    shift_bps = slider_shift.val
+    dy = shift_bps / 10000.0
+    y_new = y0 + dy
+    p_exact = bond_price(y_new)
+    p_approx = P0 - mod_dur * P0 * dy
+    point_exact.set_xdata([y_new * 100])
+    point_exact.set_ydata([p_exact])
+    point_approx.set_xdata([y_new * 100])
+    point_approx.set_ydata([p_approx])
+    fig.canvas.draw_idle()
+
+slider_shift.on_changed(update)
+
+# 保存图像
+fig_path = 'price_yield_curve.png'
+plt.savefig(fig_path)
+plt.close()
+
+# --- 输出结果字典 ---
+result = {
+    'price_at_up100bp': round(price_at_up100bp, 8),
+    'dur_approx_change_up100bp': round(dur_approx_change_up100bp, 8),
+    'figure_path': fig_path
+}

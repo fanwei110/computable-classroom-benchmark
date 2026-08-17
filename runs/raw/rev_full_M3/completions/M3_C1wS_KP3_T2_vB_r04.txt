@@ -1,0 +1,114 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==================== 假设与参数设置 ====================
+# 债券基本参数
+FACE_VALUE = 100         # 面值
+COUPON_RATE = 0.046      # 票息率 4.6%
+MATURITY = 7             # 期限 7年
+YTM_0 = 0.053            # 初始到期收益率 5.3%
+COUPON = FACE_VALUE * COUPON_RATE  # 年票息
+
+# 计算假设：未指明付息频率，默认为按年付息（Annual coupon）
+# 收益率变动幅度可调参数（用于久期近似线段的展示范围）
+APPROX_RANGE_BPS = 200   # 在初始YTM上下各200bps展示久期近似
+
+# ==================== 核心计算函数 ====================
+def bond_price(ytm, face_value=FACE_VALUE, coupon=COUPON, maturity=MATURITY):
+    """计算债券精确价格（现金流贴现）"""
+    if ytm == 0:
+        return face_value + coupon * maturity
+    times = np.arange(1, maturity + 1)
+    pv_coupons = np.sum(coupon / (1 + ytm) ** times)
+    pv_face = face_value / (1 + ytm) ** maturity
+    return pv_coupons + pv_face
+
+def bond_modified_duration(ytm, face_value=FACE_VALUE, coupon=COUPON, maturity=MATURITY):
+    """计算修正久期（Macaulay久期 / (1+ytm)）"""
+    price = bond_price(ytm, face_value, coupon, maturity)
+    times = np.arange(1, maturity + 1)
+    cash_flows = np.full(maturity, coupon)
+    cash_flows[-1] += face_value
+    pv_cf = cash_flows / (1 + ytm) ** times
+    mac_duration = np.sum(times * pv_cf) / price
+    mod_duration = mac_duration / (1 + ytm)
+    return mod_duration
+
+# ==================== 步骤1：2%到9%网格精确定价 ====================
+yields_grid = np.linspace(0.02, 0.09, 500)
+exact_prices = np.array([bond_price(y) for y in yields_grid])
+
+# ==================== 步骤2：5.3%附近叠加久期近似 ====================
+# 初始状态精确价格与久期
+P_0 = bond_price(YTM_0)
+Mod_D_0 = bond_modified_duration(YTM_0)
+
+# 久期法近似： P_approx = P_0 * (1 - Mod_D * Δy)
+delta_y_range = np.linspace(-APPROX_RANGE_BPS/10000, APPROX_RANGE_BPS/10000, 200)
+yields_approx_grid = YTM_0 + delta_y_range
+approx_prices = P_0 * (1 - Mod_D_0 * delta_y_range)
+
+# ==================== 步骤3：+100bp情景计算 ====================
+delta_y_100bp = 0.01  # 收益率上升100bp
+y_new = YTM_0 + delta_y_100bp
+
+# 精确价格
+price_at_up100bp = bond_price(y_new)
+
+# 久期法估计的相对变化（百分比形式）
+dur_approx_change_up100bp = -Mod_D_0 * delta_y_100bp
+
+# ==================== 步骤4：绘图与保存 ====================
+# 设置中文字体与符号显示
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS']
+plt.rcParams['axes.unicode_minus'] = False
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 绘制精确价格-收益率曲线
+ax.plot(yields_grid * 100, exact_prices, 
+        color='darkblue', linewidth=2, label='精确价格 (Price-Yield Curve)')
+
+# 绘制久期近似直线
+ax.plot(yields_approx_grid * 100, approx_prices, 
+        color='orangered', linewidth=2, linestyle='--', label='久期近似 (Duration Approximation)')
+
+# 标记初始点与+100bp点
+ax.scatter(YTM_0 * 100, P_0, color='black', zorder=5)
+ax.annotate(f'初始点\nYTM={YTM_0*100:.1f}%, P={P_0:.2f}', 
+            xy=(YTM_0 * 100, P_0), xytext=(YTM_0 * 100 + 1, P_0 + 3),
+            arrowprops=dict(facecolor='black', shrink=0.05, width=1.5, headwidth=8))
+
+ax.scatter(y_new * 100, price_at_up100bp, color='red', zorder=5)
+ax.annotate(f'+100bp点\n精确价格={price_at_up100bp:.2f}', 
+            xy=(y_new * 100, price_at_up100bp), xytext=(y_new * 100 + 1, price_at_up100bp + 3),
+            arrowprops=dict(facecolor='red', shrink=0.05, width=1.5, headwidth=8))
+
+# 图表装饰
+ax.set_xlabel('到期收益率 Yield to Maturity (%)', fontsize=12)
+ax.set_ylabel('债券价格 Price', fontsize=12)
+ax.set_title(f'债券价格-收益率曲线与久期近似\n(面值100, 票息4.6%, 7年, 当前YTM {YTM_0*100}%)', fontsize=14)
+ax.legend(loc='upper right', fontsize=11, frameon=True)
+ax.grid(True, linestyle=':', alpha=0.7)
+
+# 保存图形
+figure_path = 'price_yield_duration_approx.png'
+fig.savefig(figure_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# ==================== 结果输出 ====================
+result = {
+    'price_at_up100bp': round(price_at_up100bp, 6),
+    'dur_approx_change_up100bp': round(dur_approx_change_up100bp, 6),
+    'figure_path': figure_path
+}
+
+# 用于课堂投屏的打印验证
+if __name__ == '__main__':
+    print(f"初始YTM: {YTM_0*100:.1f}% | 初始精确价格: {P_0:.4f} | 修正久期: {Mod_D_0:.4f}")
+    print(f"收益率上升100bp后:")
+    print(f"  -> 精确价格: {result['price_at_up100bp']:.4f}")
+    print(f"  -> 久期法估计的相对变化: {result['dur_approx_change_up100bp']*100:.4f}%")
+    print(f"图表已保存至: {result['figure_path']}")
+```

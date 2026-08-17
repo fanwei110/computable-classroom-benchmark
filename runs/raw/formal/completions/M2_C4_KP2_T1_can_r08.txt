@@ -1,0 +1,53 @@
+以下是自包含的 Python 脚本。它根据给定的无风险利率、市场期望收益和各股票的 beta 计算 CAPM 期望收益，并求出股票 Y 的 alpha。所有数值均以小数表示，结果存储在 `result` 字典中，最后打印输出。
+
+```python
+"""
+CAPM 与证券市场线计算：
+- 使用 CAPM 公式：E[Ri] = rf + beta * (E[Rm] - rf)
+- 计算 alpha 为实际收益与 CAPM 预测值之差
+"""
+
+# 给定参数（小数表示）
+rf = 0.023          # 无风险利率 2.3%
+rm = 0.094          # 市场期望收益 9.4%
+market_premium = rm - rf   # 市场风险溢价
+
+# 各股票 beta
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+
+# 1. 计算 CAPM 期望收益
+er_x = rf + beta_x * market_premium
+er_y = rf + beta_y * market_premium
+er_z = rf + beta_z * market_premium
+
+# 2. 股票 Y 实际收益及其 alpha
+actual_return_y = 0.131   # 13.1%
+alpha_y = actual_return_y - er_y
+
+# 3. 将结果存入字典
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+
+# 输出结果（课堂上投屏用）
+print("=== CAPM 计算结果 ===")
+print(f"无风险利率 rf = {rf:.4f} ({rf*100:.2f}%)")
+print(f"市场期望收益 rm = {rm:.4f} ({rm*100:.2f}%)")
+print(f"市场风险溢价 = {market_premium:.4f} ({market_premium*100:.2f}%)")
+print()
+print(f"股票 X 期望收益 (er_x) = {er_x:.6f} ({er_x*100:.4f}%)")
+print(f"股票 Y 期望收益 (er_y) = {er_y:.6f} ({er_y*100:.4f}%)")
+print(f"股票 Z 期望收益 (er_z) = {er_z:.6f} ({er_z*100:.4f}%)")
+print(f"股票 Y 实际收益 = {actual_return_y:.4f} ({actual_return_y*100:.2f}%)")
+print(f"股票 Y 的 alpha = {alpha_y:.6f} ({alpha_y*100:.4f}%)")
+print()
+print("最终结果字典：")
+print(result)
+```
+
+该脚本可直接运行，输出确定且可复现。

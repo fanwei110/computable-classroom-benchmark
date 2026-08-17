@@ -1,0 +1,29 @@
+import numpy as np
+
+# 给定数据
+sigma = np.array([0.187, 0.243, 0.312])
+rho = np.array([
+    [1.0,  0.21, -0.13],
+    [0.21, 1.0,   0.37],
+    [-0.13, 0.37,  1.0]
+])
+
+# 构造协方差矩阵
+cov = np.outer(sigma, sigma) * rho
+
+# 最小方差组合权重（允许卖空，资金全部投入）
+ones = np.ones(3)
+inv_cov = np.linalg.inv(cov)
+weights = inv_cov @ ones / (ones @ inv_cov @ ones)
+
+# 组合年化波动率
+port_vol = np.sqrt(weights @ cov @ weights)
+
+# 结果存入字典
+result = {
+    'mvp_weights': weights.tolist(),
+    'mvp_vol_annual': port_vol
+}
+
+# 展示结果
+result

@@ -1,0 +1,48 @@
+```python
+import pandas as pd
+import numpy as np
+
+# ========== 第一部分：计算年化夏普比率 ==========
+# 读取数据
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 年无风险利率
+rf_annual = 0.021
+rf_daily = rf_annual / 252
+
+# 基金日超额收益
+fund_excess = df['fund'] - rf_daily
+
+# 样本统计量 (ddof=1)
+mean_excess_daily = fund_excess.mean()
+std_excess_daily = fund_excess.std(ddof=1)
+
+# 年化夏普比率
+sharpe_annual = (mean_excess_daily / std_excess_daily) * np.sqrt(252)
+
+# ========== 第二部分：Brinson 业绩归因 ==========
+# 组合
+w_p = np.array([0.45, 0.35, 0.20])
+r_p = np.array([0.083, 0.021, -0.014])
+
+# 基准
+w_b = np.array([0.40, 0.40, 0.20])
+r_b = np.array([0.067, 0.034, -0.009])
+
+# 配置效应
+allocation_effect = np.sum((w_p - w_b) * r_b)
+# 选择效应
+selection_effect = np.sum(w_b * (r_p - r_b))
+# 交互效应
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+
+# ========== 输出 ==========
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+print(result)
+```

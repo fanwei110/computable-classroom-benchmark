@@ -1,0 +1,27 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 给定条件
+position_value = 2_700_000   # 头寸价值（元）
+annual_vol = 0.24            # 年化波动率
+confidence = 0.95            # 置信水平
+trading_days = 252           # 假设一年有252个交易日
+
+# 1. 年化波动率换算为日波动率（假设均值为零，独立性）
+daily_vol = annual_vol / np.sqrt(trading_days)
+
+# 2. 计算95%置信度下的正态分位数（左侧5%分位点）
+z_alpha = norm.ppf(1 - confidence)   # 标准正态分布的5%分位数，为负值
+
+# 3. 计算一日 VaR 金额（delta-normal法，损失取正数）
+var_95_1d = position_value * daily_vol * abs(z_alpha)
+
+# 按要求将结果存入字典
+result = {
+    'var_95_1d': var_95_1d
+}
+
+# 可选输出，便于检查
+print(result)
+```

@@ -1,0 +1,66 @@
+import numpy as np
+
+def compute_bond_metrics(
+    face_value=100.0,
+    coupon_rate=0.046,
+    maturity=7,
+    ytm=0.053,
+    freq=1  # 假设每年付息一次
+):
+    """
+    计算债券价格、麦考利久期、修正久期和凸性。
+    假设：按年付息，到期收益率按年复利。
+    """
+    # 现金流发生的时间点（年）
+    t = np.arange(1, maturity + 1)
+
+    # 每期票息
+    coupon = face_value * coupon_rate
+
+    # 现金流：前n-1期只有利息，最后一期利息+本金
+    cf = np.full(maturity, coupon)
+    cf[-1] += face_value  # 最后一期加上本金
+
+    # 贴现因子
+    discount = (1 + ytm) ** (-t)
+
+    # 现金流现值
+    pv = cf * discount
+
+    # 价格
+    price = np.sum(pv)
+
+    # 麦考利久期：权重 × 时间的和
+    weights = pv / price
+    macaulay_duration = np.sum(weights * t)
+
+    # 修正久期（按年复利）
+    modified_duration = macaulay_duration / (1 + ytm)
+
+    # 凸性： Σ [CF_t * t*(t+1) / (1+y)^{t+2}] / P
+    convexity = np.sum(cf * t * (t + 1) / (1 + ytm) ** (t + 2)) / price
+
+    # 另一种等价的凸性计算（用现值和权重）：
+    # convexity2 = np.sum(pv * t * (t + 1)) / (price * (1 + ytm) ** 2)
+    # 两者结果一致，此处保留第一种。
+
+    return price, macaulay_duration, modified_duration, convexity
+
+# 计算
+price, mac_dur, mod_dur, conv = compute_bond_metrics()
+
+# 按要求构造结果字典
+result = {
+    'price': price,
+    'macaulay_duration_years': mac_dur,
+    'modified_duration_years': mod_dur,
+    'convexity': conv
+}
+
+# 打印以便投屏时查看
+if __name__ == "__main__":
+    print("债券计算结果：")
+    for k, v in result.items():
+        print(f"{k}: {v:.6f}")
+
+# 教师可直接访问 result 字典

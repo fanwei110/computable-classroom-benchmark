@@ -1,0 +1,37 @@
+import numpy as np
+from scipy.stats import norm
+
+# 给定参数
+S = 103.7      # 标的资产现价
+K = 97.5       # 行权价
+sigma = 0.276  # 隐含波动率 27.6%
+r = 0.043      # 无风险利率 4.3%
+T = 0.58       # 剩余期限（年）
+
+# Black-Scholes 欧式看涨期权定价
+# 计算 d1 和 d2
+d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+d2 = d1 - sigma * np.sqrt(T)
+
+# 期权价格
+call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+
+# Delta：N(d1)
+call_delta = norm.cdf(d1)
+
+# Vega：S * sqrt(T) * n(d1)   (按每单位波动率 1% = 0.01 计算，但此处是每单位σ=1)
+# n(d1) 是标准正态密度函数
+call_vega = S * np.sqrt(T) * norm.pdf(d1)
+
+# 结果字典
+result = {
+    'call_price': call_price,
+    'call_delta': call_delta,
+    'call_vega': call_vega
+}
+
+# 输出结果（供课堂演示查看）
+print("期权价格 (call_price):", result['call_price'])
+print("Delta (call_delta):", result['call_delta'])
+print("Vega (call_vega):", result['call_vega'])
+

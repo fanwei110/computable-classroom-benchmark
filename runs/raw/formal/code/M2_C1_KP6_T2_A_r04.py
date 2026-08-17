@@ -1,0 +1,49 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ============================================================
+# 若已有真实数据，请替换这部分，例如：
+# fund = df['fund']   # 净值序列（pd.Series），索引为日期
+# ============================================================
+np.random.seed(42)
+dates = pd.date_range('2020-01-01', periods=500, freq='B')
+# 生成模拟日收益率，并构造净值
+daily_returns = np.random.normal(0.0005, 0.01, len(dates))
+price = 100 * (1 + daily_returns).cumprod()
+fund = pd.Series(price, index=dates, name='fund')
+
+# 参数
+rf_annual = 0.021          # 无风险利率 2.1%
+window = 60                # 窗口大小（可调）
+rf_daily = rf_annual / 252
+
+# 计算日收益率、超额收益
+returns = fund.pct_change().dropna()
+excess = returns - rf_daily
+
+# 滚动年化夏普： 年化系数 * 窗口内超额收益均值 / 窗口内标准差
+roll_mean = excess.rolling(window).mean()
+roll_std  = excess.rolling(window).std()
+roll_sharpe = (roll_mean / roll_std) * np.sqrt(252)
+
+# 最后一个窗口的数值
+last_sharpe = roll_sharpe.iloc[-1]
+
+# 绘制曲线并保存
+fig, ax = plt.subplots(figsize=(12, 5))
+ax.plot(roll_sharpe.index, roll_sharpe.values, label=f'{window}-Day Rolling Sharpe', color='steelblue')
+ax.axhline(0, color='gray', linestyle='--', linewidth=0.8)
+ax.set_title('Rolling Annualized Sharpe Ratio (r_f = 2.1%)')
+ax.set_ylabel('Sharpe Ratio')
+ax.legend()
+fig_path = 'rolling_sharpe.png'
+fig.savefig(fig_path, dpi=150, bbox_inches='tight')
+plt.close(fig)
+
+# ---- 按要求输出字典 ----
+result = {
+    'rolling_sharpe_last': round(last_sharpe, 6),
+    'figure_path': fig_path
+}
+print(result)

@@ -1,0 +1,72 @@
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+import os
+
+# =============================================================================
+# 可调参数区
+# =============================================================================
+S_MIN        = 70.0        # 标的价格下限
+S_MAX        = 140.0       # 标的价格上限
+NUM_POINTS   = 500         # 曲线点数
+K            = 97.5        # 行权价
+R            = 0.043       # 无风险利率
+T            = 0.58        # 剩余期限(年)
+S_TARGET     = 110.0       # 报告 delta 的目标标的价格
+SIGMAS       = [0.15, 0.276, 0.40]  # 波动率列表，易修改
+
+# =============================================================================
+# 计算函数
+# =============================================================================
+def bs_delta(S, K, r, T, sigma):
+    """无分红欧式看涨期权的 Delta"""
+    if T <= 0:
+        # 到期时刻 delta = 1 if S>K else 0, 这里不会用到T=0
+        return np.where(S > K, 1.0, 0.0)
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# =============================================================================
+# 计算特定点的 delta
+# =============================================================================
+for sigma in SIGMAS:
+    if abs(sigma - 0.276) < 1e-8:   # 精确匹配 27.6% 波动率
+        sigma_target = sigma
+        break
+else:
+    sigma_target = 0.276   # 如果列表中没有精确 0.276，直接赋值
+
+delta_at_s110 = bs_delta(np.array([S_TARGET]), K, R, T, sigma_target)[0]
+
+# =============================================================================
+# 生成曲线数据并绘图
+# =============================================================================
+S = np.linspace(S_MIN, S_MAX, NUM_POINTS)
+
+fig, ax = plt.subplots(figsize=(10, 6))
+for sigma in SIGMAS:
+    delta = bs_delta(S, K, R, T, sigma)
+    ax.plot(S, delta, linewidth=2, label=f'$\sigma$ = {sigma*100:.1f}%')
+
+ax.set_xlabel('Spot Price S', fontsize=12)
+ax.set_ylabel('Delta', fontsize=12)
+ax.set_title('European Call Delta vs Spot Price', fontsize=14)
+ax.legend(fontsize=11)
+ax.grid(True, alpha=0.25)
+plt.tight_layout()
+
+# 保存图像
+figure_path = os.path.abspath('option_delta.png')
+fig.savefig(figure_path, dpi=150)
+plt.close(fig)
+
+# =============================================================================
+# 整理输出结果并打印
+# =============================================================================
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': figure_path
+}
+
+# 输出最终结果，确保可复现
+print(result)

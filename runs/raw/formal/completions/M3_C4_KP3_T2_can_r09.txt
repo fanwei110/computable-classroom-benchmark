@@ -1,0 +1,101 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==================== 债券参数设定 ====================
+F = 100          # 面值
+c = 0.046        # 票息率 4.6%
+T = 7            # 期限 7 年
+y0 = 0.053       # 当前收益率 5.3%
+freq = 1         # 每年付息1次
+
+# 收益率变动幅度（可调参数，以小数表示，0.01 代表 100 个基点）
+delta_y = 0.01
+
+# ==================== 核心计算函数 ====================
+def bond_price(y, F, c, T):
+    """计算债券精确价格（支持标量和向量输入）"""
+    t = np.arange(1, T + 1)
+    CF = np.full(T, F * c)
+    CF[-1] += F  # 最后一期加上面值
+    
+    if np.isscalar(y):
+        return np.sum(CF / (1 + y)**t)
+    else:
+        # 利用广播机制对收益率网格进行向量化计算
+        return np.sum(CF / (1 + y[:, np.newaxis])**t, axis=1)
+
+def bond_metrics(y0, F, c, T):
+    """计算债券在收益率 y0 下的价格、麦考利久期、修正久期与凸性"""
+    t = np.arange(1, T + 1)
+    CF = np.full(T, F * c)
+    CF[-1] += F
+    
+    P0 = np.sum(CF / (1 + y0)**t)
+    MacDur = np.sum(t * CF / (1 + y0)**t) / P0
+    ModDur = MacDur / (1 + y0)
+    # 课程约定：凸性 = Σ[t(t+1)CF_t/(1+y)^(t+2)] / P
+    Conv = np.sum(t * (t + 1) * CF / (1 + y0)**(t + 2)) / P0
+    
+    return P0, MacDur, ModDur, Conv
+
+# ==================== 指标计算 ====================
+P0, MacDur, ModDur, Conv = bond_metrics(y0, F, c, T)
+
+# ==================== 绘图准备 ====================
+# 1. 在 2% 到 9% 的收益率网格上计算精确价格
+y_grid = np.linspace(0.02, 0.09, 500)
+P_exact = bond_price(y_grid, F, c, T)
+
+# 2. 在 5.3% 附近计算一阶(久期)与二阶(久期+凸性)近似
+dy_grid = y_grid - y0
+P_dur_approx = P0 * (1 - ModDur * dy_grid)
+P_dur_conv_approx = P0 * (1 - ModDur * dy_grid + 0.5 * Conv * dy_grid**2)
+
+# 绘制图形
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.plot(y_grid * 100, P_exact, label='Exact Price', color='blue', linewidth=2)
+ax.plot(y_grid * 100, P_dur_approx, label='Duration Approx (1st order)', color='red', linestyle='--')
+ax.plot(y_grid * 100, P_dur_conv_approx, label='Duration+Convexity Approx (2nd order)', color='green', linestyle=':')
+
+# 标注当前收益率及变动幅度
+y_target = y0 + delta_y
+ax.axvline(y0 * 100, color='gray', linestyle='-.', alpha=0.7, label=f'Current Yield ({y0*100:.1f}%)')
+ax.axvline(y_target * 100, color='purple', linestyle='-.', alpha=0.7, label=f'Shifted Yield (+{delta_y*10000:.0f}bp)')
+
+# 图形美化
+ax.set_xlabel('Yield to Maturity (%)', fontsize=12)
+ax.set_ylabel('Bond Price', fontsize=12)
+ax.set_title(f'Bond Price-Yield Curve & Approximations (F={F}, c={c*100}%, T={T}yrs)', fontsize=14)
+ax.legend()
+ax.grid(True, linestyle='--', alpha=0.6)
+
+# 保存图形
+figure_path = 'bond_price_yield.png'
+plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# ==================== 结果报告 ====================
+# 3. 报告收益率上升 100 个基点后的精确价格与一阶相对变化
+price_at_up100bp = bond_price(y_target, F, c, T)
+# 课程惯例：一阶近似 dP/P = -D_mod × dy （下跌为负）
+dur_approx_change_up100bp = -ModDur * delta_y
+
+# 4. 填充结果字典
+result = {
+    'price_at_up100bp': price_at_up100bp,
+    'dur_approx_change_up100bp': dur_approx_change_up100bp,
+    'figure_path': figure_path
+}
+
+# 用于课堂投屏演示打印
+print("="==== 计算结果 ====")
+print(f"当前收益率 y0 = {y0*100:.1f}% 时的精确价格 P0 = {P0:.4f}")
+print(f"修正久期 ModDur = {ModDur:.4f}")
+print(f"凸性 Conv = {Conv:.4f}")
+print(f"收益率上升 100bp 后的精确价格 = {result['price_at_up100bp']:.4f}")
+print(f"久期法估计的相对价格变化 = {result['dur_approx_change_up100bp']:.4f} ({result['dur_approx_change_up100bp']*100:.2f}%)")
+print(f"图形已保存至: {result['figure_path']}")
+print("=== result 字典内容 ===")
+print(result)
+```

@@ -1,0 +1,62 @@
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ----------------------------- 可调参数 -----------------------------
+WINDOW = 60               # 滚动窗口长度（交易日）
+RISK_FREE_RATE = 0.021    # 年化无风险利率
+DATA_FILE = 'fund.csv'    # 数据文件路径，假设与脚本同目录，包含 'fund' 列
+OUTPUT_FIG = 'rolling_sharpe.png'
+# -------------------------------------------------------------------
+
+def main():
+    # 1. 读取数据
+    if not os.path.exists(DATA_FILE):
+        raise FileNotFoundError(f"数据文件 '{DATA_FILE}' 不存在，请将其放在脚本同目录下。")
+    df = pd.read_csv(DATA_FILE)
+    if 'fund' not in df.columns:
+        raise ValueError("数据文件必须包含 'fund' 列。")
+    fund_returns = df['fund'].astype(float)
+
+    # 2. 计算日超额收益（日无风险利率 = 年化利率 / 252）
+    daily_rf = RISK_FREE_RATE / 252
+    excess_returns = fund_returns - daily_rf
+
+    # 3. 滚动计算年化夏普比率
+    rolling_mean = excess_returns.rolling(window=WINDOW).mean()
+    rolling_std  = excess_returns.rolling(window=WINDOW).std()
+    rolling_sharpe = (rolling_mean / rolling_std) * np.sqrt(252)
+
+    # 4. 提取最后一个窗口的夏普值
+    rolling_sharpe_last = rolling_sharpe.iloc[-1]  # 可能为 NaN 如果数据不足
+    # 若最后一个值为 NaN，向前取第一个有效值
+    if pd.isna(rolling_sharpe_last):
+        valid_sharpes = rolling_sharpe.dropna()
+        if len(valid_sharpes) == 0:
+            raise ValueError("数据不足以计算一个完整的滚动窗口。")
+        rolling_sharpe_last = valid_sharpes.iloc[-1]
+
+    # 5. 画图并保存
+    plt.figure(figsize=(12, 5))
+    plt.plot(rolling_sharpe.index, rolling_sharpe.values, color='steelblue', linewidth=1.2)
+    plt.title(f'{WINDOW}-Day Rolling Annualized Sharpe Ratio', fontsize=14)
+    plt.xlabel('Time')
+    plt.ylabel('Sharpe Ratio')
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(OUTPUT_FIG, dpi=150)
+    plt.close()
+
+    # 6. 存入结果字典
+    result = {
+        'rolling_sharpe_last': rolling_sharpe_last,
+        'figure_path': os.path.abspath(OUTPUT_FIG)
+    }
+    return result
+
+if __name__ == "__main__":
+    result = main()
+    print(result)
+```

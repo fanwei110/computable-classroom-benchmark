@@ -1,0 +1,50 @@
+import numpy as np
+
+# ==================== 1. 输入参数 ====================
+# 年化波动率
+vols = np.array([0.187, 0.243, 0.312])
+
+# 相关系数
+rho12 = 0.21
+rho13 = -0.13
+rho23 = 0.37
+
+# ==================== 2. 构造协方差矩阵 ====================
+# 相关系数矩阵
+corr_matrix = np.array([
+    [1.0, rho12, rho13],
+    [rho12, 1.0, rho23],
+    [rho13, rho23, 1.0]
+])
+
+# 协方差矩阵 Σ = diag(σ) @ Corr @ diag(σ)
+D = np.diag(vols)
+cov_matrix = D @ corr_matrix @ D
+
+# ==================== 3. 求解最小方差组合权重 ====================
+# 满仓约束（允许卖空）下，最小方差组合的闭式解为：w = Σ^-1 1 / (1' Σ^-1 1)
+ones = np.ones(3)
+cov_inv = np.linalg.inv(cov_matrix)
+
+# 计算未归一化的权重
+w_unnormalized = cov_inv @ ones
+# 归一化使其和为1
+w_mvp = w_unnormalized / (ones.T @ w_unnormalized)
+
+# ==================== 4. 计算组合的年化波动率 ====================
+# 组合方差 = w' Σ w
+port_variance = w_mvp.T @ cov_matrix @ w_mvp
+# 组合年化波动率 = sqrt(w' Σ w)
+mvp_vol_annual = np.sqrt(port_variance)
+
+# ==================== 5. 填充结果 ====================
+result = {
+    'mvp_weights': w_mvp.tolist(),
+    'mvp_vol_annual': float(mvp_vol_annual)
+}
+
+# 输出结果供检查
+if __name__ == "__main__":
+    print("最小方差组合权重:", result['mvp_weights'])
+    print("权重之和:", sum(result['mvp_weights']))
+    print("组合年化波动率:", result['mvp_vol_annual'])

@@ -1,0 +1,43 @@
+import numpy as np
+
+# 1. 确定资产参数与权重假设
+# 假设：A占六成(60%)，B占四成(40%)，符合常规低波动资产占比较高以降低组合风险的直觉
+vol_A = 0.184
+vol_B = 0.297
+w_A = 0.6
+w_B = 0.4
+weights = np.array([w_A, w_B])
+
+# 相关系数设定
+rho_before = 0.3
+rho_after = 0.8
+
+# 2. 构造两个协方差矩阵 (Σ = [σ_A^2, ρσ_Aσ_B; ρσ_Aσ_B, σ_B^2])
+cov_before = np.array([
+    [vol_A**2, rho_before * vol_A * vol_B],
+    [rho_before * vol_A * vol_B, vol_B**2]
+])
+
+cov_after = np.array([
+    [vol_A**2, rho_after * vol_A * vol_B],
+    [rho_after * vol_A * vol_B, vol_B**2]
+])
+
+# 3. 计算组合方差 (w'Σw) 与波动率
+var_before = weights.T @ cov_before @ weights
+vol_before_annual = np.sqrt(var_before)
+
+var_after = weights.T @ cov_after @ weights
+vol_after_annual = np.sqrt(var_after)
+
+# 4. 填充 result 字典
+result = {
+    'vol_before_annual': vol_before_annual,
+    'vol_after_annual': vol_after_annual
+}
+
+# 课堂投屏展示辅助信息
+print(f"相关系数为 0.3 时，组合年化波动率: {vol_before_annual:.4%}")
+print(f"相关系数为 0.8 时，组合年化波动率: {vol_after_annual:.4%}")
+print("\n最终输出结果字典:")
+print(result)

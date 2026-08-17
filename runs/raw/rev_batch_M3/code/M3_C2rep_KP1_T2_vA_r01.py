@@ -1,0 +1,103 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ============================================================
+# 参数设置
+# ============================================================
+mu = np.array([0.071, 0.124])       # 期望年收益
+sigma = np.array([0.163, 0.289])    # 年化波动率
+rhos = [0.15, 0.45, 0.75]           # 相关系数
+
+# ============================================================
+# 辅助函数
+# ============================================================
+def build_cov_matrix(sigma_vec, rho):
+    """构建2×2协方差矩阵"""
+    return np.array([
+        [sigma_vec[0]**2, rho * sigma_vec[0] * sigma_vec[1]],
+        [rho * sigma_vec[0] * sigma_vec[1], sigma_vec[1]**2]
+    ])
+
+# ============================================================
+# 对每个相关系数画前沿
+# ============================================================
+fig, ax = plt.subplots(figsize=(10, 7))
+
+# 存储结果
+mvp_vol_at_rho45 = None
+frontier_vol_at_target = None
+
+# 扫描权重范围（允许卖空，扩展范围以覆盖完整前沿）
+w1_range = np.linspace(-1.0, 2.0, 3000)
+
+colors = ['blue', 'red', 'green']
+
+for idx, rho in enumerate(rhos):
+    cov_mat = build_cov_matrix(sigma, rho)
+    
+    # ---- 解析法求最小方差组合（MVP）----
+    # w_mvp = Σ^{-1}·1 / (1'·Σ^{-1}·1)，满仓约束下
+    ones = np.ones(2)
+    cov_inv = np.linalg.inv(cov_mat)
+    w_mvp = cov_inv @ ones / (ones @ cov_inv @ ones)
+    mvp_ret = w_mvp @ mu
+    mvp_vol = np.sqrt(w_mvp @ cov_mat @ w_mvp)
+    
+    # ---- 扫描权重画前沿 ----
+    w2_range = 1 - w1_range
+    port_rets = mu[0] * w1_range + mu[1] * w2_range
+    port_vars = (w1_range**2 * cov_mat[0, 0] + 
+                 w2_range**2 * cov_mat[1, 1] + 
+                 2 * w1_range * w2_range * cov_mat[0, 1])
+    port_vols = np.sqrt(port_vars)
+    
+    # 画前沿曲线
+    ax.plot(port_vols, port_rets, color=colors[idx], 
+            label=f'ρ = {rho}', linewidth=1.5)
+    # 标出最小方差组合
+    ax.scatter(mvp_vol, mvp_ret, color=colors[idx], s=120, zorder=5, 
+               edgecolors='black', linewidths=1.5, marker='o')
+    ax.annotate(f'MVP (ρ={rho})', xy=(mvp_vol, mvp_ret), xytext=(8, -12),
+                textcoords='offset points', fontsize=8, color=colors[idx],
+                fontweight='bold')
+    
+    # 对rho=0.45计算所需结果
+    if rho == 0.45:
+        mvp_vol_at_rho45 = mvp_vol
+        
+        # 目标收益10%下的最小波动率（解析解）
+        # 满仓约束：w1 + w2 = 1，w2 = 1 - w1
+        # 收益约束：w1·μ1 + (1-w1)·μ2 = 0.10
+        # => w1 = (0.10 - μ2) / (μ1 - μ2)
+        target_ret = 0.10
+        w1_target = (target_ret - mu[1]) / (mu[0] - mu[1])
+        w2_target = 1 - w1_target
+        w_target = np.array([w1_target, w2_target])
+        frontier_vol_at_target = np.sqrt(w_target @ cov_mat @ w_target)
+
+# 图表设置
+ax.set_xlabel('Annualized Volatility (σ)', fontsize=12)
+ax.set_ylabel('Expected Return (μ)', fontsize=12)
+ax.set_title('Markowitz Mean-Variance Frontier (Two Risky Assets)', fontsize=14)
+ax.legend(fontsize=11, loc='upper left')
+ax.grid(True, alpha=0.3)
+
+# 保存图形
+fig_path = 'markowitz_frontier.png'
+plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ============================================================
+# 输出结果
+# ============================================================
+result = {
+    'mvp_vol_at_rho45': mvp_vol_at_rho45,
+    'frontier_vol_at_target': frontier_vol_at_target,
+    'figure_path': fig_path
+}
+
+print("=== 结果 ===")
+print(f"rho=0.45 时最小方差组合的年化波动率: {mvp_vol_at_rho45:.6f} ({mvp_vol_at_rho45*100:.4f}%)")
+print(f"目标收益10%下可达到的最小年化波动率: {frontier_vol_at_target:.6f} ({frontier_vol_at_target*100:.4f}%)")
+print(f"图形保存路径: {fig_path}")
+print(f"\nresult = {result}")

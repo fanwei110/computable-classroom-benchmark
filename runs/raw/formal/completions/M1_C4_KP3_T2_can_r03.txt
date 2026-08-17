@@ -1,0 +1,105 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.ticker import FuncFormatter
+
+# 债券参数
+face_value = 100.0
+coupon_rate = 0.046
+years_to_maturity = 7
+current_yield = 0.053
+yield_shift_bp = 100  # 100个基点 = 1%
+yield_shift = yield_shift_bp / 10000  # 转换为小数
+
+# 1. 生成收益率网格并计算精确价格
+yields = np.linspace(0.02, 0.09, 100)
+prices = np.zeros_like(yields)
+
+for i, y in enumerate(yields):
+    cash_flows = np.array([face_value * coupon_rate] * years_to_maturity)
+    cash_flows[-1] += face_value  # 最后一期支付本金
+    discount_factors = (1 + y) ** np.arange(1, years_to_maturity + 1)
+    prices[i] = np.sum(cash_flows / discount_factors)
+
+# 2. 计算久期和凸性
+def calculate_duration_convexity(y, cash_flows, face_value, years_to_maturity):
+    t = np.arange(1, years_to_maturity + 1)
+    discount_factors = (1 + y) ** t
+    pv_cash_flows = cash_flows / discount_factors
+
+    # 麦考利久期
+    macaulay_duration = np.sum(t * pv_cash_flows) / np.sum(pv_cash_flows)
+    # 修正久期
+    modified_duration = macaulay_duration / (1 + y)
+
+    # 凸性
+    convexity = np.sum(t * (t + 1) * cash_flows / ((1 + y) ** (t + 2))) / np.sum(pv_cash_flows)
+
+    return macaulay_duration, modified_duration, convexity
+
+cash_flows = np.array([face_value * coupon_rate] * years_to_maturity)
+cash_flows[-1] += face_value
+macaulay_dur, mod_dur, convexity = calculate_duration_convexity(
+    current_yield, cash_flows, face_value, years_to_maturity
+)
+
+# 计算久期近似和久期+凸性近似
+price_at_current = np.interp(current_yield, yields, prices)
+yields_around_current = np.linspace(current_yield - 0.02, current_yield + 0.02, 50)
+
+# 久期近似 (一阶)
+dur_approx_prices = price_at_current * (1 - mod_dur * (yields_around_current - current_yield))
+
+# 久期+凸性近似 (二阶)
+dur_convex_approx_prices = price_at_current * (
+    1
+    - mod_dur * (yields_around_current - current_yield)
+    + 0.5 * convexity * (yields_around_current - current_yield) ** 2
+)
+
+# 3. 计算收益率上升100bp后的精确价格和久期估计变化
+yield_up100bp = current_yield + yield_shift
+price_at_up100bp = np.interp(yield_up100bp, yields, prices)
+dur_approx_change_up100bp = -mod_dur * yield_shift
+
+# 4. 绘图
+plt.figure(figsize=(10, 6))
+plt.plot(yields * 100, prices, label='精确价格', color='blue')
+plt.plot(
+    yields_around_current * 100,
+    dur_approx_prices,
+    '--',
+    label='久期近似',
+    color='red'
+)
+plt.plot(
+    yields_around_current * 100,
+    dur_convex_approx_prices,
+    '-.',
+    label='久期+凸性近似',
+    color='green'
+)
+plt.axvline(x=current_yield * 100, color='gray', linestyle=':', label='当前收益率 (5.3%)')
+plt.xlabel('收益率 (%)')
+plt.ylabel('债券价格')
+plt.title('债券价格-收益率曲线及久期近似')
+plt.legend()
+plt.grid(True)
+
+# 格式化y轴为百分比
+plt.gca().xaxis.set_major_formatter(FuncFormatter(lambda x, _: f'{x:.1f}%'))
+
+# 保存图形
+figure_path = 'bond_price_yield_curve.png'
+plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+
+# 填充result字典
+result = {
+    'price_at_up100bp': price_at_up100bp,
+    'dur_approx_change_up100bp': dur_approx_change_up100bp,
+    'figure_path': figure_path
+}
+
+# 输出结果以供验证
+print(result)
+```

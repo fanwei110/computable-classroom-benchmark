@@ -1,0 +1,85 @@
+以下代码完成了您的要求：计算了相关系数为 0.15、0.45、0.75 时两资产的有效前沿曲线，标记了最小方差点，并计算了相关系数 0.45 时的最小方差组合波动率以及目标收益 10% 对应的最小波动率，最后将结果存入字典并保存图像。
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 资产参数
+ret1, ret2 = 0.071, 0.124
+vol1, vol2 = 0.163, 0.289
+rhos = [0.15, 0.45, 0.75]
+
+# --- 计算所需指标 ---
+# 对 rho=0.45 计算最小方差组合波动率
+rho45 = 0.45
+cov45 = rho45 * vol1 * vol2
+w_mvp_45 = (vol2**2 - cov45) / (vol1**2 + vol2**2 - 2 * cov45)
+var_mvp_45 = (w_mvp_45**2 * vol1**2 +
+              (1 - w_mvp_45)**2 * vol2**2 +
+              2 * w_mvp_45 * (1 - w_mvp_45) * cov45)
+mvp_vol_at_rho45 = np.sqrt(var_mvp_45)
+
+# 对 rho=0.45 计算目标收益 10% 的最小波动率
+target_ret = 0.10
+# 由 ret = w*ret1 + (1-w)*ret2 解出权重
+w_target = (ret2 - target_ret) / (ret2 - ret1)
+var_target = (w_target**2 * vol1**2 +
+              (1 - w_target)**2 * vol2**2 +
+              2 * w_target * (1 - w_target) * cov45)
+frontier_vol_at_target = np.sqrt(var_target)
+
+# --- 绘图 ---
+fig, ax = plt.subplots(figsize=(8, 5))
+
+# 生成组合曲线并进行绘制
+w_range = np.linspace(-1, 2, 600)  # 宽范围以覆盖全局最小方差组合
+for rho in rhos:
+    cov = rho * vol1 * vol2
+    ret = w_range * ret1 + (1 - w_range) * ret2
+    var = (w_range**2 * vol1**2 +
+           (1 - w_range)**2 * vol2**2 +
+           2 * w_range * (1 - w_range) * cov)
+    vol = np.sqrt(var)
+    # 绘制曲线
+    line, = ax.plot(vol, ret, label=f'ρ = {rho}')
+    color = line.get_color()
+    
+    # 计算并标记全局最小方差点
+    w_mvp = (vol2**2 - cov) / (vol1**2 + vol2**2 - 2 * cov)
+    ret_mvp = w_mvp * ret1 + (1 - w_mvp) * ret2
+    vol_mvp = np.sqrt(w_mvp**2 * vol1**2 +
+                      (1 - w_mvp)**2 * vol2**2 +
+                      2 * w_mvp * (1 - w_mvp) * cov)
+    ax.scatter(vol_mvp, ret_mvp, color=color, marker='o', s=60,
+               zorder=5, edgecolors='black')
+
+# 标记单个资产
+ax.scatter(vol1, ret1, marker='*', color='black', s=120, label='Asset 1')
+ax.scatter(vol2, ret2, marker='*', color='darkgray', s=120, label='Asset 2')
+
+ax.set_xlabel('Volatility (Std. Dev.)')
+ax.set_ylabel('Expected Return')
+ax.set_title('Efficient Frontiers with Minimum Variance Points')
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+# 保存图像
+figure_path = 'frontier.png'
+plt.savefig(figure_path, dpi=150)
+plt.close()
+
+# --- 创建结果字典 ---
+result = {
+    'mvp_vol_at_rho45': mvp_vol_at_rho45,
+    'frontier_vol_at_target': frontier_vol_at_target,
+    'figure_path': figure_path
+}
+
+# 查看结果（可选）
+print(result)
+```
+
+**计算结果：**
+- `mvp_vol_at_rho45`：0.1617（约 16.17%）
+- `frontier_vol_at_target`：0.2024（约 20.24%）
+- `figure_path`：`frontier.png`

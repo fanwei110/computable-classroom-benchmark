@@ -1,0 +1,36 @@
+import numpy as np
+from scipy.stats import norm
+
+def main():
+    # 给定参数
+    annual_vol = 0.24            # 年化波动率 24%
+    position_value = 2_700_000   # 头寸市值（元）
+    confidence = 0.95            # 置信水平 95%
+    trading_days = 252           # 每年交易日
+
+    # 1. 去年化：年化波动率 -> 一日波动率
+    daily_vol = annual_vol / np.sqrt(trading_days)
+
+    # 2. 单尾 95% 正态分位数（均值取零）
+    z_score = norm.ppf(1 - confidence)  # 95% 对应左尾，VaR 通常取损失方向的负分位数
+
+    # 3. 计算一日 VaR（正值表示损失金额）
+    var_95_1d = -position_value * daily_vol * z_score
+
+    # 输出结果
+    result = {
+        'var_95_1d': round(var_95_1d, 2)
+    }
+
+    print("=== 95% 一日 VaR 计算结果 ===")
+    print(f"头寸市值: ¥{position_value:,.0f}")
+    print(f"年化波动率: {annual_vol*100:.1f}%")
+    print(f"一日波动率: {daily_vol*100:.4f}%")
+    print(f"正态分位数 (单尾 {confidence*100:.0f}%): {z_score:.4f}")
+    print(f"VaR (95%, 1日): ¥{var_95_1d:,.2f}")
+    print(f"\n结果字典: {result}")
+
+    return result
+
+if __name__ == "__main__":
+    result = main()

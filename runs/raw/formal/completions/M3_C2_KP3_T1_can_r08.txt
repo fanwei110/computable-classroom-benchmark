@@ -1,0 +1,62 @@
+```python
+import numpy as np
+
+# ==================== 假设处理 ====================
+# 题目未指明付息频率，采用国内大学《证券投资学》教材常见惯例：每年付息一次 (m=1)。
+# 到期收益率 y 为年化收益率，久期与凸性亦以年为基本单位。
+
+# ==================== 债券参数 ====================
+face_value = 100.0       # 面值
+coupon_rate = 0.046      # 票息率
+T = 7                    # 期限（年）
+y = 0.053                # 到期收益率（YTM）
+
+# ==================== 现金流构建 ====================
+# 时间点 t = 1, 2, ..., T
+t = np.arange(1, T + 1)
+
+# 现金流：前 T-1 期为票息，第 T 期为票息 + 面值
+cash_flows = np.full(T, face_value * coupon_rate)
+cash_flows[-1] += face_value
+
+# ==================== 1. 计算价格 ====================
+# 贴现因子
+discount_factors = (1 + y) ** t
+# 各期现金流现值
+present_values = cash_flows / discount_factors
+# 债券价格
+price = np.sum(present_values)
+
+# ==================== 2. 计算麦考利久期与修正久期 ====================
+# 麦考利久期 = 加权平均回流时间 = sum(t * PV(CF_t)) / Price
+macaulay_duration = np.sum(t * present_values) / price
+
+# 修正久期 = 麦考利久期 / (1 + y)
+modified_duration = macaulay_duration / (1 + y)
+
+# ==================== 3. 计算凸性 ====================
+# 凸性 = (1/Price) * sum( [t*(t+1) * CF_t] / (1+y)^(t+2) )
+# 数学等价变形：= sum( t*(t+1) * PV(CF_t) ) / [ Price * (1+y)^2 ]
+convexity = np.sum(t * (t + 1) * present_values) / (price * (1 + y) ** 2)
+
+# ==================== 4. 填充 result ====================
+result = {
+    'price': round(price, 4),
+    'macaulay_duration_years': round(macaulay_duration, 4),
+    'modified_duration_years': round(modified_duration, 4),
+    'convexity': round(convexity, 4)
+}
+
+# 课堂投屏展示打印
+print("="*40)
+print("债券定价与久期、凸性计算结果")
+print("="*40)
+print(f"面值: {face_value}, 票息率: {coupon_rate*100}%")
+print(f"期限: {T}年, 到期收益率: {y*100}%")
+print("-"*40)
+print(f"价格 (Price)              : {result['price']}")
+print(f"麦考利久期 (Macaulay Dur) : {result['macaulay_duration_years']} 年")
+print(f"修正久期 (Modified Dur)   : {result['modified_duration_years']} 年")
+print(f"凸性 (Convexity)          : {result['convexity']}")
+print("="*40)
+```

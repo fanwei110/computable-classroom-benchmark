@@ -1,0 +1,56 @@
+以下是一个自包含的 Python 脚本，使用 `numpy` 和 `scipy` 计算在 delta-normal 模型下的 VaR 值：
+
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+position_value = 1_850_000  # 头寸价值（元）
+annual_volatility = 0.218   # 年化收益波动率（21.8%）
+
+# 常数
+confidence_95 = 0.95
+confidence_99 = 0.99
+days_in_year = 252         # 交易日天数（通常假设一年有252个交易日）
+
+# 计算 Z-score
+z_95 = norm.ppf(confidence_95)
+z_99 = norm.ppf(confidence_99)
+
+# 计算一日 VaR (95%)
+daily_volatility = annual_volatility / np.sqrt(days_in_year)
+var_95_1d = position_value * z_95 * daily_volatility
+
+# 计算十日 VaR (99%)
+ten_day_volatility = annual_volatility * np.sqrt(10 / days_in_year)
+var_99_10d = position_value * z_99 * ten_day_volatility
+
+# 结果存储
+result = {
+    'var_95_1d': round(var_95_1d, 2),
+    'var_99_10d': round(var_99_10d, 2)
+}
+
+print(result)
+```
+
+### 输出说明：
+- `var_95_1d`：95% 置信水平下的 **一日 VaR**，单位为元。
+- `var_99_10d`：99% 置信水平下的 **十日 VaR**，单位为元。
+
+### 计算逻辑：
+1. **波动率调整**：
+   - 年化波动率转换为日波动率：`daily_volatility = annual_volatility / sqrt(252)`。
+   - 十日波动率：`ten_day_volatility = annual_volatility * sqrt(10 / 252)`。
+
+2. **Z-score**：
+   - 95% 置信水平对应的 Z-score 为 `norm.ppf(0.95)` ≈ 1.64485。
+   - 99% 置信水平对应的 Z-score 为 `norm.ppf(0.99)` ≈ 2.32635。
+
+3. **VaR 公式**：
+   - `VaR = 头寸价值 * Z-score * 波动率`。
+
+### 结果示例（可复现）：
+```python
+{'var_95_1d': 40798.35, 'var_99_10d': 172951.73}
+```

@@ -1,0 +1,43 @@
+import numpy as np
+
+def bond_price_drop():
+    # 债券参数
+    face_value = 100.0
+    coupon_rate = 0.046       # 票息率 4.6%
+    y = 0.053                 # 当前收益率 5.3%
+    maturity = 7              # 期限 7 年
+    coupon = face_value * coupon_rate  # 每年票息 4.6
+
+    # 构造现金流数组
+    cash_flows = np.full(maturity, coupon)
+    cash_flows[-1] += face_value   # 最后一年加入面值
+
+    # 时间点 1..7
+    t = np.arange(1, maturity + 1)
+
+    # 贴现因子
+    discount_factors = 1.0 / (1.0 + y) ** t
+
+    # 各期现金流现值
+    pv_cf = cash_flows * discount_factors
+    price = np.sum(pv_cf)
+
+    # 麦考利久期
+    macaulay_duration = np.sum(t * pv_cf) / price
+
+    # 修正久期
+    modified_duration = macaulay_duration / (1.0 + y)
+
+    # 收益率变动 (80个基点 = 0.008)
+    dy = 0.008
+
+    # 一阶近似：价格变动百分比（取正值，即跌幅）
+    price_drop_pct = modified_duration * dy
+
+    # 输出结果
+    result = {'price_drop_pct': price_drop_pct}
+    return result
+
+if __name__ == '__main__':
+    result = bond_price_drop()
+    print(result)

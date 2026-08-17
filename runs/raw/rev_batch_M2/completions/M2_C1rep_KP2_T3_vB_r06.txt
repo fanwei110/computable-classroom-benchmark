@@ -1,0 +1,16 @@
+```python
+# 计算月无风险利率
+rf_annual = 0.047
+rf_monthly = rf_annual / 12
+
+# 市场月收益率
+rm = -0.058
+
+# 股票贝塔
+beta = 1.42
+
+# CAPM 预期月收益率
+capm_return = rf_monthly + beta * (rm - rf_monthly)
+
+result = {'capm_return_monthly': capm_return}
+```

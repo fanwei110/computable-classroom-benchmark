@@ -1,0 +1,15 @@
+由于我无法直接读取你本地的课程数据文件，请把**基金（fund）列的日收益率数据**贴出来（例如以 CSV、列表或截图形式）。收到数据后，我会按以下约定计算并存入 `result` 字典：
+
+**计算逻辑：**
+1. 日化无风险利率：年复利 2.1% → \( r_f^{daily} = (1+0.021)^{1/252} - 1 \)
+2. 日超额收益：\( r_{excess} = r_{fund} - r_f^{daily} \)
+3. 年化超额收益：\( \mu_{annual} = \text{mean}(r_{excess}) \times 252 \)
+4. 年化波动率：\( \sigma_{annual} = \text{std}(r_{excess}, ddof=1) \times \sqrt{252} \)
+5. 年化 Sharpe ratio：\( \frac{\mu_{annual}}{\sigma_{annual}} \)
+
+**输出格式：**
+```python
+result = {'sharpe_annual': 算出的数值}
+```
+
+请把基金日收益数据发给我，我立即帮你计算。

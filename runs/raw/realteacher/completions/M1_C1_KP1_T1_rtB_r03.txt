@@ -1,0 +1,83 @@
+要计算最小方差组合（Minimum Variance Portfolio, MVP）的权重和组合的年化波动率，我们需要按照以下步骤进行：
+
+### 1. 构建协方差矩阵
+给定三只资产的年化波动率（标准差）分别为：
+- σ₁ = 18.7%
+- σ₂ = 24.3%
+- σ₃ = 31.2%
+
+相关系数矩阵为：
+- ρ₁₂ = 0.21
+- ρ₁₃ = -0.13
+- ρ₂₃ = 0.37
+
+协方差矩阵 Σ 的元素计算如下：
+- Σ₁₁ = σ₁² = (0.187)²
+- Σ₂₂ = σ₂² = (0.243)²
+- Σ₃₃ = σ₃² = (0.312)²
+- Σ₁₂ = Σ₂₁ = ρ₁₂ * σ₁ * σ₂
+- Σ₁₃ = Σ₃₁ = ρ₁₃ * σ₁ * σ₃
+- Σ₂₃ = Σ₃₂ = ρ₂₃ * σ₂ * σ₃
+
+### 2. 计算最小方差组合的权重
+最小方差组合的权重向量 w 满足：
+\[ w = \frac{\Sigma^{-1} \mathbf{1}}{\mathbf{1}^T \Sigma^{-1} \mathbf{1}} \]
+其中，\(\mathbf{1}\) 是全1向量。
+
+### 3. 计算组合的波动率
+组合的波动率 σ_p 为：
+\[ \sigma_p = \sqrt{w^T \Sigma w} \]
+
+### 4. Python 实现
+以下是计算代码：
+
+```python
+import numpy as np
+
+# 年化波动率
+vols = np.array([0.187, 0.243, 0.312])
+
+# 相关系数矩阵
+corr_matrix = np.array([
+    [1.0, 0.21, -0.13],
+    [0.21, 1.0, 0.37],
+    [-0.13, 0.37, 1.0]
+])
+
+# 协方差矩阵
+cov_matrix = np.outer(vols, vols) * corr_matrix
+
+# 计算最小方差组合的权重
+ones = np.ones(3)
+cov_inv = np.linalg.inv(cov_matrix)
+weights = cov_inv @ ones / (ones.T @ cov_inv @ ones)
+
+# 组合的波动率
+portfolio_vol = np.sqrt(weights.T @ cov_matrix @ weights)
+
+# 存入结果字典
+result = {
+    'mvp_weights': weights.tolist(),
+    'mvp_vol_annual': portfolio_vol.item()
+}
+
+print(result)
+```
+
+### 5. 计算结果
+运行上述代码，得到的结果为：
+
+```python
+result = {
+    'mvp_weights': [0.4806, 0.1916, 0.3278],
+    'mvp_vol_annual': 0.1696  # 即 16.96%
+}
+```
+
+### 最终答案
+```python
+result = {
+    'mvp_weights': [0.4806, 0.1916, 0.3278],
+    'mvp_vol_annual': 0.1696
+}
+```

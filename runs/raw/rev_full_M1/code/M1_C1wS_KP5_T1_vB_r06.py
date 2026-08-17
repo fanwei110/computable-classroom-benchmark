@@ -1,0 +1,29 @@
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+position = 1_850_000          # 仓位（人民币）
+annual_vol = 0.218            # 年化波动率
+confidence_95 = 0.95          # 95% 置信水平
+confidence_99 = 0.99          # 99% 置信水平
+
+# 1. 年化波动率换算到一日波动率
+daily_vol = annual_vol / np.sqrt(252)   # 假设一年 252 个交易日
+
+# 2. 正态分位数
+z_95 = norm.ppf(1 - confidence_95)      # 95% 置信水平对应的 z 值
+z_99 = norm.ppf(1 - confidence_99)      # 99% 置信水平对应的 z 值
+
+# 3. 计算 VaR
+var_95_1d = position * daily_vol * z_95
+var_99_10d = position * (daily_vol * np.sqrt(10)) * z_99  # 十日波动率 = 日波动率 * sqrt(10)
+
+# 4. 填充 result 字典
+result = {
+    'var_95_1d': round(var_95_1d, 2),      # 保留两位小数
+    'var_99_10d': round(var_99_10d, 2)
+}
+
+# 打印结果（可选，便于课堂展示）
+print("95% 置信水平下 1 天 VaR：", result['var_95_1d'], "元")
+print("99% 置信水平下 10 天 VaR：", result['var_99_10d'], "元")

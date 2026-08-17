@@ -1,0 +1,45 @@
+import numpy as np
+
+# 债券参数
+face_value = 100.0
+coupon_rate = 0.046
+coupon = face_value * coupon_rate
+maturity = 7
+ytm = 0.053
+
+# 现金流量：第1到6年为票息，第7年为票息+面值
+cash_flows = np.full(maturity, coupon)
+cash_flows[-1] += face_value
+
+# 时间向量（从1开始）
+t = np.arange(1, maturity + 1)
+
+# 贴现因子与现值
+discount_factors = (1 + ytm) ** t
+present_values = cash_flows / discount_factors
+
+# 价格
+price = np.sum(present_values)
+
+# 麦考利久期：加权平均时间，权重为各期现金流现值占总价格的比例
+weights = present_values / price
+macaulay_duration = np.sum(t * weights)
+
+# 修正久期：麦考利久期 / (1 + ytm) （年复利假设）
+modified_duration = macaulay_duration / (1 + ytm)
+
+# 凸性：二阶导数除以价格
+# 公式：Convexity = (1/P) * Σ [ t*(t+1) * CF_t / (1 + ytm)^(t+2) ]
+# 等价于 Σ [ t*(t+1) * present_values / ((1+ytm)^2 * price) ] 
+convexity = np.sum(t * (t + 1) * present_values) / (price * (1 + ytm)**2)
+
+# 结果字典
+result = {
+    'price': round(price, 6),
+    'macaulay_duration_years': round(macaulay_duration, 6),
+    'modified_duration_years': round(modified_duration, 6),
+    'convexity': round(convexity, 6)
+}
+
+# 可选：打印以便课堂演示
+print(result)

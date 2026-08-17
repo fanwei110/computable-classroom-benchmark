@@ -1,0 +1,105 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.optimize import brentq
+
+# ===================== 参数定义 =====================
+FACE_VALUE = 100.0          # 面值
+COUPON_RATE = 0.046         # 票息率 4.6%
+MATURITY = 7                # 期限（年）
+YTM_CURRENT = 0.053         # 当前到期收益率 5.3%
+FREQ = 1                    # 每年付息一次（年付息）
+
+# 现金流时间点（年末付息）
+times = np.arange(1, MATURITY + 1)
+cash_flows = np.full(MATURITY, FACE_VALUE * COUPON_RATE)
+cash_flows[-1] += FACE_VALUE  # 本金在最后一年偿还
+
+# ===================== 定价函数 =====================
+def bond_price(ytm):
+    """给定到期收益率，返回债券价格（精确现金流贴现）"""
+    discount_factors = (1 + ytm) ** (-times)
+    return np.dot(cash_flows, discount_factors)
+
+def bond_duration(ytm, price=None):
+    """计算麦考利久期和修正久期（当前收益率下）"""
+    if price is None:
+        price = bond_price(ytm)
+    # 各期现金流现值权重
+    pv_cf = cash_flows * (1 + ytm) ** (-times)
+    weights = pv_cf / price
+    mac_duration = np.dot(times, weights)
+    mod_duration = mac_duration / (1 + ytm)
+    return mac_duration, mod_duration
+
+# ===================== 1. 精确价格-收益率曲线 =====================
+yields = np.linspace(0.02, 0.09, 200)  # 从2%到9%的精细网格
+prices_exact = np.array([bond_price(y) for y in yields])
+
+# ===================== 2. 久期近似线 =====================
+price_current = bond_price(YTM_CURRENT)
+mac_dur, mod_dur = bond_duration(YTM_CURRENT, price_current)
+print(f"当前收益率 {YTM_CURRENT*100:.2f}% 下：")
+print(f"  精确价格: {price_current:.6f}")
+print(f"  麦考利久期: {mac_dur:.4f} 年")
+print(f"  修正久期: {mod_dur:.4f}")
+
+# 久期一阶近似： P(y) ≈ P(y0) * [1 - ModDur * (y - y0)]
+prices_dur_approx = price_current * (1 - mod_dur * (yields - YTM_CURRENT))
+
+# ===================== 3. 报告 +100bp 情况 =====================
+delta_y = 0.01  # 100个基点
+ytm_up100 = YTM_CURRENT + delta_y
+
+price_up100_exact = bond_price(ytm_up100)
+price_change_exact = price_up100_exact - price_current
+price_change_pct_exact = (price_up100_exact - price_current) / price_current * 100
+
+# 久期法估计的相对价格变化
+price_change_dur_approx = -mod_dur * delta_y * price_current  # 绝对变化
+price_change_pct_dur_approx = -mod_dur * delta_y * 100       # 相对变化(%)
+
+print(f"\n收益率上升100bp (到 {ytm_up100*100:.2f}%):")
+print(f"  精确价格: {price_up100_exact:.6f}")
+print(f"  精确相对价格变化: {price_change_pct_exact:.4f}%")
+print(f"  久期法估计相对变化: {price_change_pct_dur_approx:.4f}%")
+
+# ===================== 4. 绘图并保存 =====================
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.plot(yields * 100, prices_exact, 'b-', linewidth=2, label='精确价格-收益率曲线')
+ax.plot(yields * 100, prices_dur_approx, 'r--', linewidth=2, label='基于久期的近似(当前收益率附近)')
+
+# 标注当前收益率点
+ax.axvline(x=YTM_CURRENT*100, color='gray', linestyle=':', alpha=0.7)
+ax.plot(YTM_CURRENT*100, price_current, 'ko', markersize=7, label=f'当前收益率点 ({YTM_CURRENT*100:.1f}%)')
+
+# 标注+100bp点
+ax.plot(ytm_up100*100, price_up100_exact, 'b^', markersize=8, label=f'+100bp 精确价格')
+ax.plot(ytm_up100*100, price_current + price_change_dur_approx, 'rs', markersize=7, label='+100bp 久期估计')
+
+ax.set_xlabel('到期收益率 (%)', fontsize=12)
+ax.set_ylabel('债券价格', fontsize=12)
+ax.set_title('债券价格-收益率曲线（面值100，票息4.6%，7年期）', fontsize=14)
+ax.legend(loc='upper right', fontsize=10)
+ax.grid(True, alpha=0.3)
+ax.set_xlim(2, 9)
+fig.tight_layout()
+
+figure_filename = 'bond_price_yield_curve.png'
+fig.savefig(figure_filename, dpi=150)
+print(f"图形已保存为: {figure_filename}")
+
+# ===================== 输出契约 =====================
+result = {
+    'price_at_up100bp': round(price_up100_exact, 6),
+    'dur_approx_change_up100bp': round(price_change_pct_dur_approx, 6),  # 久期法估计的相对变化(%)
+    'figure_path': figure_filename
+}
+
+print("\n结果字典 result:")
+for k, v in result.items():
+    print(f"  {k}: {v}")
+
+# 若需在交互环境查看图形，取消下一行
+# plt.show()
+plt.close()

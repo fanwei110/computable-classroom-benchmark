@@ -1,0 +1,72 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==================== 1. 参数设置 ====================
+mu = np.array([0.071, 0.124])          # 期望年收益 (7.1%, 12.4%)
+sigma = np.array([0.163, 0.289])       # 年化波动率 (16.3%, 28.9%)
+rhos = [0.15, 0.45, 0.75]             # 给定的相关系数
+target_mu = 0.10                       # 目标期望收益 10%
+
+# ==================== 2. 扫描权重并绘制前沿 ====================
+# 允许卖空，权重范围设为 [-1.0, 2.0] 以展示完整的双曲线
+w1 = np.linspace(-1.0, 2.0, 1000)     
+w2 = 1 - w1                           # 满仓约束 w1 + w2 = 1
+port_mu = w1 * mu[0] + w2 * mu[1]     # 组合期望收益
+
+result = {}
+
+plt.figure(figsize=(10, 7))
+
+# 在图例中预先加入最小方差组合(MVP)的图例占位
+plt.scatter([], [], marker='D', s=60, color='black', label='Minimum Variance Portfolio (MVP)')
+
+for rho in rhos:
+    # 构造协方差矩阵
+    cov = np.array([
+        [sigma[0]**2, rho * sigma[0] * sigma[1]],
+        [rho * sigma[0] * sigma[1], sigma[1]**2]
+    ])
+    
+    # 计算组合方差与波动率
+    port_var = w1**2 * cov[0,0] + w2**2 * cov[1,1] + 2 * w1 * w2 * cov[0,1]
+    port_vol = np.sqrt(port_var)
+    
+    # 画出均值-方差前沿曲线
+    plt.plot(port_vol, port_mu, label=f'rho = {rho}')
+    
+    # 解析求解最小方差组合(MVP)的权重与指标
+    # 由 d(sigma_p^2)/dw1 = 0 推导而得
+    w_mvp = (cov[1,1] - cov[0,1]) / (cov[0,0] + cov[1,1] - 2 * cov[0,1])
+    mu_mvp = w_mvp * mu[0] + (1 - w_mvp) * mu[1]
+    var_mvp = w_mvp**2 * cov[0,0] + (1 - w_mvp)**2 * cov[1,1] + 2 * w_mvp * (1 - w_mvp) * cov[0,1]
+    vol_mvp = np.sqrt(var_mvp)
+    
+    # 在曲线上标出最小方差组合
+    plt.scatter(vol_mvp, mu_mvp, marker='D', s=60, color='black', zorder=5)
+    
+    # 针对 rho = 0.45 计算要求的波动率
+    if rho == 0.45:
+        # 记录 rho=0.45 时的最小方差组合年化波动率
+        result['mvp_vol_at_rho45'] = vol_mvp
+        
+        # 计算目标期望收益 10% 下的权重及最小波动率
+        w_target = (target_mu - mu[1]) / (mu[0] - mu[1])
+        var_target = w_target**2 * cov[0,0] + (1 - w_target)**2 * cov[1,1] + 2 * w_target * (1 - w_target) * cov[0,1]
+        vol_target = np.sqrt(var_target)
+        result['frontier_vol_at_target'] = vol_target
+
+# ==================== 3. 图形设置与保存 ====================
+plt.xlabel('Volatility (Annualized)')
+plt.ylabel('Expected Return (Annualized)')
+plt.title('Markowitz Mean-Variance Frontiers for Different Correlations')
+plt.legend()
+plt.grid(True)
+
+figure_path = 'markowitz_frontier.png'
+plt.savefig(figure_path)
+result['figure_path'] = figure_path
+
+# 输出结果以供验证
+print(result)
+```

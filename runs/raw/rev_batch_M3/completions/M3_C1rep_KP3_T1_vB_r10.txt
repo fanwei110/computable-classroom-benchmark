@@ -1,0 +1,18 @@
+```python
+result = {
+    'price': 95.9930,
+    'macaulay_duration_years': 6.1197,
+    'modified_duration_years': 5.8116,
+    'convexity': 42.1340
+}
+```
+
+**计算过程说明（假设每年付息一次）：**
+1. **价格**：票息 $C = 100 \times 4.6\% = 4.6$，收益率 $y = 5.3\%$，期数 $n = 7$。
+   $$P = \sum_{t=1}^{7} \frac{4.6}{(1+0.053)^t} + \frac{100}{(1+0.053)^7} \approx 95.9930$$
+2. **麦考利久期**：
+   $$MacD = \frac{1}{P} \sum_{t=1}^{7} \frac{t \cdot CF_t}{(1+y)^t} \approx 6.1197 \text{ 年}$$
+3. **修正久期**：
+   $$ModD = \frac{MacD}{1+y} = \frac{6.1197}{1.053} \approx 5.8116 \text{ 年}$$
+4. **凸性**：
+   $$Conv = \frac{1}{P(1+y)^2} \sum_{t=1}^{7} \frac{t(t+1) \cdot CF_t}{(1+y)^t} \approx 42.1340$$

@@ -1,0 +1,51 @@
+```python
+import pandas as pd
+import numpy as np
+
+# ================== 假设与说明 ==================
+# 1. 假设快照文件名为 'snapshot.csv'，基金数据位于 'fund' 列。
+# 2. 假设一年有 252 个交易日，采用日度数据计算年化夏普比率。
+# 3. 无风险利率为 2.1%（年化），日度无风险利率按 2.1% / 252 近似折算。
+# 4. 采用样本标准差 (ddof=1) 衡量波动率。
+# 5. 增加启发式判断：若 'fund' 列均值大于 1.5，视作基金净值（NAV）并计算日收益率；
+#    否则视作日收益率序列，以兼容不同格式的课程数据。
+# ===============================================
+
+# 1. 读取快照 CSV
+df = pd.read_csv('snapshot.csv')
+fund_data = df['fund'].dropna()
+
+# 判断数据是净值还是收益率，并统一转换为日收益率
+if fund_data.mean() > 1.5:
+    # 视为基金净值序列，计算日百分比收益率
+    daily_returns = fund_data.pct_change().dropna()
+else:
+    # 视为日收益率序列
+    daily_returns = fund_data
+
+# 2. 计入 2.1% 的无风险利率并计算全样本年化夏普比率
+rf_annual = 0.021
+rf_daily = rf_annual / 252  # 日度无风险利率
+
+# 计算日超额收益率
+excess_daily_returns = daily_returns - rf_daily
+
+# 计算日夏普比率的分子与分母
+mean_excess = excess_daily_returns.mean()
+std_excess = excess_daily_returns.std(ddof=1)  # 使用样本标准差
+
+# 计算日夏普比率并年化
+sharpe_daily = mean_excess / std_excess
+sharpe_annual = sharpe_daily * np.sqrt(252)
+
+# 3. 把结果存入 result
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+# 输出结果供课堂展示
+print(f"日超额收益均值: {mean_excess:.6f}")
+print(f"日超额收益标准差: {std_excess:.6f}")
+print(f"年化夏普比率: {sharpe_annual:.4f}")
+print(result)
+```

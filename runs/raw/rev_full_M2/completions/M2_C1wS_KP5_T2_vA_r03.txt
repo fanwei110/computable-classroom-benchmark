@@ -1,0 +1,61 @@
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ============================================================
+# 1. 读取数据并构造头寸日损益
+# ============================================================
+# 读取快照CSV，假设文件位于 data/market_snapshot_v1.csv
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 提取基金日收益率（题目说明该列已是日收益，故直接使用）
+returns = df['fund'].dropna()   # 剔除缺失值，保证计算稳定
+
+# 头寸规模（人民币）
+position_value = 1_000_000.0
+
+# 构造日损益序列：头寸 * 日收益率
+pnl = position_value * returns.values
+
+# ============================================================
+# 2. 参数化计算历史VaR（95%置信水平，可调）
+# ============================================================
+conf_level = 0.95                # 置信水平，可在此修改
+alpha = 1 - conf_level           # 左尾概率
+
+# 经验分位数：损益的alpha分位数（通常为负值）
+var_threshold = np.percentile(pnl, 100 * alpha)
+
+# 历史VaR定义为损失的正数金额
+hist_var = -var_threshold
+
+# 保存结果
+result = {
+    'hist_var_95_1d': hist_var,
+    'figure_path': 'var_histogram.png'
+}
+
+# 控制台输出数值，便于课堂查看
+print(f"95% 1-day Historical VaR: {hist_var:,.2f} CNY")
+
+# ============================================================
+# 3. 绘制直方图并标注VaR线
+# ============================================================
+plt.figure(figsize=(8, 5))
+plt.hist(pnl, bins=50, edgecolor='black', alpha=0.7, color='steelblue')
+plt.axvline(var_threshold, color='red', linestyle='--', linewidth=2,
+            label=f'{conf_level*100:.0f}% 1-day VaR: {hist_var:,.2f} CNY')
+plt.xlabel('Daily P&L (CNY)')
+plt.ylabel('Frequency')
+plt.title('Historical VaR - Daily P&L Distribution')
+plt.legend()
+plt.tight_layout()
+
+# 保存图形
+plt.savefig(result['figure_path'], dpi=150)
+plt.close()
+
+# 最终输出字典
+print(result)
+```

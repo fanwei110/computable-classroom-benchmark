@@ -1,0 +1,23 @@
+=== B0541  任务 KP1_T3 (T3) ===
+
+--- 任务要求的输出键 ---
+vol_before_annual, vol_after_annual
+
+--- 判分失败明细 ---
+vol_before_annual: 提交值 0.1849  |  参考值 0.18485375841459106
+vol_after_annual: 提交值 0.2175  |  参考值 0.21745443660684413
+
+--- 提取出的代码 ---
+result = {
+    'vol_before_annual': 0.1849,
+    'vol_after_annual': 0.2175
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+```python
+result = {
+    'vol_before_annual': 0.1849,
+    'vol_after_annual': 0.2175
+}
+```

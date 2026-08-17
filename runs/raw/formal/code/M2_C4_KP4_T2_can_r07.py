@@ -1,0 +1,102 @@
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+
+# 设置中文显示
+plt.rcParams['font.sans-serif'] = ['SimHei']  # 针对matplotlib中文显示
+plt.rcParams['axes.unicode_minus'] = False
+
+def calculate_d1(S, K, r, sigma, T):
+    """
+    计算d1参数
+    S: 标的价格
+    K: 行权价
+    r: 无风险利率（连续复利）
+    sigma: 波动率
+    T: 距离到期时间（年）
+    """
+    d1 = (np.log(S/K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return d1
+
+def calculate_delta(S, K, r, sigma, T):
+    """
+    计算欧式看涨期权Delta
+    对于看涨期权：delta = N(d1)
+    """
+    d1 = calculate_d1(S, K, r, sigma, T)
+    delta = norm.cdf(d1)  # 使用标准正态分布的累积分布函数
+    return delta
+
+# 参数设置
+K = 97.5  # 行权价
+r = 0.043  # 无风险利率
+T = 0.58  # 剩余时间（年）
+
+# 生成标的价格网格
+S = np.linspace(70, 140, 500)
+
+# 定义三个波动率参数
+sigma_1 = 0.15   # 15%
+sigma_2 = 0.276  # 27.6%
+sigma_3 = 0.40   # 40%
+
+# 计算不同波动率下的Delta
+delta_1 = calculate_delta(S, K, r, sigma_1, T)
+delta_2 = calculate_delta(S, K, r, sigma_2, T)
+delta_3 = calculate_delta(S, K, r, sigma_3, T)
+
+# 创建图形
+plt.figure(figsize=(10, 6))
+
+# 绘制三条Delta曲线
+plt.plot(S, delta_1, 'b-', linewidth=2, label=f'σ = {sigma_1*100}%')
+plt.plot(S, delta_2, 'r-', linewidth=2, label=f'σ = {sigma_2*100}%')
+plt.plot(S, delta_3, 'g-', linewidth=2, label=f'σ = {sigma_3*100}%')
+
+# 设置图形属性
+plt.xlabel('标的价格', fontsize=12)
+plt.ylabel('Delta', fontsize=12)
+plt.title('欧式看涨期权Delta vs 标的价格 (不同波动率)', fontsize=14)
+plt.grid(True, alpha=0.3)
+plt.legend(loc='best', fontsize=11)
+
+# 设置坐标轴范围
+plt.xlim(70, 140)
+plt.ylim(0, 1.05)
+
+# 添加水平线和垂直线以供参考
+plt.axhline(y=0.5, color='gray', linestyle='--', alpha=0.5)
+plt.axvline(x=110, color='purple', linestyle='--', alpha=0.3, label='S=110')
+
+# 更新图例
+plt.legend(loc='best', fontsize=11)
+
+# 计算并标记S=110, σ=27.6%的Delta
+delta_at_s110 = calculate_delta(110, K, r, sigma_2, T)
+plt.plot(110, delta_at_s110, 'ro', markersize=8, label=f'Delta({110}, σ={sigma_2*100}%) = {delta_at_s110:.4f}')
+plt.annotate(f'{delta_at_s110:.4f}', 
+             xy=(110, delta_at_s110), 
+             xytext=(120, delta_at_s110 + 0.05),
+             arrowprops=dict(facecolor='red', shrink=0.05, width=1.5),
+             fontsize=10)
+
+plt.tight_layout()
+
+# 保存图形
+figure_path = 'option_delta_curves.png'
+plt.savefig(figure_path, dpi=100, bbox_inches='tight')
+print(f"图形已保存至: {figure_path}")
+print(f"标的110、波动率27.6%时的Delta: {delta_at_s110:.6f}")
+
+# 存储结果
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': figure_path
+}
+
+print(f"\n结果字典:")
+print(f"Delta at S=110 (σ=27.6%): {result['delta_at_s110']:.6f}")
+print(f"Figure Path: {result['figure_path']}")
+
+# 显示图形（可选）
+plt.show()

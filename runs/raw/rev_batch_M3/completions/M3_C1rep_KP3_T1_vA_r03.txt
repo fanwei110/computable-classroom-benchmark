@@ -1,0 +1,32 @@
+根据您提供的债券参数，基于**每年付息一次**的常规假设，计算过程如下：
+
+**参数设定：**
+* 面值 (F) = 100
+* 票面利率 = 4.6%，则每年利息 (C) = 100 × 4.6% = 4.6
+* 期限 (T) = 7 年
+* 到期收益率 = 5.3%
+
+**1. 债券价格**
+$$P = \sum_{t=1}^{7} \frac{4.6}{(1+0.053)^t} + \frac{100}{(1+0.053)^7} \approx 95.9962$$
+
+**2. 麦考利久期**
+$$MacD = \frac{1}{P} \times \left[ \sum_{t=1}^{7} \frac{t \times 4.6}{(1+0.053)^t} + \frac{7 \times 100}{(1+0.053)^7} \right] \approx 6.1219 \text{ 年}$$
+
+**3. 修正久期**
+$$ModD = \frac{MacD}{1+y} = \frac{6.1219}{1.053} \approx 5.8142$$
+
+**4. 凸性**
+$$Conv = \frac{1}{P \times (1+y)^2} \times \left[ \sum_{t=1}^{7} \frac{t(t+1) \times 4.6}{(1+0.053)^t} + \frac{7 \times 8 \times 100}{(1+0.053)^7} \right] \approx 42.1348$$
+
+---
+
+按照您的输出契约，结果存入字典如下：
+
+```python
+result = {
+    'price': 95.9962,
+    'macaulay_duration_years': 6.1219,
+    'modified_duration_years': 5.8142,
+    'convexity': 42.1348
+}
+```

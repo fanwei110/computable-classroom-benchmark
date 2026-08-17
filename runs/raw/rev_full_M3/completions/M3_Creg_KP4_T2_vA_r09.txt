@@ -1,0 +1,54 @@
+```python
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+
+def calculate_call_delta(S, K, r, T, sigma):
+    """
+    计算无分红欧式看涨期权的 Delta
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    delta = norm.cdf(d1)
+    return delta
+
+# 给定参数
+K = 97.5
+r = 0.043
+T = 0.58
+
+# 可调参数：波动率列表
+sigma_values = [0.15, 0.276, 0.40]
+
+# 标的价格范围
+S_range = np.linspace(70, 140, 500)
+
+# 绘制 Delta 曲线
+plt.figure(figsize=(10, 6))
+for sigma in sigma_values:
+    delta_curve = calculate_call_delta(S_range, K, r, T, sigma)
+    plt.plot(S_range, delta_curve, label=f'Vol = {sigma*100:.1f}%')
+
+plt.title('Delta of European Call Option (K=97.5, r=4.3%, T=0.58)')
+plt.xlabel('Underlying Price (S)')
+plt.ylabel('Delta')
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.7)
+
+# 保存图片
+figure_path = 'delta_curve.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 计算标的 110、波动率 27.6% 时的 delta
+S_target = 110
+sigma_target = 0.276
+delta_at_s110 = calculate_call_delta(S_target, K, r, T, sigma_target)
+
+# 按契约存入结果字典
+result = {
+    'delta_at_s110': float(delta_at_s110),
+    'figure_path': figure_path
+}
+
+print(result)
+```

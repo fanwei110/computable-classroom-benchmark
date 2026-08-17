@@ -1,0 +1,50 @@
+import numpy as np
+
+# ---- 输入参数 ----
+face_value = 100.0       # 面值
+coupon_rate = 0.046      # 票息率
+years = 7                # 年限
+ytm = 0.053              # 到期收益率（报价收益率）
+freq = 1                 # 每年付息次数（默认按年付息）
+
+# ---- 生成现金流时间点与金额 ----
+# 若 freq=1，periods 为整数年 1..years
+periods = np.arange(1, years * freq + 1) / freq
+coupon = face_value * coupon_rate / freq
+cash_flows = np.full_like(periods, coupon)
+cash_flows[-1] += face_value   # 最后一期包含本金
+
+# ---- 贴现因子与现值 ----
+discount_factors = (1 + ytm / freq) ** (-periods * freq)
+present_values = cash_flows * discount_factors
+price = np.sum(present_values)                        # 价格
+
+# ---- 麦考利久期（年） ----
+weighted_times = periods * present_values
+macaulay_duration_raw = np.sum(weighted_times) / price
+# 将时间单位转换为年（对于 freq>1 需调整，这里 freq=1 直接就是年）
+macaulay_duration_years = macaulay_duration_raw / freq
+
+# ---- 修正久期（年） ----
+modified_duration_years = macaulay_duration_years / (1 + ytm / freq)
+
+# ---- 凸性 ----
+# 公式：凸性 = (1/price) * Σ [ t*(t+1/freq) * PV_t / (1 + y/freq)^2 ]
+# 或采用修正凸性： Convexity = [1 / (P * (1+y/freq)^2)] * Σ [ t*(t+1) * CF_t / (1+y/freq)^t ]
+# 两者在 freq=1 时等价。这里用常用写法，确保单位为年。
+t = periods * freq   # 以“付息周期数”计的时间
+weights = (t * (t + 1)) * present_values
+convexity_raw = np.sum(weights) / (price * (1 + ytm / freq) ** 2)
+convexity = convexity_raw / (freq ** 2)   # 转换成年单位
+
+# ---- 构建输出字典 ----
+result = {
+    'price': price,
+    'macaulay_duration_years': macaulay_duration_years,
+    'modified_duration_years': modified_duration_years,
+    'convexity': convexity
+}
+
+# 打印结果，便于课堂展示
+for key, val in result.items():
+    print(f"{key}: {val:.6f}")

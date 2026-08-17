@@ -1,0 +1,85 @@
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# =========================
+# 可调参数
+# =========================
+WINDOW = 60                     # 滚动窗口长度（交易日）
+RISK_FREE_RATE = 0.021          # 年化无风险利率
+TRADING_DAYS = 252              # 年交易日数
+
+# =========================
+# 读取数据
+# =========================
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 自动识别日期列
+date_col = None
+for col in df.columns:
+    if 'date' in col.lower():
+        date_col = col
+        break
+
+if date_col:
+    df[date_col] = pd.to_datetime(df[date_col])
+    df.set_index(date_col, inplace=True)
+    time_index_name = 'Date'
+else:
+    time_index_name = 'Time'
+
+# 提取 fund 的日收益序列
+fund = df['fund'].astype(float)
+
+# 稳健处理：若数据像是价格（值普遍大于1或小于-1），自动转为收益率
+if fund.max() > 1 or fund.min() < -1:
+    fund = fund.pct_change().dropna()
+
+# =========================
+# 计算日化无风险收益
+# =========================
+rf_daily = RISK_FREE_RATE / TRADING_DAYS          # 简单年化除以天数
+excess_return = fund - rf_daily
+
+# =========================
+# 滚动年化夏普比率
+# =========================
+roll_mean = excess_return.rolling(window=WINDOW).mean() * TRADING_DAYS
+roll_std  = excess_return.rolling(window=WINDOW).std()  * np.sqrt(TRADING_DAYS)
+rolling_sharpe = roll_mean / roll_std
+
+# 移除 NaN（前 WINDOW-1 个窗口）
+rolling_sharpe_clean = rolling_sharpe.dropna()
+
+# 最后一个窗口的夏普值
+rolling_sharpe_last = float(rolling_sharpe_clean.iloc[-1])
+
+# =========================
+# 绘图并保存
+# =========================
+plt.figure(figsize=(12, 6))
+plt.plot(rolling_sharpe_clean.index, rolling_sharpe_clean.values, color='steelblue', linewidth=1.2)
+plt.title(f'{WINDOW}-Day Rolling Annualized Sharpe Ratio', fontsize=14)
+plt.xlabel(time_index_name, fontsize=12)
+plt.ylabel('Sharpe Ratio', fontsize=12)
+plt.grid(True, alpha=0.4)
+plt.tight_layout()
+
+figure_path = 'rolling_sharpe.png'
+plt.savefig(figure_path, dpi=150)
+plt.close()
+
+# =========================
+# 输出契约
+# =========================
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': figure_path
+}
+
+# 仅用于课堂展示时打印，不影响 result 字典
+print(f"最后一个{WINDOW}日窗口的年化夏普比率: {rolling_sharpe_last:.4f}")
+print(f"图形已保存至: {figure_path}")
+print(result)
+```

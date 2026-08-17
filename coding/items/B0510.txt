@@ -1,0 +1,78 @@
+=== B0510  任务 KP4_T1 (T1) ===
+
+--- 任务要求的输出键 ---
+call_price, call_delta, call_vega
+
+--- 判分失败明细 ---
+call_vega: 提交值 0.2756  |  参考值 27.56457460271352
+
+--- 提取出的代码 ---
+import math
+from scipy.stats import norm
+
+# 已知参数
+S = 103.7      # 标的资产价格
+K = 97.5       # 行权价
+vol = 0.276    # 波动率
+r = 0.043      # 无风险利率
+T = 0.58       # 剩余期限（年）
+q = 0.0        # 不分红
+
+# 计算 d1 和 d2
+d1 = (math.log(S / K) + (r - q + 0.5 * vol**2) * T) / (vol * math.sqrt(T))
+d2 = d1 - vol * math.sqrt(T)
+
+# 计算欧式看涨期权价格
+call_price = S * math.exp(-q * T) * norm.cdf(d1) - K * math.exp(-r * T) * norm.cdf(d2)
+
+# 计算 Delta
+call_delta = math.exp(-q * T) * norm.cdf(d1)
+
+# 计算 Vega (通常Vega表示波动率每变化1%引起的期权价格变化，因此除以100)
+call_vega = S * math.exp(-q * T) * norm.pdf(d1) * math.sqrt(T) / 100
+
+# 按照契约要求存入字典
+result = {
+    'call_price': round(call_price, 4),
+    'call_delta': round(call_delta, 4),
+    'call_vega': round(call_vega, 4)
+}
+
+print(result)
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+```python
+import math
+from scipy.stats import norm
+
+# 已知参数
+S = 103.7      # 标的资产价格
+K = 97.5       # 行权价
+vol = 0.276    # 波动率
+r = 0.043      # 无风险利率
+T = 0.58       # 剩余期限（年）
+q = 0.0        # 不分红
+
+# 计算 d1 和 d2
+d1 = (math.log(S / K) + (r - q + 0.5 * vol**2) * T) / (vol * math.sqrt(T))
+d2 = d1 - vol * math.sqrt(T)
+
+# 计算欧式看涨期权价格
+call_price = S * math.exp(-q * T) * norm.cdf(d1) - K * math.exp(-r * T) * norm.cdf(d2)
+
+# 计算 Delta
+call_delta = math.exp(-q * T) * norm.cdf(d1)
+
+# 计算 Vega (通常Vega表示波动率每变化1%引起的期权价格变化，因此除以100)
+call_vega = S * math.exp(-q * T) * norm.pdf(d1) * math.sqrt(T) / 100
+
+# 按照契约要求存入字典
+result = {
+    'call_price': round(call_price, 4),
+    'call_delta': round(call_delta, 4),
+    'call_vega': round(call_vega, 4)
+}
+
+print(result)
+```

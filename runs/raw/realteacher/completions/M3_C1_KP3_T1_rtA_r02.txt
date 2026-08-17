@@ -1,0 +1,32 @@
+根据债券定价公式及久期、凸性的定义，我们进行如下计算（假设该债券为每年付息一次的固定利率债券）：
+
+**1. 计算债券价格 (Price)**
+债券价格是未来现金流（票息和面值）按到期收益率折现的现值总和。
+$$ P = \sum_{t=1}^{7} \frac{C}{(1+y)^t} + \frac{F}{(1+y)^7} $$
+其中：面值 $F = 100$，票息 $C = 100 \times 4.6\% = 4.6$，到期收益率 $y = 5.3\% = 0.053$。
+$$ P = 4.6 \times \frac{1 - (1.053)^{-7}}{0.053} + 100 \times (1.053)^{-7} \approx 95.9982 $$
+
+**2. 计算麦考利久期 (Macaulay Duration)**
+麦考利久期是现金流回收时间的加权平均，权重为各期现金流现值占债券价格的比重。
+$$ MacDur = \frac{\sum_{t=1}^{7} t \cdot \frac{C}{(1+y)^t} + 7 \cdot \frac{F}{(1+y)^7}}{P} $$
+$$ MacDur \approx \frac{587.7789}{95.9982} \approx 6.1263 \text{ 年} $$
+
+**3. 计算修正久期 (Modified Duration)**
+修正久期衡量的是收益率变动1%时，债券价格变动的百分比，由麦考利久期除以(1+y)得到。
+$$ ModDur = \frac{MacDur}{1+y} = \frac{6.1263}{1.053} \approx 5.8142 \text{ 年} $$
+
+**4. 计算凸性 (Convexity)**
+凸性衡量的是久期本身对收益率变动的敏感度，即价格-收益率曲线的弯曲程度。
+$$ Conv = \frac{1}{P(1+y)^2} \left[ \sum_{t=1}^{7} t(t+1) \cdot \frac{C}{(1+y)^t} + 7 \times 8 \cdot \frac{F}{(1+y)^7} \right] $$
+$$ Conv \approx \frac{4487.1706}{95.9982 \times 1.053^2} \approx \frac{4487.1706}{106.5209} \approx 42.1191 $$
+
+根据您的输出契约，将结果存入字典 `result`：
+
+```python
+result = {
+    'price': 95.9982,
+    'macaulay_duration_years': 6.1263,
+    'modified_duration_years': 5.8142,
+    'convexity': 42.1191
+}
+```

@@ -1,0 +1,34 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+# ------------------------------
+# 给定参数
+# ------------------------------
+position_value = 2_700_000   # 头寸市值（元）
+annual_vol = 0.24            # 年化波动率
+confidence = 0.95            # 置信水平 95%
+trading_days = 252           # 一年交易日数（市场惯例）
+
+# ------------------------------
+# 1. 年化波动率 → 日波动率
+# ------------------------------
+daily_vol = annual_vol / np.sqrt(trading_days)
+
+# ------------------------------
+# 2. 95% 正态分位数（左尾）
+#    在 delta-normal 框架下，VaR = 头寸 × 日波动率 × |z_α|
+# ------------------------------
+z_abs = -norm.ppf(1 - confidence)   # 等价于 norm.ppf(0.05) 取绝对值
+var_95_1d = position_value * daily_vol * z_abs
+
+# ------------------------------
+# 输出契约
+# ------------------------------
+result = {
+    'var_95_1d': var_95_1d
+}
+
+# 课堂展示用（可保留）
+print(result)
+```

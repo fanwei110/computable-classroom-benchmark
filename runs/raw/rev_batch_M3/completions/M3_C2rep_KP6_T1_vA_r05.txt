@@ -1,0 +1,74 @@
+```python
+import pandas as pd
+import numpy as np
+
+# ==========================================
+# 第一部分：读取数据与年化夏普比率计算
+# ==========================================
+
+# 1. 读取快照 CSV
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 提取基金日收益并剔除缺失值
+daily_returns_fund = df['fund'].dropna()
+
+# 假设参数
+annual_rf = 0.021         # 年化无风险利率 2.1%
+trading_days = 252        # 一年交易日
+
+# 将年化无风险利率转换为日无风险利率（行业惯例采用单利折算）
+daily_rf = annual_rf / trading_days
+
+# 在基金收益中计入无风险利率，计算日超额收益
+daily_excess_returns = daily_returns_fund - daily_rf
+
+# 计算日均超额收益与日超额收益标准差（ddof=1 为样本标准差，符合金融计算惯例）
+mean_daily_excess = daily_excess_returns.mean()
+std_daily_excess = daily_excess_returns.std(ddof=1)
+
+# 计算年化夏普比率
+# 公式：夏普比率 = (日均超额收益 * 252) / (日标准差 * sqrt(252))
+sharpe_annual = (mean_daily_excess * trading_days) / (std_daily_excess * np.sqrt(trading_days))
+
+
+# ==========================================
+# 第二部分：BHB 业绩归因分解
+# ==========================================
+
+# 组合与基准的权重与收益数据
+w_p = np.array([0.45, 0.35, 0.20])      # 组合权重
+r_p = np.array([0.083, 0.021, -0.014])  # 组合行业收益
+
+w_b = np.array([0.40, 0.40, 0.20])      # 基准权重
+r_b = np.array([0.067, 0.034, -0.009])  # 基准行业收益
+
+# 配置效应 (Allocation Effect) = Σ (组合权重 - 基准权重) * 基准收益
+allocation_effect = np.sum((w_p - w_b) * r_b)
+
+# 选择效应 (Selection Effect) = Σ 基准权重 * (组合收益 - 基准收益)
+selection_effect = np.sum(w_b * (r_p - r_b))
+
+# 交互效应 (Interaction Effect) = Σ (组合权重 - 基准权重) * (组合收益 - 基准收益)
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+
+# 验证：主动收益 = 配置 + 选择 + 交互
+# active_return = np.sum(w_p * r_p) - np.sum(w_b * r_b)
+# assert np.isclose(active_return, allocation_effect + selection_effect + interaction_effect), "归因分解验证失败"
+
+
+# ==========================================
+# 输出契约
+# ==========================================
+
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+# 打印结果供课堂投屏展示
+print("=== 风险调整后业绩与归因分析结果 ===")
+for key, value in result.items():
+    print(f"{key}: {value:.6f}")
+```

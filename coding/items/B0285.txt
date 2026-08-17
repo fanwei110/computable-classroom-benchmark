@@ -1,0 +1,141 @@
+=== B0285  任务 KP2_T2 (T2) ===
+
+--- 任务要求的输出键 ---
+sml_slope, er_at_beta_127
+
+--- 判分失败明细 ---
+sml_slope: 提交值 7.1000000000000005  |  参考值 0.07100000000000001
+er_at_beta_127: 提交值 11.317  |  参考值 0.11317000000000002
+
+--- 提取出的代码 ---
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+
+# 参数设置（可调）
+rf = 2.3  # 无风险利率（%）
+market_return = 9.4  # 市场期望收益（%）
+
+# 计算SML斜率
+sml_slope = (market_return - rf) / (1 - 0)  # (E[Rm] - Rf) / (1 - 0)
+
+# 计算beta=1.27对应的期望收益
+beta_127 = 1.27
+er_at_beta_127 = rf + beta_127 * (market_return - rf)
+
+# 生成SML数据
+betas = np.linspace(0, 2, 100)
+expected_returns = rf + betas * (market_return - rf)
+
+# 绘制SML
+plt.figure(figsize=(10, 6))
+plt.plot(betas, expected_returns, label='Security Market Line (SML)', color='blue')
+
+# 标记三个点
+points = {
+    'X': (0.62, 8.1),
+    'Y': (1.18, 13.1),
+    'Z': (1.51, 9.9)
+}
+for label, (beta, er) in points.items():
+    plt.scatter(beta, er, color='red', zorder=5)
+    plt.text(beta, er + 0.5, f'{label}({beta}, {er}%)', ha='center', color='red')
+
+# 设置图形属性
+plt.title('Security Market Line (SML)')
+plt.xlabel('Beta (β)')
+plt.ylabel('Expected Return (%)')
+plt.xlim(0, 2)
+plt.ylim(0, 15)
+plt.grid(True)
+plt.legend()
+
+# 保存图形
+figure_path = 'sml_plot.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 存储结果
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+print(result)
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+以下是根据您的要求生成的代码和结果。代码会绘制证券市场线（SML），并将所需结果存入 `result` 字典中。
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+import os
+
+# 参数设置（可调）
+rf = 2.3  # 无风险利率（%）
+market_return = 9.4  # 市场期望收益（%）
+
+# 计算SML斜率
+sml_slope = (market_return - rf) / (1 - 0)  # (E[Rm] - Rf) / (1 - 0)
+
+# 计算beta=1.27对应的期望收益
+beta_127 = 1.27
+er_at_beta_127 = rf + beta_127 * (market_return - rf)
+
+# 生成SML数据
+betas = np.linspace(0, 2, 100)
+expected_returns = rf + betas * (market_return - rf)
+
+# 绘制SML
+plt.figure(figsize=(10, 6))
+plt.plot(betas, expected_returns, label='Security Market Line (SML)', color='blue')
+
+# 标记三个点
+points = {
+    'X': (0.62, 8.1),
+    'Y': (1.18, 13.1),
+    'Z': (1.51, 9.9)
+}
+for label, (beta, er) in points.items():
+    plt.scatter(beta, er, color='red', zorder=5)
+    plt.text(beta, er + 0.5, f'{label}({beta}, {er}%)', ha='center', color='red')
+
+# 设置图形属性
+plt.title('Security Market Line (SML)')
+plt.xlabel('Beta (β)')
+plt.ylabel('Expected Return (%)')
+plt.xlim(0, 2)
+plt.ylim(0, 15)
+plt.grid(True)
+plt.legend()
+
+# 保存图形
+figure_path = 'sml_plot.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 存储结果
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+print(result)
+```
+
+### 输出结果（`result` 字典）：
+```python
+{
+    'sml_slope': 7.1,  # SML斜率 = (9.4 - 2.3) / (1 - 0) = 7.1
+    'er_at_beta_127': 11.337,  # beta=1.27对应的期望收益 = 2.3 + 1.27 * (9.4 - 2.3) ≈ 11.337%
+    'figure_path': '/path/to/your/directory/sml_plot.png'  # 图片保存的绝对路径
+}
+```
+
+### 说明：
+1. **SML斜率**：`(市场期望收益 - 无风险利率) / (1 - 0) = (9.4 - 2.3) / 1 = 7.1`。
+2. **beta=1.27对应的期望收益**：`2.3 + 1.27 * (9.4 - 2.3) ≈ 11.337%`。
+3. **图形**：保存为 `sml_plot.png`，包含SML曲线和三个标记点（X、Y、Z）。您可以在代码中修改 `rf` 和 `market_return` 的值来调整参数。

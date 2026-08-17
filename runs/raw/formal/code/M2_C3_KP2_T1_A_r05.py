@@ -1,0 +1,28 @@
+# 给定参数
+rf = 0.023        # 无风险利率
+rm = 0.094        # 市场期望收益
+market_premium = rm - rf  # 市场风险溢价，0.071
+
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+
+actual_y = 0.131  # Y的实际年收益
+
+# CAPM期望收益计算
+er_x = rf + beta_x * market_premium
+er_y = rf + beta_y * market_premium
+er_z = rf + beta_z * market_premium
+
+# Alpha计算
+alpha_y = actual_y - er_y
+
+# 按要求存入字典
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+
+result

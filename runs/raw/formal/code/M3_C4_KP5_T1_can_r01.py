@@ -1,0 +1,39 @@
+import numpy as np
+from scipy.stats import norm
+
+# ==================== 参数设定 ====================
+V = 1_850_000.0        # 头寸价值（元）
+sigma_annual = 0.218   # 年化收益波动率（小数表示）
+trading_days = 252     # 每年交易日数
+
+# ==================== 步骤 1: 去年化到一日 ====================
+# 波动率按 sqrt(T) 缩放，从年化转换为日度
+sigma_daily = sigma_annual / np.sqrt(trading_days)
+
+# ==================== 步骤 2: 单尾正态分位数 ====================
+# 使用 scipy 的 norm.ppf 计算单尾分位数（均值取零，仅乘以波动率和头寸即可）
+z_95 = norm.ppf(0.95)
+z_99 = norm.ppf(0.99)
+
+# ==================== 步骤 3: 计算 VaR ====================
+# 95% 一日 VaR
+var_95_1d = V * z_95 * sigma_daily
+
+# 99% 十日 VaR，十日波动率按 sqrt(10) 缩放
+sigma_10d = sigma_daily * np.sqrt(10)
+var_99_10d = V * z_99 * sigma_10d
+
+# ==================== 步骤 4: 填充 result ====================
+result = {
+    'var_95_1d': var_95_1d,
+    'var_99_10d': var_99_10d
+}
+
+# 投屏演示输出
+if __name__ == "__main__":
+    print(f"头寸价值: {V:,.2f} 元")
+    print(f"年化波动率: {sigma_annual:.1%}")
+    print(f"日度波动率: {sigma_daily:.6%}")
+    print("-" * 40)
+    print(f"95% 一日 VaR: {result['var_95_1d']:,.2f} 元")
+    print(f"99% 十日 VaR: {result['var_99_10d']:,.2f} 元")

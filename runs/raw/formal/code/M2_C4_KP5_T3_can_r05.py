@@ -1,0 +1,23 @@
+import numpy as np
+from scipy.stats import norm
+
+# 给定参数
+annual_vol = 0.24           # 年化波动率
+position = 2_700_000        # 头寸金额（元）
+confidence = 0.95           # 置信水平
+trading_days = 252          # 年交易日数
+
+# 1. 将年化波动率去年化到一日
+daily_vol = annual_vol / np.sqrt(trading_days)
+
+# 2. 单尾 95% 正态分位数（损失侧），均值取零
+#    norm.ppf(0.05) 给出左侧 5% 分位数，为负值；取绝对值得到正的分位数距离
+z_score = -norm.ppf(1 - confidence)  # 等价于 abs(norm.ppf(0.05))
+
+# 3. 计算 95% 一日 VaR（正的人民币损失金额）
+var_95_1d = position * daily_vol * z_score
+
+# 输出结果
+result = {'var_95_1d': var_95_1d}
+
+print(result)

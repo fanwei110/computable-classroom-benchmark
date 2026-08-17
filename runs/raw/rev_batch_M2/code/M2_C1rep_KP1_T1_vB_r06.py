@@ -1,0 +1,27 @@
+import numpy as np
+
+# 给定数据
+vol = np.array([0.187, 0.243, 0.312])
+corr = np.array([[1.0, 0.21, -0.13],
+                 [0.21, 1.0, 0.37],
+                 [-0.13, 0.37, 1.0]])
+
+# 协方差矩阵
+cov = np.outer(vol, vol) * corr
+
+# 最小方差组合（允许做空，资金全部投入）
+inv_cov = np.linalg.inv(cov)
+ones = np.ones(3)
+w = inv_cov @ ones / (ones @ inv_cov @ ones)
+
+# 组合波动率（年化）
+mvp_var = 1 / (ones @ inv_cov @ ones)
+mvp_vol = np.sqrt(mvp_var)
+
+# 结果存入字典
+result = {
+    'mvp_weights': w.tolist(),
+    'mvp_vol_annual': mvp_vol
+}
+
+print(result)

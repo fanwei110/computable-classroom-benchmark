@@ -1,0 +1,77 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+def main():
+    # -----------------------------
+    # 参数设定 (可调参数)
+    # -----------------------------
+    csv_path = 'data/market_snapshot_v1.csv'
+    position_value = 1_000_000       # 头寸金额（人民币）
+    confidence_level = 0.95          # 置信水平，可调参数
+    alpha = 1 - confidence_level     # 显著性水平
+    figure_path = 'var_pnl_histogram.png'
+
+    # -----------------------------
+    # 1. 读取数据，构造日损益
+    # -----------------------------
+    df = pd.read_csv(csv_path)
+    # 提取基金日收益率并剔除缺失值
+    returns = df['fund'].dropna()
+    # 计算头寸的日损益 (P&L)
+    pnl = returns * position_value
+
+    # -----------------------------
+    # 2. 计算历史 VaR (经验分位数)
+    # -----------------------------
+    # 损益分布的左端分位数（损失），使用经验分位数计算
+    var_quantile = np.percentile(pnl, 100 * alpha)
+    # VaR 惯例报告为正数（表示可能遭受的损失金额）
+    hist_var_value = -var_quantile
+
+    # -----------------------------
+    # 3. 画直方图并加带标注的 VaR 竖线
+    # -----------------------------
+    plt.figure(figsize=(10, 6))
+    
+    # 绘制日损益直方图
+    n, bins, patches = plt.hist(pnl, bins=50, color='steelblue', edgecolor='black', alpha=0.75)
+    
+    # 绘制 VaR 竖线 (在损失分位数的位置)
+    plt.axvline(x=var_quantile, color='red', linestyle='--', linewidth=2, 
+                label=f'{confidence_level*100:.0f}% 1-Day Historical VaR')
+    
+    # 添加文本标注 (放置在直方图内部合适的位置)
+    ymax = n.max()
+    text_x = var_quantile
+    text_y = ymax * 0.90
+    plt.text(text_x, text_y, 
+             f'VaR ({confidence_level*100:.0f}%): {hist_var_value:,.2f} RMB\n(P&L Quantile: {var_quantile:,.2f} RMB)', 
+             color='red', ha='right', va='top', fontsize=10,
+             bbox=dict(facecolor='white', alpha=0.8, edgecolor='red', boxstyle='round,pad=0.5'))
+
+    plt.title('Daily P&L Distribution and Historical VaR', fontsize=14)
+    plt.xlabel('Daily Profit and Loss (RMB)', fontsize=12)
+    plt.ylabel('Frequency', fontsize=12)
+    plt.legend(fontsize=11)
+    plt.grid(axis='y', alpha=0.3)
+    
+    # -----------------------------
+    # 4. 保存图形并填充 result
+    # -----------------------------
+    plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+    plt.close()
+
+    # 构建输出字典
+    result = {
+        'hist_var_95_1d': round(hist_var_value, 2),
+        'figure_path': figure_path
+    }
+
+    # 课堂演示打印输出
+    print(f"计算完成：")
+    print(f"95% 一日历史 VaR (人民币): {result['hist_var_95_1d']:,.2f} RMB")
+    print(f"图表已保存至: {result['figure_path']}")
+
+if __name__ == '__main__':
+    main()

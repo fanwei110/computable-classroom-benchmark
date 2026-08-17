@@ -1,0 +1,73 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+import os
+
+# =========================
+# 期权与市场参数
+# =========================
+K = 97.5          # 行权价
+r = 0.043         # 无风险利率（连续复利，小数形式）
+T = 0.58          # 剩余期限（年）
+q = 0.0           # 标的连续分红率（本题无分红）
+
+# 可调参数：波动率列表（小数形式）
+volatilities = [0.15, 0.276, 0.40]
+
+# 标的价格网格
+S_min, S_max = 70, 140
+S_grid = np.linspace(S_min, S_max, 500)
+
+# =========================
+# Black-Scholes Delta 函数
+# =========================
+def bs_delta(S, K, T, r, sigma, q=0.0):
+    """
+    欧式看涨期权的 Delta (N(d1))
+    连续复利利率，无分红或已知分红率 q
+    """
+    d1 = (np.log(S / K) + (r - q + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# =========================
+# 1. 计算并绘制 Delta 曲线
+# =========================
+plt.figure(figsize=(10, 6))
+for sigma in volatilities:
+    delta = bs_delta(S_grid, K, T, r, sigma, q)
+    # 标签格式：百分比表示，保留一位小数（或精确显示 27.6%）
+    label = f"σ = {sigma*100:.1f}%" if sigma != 0.276 else "σ = 27.6%"
+    plt.plot(S_grid, delta, lw=2, label=label)
+
+plt.xlabel("标的价格 S", fontsize=12)
+plt.ylabel("Delta", fontsize=12)
+plt.title("欧式看涨期权 Delta 曲线（不同波动率）", fontsize=14)
+plt.legend(fontsize=11)
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+
+# 保存图形（使用绝对路径，确保可复现）
+figure_path = os.path.abspath("delta_curves.png")
+plt.savefig(figure_path, dpi=150)
+plt.close()
+
+# =========================
+# 2. 报告指定点的 Delta
+# =========================
+S_target = 110.0
+sigma_target = 0.276
+delta_target = bs_delta(S_target, K, T, r, sigma_target, q)
+
+# =========================
+# 3. 构造输出字典
+# =========================
+result = {
+    "delta_at_s110": delta_target,
+    "figure_path": figure_path
+}
+
+# 课堂展示用打印
+print("=== 计算结果 ===")
+print(f"标的 S = {S_target}, 波动率 σ = {sigma_target*100}% 时，看涨期权 Delta = {delta_target:.6f}")
+print(f"图形已保存至: {figure_path}")
+print("Result 字典内容:", result)

@@ -1,0 +1,80 @@
+下面分别计算两个问题，并将结果存入 `result` 字典中。
+
+---
+
+### **第一问：年化夏普比率**
+**步骤：**
+1. 计算日收益率的均值（`mean_daily_return`）和标准差（`std_daily_return`，样本标准差，`ddof=1`）。
+2. 年化收益率 = `mean_daily_return * 252`
+3. 年化波动率 = `std_daily_return * sqrt(252)`
+4. 年化夏普比率 = `(年化收益率 - 无风险利率) / 年化波动率`，其中无风险利率为 `2.1%`（即 `0.021`）。
+
+**注意：**
+- 题目未提供具体的 `fund` 列数据，因此无法直接计算。假设你已有 `fund` 列的日收益率数据，可以用以下代码计算：
+```python
+import numpy as np
+
+# 假设 fund 是日收益率的 numpy 数组或 pandas Series
+mean_daily_return = np.mean(fund)
+std_daily_return = np.std(fund, ddof=1)
+annualized_return = mean_daily_return * 252
+annualized_vol = std_daily_return * np.sqrt(252)
+sharpe_annual = (annualized_return - 0.021) / annualized_vol
+```
+
+---
+
+### **第二问：业绩归因（Brinson 模型）**
+**已知：**
+- 组合权重 = `[0.45, 0.35, 0.20]`
+- 组合行业收益 = `[0.083, 0.021, -0.014]`
+- 基准权重 = `[0.40, 0.40, 0.20]`
+- 基准行业收益 = `[0.067, 0.034, -0.009]`
+
+**计算公式：**
+1. **配置效应（Allocation Effect）**：
+   \( \sum (w_p - w_b) \cdot r_b \)
+   其中 \( w_p \) 是组合权重，\( w_b \) 是基准权重，\( r_b \) 是基准行业收益。
+
+2. **选择效应（Selection Effect）**：
+   \( \sum w_b \cdot (r_p - r_b) \)
+   其中 \( r_p \) 是组合行业收益。
+
+3. **交互效应（Interaction Effect）**：
+   \( \sum (w_p - w_b) \cdot (r_p - r_b) \)
+
+**计算过程：**
+```python
+import numpy as np
+
+w_p = np.array([0.45, 0.35, 0.20])
+r_p = np.array([0.083, 0.021, -0.014])
+w_b = np.array([0.40, 0.40, 0.20])
+r_b = np.array([0.067, 0.034, -0.009])
+
+allocation_effect = np.sum((w_p - w_b) * r_b)
+selection_effect = np.sum(w_b * (r_p - r_b))
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+```
+
+**结果：**
+- 配置效应 = `(0.45-0.40)*0.067 + (0.35-0.40)*0.034 + (0.20-0.20)*(-0.009) = 0.00335 - 0.0017 + 0 = 0.00165`
+- 选择效应 = `0.40*(0.083-0.067) + 0.40*(0.021-0.034) + 0.20*(-0.014+0.009) = 0.0064 - 0.0052 - 0.001 = 0.0002`
+- 交互效应 = `(0.45-0.40)*(0.083-0.067) + (0.35-0.40)*(0.021-0.034) + (0.20-0.20)*(-0.014+0.009) = 0.0008 - 0.00065 + 0 = 0.00015`
+
+---
+
+### **最终输出**
+将结果存入 `result` 字典：
+```python
+result = {
+    'sharpe_annual': sharpe_annual,  # 需要根据 fund 数据计算
+    'allocation_effect': 0.00165,
+    'selection_effect': 0.0002,
+    'interaction_effect': 0.00015
+}
+```
+
+**注意：**
+- `sharpe_annual` 需要根据实际 `fund` 数据计算，这里无法直接给出具体值。
+- 业绩归因的结果已精确计算。

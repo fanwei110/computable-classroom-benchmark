@@ -1,0 +1,60 @@
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+
+# ------------------------------
+# 参数定义（可调）
+# ------------------------------
+K = 97.5                # 行权价
+r = 0.043               # 无风险利率
+T = 0.58                # 剩余期限（年）
+S_low, S_high = 70, 140 # 标的价格范围
+S_target = 110          # 需要报告的标的价格
+sigma_list = [0.15, 0.276, 0.40]  # 三条波动率
+
+# ------------------------------
+# 计算 delta 的函数
+# ------------------------------
+def delta_call(S, K, r, sigma, T):
+    """不分红的欧式看涨期权 delta"""
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# ------------------------------
+# 生成标的价格数组
+# ------------------------------
+S = np.linspace(S_low, S_high, 500)
+
+# ------------------------------
+# 绘图
+# ------------------------------
+fig, ax = plt.subplots(figsize=(8, 5))
+for sigma in sigma_list:
+    delta_vals = delta_call(S, K, r, sigma, T)
+    ax.plot(S, delta_vals, label=f"σ = {sigma*100:.1f}%")
+
+ax.set_xlabel("Spot price S")
+ax.set_ylabel("Delta")
+ax.set_title("European call option delta")
+ax.legend()
+ax.grid(True)
+
+# 保存图片
+figure_path = "delta_curve.png"
+fig.savefig(figure_path, dpi=150, bbox_inches="tight")
+plt.close(fig)  # 释放资源
+
+# ------------------------------
+# 计算特定点的 delta
+# ------------------------------
+delta_at_s110 = delta_call(S_target, K, r, 0.276, T)
+
+# ------------------------------
+# 输出契约
+# ------------------------------
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': figure_path
+}
+
+print(result)

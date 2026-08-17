@@ -1,0 +1,37 @@
+为了计算该债券的各项指标，我们基于年度付息的假设进行计算。给定参数如下：
+- 面值 (F) = 100
+- 票息率 = 4.6%，即年度票息 (C) = 4.6
+- 期限 = 7 年
+- 收益率 (y) = 5.3% = 0.053
+
+**1. 债券价格**
+使用现金流贴现公式：
+$P = \sum_{t=1}^{n} \frac{C}{(1+y)^t} + \frac{F}{(1+y)^n} = C \times \frac{1 - (1+y)^{-n}}{y} + \frac{F}{(1+y)^n}$
+$P = 4.6 \times \frac{1 - 1.053^{-7}}{0.053} + 100 \times 1.053^{-7} \approx 26.3453 + 69.6446 = 95.9899$
+
+**2. 麦考利久期**
+麦考利久期公式为：
+$MacD = \frac{1}{P} \left[ \sum_{t=1}^{n} \frac{t \cdot C}{(1+y)^t} + \frac{n \cdot F}{(1+y)^n} \right]$
+计算各期现金流现值与时间的乘积之和：
+$\sum t \cdot PV = 4.6 \times 21.8049 + 700 \times 0.696446 \approx 100.3027 + 487.5124 = 587.8151$
+$MacD = \frac{587.8151}{95.9899} \approx 6.1229$ 年
+
+**3. 修正久期**
+修正久期由麦考利久期得出：
+$ModD = \frac{MacD}{1+y} = \frac{6.1229}{1.053} \approx 5.8157$
+
+**4. 凸性**
+凸性公式为：
+$Conv = \frac{1}{P \cdot (1+y)^2} \left[ \sum_{t=1}^{n} \frac{t(t+1) \cdot C}{(1+y)^t} + \frac{n(n+1) \cdot F}{(1+y)^n} \right]$
+计算各期 $t(t+1) \cdot PV$ 的加权和：
+$\sum t(t+1) \cdot PV = 4484.3886$
+$Conv = \frac{4484.3886}{95.9899 \times 1.053^2} = \frac{4484.3886}{106.4349} \approx 42.1359$
+
+```python
+result = {
+    'price': 95.9899,
+    'macaulay_duration_years': 6.1229,
+    'modified_duration_years': 5.8157,
+    'convexity': 42.1359
+}
+```

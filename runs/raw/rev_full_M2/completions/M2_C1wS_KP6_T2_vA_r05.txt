@@ -1,0 +1,71 @@
+以下是一个自包含的 Python 脚本，满足课堂实时演示的全部要求。代码假设当前目录下存在名为 `snapshot.csv` 的文件，其中包含 `date`（日期）和 `fund`（基金净值）两列。若实际数据为日收益率，请参考代码注释进行微调。
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+# ===================== 可调参数 =====================
+WINDOW = 60                # 滚动窗口（交易日数）
+RF_ANNUAL = 0.021          # 年化无风险利率（2.1%）
+TRADING_DAYS = 252         # 年交易日数
+FIGURE_NAME = "rolling_sharpe.png"
+# ===================================================
+
+def main():
+    # 1. 读取 CSV（假设列名为 date 和 fund）
+    data = pd.read_csv("snapshot.csv", parse_dates=["date"])
+    data.sort_values("date", inplace=True)
+    data.set_index("date", inplace=True)
+
+    # 如果 fund 列是净值，转换为日对数收益率；
+    # 如果已经是收益率（小数且正负共存），可注释掉下一行并直接使用 fund 列。
+    # 此处按净值处理：
+    prices = data["fund"]
+    rets = np.log(prices / prices.shift(1)).dropna()   # 对数收益率
+
+    # 2. 年化无风险利率转换为日度（连续复利）
+    rf_daily = RF_ANNUAL / TRADING_DAYS
+
+    # 3. 计算 60 日滚动年化夏普比率
+    roll_mean = rets.rolling(window=WINDOW).mean() * TRADING_DAYS
+    roll_std = rets.rolling(window=WINDOW).std() * np.sqrt(TRADING_DAYS)
+    rolling_sharpe = (roll_mean - RF_ANNUAL) / roll_std
+
+    # 4. 最后一个窗口的值（去除 NaN）
+    rolling_sharpe_clean = rolling_sharpe.dropna()
+    last_value = rolling_sharpe_clean.iloc[-1]
+
+    # 5. 画图并保存
+    plt.figure(figsize=(10, 5))
+    plt.plot(rolling_sharpe_clean.index, rolling_sharpe_clean.values, color='navy', linewidth=1.2)
+    plt.axhline(y=0, color='gray', linestyle='--', linewidth=0.8)
+    plt.title(f"{WINDOW}-Day Rolling Annualized Sharpe Ratio (rf={RF_ANNUAL*100:.1f}%)")
+    plt.xlabel("Date")
+    plt.ylabel("Annualized Sharpe Ratio")
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(FIGURE_NAME, dpi=150)
+    plt.close()  # 避免在非交互环境中弹窗
+    
+    figure_path = os.path.abspath(FIGURE_NAME)
+
+    # 6. 按要求输出结果
+    result = {
+        "rolling_sharpe_last": round(float(last_value), 6),
+        "figure_path": figure_path
+    }
+    print(result)
+    return result
+
+if __name__ == "__main__":
+    main()
+```
+
+**变量说明与修改建议**
+- `WINDOW`：默认 60，可根据课堂要求调整。
+- 若 CSV 中 `fund` 列本身就是日收益率（如 0.001 表示 0.1%），将第 25 行附近改为 `rets = data["fund"].dropna() * 1.0`，并删掉价格转换行。
+- 输出中 `rolling_sharpe_last` 是最后一个有效窗口的夏普比率（浮点数），`figure_path` 是保存的图表绝对路径。
+
+**可复现性**：代码仅依赖 CSV 输入，无随机成分，每次运行结果一致。

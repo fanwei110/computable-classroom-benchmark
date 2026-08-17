@@ -1,0 +1,79 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 资产参数
+mu1, mu2 = 0.071, 0.124
+sigma1, sigma2 = 0.163, 0.289
+mu = np.array([mu1, mu2])
+
+# 相关系数列表
+rhos = [0.15, 0.45, 0.75]
+
+# 扫描权重用于绘制组合边界（允许卖空）
+w1 = np.linspace(-2, 3, 2000)
+w2 = 1 - w1
+
+plt.figure(figsize=(10, 6))
+
+# 用于存储rho=0.45的参数
+A_045, B_045, C_045, Delta_045 = None, None, None, None
+
+for rho in rhos:
+    # 协方差矩阵
+    cov = np.array([[sigma1**2, rho * sigma1 * sigma2],
+                    [rho * sigma1 * sigma2, sigma2**2]])
+    # 组合收益与波动率（整条曲线）
+    rp = w1 * mu1 + w2 * mu2
+    sd = np.sqrt(w1**2 * sigma1**2 + w2**2 * sigma2**2 + 2 * w1 * w2 * rho * sigma1 * sigma2)
+    plt.plot(sd, rp, label=f'ρ={rho}')
+
+    # 解析计算最小方差组合 (MVP)
+    inv_cov = np.linalg.inv(cov)
+    ones = np.ones(2)
+    A = mu @ inv_cov @ mu
+    B = mu @ inv_cov @ ones
+    C = ones @ inv_cov @ ones
+    Delta = A * C - B**2
+
+    r_mvp = B / C
+    sigma_mvp = np.sqrt(1.0 / C)
+
+    # 在曲线上标记 MVP
+    plt.scatter(sigma_mvp, r_mvp, color=plt.gca().get_lines()[-1].get_color(),
+                marker='o', s=60, zorder=5, label='_nolegend_')  # 不显示在图例中
+
+    # 保存 rho = 0.45 的参数
+    if rho == 0.45:
+        A_045, B_045, C_045, Delta_045 = A, B, C, Delta
+        mvp_vol_045 = sigma_mvp
+
+# 计算 rho=0.45 时目标收益 10% 的最小波动率
+r_target = 0.10
+var_target = (C_045 * r_target**2 - 2 * B_045 * r_target + A_045) / Delta_045
+frontier_vol_target = np.sqrt(var_target)
+
+# 图形修饰
+plt.xlabel('Volatility (Standard Deviation)')
+plt.ylabel('Expected Return')
+plt.title('Mean-Variance Efficient Frontiers (Two Assets)')
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.tight_layout()
+
+# 保存图形
+fig_path = 'frontier.png'
+plt.savefig(fig_path, dpi=150)
+plt.close()
+
+# 结果字典
+result = {
+    'mvp_vol_at_rho45': mvp_vol_045,
+    'frontier_vol_at_target': frontier_vol_target,
+    'figure_path': fig_path
+}
+
+# 打印结果以便教师查看（可选）
+print("=== Results ===")
+print(f"MVP volatility (rho=0.45): {mvp_vol_045:.4%}")
+print(f"Minimum volatility at target return 10% (rho=0.45): {frontier_vol_target:.4%}")
+print(f"Figure saved to: {fig_path}")

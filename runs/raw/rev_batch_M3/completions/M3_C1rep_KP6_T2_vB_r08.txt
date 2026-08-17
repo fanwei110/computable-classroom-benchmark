@@ -1,0 +1,77 @@
+为了实现你的需求，我将使用 `pandas` 和 `matplotlib` 来计算并绘制60天滚动夏普比率。由于你没有提供具体的数据，我将生成一份模拟的基金净值数据（包含日期和 `fund` 列）来演示完整流程。你可以非常方便地将自己的数据替换进去。
+
+关于夏普比率的计算，采用业界标准年化方法：
+- 日度无风险利率 = 2.1% / 252
+- 滚动夏普比率 = (滚动日均超额收益 * 252) / (滚动日收益标准差 * $\sqrt{252}$) = (滚动均值 / 滚动标准差) * $\sqrt{252}$
+
+以下是完整的Python代码：
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ================= 1. 准备数据 (如果你有自己的数据，直接替换这部分即可) =================
+np.random.seed(42)
+dates = pd.date_range(start='2023-01-01', periods=250, freq='D')
+# 模拟一个基金净值序列
+nav = (1 + np.random.normal(0.0004, 0.015, 250)).cumprod() * 1.0
+df = pd.DataFrame({'date': dates, 'fund': nav})
+df.set_index('date', inplace=True)
+
+# ================= 2. 参数设置 =================
+rf_annual = 0.021            # 年化无风险利率 2.1%
+window_size = 60             # 滚动窗口大小（可在此处调整）
+
+# ================= 3. 计算滚动夏普 =================
+# 计算日度收益率
+df['daily_return'] = df['fund'].pct_change()
+
+# 计算日度无风险利率
+rf_daily = rf_annual / 252
+
+# 计算超额收益
+df['excess_return'] = df['daily_return'] - rf_daily
+
+# 计算滚动均值和滚动标准差
+rolling_mean = df['excess_return'].rolling(window=window_size).mean()
+rolling_std = df['excess_return'].rolling(window=window_size).std()
+
+# 年化滚动夏普比率
+df['rolling_sharpe'] = (rolling_mean / rolling_std) * np.sqrt(252)
+
+# 提取最后一个窗口的值（去除NaN）
+last_valid_sharpe = df['rolling_sharpe'].dropna().iloc[-1]
+
+# ================= 4. 绘图并保存 =================
+plt.figure(figsize=(12, 6))
+plt.plot(df.index, df['rolling_sharpe'], label=f'{window_size}-Day Rolling Sharpe', color='royalblue')
+plt.axhline(y=0, color='gray', linestyle='--', linewidth=0.8)
+plt.title(f'{window_size}-Day Rolling Sharpe Ratio (rf={rf_annual*100}%)', fontsize=14)
+plt.xlabel('Date', fontsize=12)
+plt.ylabel('Annualized Sharpe Ratio', fontsize=12)
+plt.grid(True, alpha=0.3)
+plt.legend()
+
+# 保存图片
+figure_path = 'rolling_sharpe_plot.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ================= 5. 按照输出契约构建字典 =================
+result = {
+    'rolling_sharpe_last': last_valid_sharpe,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+# 打印结果查看
+print(f"最后一个窗口的滚动夏普值: {result['rolling_sharpe_last']:.4f}")
+print(f"图片已保存至: {result['figure_path']}")
+```
+
+### 代码说明：
+1. **数据替换**：代码第7-13行为模拟数据生成逻辑，实际使用时，只需读取你的数据并保证包含 `fund` 列和日期索引即可。
+2. **窗口可调**：`window_size = 60` 变量独立定义，你可以随意修改（如改为30、90、120等）。
+3. **计算细节**：日度化无风险利率采用 `2.1% / 252`，并通过乘上 `sqrt(252)` 将滚动夏普年化。
+4. **输出契约**：结果严格按要求存入了 `result` 字典，键名为 `rolling_sharpe_last` 和 `figure_path`，并将图片存储为本地文件后把绝对路径赋给 `figure_path`。

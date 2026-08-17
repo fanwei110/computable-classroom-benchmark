@@ -1,0 +1,60 @@
+=== B0160  任务 KP5_T3 (T3) ===
+
+--- 任务要求的输出键 ---
+var_95_1d
+
+--- 判分失败明细 ---
+var_95_1d: 提交值 -67143.19  |  参考值 67143.19330310714
+
+--- 提取出的代码 ---
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+annual_volatility = 0.24          # 年化波动率 24%
+position_size = 2_700_000         # 头寸金额 2,700,000 元
+confidence_level = 0.95           # 置信水平 95%
+
+# 1. 年化波动率换算为一日波动率
+# 假设一年有 252 个交易日（业界常用值）
+trading_days_per_year = 252
+daily_volatility = annual_volatility / np.sqrt(trading_days_per_year)
+
+# 2. 95% 正态分位数（单尾）
+z_score_95 = norm.ppf(1 - confidence_level)
+
+# 3. 计算一日 VaR
+var_95_1d = position_size * z_score_95 * daily_volatility
+
+# 存入结果字典
+result = {
+    'var_95_1d': round(var_95_1d, 2)   # 保留两位小数，符合金额习惯
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+annual_volatility = 0.24          # 年化波动率 24%
+position_size = 2_700_000         # 头寸金额 2,700,000 元
+confidence_level = 0.95           # 置信水平 95%
+
+# 1. 年化波动率换算为一日波动率
+# 假设一年有 252 个交易日（业界常用值）
+trading_days_per_year = 252
+daily_volatility = annual_volatility / np.sqrt(trading_days_per_year)
+
+# 2. 95% 正态分位数（单尾）
+z_score_95 = norm.ppf(1 - confidence_level)
+
+# 3. 计算一日 VaR
+var_95_1d = position_size * z_score_95 * daily_volatility
+
+# 存入结果字典
+result = {
+    'var_95_1d': round(var_95_1d, 2)   # 保留两位小数，符合金额习惯
+}
+```

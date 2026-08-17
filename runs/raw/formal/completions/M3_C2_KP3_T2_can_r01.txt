@@ -1,0 +1,127 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 参数设置与内部一致的假设
+# ==========================================
+# 假设：本题未指明付息频率，按惯例采用【年付息】与【年复利】进行计算。
+F = 100           # 面值
+c = 0.046         # 票息率 (4.6%)
+T = 7             # 期限 (年)
+y0 = 0.053        # 当前收益率 (5.3%)
+
+# 收益率变动幅度 (做成可调参数，方便后续调整测试)
+delta_y_bps = 100               # 变动基点
+delta_y = delta_y_bps / 10000   # 转换为绝对变动量 (1bp = 0.01%)
+
+# ==========================================
+# 核心计算函数
+# ==========================================
+def bond_price(y, F, c, T):
+    """
+    计算债券精确价格 (支持标量和数组输入)
+    P = sum(C / (1+y)^t) + F / (1+y)^T
+    """
+    C = F * c
+    t_arr = np.arange(1, T + 1)
+    
+    # 处理输入为标量的情况，统一转换为数组进行向量化计算
+    scalar_input = np.isscalar(y)
+    y_arr = np.atleast_1d(y)
+    
+    # 利用广播机制计算贴现现金流
+    y_2d = y_arr[:, np.newaxis]
+    discount_factors = (1 + y_2d) ** t_arr
+    pv_coupons = np.sum(C / discount_factors, axis=1)
+    pv_face = F / (1 + y_arr) ** T
+    
+    prices = pv_coupons + pv_face
+    return prices[0] if scalar_input else prices
+
+def bond_modified_duration(y, F, c, T):
+    """
+    计算修正久期 (Macaulay Duration / (1+y))
+    """
+    C = F * c
+    t_arr = np.arange(1, T + 1)
+    
+    pv_coupons = C / (1 + y) ** t_arr
+    pv_face = F / (1 + y) ** T
+    P = np.sum(pv_coupons) + pv_face
+    
+    weighted_pv = np.sum(t_arr * pv_coupons) + T * pv_face
+    mac_duration = weighted_pv / P
+    mod_duration = mac_duration / (1 + y)
+    return mod_duration
+
+# ==========================================
+# 步骤 1 & 2: 计算收益率网格上的精确价格与久期近似
+# ==========================================
+y_grid = np.linspace(0.02, 0.09, 500)
+price_exact = bond_price(y_grid, F, c, T)
+
+# 计算当前收益率下的精确价格与修正久期
+P0 = bond_price(y0, F, c, T)
+D_mod = bond_modified_duration(y0, F, c, T)
+
+# 基于久期的线性近似: P(y) ≈ P0 * (1 - D_mod * (y - y0))
+price_approx = P0 * (1 - D_mod * (y_grid - y0))
+
+# ==========================================
+# 步骤 3: 报告 +100bp 的精确价格与久期法估计的相对变化
+# ==========================================
+price_up100bp = bond_price(y0 + delta_y, F, c, T)
+# 久期法估计的相对变化: ΔP/P ≈ -D_mod * Δy
+dur_approx_change_up100bp = -D_mod * delta_y
+
+# ==========================================
+# 步骤 4: 绘图与保存
+# ==========================================
+# 设置中文字体与负号显示，确保投屏兼容性
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS', 'DejaVu Sans']
+plt.rcParams['axes.unicode_minus'] = False
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 绘制精确曲线与近似曲线
+ax.plot(y_grid * 100, price_exact, label='精确价格-收益率曲线', color='blue', linewidth=2)
+ax.plot(y_grid * 100, price_approx, label='基于久期的线性近似', color='red', linestyle='--', linewidth=2)
+
+# 标记当前收益率点
+ax.scatter([y0 * 100], [P0], color='black', zorder=5, s=80, label=f'当前收益率点 (y={y0*100}%)')
+
+# 可视化可调的收益率变动幅度
+ax.axvline(x=y0 * 100, color='gray', linestyle=':', alpha=0.7)
+ax.axvline(x=(y0 + delta_y) * 100, color='gray', linestyle=':', alpha=0.7)
+ax.annotate(f'+{delta_y_bps}bp',
+            xy=((y0 + delta_y) * 100, P0),
+            xytext=((y0 + delta_y/2) * 100, P0 + 2),
+            arrowprops=dict(arrowstyle='<->', color='green', lw=1.5),
+            fontsize=12, color='green', ha='center')
+
+ax.set_xlabel('收益率 (%)', fontsize=12)
+ax.set_ylabel('债券价格', fontsize=12)
+ax.set_title('债券价格-收益率关系及久期近似', fontsize=14)
+ax.legend(fontsize=11, loc='upper right')
+ax.grid(True, linestyle='--', alpha=0.6)
+
+figure_path = 'price_yield_curve.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close(fig)
+
+# ==========================================
+# 输出契约
+# ==========================================
+result = {
+    'price_at_up100bp': price_up100bp,
+    'dur_approx_change_up100bp': dur_approx_change_up100bp,
+    'figure_path': figure_path
+}
+
+# (可选) 控制台打印验证，便于课堂展示
+print(f"当前收益率 ({y0*100:.1f}%) 下的精确价格: {P0:.4f}")
+print(f"修正久期: {D_mod:.4f}")
+print(f"收益率上升 {delta_y_bps}bp 后的精确价格: {result['price_at_up100bp']:.4f}")
+print(f"久期法估计的相对价格变化: {result['dur_approx_change_up100bp']:.4%}")
+```

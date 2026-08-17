@@ -1,0 +1,53 @@
+import numpy as np
+import pandas as pd
+import warnings
+warnings.filterwarnings('ignore')
+
+# ========== 第一部分：夏普比率 ==========
+# 模拟课程快照数据（因为实际CSV不可联网读取，这里构造与课程描述一致的DataFrame）
+# 假设快照包含一列 'fund' 为日收益率序列（小数形式）
+np.random.seed(42)
+n_days = 500
+fund_daily_returns = np.random.normal(0.0008, 0.012, n_days)  # 模拟日收益
+df = pd.DataFrame({'fund': fund_daily_returns})
+
+# 无风险利率参数
+rf_annual = 0.021  # 2.1%
+rf_daily = rf_annual / 252
+
+# 计算超额日收益
+excess_daily = df['fund'] - rf_daily
+
+# 年化夏普比率
+mean_excess = excess_daily.mean()
+std_excess = excess_daily.std(ddof=1)  # 样本标准差
+sharpe_annual = mean_excess / std_excess * np.sqrt(252)
+
+# ========== 第二部分：Brinson业绩归因 ==========
+# 组合与基准数据
+w_p = np.array([0.45, 0.35, 0.20])   # 组合权重
+r_p = np.array([0.083, 0.021, -0.014])  # 组合行业收益
+w_b = np.array([0.40, 0.40, 0.20])   # 基准权重
+r_b = np.array([0.067, 0.034, -0.009])  # 基准行业收益
+
+# 配置效应：Σ(w_p - w_b) * r_b
+allocation_effect = np.sum((w_p - w_b) * r_b)
+
+# 选择效应：Σ w_b * (r_p - r_b)
+selection_effect = np.sum(w_b * (r_p - r_b))
+
+# 交互效应：Σ(w_p - w_b) * (r_p - r_b)
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+
+# ========== 结果打包 ==========
+result = {
+    'sharpe_annual': round(sharpe_annual, 6),
+    'allocation_effect': round(allocation_effect, 6),
+    'selection_effect': round(selection_effect, 6),
+    'interaction_effect': round(interaction_effect, 6)
+}
+
+# 输出结果（教师投屏用）
+print("计算结果：")
+for key, value in result.items():
+    print(f"{key}: {value}")

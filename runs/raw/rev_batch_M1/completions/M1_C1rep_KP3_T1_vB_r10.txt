@@ -1,0 +1,103 @@
+我们需要计算以下债券的各项指标：
+
+- **债券参数**：
+  - 面值（Face Value）：100
+  - 票息率（Coupon Rate）：4.6%
+  - 期限（Maturity）：7年
+  - 收益率（Yield to Maturity, YTM）：5.3%
+
+- **要求计算**：
+  - 价格（Price）
+  - 麦考利久期（Macaulay Duration，单位：年）
+  - 修正久期（Modified Duration，单位：年）
+  - 凸性（Convexity）
+
+---
+
+### 1. 计算价格（Price）
+债券价格是未来现金流的现值总和。每年支付的票息为 \( C = 100 \times 4.6\% = 4.6 \)，到期偿还本金100。
+
+价格公式：
+\[
+P = \sum_{t=1}^{7} \frac{C}{(1 + y)^t} + \frac{F}{(1 + y)^7}
+\]
+其中 \( y = 5.3\% \)。
+
+计算过程：
+\[
+P = \frac{4.6}{1.053} + \frac{4.6}{1.053^2} + \frac{4.6}{1.053^3} + \frac{4.6}{1.053^4} + \frac{4.6}{1.053^5} + \frac{4.6}{1.053^6} + \frac{104.6}{1.053^7}
+\]
+
+计算结果：
+\[
+P \approx 95.76
+\]
+
+---
+
+### 2. 计算麦考利久期（Macaulay Duration）
+麦考利久期是现金流的加权平均时间，权重为现金流的现值占价格的比例。
+
+公式：
+\[
+\text{Macaulay Duration} = \frac{1}{P} \sum_{t=1}^{7} \frac{t \cdot C}{(1 + y)^t} + \frac{7 \cdot F}{(1 + y)^7}
+\]
+
+计算过程：
+\[
+\text{Macaulay Duration} = \frac{1}{95.76} \left( \frac{1 \times 4.6}{1.053} + \frac{2 \times 4.6}{1.053^2} + \frac{3 \times 4.6}{1.053^3} + \frac{4 \times 4.6}{1.053^4} + \frac{5 \times 4.6}{1.053^5} + \frac{6 \times 4.6}{1.053^6} + \frac{7 \times 104.6}{1.053^7} \right)
+\]
+
+计算结果：
+\[
+\text{Macaulay Duration} \approx 6.03 \text{ 年}
+\]
+
+---
+
+### 3. 计算修正久期（Modified Duration）
+修正久期衡量债券价格对收益率变化的敏感性。
+
+公式：
+\[
+\text{Modified Duration} = \frac{\text{Macaulay Duration}}{1 + y}
+\]
+
+计算结果：
+\[
+\text{Modified Duration} = \frac{6.03}{1.053} \approx 5.73 \text{ 年}
+\]
+
+---
+
+### 4. 计算凸性（Convexity）
+凸性衡量久期随收益率变化的曲率。
+
+公式：
+\[
+\text{Convexity} = \frac{1}{P} \sum_{t=1}^{7} \frac{t(t+1) \cdot C}{(1 + y)^{t+2}} + \frac{7 \times 8 \times F}{(1 + y)^9}
+\]
+
+计算过程：
+\[
+\text{Convexity} = \frac{1}{95.76} \left( \frac{1 \times 2 \times 4.6}{1.053^3} + \frac{2 \times 3 \times 4.6}{1.053^4} + \frac{3 \times 4 \times 4.6}{1.053^5} + \frac{4 \times 5 \times 4.6}{1.053^6} + \frac{5 \times 6 \times 4.6}{1.053^7} + \frac{6 \times 7 \times 4.6}{1.053^8} + \frac{7 \times 8 \times 104.6}{1.053^9} \right)
+\]
+
+计算结果：
+\[
+\text{Convexity} \approx 39.5
+\]
+
+---
+
+### 最终结果
+将所有计算结果存入字典 `result`：
+
+```python
+result = {
+    'price': 95.76,
+    'macaulay_duration_years': 6.03,
+    'modified_duration_years': 5.73,
+    'convexity': 39.5
+}
+```

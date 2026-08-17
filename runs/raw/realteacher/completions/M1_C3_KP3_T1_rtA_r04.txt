@@ -1,0 +1,71 @@
+我们需要计算债券的价格、麦考利久期、修正久期和凸性。以下是详细的计算步骤和结果：
+
+### 1. 债券价格（Price）
+债券价格是未来现金流的现值总和。对于面值100、票息4.6%、7年期、到期收益率5.3%的债券，现金流包括每年的票息和到期时的面值。
+
+债券价格公式：
+\[ P = \sum_{t=1}^{T} \frac{C}{(1 + y)^t} + \frac{F}{(1 + y)^T} \]
+其中：
+- \( C = 100 \times 4.6\% = 4.6 \)（每年票息）
+- \( F = 100 \)（面值）
+- \( y = 5.3\% \)（到期收益率）
+- \( T = 7 \)（年限）
+
+计算过程：
+\[ P = \sum_{t=1}^{7} \frac{4.6}{(1 + 0.053)^t} + \frac{100}{(1 + 0.053)^7} \]
+
+具体计算：
+\[ P = 4.6 \times \left( \frac{1 - (1 + 0.053)^{-7}}{0.053} \right) + \frac{100}{(1 + 0.053)^7} \]
+\[ P = 4.6 \times 5.7599 + 70.7726 \]
+\[ P \approx 26.4955 + 70.7726 = 97.2681 \]
+
+### 2. 麦考利久期（Macaulay Duration）
+麦考利久期是现金流的加权平均时间，权重为现金流的现值占债券价格的比例。
+
+公式：
+\[ \text{Macaulay Duration} = \frac{1}{P} \sum_{t=1}^{T} \frac{t \times C}{(1 + y)^t} + \frac{T \times F}{(1 + y)^T} \]
+
+计算过程：
+\[ \text{Macaulay Duration} = \frac{1}{97.2681} \left( \sum_{t=1}^{7} \frac{t \times 4.6}{(1 + 0.053)^t} + \frac{7 \times 100}{(1 + 0.053)^7} \right) \]
+
+具体计算：
+\[ \sum_{t=1}^{7} \frac{t \times 4.6}{(1 + 0.053)^t} \approx 4.6 \times (0.9497 + 1.8033 + 2.5666 + 3.2450 + 3.8436 + 4.3670 + 4.8203) \]
+\[ \approx 4.6 \times 21.5955 \approx 99.3393 \]
+\[ \frac{7 \times 100}{(1 + 0.053)^7} \approx 707.726 \]
+\[ \text{Macaulay Duration} = \frac{99.3393 + 707.726}{97.2681} \approx \frac{807.0653}{97.2681} \approx 6.2416 \text{ 年} \]
+
+### 3. 修正久期（Modified Duration）
+修正久期是麦考利久期对收益率的导数，衡量债券价格对收益率变化的敏感性。
+
+公式：
+\[ \text{Modified Duration} = \frac{\text{Macaulay Duration}}{1 + y} \]
+
+计算过程：
+\[ \text{Modified Duration} = \frac{6.2416}{1 + 0.053} \approx 5.9274 \text{ 年} \]
+
+### 4. 凸性（Convexity）
+凸性衡量债券价格对收益率变化的二阶敏感性。
+
+公式：
+\[ \text{Convexity} = \frac{1}{P} \sum_{t=1}^{T} \frac{t(t + 1) \times C}{(1 + y)^{t + 2}} + \frac{T(T + 1) \times F}{(1 + y)^{T + 2}} \]
+
+计算过程：
+\[ \text{Convexity} = \frac{1}{97.2681} \left( \sum_{t=1}^{7} \frac{t(t + 1) \times 4.6}{(1 + 0.053)^{t + 2}} + \frac{7 \times 8 \times 100}{(1 + 0.053)^9} \right) \]
+
+具体计算：
+\[ \sum_{t=1}^{7} \frac{t(t + 1) \times 4.6}{(1 + 0.053)^{t + 2}} \approx 4.6 \times (0.8556 + 3.2506 + 6.8443 + 11.3075 + 16.4106 + 22.0136 + 28.0066) \]
+\[ \approx 4.6 \times 88.6888 \approx 408.9685 \]
+\[ \frac{7 \times 8 \times 100}{(1 + 0.053)^9} \approx \frac{5600}{1.5580} \approx 3594.3517 \]
+\[ \text{Convexity} = \frac{408.9685 + 3594.3517}{97.2681} \approx \frac{4003.3202}{97.2681} \approx 41.1577 \]
+
+### 最终结果
+将所有计算结果存入 `result` 字典：
+
+```python
+result = {
+    'price': 97.2681,
+    'macaulay_duration_years': 6.2416,
+    'modified_duration_years': 5.9274,
+    'convexity': 41.1577
+}
+```

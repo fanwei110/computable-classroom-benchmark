@@ -1,0 +1,52 @@
+import numpy as np
+
+def main():
+    # ---------- 债券参数 ----------
+    face_value = 100.0          # 面值
+    coupon_rate = 0.046         # 票面利率（4.6%）
+    ytm = 0.053                 # 到期收益率（5.3%）
+    n_periods = 7               # 剩余期限（年）
+    coupon = face_value * coupon_rate  # 每年票息
+
+    # ---------- 计算现金流 ----------
+    # 时间点（第1年到第n年）
+    t = np.arange(1, n_periods + 1, dtype=float)
+
+    # 现金流：前n-1年为票息，第n年为票息+面值
+    cf = np.full(n_periods, coupon)
+    cf[-1] += face_value
+
+    # 贴现因子
+    discount = (1 + ytm) ** t
+    pv = cf / discount
+
+    # 债券全价
+    price = np.sum(pv)
+
+    # ---------- 麦考利久期 ----------
+    # D_mac = Σ t * PV(CF_t) / P
+    weighted_time = np.sum(t * pv)
+    mac_duration = weighted_time / price
+
+    # ---------- 修正久期 ----------
+    mod_duration = mac_duration / (1 + ytm)
+
+    # ---------- 价格跌幅（依据 dP/P ≈ -D_mod * dy）----------
+    dy = 0.008  # 收益率上升 80 个基点
+    price_drop_pct = mod_duration * dy   # 正的小数，表示跌幅
+
+    # ---------- 输出契约 ----------
+    result = {
+        'price_drop_pct': price_drop_pct
+    }
+
+    # 可选：打印详细信息，便于课堂观察
+    print(f"债券价格：{price:.4f}")
+    print(f"麦考利久期：{mac_duration:.4f} 年")
+    print(f"修正久期：{mod_duration:.4f}")
+    print(f"收益率变动（dy）：{dy:.4f}（{dy*100:.2f} bp）")
+    print(f"一阶近似价格跌幅：{price_drop_pct:.6f} 即 {price_drop_pct*100:.4f}%")
+    print(f"\n结果字典：{result}")
+
+if __name__ == "__main__":
+    main()

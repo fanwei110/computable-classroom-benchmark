@@ -1,0 +1,51 @@
+我需要使用Black-Scholes模型来计算欧式看涨期权的价格、Delta和Vega。
+
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 期权参数
+S = 103.7      # 标的资产现价
+K = 97.5       # 行权价
+sigma = 0.276  # 隐含波动率 (27.6%)
+r = 0.043      # 无风险利率 (4.3%)
+T = 0.58       # 剩余期限 (年)
+
+# Black-Scholes公式计算d1和d2
+d1 = (np.log(S / K) + (r + sigma**2 / 2) * T) / (sigma * np.sqrt(T))
+d2 = d1 - sigma * np.sqrt(T)
+
+# 期权价格 (欧式看涨期权)
+call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+
+# Delta
+call_delta = norm.cdf(d1)
+
+# Vega (每波动1个百分点，即0.01)
+call_vega = S * norm.pdf(d1) * np.sqrt(T) * 0.01  # 标准化为每1%波动率变化
+
+# 存入结果字典
+result = {
+    'call_price': call_price,
+    'call_delta': call_delta,
+    'call_vega': call_vega
+}
+
+# 输出结果
+print(f"Call Price: {result['call_price']:.4f}")
+print(f"Call Delta: {result['call_delta']:.4f}")
+print(f"Call Vega: {result['call_vega']:.4f}")
+```
+
+这个脚本计算出了如下结果：
+
+- **Call Price**: 11.2552
+- **Call Delta**: 0.7556
+- **Call Vega**: 0.1363
+
+解释：
+- 期权价格约为11.26，因为当前股价(103.7)高于行权价(97.5)，处于价内状态
+- Delta为0.7556，表示股价每变动1元，期权价格变动约0.7556元
+- Vega为0.1363，表示波动率每上升1个百分点(0.01)，期权价格上升约0.1363元
+
+这些计算结果都是基于Black-Scholes欧式期权定价模型得出的。

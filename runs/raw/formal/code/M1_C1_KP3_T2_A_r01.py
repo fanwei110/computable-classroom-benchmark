@@ -1,0 +1,115 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+import os
+
+def bond_price(face_value, coupon_rate, years_to_maturity, ytm, frequency=1):
+    """
+    计算债券精确价格
+    """
+    periods = years_to_maturity * frequency
+    coupon = face_value * coupon_rate / frequency
+    discount_rate = ytm / frequency
+
+    price = sum([coupon / (1 + discount_rate)**t for t in range(1, int(periods) + 1)]) + \
+            face_value / (1 + discount_rate)**periods
+    return price
+
+def duration_macaulay(face_value, coupon_rate, years_to_maturity, ytm, frequency=1):
+    """
+    计算麦考利久期
+    """
+    periods = years_to_maturity * frequency
+    coupon = face_value * coupon_rate / frequency
+    discount_rate = ytm / frequency
+
+    cash_flows = [coupon] * int(periods)
+    cash_flows[-1] += face_value  # 最后一期加上面值
+
+    weighted_cash_flows = [t * cf / (1 + discount_rate)**t for t, cf in enumerate(cash_flows, 1)]
+    mac_duration = sum(weighted_cash_flows) / bond_price(face_value, coupon_rate, years_to_maturity, ytm, frequency)
+
+    return mac_duration / frequency  # 转换为年化久期
+
+def duration_modified(face_value, coupon_rate, years_to_maturity, ytm, frequency=1):
+    """
+    计算修正久期
+    """
+    mac_dur = duration_macaulay(face_value, coupon_rate, years_to_maturity, ytm, frequency)
+    return mac_dur / (1 + ytm / frequency)
+
+# 债券参数
+face_value = 100
+coupon_rate = 0.046
+years_to_maturity = 7
+current_ytm = 0.053
+frequency = 1
+
+# 计算当前价格和久期
+current_price = bond_price(face_value, coupon_rate, years_to_maturity, current_ytm)
+mod_dur = duration_modified(face_value, coupon_rate, years_to_maturity, current_ytm)
+
+# 计算收益率上升100bp后的精确价格
+ytm_up100bp = current_ytm + 0.01
+price_up100bp = bond_price(face_value, coupon_rate, years_to_maturity, ytm_up100bp)
+
+# 计算久期近似的价格变化
+dur_approx_change = -mod_dur * 0.01 * current_price
+
+# 创建图形
+fig, ax = plt.subplots(figsize=(10, 6))
+plt.subplots_adjust(bottom=0.25)
+
+# 生成收益率范围
+ytm_range = np.linspace(0.02, 0.09, 100)
+prices = [bond_price(face_value, coupon_rate, years_to_maturity, y) for y in ytm_range]
+
+# 绘制精确价格曲线
+line_exact, = ax.plot(ytm_range, prices, label='Exact Price', color='blue')
+
+# 绘制久期近似线
+ytm_approx = np.linspace(current_ytm - 0.02, current_ytm + 0.02, 50)
+approx_prices = current_price * (1 - mod_dur * (ytm_approx - current_ytm))
+line_approx, = ax.plot(ytm_approx, approx_prices, label='Duration Approximation', color='red', linestyle='--')
+
+# 标记当前点
+ax.scatter(current_ytm, current_price, color='green', zorder=5)
+ax.annotate(f'Current ({current_ytm*100:.1f}%, {current_price:.2f})',
+            xy=(current_ytm, current_price),
+            xytext=(current_ytm+0.005, current_price+5),
+            arrowprops=dict(facecolor='black', shrink=0.05))
+
+ax.set_xlabel('Yield to Maturity')
+ax.set_ylabel('Bond Price')
+ax.set_title('Bond Price vs Yield to Maturity')
+ax.legend()
+ax.grid(True)
+
+# 添加滑块控制收益率变动幅度
+axcolor = 'lightgoldenrodyellow'
+ax_amp = plt.axes([0.2, 0.1, 0.6, 0.03], facecolor=axcolor)
+slider_amp = Slider(ax_amp, 'Yield Change (bp)', -200, 200, valinit=100, valstep=10)
+
+def update(val):
+    amp = slider_amp.val / 10000  # 转换为百分点
+    ytm_approx = np.linspace(current_ytm - amp, current_ytm + amp, 50)
+    approx_prices = current_price * (1 - mod_dur * (ytm_approx - current_ytm))
+    line_approx.set_xdata(ytm_approx)
+    line_approx.set_ydata(approx_prices)
+    fig.canvas.draw_idle()
+
+slider_amp.on_changed(update)
+
+# 保存图形
+figure_path = 'bond_price_vs_ytm.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 准备结果
+result = {
+    'price_at_up100bp': price_up100bp,
+    'dur_approx_change_up100bp': dur_approx_change / current_price * 100,  # 转换为百分比
+    'figure_path': os.path.abspath(figure_path)
+}
+
+print(result)

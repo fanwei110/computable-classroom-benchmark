@@ -1,0 +1,95 @@
+```python
+import numpy as np
+import pandas as pd
+
+# ===================== 参数配置 =====================
+RF_ANNUAL = 0.021  # 年化无风险利率 2.1%
+DATA_FILE = 'data.csv'
+
+# ===================== 读取数据 =====================
+df = pd.read_csv(DATA_FILE)
+
+# 查找 fund 列（不区分大小写，去除前后空格）
+fund_col = None
+for col in df.columns:
+    if col.strip().lower() == 'fund':
+        fund_col = col
+        break
+assert fund_col is not None, "数据文件中未找到 'fund' 列"
+
+fund_raw = df[fund_col].dropna().values.astype(float)
+
+# ===================== 判断是净值还是收益率 =====================
+# 若全为正且分布跨度大（min>0.5, max/min>1.5），视为净值序列并转换为收益率
+is_nav = bool(
+    np.all(fund_raw > 0)
+    and np.min(fund_raw) > 0.5
+    and np.max(fund_raw) / np.min(fund_raw) > 1.5
+)
+
+if is_nav:
+    fund_returns = np.diff(fund_raw) / fund_raw[:-1]  # 简单收益率
+else:
+    fund_returns = fund_raw  # 已经是收益率
+
+assert len(fund_returns) > 1, "样本量不足，至少需要2个观测值"
+
+# ===================== 推断数据频率 =====================
+n_per_year = 252  # 默认按日度
+
+date_col = None
+for col in df.columns:
+    cl = col.strip().lower()
+    if cl in ['date', '日期', 'time', 'trading_date', 'trade_date']:
+        date_col = col
+        break
+
+if date_col is not None:
+    dates = pd.to_datetime(df[date_col]).sort_values().dropna()
+    if len(dates) > 1:
+        median_gap_days = dates.diff().dropna().median().days
+        if median_gap_days <= 7:
+            n_per_year = 252   # 日度
+        elif median_gap_days <= 14:
+            n_per_year = 52    # 周度
+        elif median_gap_days <= 45:
+            n_per_year = 12    # 月度
+        else:
+            n_per_year = 4     # 季度
+
+# ===================== 计算年化夏普比率 =====================
+# 期间统计量
+mean_period = np.mean(fund_returns)
+std_period = np.std(fund_returns, ddof=1)  # 样本标准差
+
+assert std_period > 0, "收益率标准差为0，无法计算夏普比率"
+
+# 年化夏普比率 = (期间均值 - 期间无风险利率) / 期间标准差 × √年期内数
+rf_period = RF_ANNUAL / n_per_year
+sharpe_annual = (mean_period - rf_period) / std_period * np.sqrt(n_per_year)
+
+# ===================== 结果输出 =====================
+result = {'sharpe_annual': sharpe_annual}
+
+print(f"数据类型: {'净值(已转换为收益率)' if is_nav else '收益率'}")
+print(f"推断频率: 每年 {n_per_year} 期")
+print(f"有效样本数: {len(fund_returns)}")
+print(f"期间均值: {mean_period:.8f}")
+print(f"期间标准差: {std_period:.8f}")
+print(f"年化无风险利率: {RF_ANNUAL:.4f}")
+print(f"年化夏普比率: {sharpe_annual:.4f}")
+```
+
+**核心计算逻辑说明：**
+
+1. **读取数据**：从 `data.csv` 读取 `fund` 列，自动处理列名大小写和空格问题。
+
+2. **净值 vs 收益率自动判断**：若数据全为正、最小值 > 0.5、最大/最小 > 1.5，则判定为净值序列，自动用 $r_t = \frac{NAV_t - NAV_{t-1}}{NAV_{t-1}}$ 转换为简单收益率。
+
+3. **频率推断**：从日期列推断数据频率（日度252 / 周度52 / 月度12 / 季度4），无日期列时默认日度。
+
+4. **年化夏普比率公式**：
+
+$$\text{Sharpe}_{\text{annual}} = \frac{\bar{r}_{\text{period}} - r_f / N}{\sigma_{\text{period}}} \times \sqrt{N}$$
+
+其中 $N$ 为年期内数，$r_f = 2.1\%$，$\sigma$ 使用样本标准差（ddof=1）。

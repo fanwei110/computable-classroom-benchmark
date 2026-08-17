@@ -1,0 +1,30 @@
+```python
+import math
+
+# 已知参数
+vol_A = 0.184
+vol_B = 0.297
+w_A = 0.6
+w_B = 0.4
+rho_before = 0.3
+rho_after = 0.8
+
+# 计算组合方差的公共项
+w_A2_vol_A2 = w_A**2 * vol_A**2
+w_B2_vol_B2 = w_B**2 * vol_B**2
+cross_term_base = 2 * w_A * w_B * vol_A * vol_B
+
+# 计算变化前的波动率
+var_before = w_A2_vol_A2 + w_B2_vol_B2 + cross_term_base * rho_before
+vol_before = math.sqrt(var_before)
+
+# 计算变化后的波动率
+var_after = w_A2_vol_A2 + w_B2_vol_B2 + cross_term_base * rho_after
+vol_after = math.sqrt(var_after)
+
+# 按照输出契约存入字典，保留4位小数
+result = {
+    'vol_before_annual': round(vol_before, 4),
+    'vol_after_annual': round(vol_after, 4)
+}
+```

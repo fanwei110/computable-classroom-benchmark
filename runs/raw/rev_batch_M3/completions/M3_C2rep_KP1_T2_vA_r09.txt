@@ -1,0 +1,82 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 1. 基本参数设定
+mu1, mu2 = 0.071, 0.124       # 期望年收益
+sig1, sig2 = 0.163, 0.289     # 年化波动率
+rhos = [0.15, 0.45, 0.75]     # 给定的三种相关系数
+target_mu = 0.10              # 目标期望收益 10%
+
+# 设置matplotlib以支持中文显示
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS']
+plt.rcParams['axes.unicode_minus'] = False
+
+# 初始化结果字典
+result = {}
+
+# 2. 画图准备
+plt.figure(figsize=(10, 7))
+
+for rho in rhos:
+    # 构造协方差矩阵
+    cov12 = rho * sig1 * sig2
+    
+    # 在组合权重上扫描画出前沿 (允许卖空，满仓约束 w1+w2=1)
+    w1 = np.linspace(-0.5, 1.5, 500)
+    w2 = 1 - w1
+    
+    # 组合期望收益和波动率
+    port_mu = w1 * mu1 + w2 * mu2
+    port_var = (w1**2) * (sig1**2) + (w2**2) * (sig2**2) + 2 * w1 * w2 * cov12
+    port_sig = np.sqrt(port_var)
+    
+    # 绘制前沿曲线
+    plt.plot(port_sig, port_mu, label=f'前沿 (ρ={rho:.2f})')
+    
+    # 计算最小方差组合 (MVP) 的闭式解权重
+    denom = sig1**2 + sig2**2 - 2 * rho * sig1 * sig2
+    w1_mvp = (sig2**2 - rho * sig1 * sig2) / denom
+    w2_mvp = 1 - w1_mvp
+    
+    # MVP的收益与风险
+    mvp_mu = w1_mvp * mu1 + w2_mvp * mu2
+    mvp_var = (w1_mvp**2) * (sig1**2) + (w2_mvp**2) * (sig2**2) + 2 * w1_mvp * w2_mvp * cov12
+    mvp_sig = np.sqrt(mvp_var)
+    
+    # 在每条曲线上标出最小方差组合
+    plt.scatter(mvp_sig, mvp_mu, marker='*', s=200, zorder=5, edgecolors='black', label=f'MVP (ρ={rho:.2f})')
+    
+    # 针对相关系数 0.45 计算所需的两个波动率指标
+    if np.isclose(rho, 0.45):
+        result['mvp_vol_at_rho45'] = mvp_sig
+        
+        # 计算目标期望收益 10% 下可达到的最小年化波动率
+        # 两资产模型中，满足目标收益的权重唯一确定
+        w1_target = (target_mu - mu2) / (mu1 - mu2)
+        w2_target = 1 - w1_target
+        
+        target_var = (w1_target**2) * (sig1**2) + (w2_target**2) * (sig2**2) + 2 * w1_target * w2_target * cov12
+        target_sig = np.sqrt(target_var)
+        
+        result['frontier_vol_at_target'] = target_sig
+
+# 绘制单项资产点以作为参照
+plt.scatter(sig1, mu1, color='red', marker='o', s=100, zorder=5, label='资产 1')
+plt.scatter(sig2, mu2, color='blue', marker='o', s=100, zorder=5, label='资产 2')
+
+# 图表格式设置
+plt.xlabel('年化波动率')
+plt.ylabel('期望年收益')
+plt.title('马科维茨均值-方差前沿 (不同相关系数)')
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.6)
+
+# 3. 保存图形
+fig_path = 'markowitz_frontier.png'
+plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+result['figure_path'] = fig_path
+
+# 程序结束时打印报告结果，确保可复现验证
+print(result)
+```

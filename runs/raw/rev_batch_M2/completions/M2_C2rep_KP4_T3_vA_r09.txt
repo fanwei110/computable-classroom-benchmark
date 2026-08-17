@@ -1,0 +1,31 @@
+```python
+
+import numpy as np
+from scipy.stats import norm
+
+# -------------------- 参数设定 --------------------
+S = 103.7          # 标的现价
+K = 97.5           # 行权价
+sigma = 0.276      # 波动率（27.6%）
+r = 0.043          # 无风险利率
+T = 0.58           # 剩余到期时间（年）
+
+# ---------------- Black-Scholes 计算 ----------------
+# 计算 d1 和 d2
+d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+d2 = d1 - sigma * np.sqrt(T)
+
+# 计算 Vega（对 sigma 的偏导数，sigma 以小数形式给出）
+# Vega = S * sqrt(T) * N'(d1)
+vega = S * np.sqrt(T) * norm.pdf(d1)
+
+# 波动率上升一个百分点（即 +0.01）
+delta_sigma = 0.01
+price_change = vega * delta_sigma
+
+# -------------------- 输出结果 --------------------
+result = {'price_change': price_change}
+
+print(result)
+
+```

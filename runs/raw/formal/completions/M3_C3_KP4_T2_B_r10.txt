@@ -1,0 +1,49 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+
+# 参数设定
+K = 97.5
+r = 0.043
+T = 0.58
+S = np.linspace(70, 140, 700)
+vols = [0.15, 0.276, 0.40]
+
+# 计算看涨期权Delta的函数 (Black-Scholes模型)
+def call_delta(S, K, r, T, sigma):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# 绘制Delta曲线
+plt.figure(figsize=(10, 6))
+for vol in vols:
+    delta_vals = call_delta(S, K, r, T, vol)
+    plt.plot(S, delta_vals, label=f'Vol = {vol*100:.1f}%')
+
+# 添加图表元素
+plt.title('Call Option Delta Curve (K=97.5, r=4.3%, T=0.58)')
+plt.xlabel('Underlying Price')
+plt.ylabel('Delta')
+plt.axvline(x=K, color='grey', linestyle='--', alpha=0.7, label='Strike Price (97.5)')
+plt.legend()
+plt.grid(True)
+
+# 保存图像
+fig_path = 'delta_curve.png'
+plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# 计算标的110，波动率27.6%时的Delta
+S_target = 110
+vol_target = 0.276
+delta_at_s110 = call_delta(S_target, K, r, T, vol_target)
+
+# 存入结果字典
+result = {
+    'delta_at_s110': float(delta_at_s110),
+    'figure_path': fig_path
+}
+
+print(result)
+```

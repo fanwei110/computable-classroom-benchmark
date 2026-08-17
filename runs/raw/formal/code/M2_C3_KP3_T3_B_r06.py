@@ -1,0 +1,31 @@
+import numpy as np
+
+# 债券参数
+face_value = 100.0
+coupon_rate = 0.046
+yield_initial = 0.053
+dy = 0.008  # 80 bp
+n = 7  # 期限（年）
+# 按年复利、年付息计算价格
+# 先计算初始价格、麦考利久期、修正久期
+# 也可以用久期近似计算价格跌幅百分比
+
+# 现金流（不含本金，本金在最后）
+cash_flows = np.full(n, face_value * coupon_rate)
+cash_flows[-1] += face_value
+discount_factors = (1 + yield_initial) ** -np.arange(1, n + 1)
+pv = cash_flows * discount_factors
+price_initial = np.sum(pv)
+
+# 麦考利久期
+weights = pv / price_initial
+t = np.arange(1, n + 1)
+macaulay_duration = np.sum(t * weights)
+# 修正久期
+modified_duration = macaulay_duration / (1 + yield_initial)
+# 价格变动百分比（正数表示跌幅）
+price_drop_pct = modified_duration * dy * 100  # 转为百分比点数
+
+# 存入字典
+result = {'price_drop_pct': round(price_drop_pct, 2)}
+print(result)

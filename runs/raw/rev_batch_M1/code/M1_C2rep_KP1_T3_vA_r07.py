@@ -1,0 +1,33 @@
+import numpy as np
+
+# 1. 确定权重对应方式：w_A = 0.6, w_B = 0.4
+weights = np.array([0.6, 0.4])  # A, B
+
+# 2. 资产年化波动率（标准差）
+vol_A_annual = 0.184
+vol_B_annual = 0.297
+
+# 3. 构造协方差矩阵
+# 相关系数 0.3
+corr_before = 0.3
+cov_before = np.array([
+    [vol_A_annual ** 2, corr_before * vol_A_annual * vol_B_annual],
+    [corr_before * vol_A_annual * vol_B_annual, vol_B_annual ** 2]
+])
+
+# 相关系数 0.8
+corr_after = 0.8
+cov_after = np.array([
+    [vol_A_annual ** 2, corr_after * vol_A_annual * vol_B_annual],
+    [corr_after * vol_A_annual * vol_B_annual, vol_B_annual ** 2]
+])
+
+# 4. 计算组合波动率（年化）
+portfolio_vol_before = np.sqrt(weights @ cov_before @ weights.T)
+portfolio_vol_after = np.sqrt(weights @ cov_after @ weights.T)
+
+# 5. 填充 result 字典
+result = {
+    'vol_before_annual': portfolio_vol_before,
+    'vol_after_annual': portfolio_vol_after
+}

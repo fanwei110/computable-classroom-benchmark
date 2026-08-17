@@ -1,0 +1,67 @@
+我将按照您的要求计算历史法VaR，并生成相应的输出。以下是完整的代码实现：
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# 设置参数
+confidence_level = 0.95  # 可调置信水平
+position = 1_000_000  # 头寸100万元
+
+# 读取数据
+df = pd.read_csv('data/market_snapshot_v1.csv')
+returns = df['fund'].pct_change().dropna()  # 日收益率
+
+# 计算日损益
+daily_pnl = returns * position
+
+# 计算历史VaR
+var = -np.percentile(daily_pnl, 100 * (1 - confidence_level))
+
+# 绘制直方图
+plt.figure(figsize=(10, 6))
+plt.hist(daily_pnl, bins=50, alpha=0.75, color='blue', edgecolor='black')
+
+# 添加VaR线
+plt.axvline(x=-var, color='red', linestyle='--', label=f'{confidence_level*100:.0f}% 1-day Historical VaR: {var:,.2f}')
+
+plt.title('Daily P&L Distribution with Historical VaR')
+plt.xlabel('Daily P&L (RMB)')
+plt.ylabel('Frequency')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 保存图片
+figure_path = 'var_plot.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 准备结果
+result = {
+    'hist_var_95_1d': var,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+print(result)
+```
+
+输出结果示例（具体数值可能因数据而异）：
+```python
+{
+    'hist_var_95_1d': 12345.67,  # 具体数值取决于数据
+    'figure_path': '/path/to/your/working/directory/var_plot.png'
+}
+```
+
+注意事项：
+1. 请确保数据文件路径正确（'data/market_snapshot_v1.csv'）
+2. 代码中置信水平设置为95%，您可以根据需要修改`confidence_level`变量
+3. 图片将保存为当前工作目录下的'var_plot.png'
+4. VaR值是正数，表示在95%置信水平下1日内可能的最大损失金额
+5. 如果需要调整置信水平，只需修改`confidence_level`变量即可
+
+如果您需要不同置信水平的VaR值，可以修改代码中的`confidence_level`变量，例如：
+- 99%置信水平：`confidence_level = 0.99`
+- 90%置信水平：`confidence_level = 0.90`

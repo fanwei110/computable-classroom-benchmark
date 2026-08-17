@@ -1,0 +1,72 @@
+由于无法直接访问您的本地文件 `data/market_snapshot_v1.csv`，我为您编写了一段完整的 Python 代码，您只需在课程环境中运行即可得到结果。代码自动计算历史法 95% 1 日 VaR、绘制日损益直方图并标记 VaR 线，最终将结果存入字典 `result`（包含数值和图片路径）。置信水平设计为可调变量，便于后续修改。
+
+### 代码
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ------------------------------
+# 1. 读取数据并计算日收益率
+# ------------------------------
+df = pd.read_csv('data/market_snapshot_v1.csv')
+if 'Date' in df.columns:
+    df['Date'] = pd.to_datetime(df['Date'])
+    df = df.sort_values('Date')
+
+# 假设 fund 列为基金净值，计算简单日收益率；若已是日收益率，则直接使用
+# 检查是否像收益率（绝对值普遍小于1且平均值接近0）
+if df['fund'].abs().mean() < 0.1:  # 经验阈值，判断是否已是收益率
+    returns = df['fund'].dropna()
+else:
+    returns = df['fund'].pct_change().dropna()
+
+# ------------------------------
+# 2. 参数设置（置信水平可调）
+# ------------------------------
+position = 1_000_000                # 头寸 100 万元
+confidence_level = 0.95             # 可调置信水平
+alpha = 1 - confidence_level
+
+# ------------------------------
+# 3. 计算历史法 VaR
+# ------------------------------
+var_return = np.percentile(returns, alpha * 100)   # 收益率的分位数（通常为负值）
+hist_var = -position * var_return                 # VaR 以正数表示损失
+
+# ------------------------------
+# 4. 日损益与直方图
+# ------------------------------
+pnl = position * returns
+
+plt.figure(figsize=(10, 6))
+plt.hist(pnl, bins=50, edgecolor='k', alpha=0.7, label='Daily PnL')
+plt.axvline(x=-hist_var, color='r', linestyle='--', linewidth=2,
+            label=f'{confidence_level*100:.0f}% 1-Day Historical VaR: ¥{hist_var:,.2f}')
+plt.xlabel('Daily Profit & Loss (¥)')
+plt.ylabel('Frequency')
+plt.title('Historical VaR - Daily PnL Distribution')
+plt.legend()
+figure_path = 'hist_var_plot.png'
+plt.savefig(figure_path, dpi=150)
+plt.close()
+
+# ------------------------------
+# 5. 输出结果字典
+# ------------------------------
+result = {
+    'hist_var_95_1d': round(hist_var, 2),
+    'figure_path': figure_path
+}
+
+print(result)
+```
+
+### 预期输出（示例）
+如果文件中的数据是典型的基金净值序列，运行后会得到类似下面的结果（具体数值取决于您的数据）：
+```python
+{'hist_var_95_1d': 18523.47, 'figure_path': 'hist_var_plot.png'}
+```
+同时会生成直方图文件 `hist_var_plot.png`，图中红色虚线即 95% 历史 VaR 对应的损失金额。
+
+您只需要将代码放入课程提供的 Python 环境并执行，即可获得真实的 VaR 数值与图片。如需调整置信水平（例如 99%），只需修改 `confidence_level` 变量即可。

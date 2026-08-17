@@ -1,0 +1,35 @@
+import numpy as np
+
+# 1. 定义权重 (60% A, 40% B)
+weights = np.array([0.6, 0.4])
+
+# 2. 定义单个资产的波动率 (年化)
+vol_A = 0.184
+vol_B = 0.297
+
+# 3. 构造相关系数为0.3和0.8的协方差矩阵
+corr_before = 0.3
+corr_after = 0.8
+
+# 协方差矩阵 = 相关系数矩阵 * 标准差向量 * 标准差向量'
+cov_before = np.array([
+    [vol_A**2, corr_before * vol_A * vol_B],
+    [corr_before * vol_A * vol_B, vol_B**2]
+])
+
+cov_after = np.array([
+    [vol_A**2, corr_after * vol_A * vol_B],
+    [corr_after * vol_A * vol_B, vol_B**2]
+])
+
+# 4. 计算组合波动率 (w'Σw)^0.5
+portfolio_vol_before = np.sqrt(weights.T @ cov_before @ weights)
+portfolio_vol_after = np.sqrt(weights.T @ cov_after @ weights)
+
+# 5. 存储结果
+result = {
+    'vol_before_annual': portfolio_vol_before,
+    'vol_after_annual': portfolio_vol_after
+}
+
+print(result)

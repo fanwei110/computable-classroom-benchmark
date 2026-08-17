@@ -1,0 +1,100 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+
+# ==========================================
+# 1. 参数化设置 (小数表示)
+# ==========================================
+rf = 0.023   # 无风险利率 2.3%
+rm = 0.094   # 市场期望收益 9.4%
+
+# 股票参数
+stocks = {
+    'X': {'beta': 0.62, 'return': 0.081},
+    'Y': {'beta': 1.18, 'return': 0.131},
+    'Z': {'beta': 1.51, 'return': 0.099}
+}
+
+# ==========================================
+# 2. 核心计算
+# ==========================================
+# SML斜率即为市场风险溢价
+sml_slope = rm - rf
+
+# beta = 1.27 处的 CAPM 期望收益
+beta_target = 1.27
+er_at_beta_127 = rf + beta_target * sml_slope
+
+# ==========================================
+# 3. 绘图
+# ==========================================
+# 生成 beta 数据
+betas = np.linspace(0, 2, 100)
+# SML 期望收益: E(R) = Rf + beta * (Rm - Rf)
+er_sml = rf + betas * sml_slope
+
+plt.figure(figsize=(10, 7))
+
+# 绘制证券市场线 (SML)
+plt.plot(betas, er_sml, label='Security Market Line (SML)', color='blue', linewidth=2.5)
+
+# 标出无风险利率和市场组合点
+plt.scatter([0, 1], [rf, rm], color='blue', s=60, zorder=5)
+plt.annotate(f'Rf ({rf:.1%})', xy=(0, rf), xytext=(0.05, rf-0.008), fontsize=10)
+plt.annotate(f'Market ({rm:.1%})', xy=(1, rm), xytext=(1.05, rm+0.003), fontsize=10)
+
+# 绘制股票点并标注 (包含 Alpha 信息)
+offsets = {
+    'X': (15, -40),
+    'Y': (15, 10),
+    'Z': (-100, -40)
+}
+for name, data in stocks.items():
+    b = data['beta']
+    r = data['return']
+    er_capm = rf + b * sml_slope
+    alpha = r - er_capm
+    
+    plt.scatter(b, r, color='red', s=80, zorder=5, edgecolors='black')
+    
+    # 标注内容包含 Beta, 实际收益和 Alpha
+    text = f'Stock {name}\nβ={b:.2f}, R={r:.1%}\nα={alpha:.2%}'
+    plt.annotate(text, xy=(b, r), xytext=offsets[name], 
+                 textcoords='offset points',
+                 bbox=dict(boxstyle='round,pad=0.5', fc='lightyellow', alpha=0.8),
+                 arrowprops=dict(arrowstyle='->', connectionstyle='arc3,rad=0'))
+
+# 标出 beta=1.27 的 CAPM 期望收益点 (任务要求)
+plt.scatter([beta_target], [er_at_beta_127], color='green', s=80, marker='D', zorder=5, label=f'β=1.27, E(R)={er_at_beta_127:.2%}')
+plt.axvline(x=beta_target, ymin=0, ymax=(er_at_beta_127 - plt.ylim()[0]) / (plt.ylim()[1] - plt.ylim()[0]), 
+            color='green', linestyle='--', alpha=0.5)
+
+# 图表格式美化
+plt.title(f'CAPM & Security Market Line\nRf = {rf:.1%}, E(Rm) = {rm:.1%}', fontsize=14, fontweight='bold')
+plt.xlabel('Beta (β)', fontsize=12)
+plt.ylabel('Expected Return', fontsize=12)
+plt.gca().yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=1))
+plt.xlim(0, 2)
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.legend(fontsize=11, loc='upper left')
+
+# 保存图形
+figure_path = 'sml_plot.png'
+plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# ==========================================
+# 4. 填充输出契约字典
+# ==========================================
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': figure_path
+}
+
+# 打印结果供课堂投屏展示
+print(f"SML 斜率 (市场风险溢价): {result['sml_slope']:.4f}")
+print(f"Beta=1.27 处的 CAPM 期望收益: {result['er_at_beta_127']:.4f}")
+print(f"图形已保存至: {result['figure_path']}")
+```

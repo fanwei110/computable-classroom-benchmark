@@ -1,0 +1,51 @@
+=== B0395  任务 KP2_T3 (T3) ===
+
+--- 任务要求的输出键 ---
+capm_return_monthly
+
+--- 判分失败明细 ---
+reason: silent alternative convention
+matched: rf_geometric
+evidence: {'rf_geometric': False}
+harness声明探测: {'rf_geometric': False}
+
+--- 提取出的代码 ---
+result = {
+    'capm_return_monthly': -0.0839729585
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+根据题目要求，我们需要利用CAPM模型计算该股票上个月的预期收益率。
+
+**1. 提取已知信息：**
+* 贝塔系数 $\beta = 1.42$
+* 大盘上个月收益率 $R_{m, monthly} = -5.8\% = -0.058$
+* 年化无风险利率 $r_{f, annual} = 4.7\% = 0.047$
+
+**2. 计算月度无风险利率：**
+根据计算约定，债券收益率按**年复利**报价，且年化与去年化一律按每年 252 个交易日。
+一个月通常对应 $252 / 12 = 21$ 个交易日，即 $1/12$ 年。
+将年复利无风险利率转换为月复利无风险利率：
+$$1 + r_{f, monthly} = (1 + r_{f, annual})^{1/12}$$
+$$r_{f, monthly} = (1 + 0.047)^{1/12} - 1 \approx 0.0038403765$$
+
+**3. 利用CAPM模型计算该股票上个月的预期收益：**
+CAPM公式为：
+$$E(R_i) = r_f + \beta \times (R_m - r_f)$$
+
+代入月度数据：
+$$E(R_{i, monthly}) = r_{f, monthly} + \beta \times (R_{m, monthly} - r_{f, monthly})$$
+$$E(R_{i, monthly}) = 0.0038403765 + 1.42 \times (-0.058 - 0.0038403765)$$
+$$E(R_{i, monthly}) = 0.0038403765 + 1.42 \times (-0.0618403765)$$
+$$E(R_{i, monthly}) = 0.0038403765 - 0.087813335$$
+$$E(R_{i, monthly}) \approx -0.0839729585$$
+
+**4. 构建输出结果：**
+按照输出契约，将结果（小数形式）存入字典 `result` 中。
+
+```python
+result = {
+    'capm_return_monthly': -0.0839729585
+}
+```

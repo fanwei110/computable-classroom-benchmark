@@ -1,0 +1,89 @@
+```python
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+import matplotlib.ticker as mticker
+
+# 初始参数
+rf_init = 0.023  # 2.3%
+rm_init = 0.094  # 9.4%
+
+# 三个资产点的数据
+points = {
+    'X': (0.62, 0.081),
+    'Y': (1.18, 0.131),
+    'Z': (1.51, 0.099)
+}
+
+# 1. 计算SML斜率
+sml_slope = rm_init - rf_init
+
+# 2. 计算beta 1.27对应的期望收益
+beta_target = 1.27
+er_at_beta_127 = rf_init + beta_target * sml_slope
+
+# 设置图形
+fig, ax = plt.subplots(figsize=(10, 7))
+plt.subplots_adjust(bottom=0.25)
+
+# 绘制初始SML
+betas = [0, 2]
+returns = [rf_init, rf_init + 2 * sml_slope]
+line, = ax.plot(betas, returns, 'b-', linewidth=2, label='SML')
+
+# 标出市场组合和Rf
+mkt_point, = ax.plot(1, rm_init, 'ko', label='Market (β=1)')
+rf_point, = ax.plot(0, rf_init, 'go', label='Rf (β=0)')
+
+# 标出X, Y, Z三个点
+for name, (beta, ret) in points.items():
+    ax.plot(beta, ret, 'r*', markersize=12, label=f'Asset {name}')
+    ax.annotate(f'{name} ({beta}, {ret*100:.1f}%)', 
+                xy=(beta, ret), xytext=(10, 10), textcoords='offset points',
+                arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=5),
+                bbox=dict(boxstyle='round,pad=0.3', fc='yellow', alpha=0.5))
+
+ax.set_xlim(0, 2)
+ax.set_ylim(0, 0.20)
+ax.set_xlabel('Beta', fontsize=12)
+ax.set_ylabel('Expected Return', fontsize=12)
+ax.set_title('Security Market Line (SML)', fontsize=14)
+ax.yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1.0, decimals=1))
+ax.grid(True, linestyle='--', alpha=0.6)
+ax.legend(loc='upper left')
+
+# 添加Rf和市场收益的交互式滑块
+ax_rf = plt.axes([0.15, 0.1, 0.75, 0.03])
+ax_rm = plt.axes([0.15, 0.15, 0.75, 0.03])
+
+# 滑块范围设定为百分比便于拖动理解
+slider_rf = Slider(ax_rf, 'Rf (%)', 0.0, 10.0, valinit=rf_init*100, valfmt='%.1f%%')
+slider_rm = Slider(ax_rm, 'Market Return (%)', 0.0, 30.0, valinit=rm_init*100, valfmt='%.1f%%')
+
+# 更新图形的回调函数
+def update(val):
+    rf = slider_rf.val / 100
+    rm = slider_rm.val / 100
+    slope = rm - rf
+    new_returns = [rf, rf + 2 * slope]
+    line.set_ydata(new_returns)
+    mkt_point.set_ydata([rm])
+    rf_point.set_ydata([rf])
+    fig.canvas.draw_idle()
+
+slider_rf.on_changed(update)
+slider_rm.on_changed(update)
+
+# 保存图表
+fig_path = 'sml_plot.png'
+fig.savefig(fig_path, bbox_inches='tight')
+plt.close(fig)
+
+# 构建符合契约的输出字典
+result = {
+    'sml_slope': round(sml_slope, 4),  # 0.071 (即 7.1%)
+    'er_at_beta_127': round(er_at_beta_127, 4),  # 0.1132 (即 11.32%)
+    'figure_path': fig_path
+}
+
+print(result)
+```

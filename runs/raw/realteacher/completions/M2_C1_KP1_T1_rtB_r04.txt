@@ -1,0 +1,28 @@
+为了计算最小方差投资组合（Minimum Variance Portfolio, MVP），首先根据已知的年化波动率和相关系数构建协方差矩阵。给定：
+
+- 年化波动率：\(\sigma_1 = 18.7\% = 0.187\)，\(\sigma_2 = 24.3\% = 0.243\)，\(\sigma_3 = 31.2\% = 0.312\)
+- 相关系数：\(\rho_{12}=0.21\)，\(\rho_{13}=-0.13\)，\(\rho_{23}=0.37\)
+
+协方差矩阵 \(\Sigma\) 的元素为 \(\Sigma_{ij} = \rho_{ij} \sigma_i \sigma_j\)（且 \(\Sigma_{ii} = \sigma_i^2\)），计算得：
+
+\[
+\Sigma = \begin{bmatrix}
+0.034969 & 0.00954261 & -0.00758472 \\
+0.00954261 & 0.059049 & 0.02805192 \\
+-0.00758472 & 0.02805192 & 0.097344
+\end{bmatrix}
+\]
+
+MVP 的权重为 \(w = \frac{\Sigma^{-1} \mathbf{1}}{\mathbf{1}^\top \Sigma^{-1} \mathbf{1}}\)，组合方差为 \(\sigma_p^2 = \frac{1}{\mathbf{1}^\top \Sigma^{-1} \mathbf{1}}\)。通过解线性方程组 \(\Sigma z = \mathbf{1}\) 并做归一化得到权重，最终计算结果为：
+
+- 权重：\(w_1 \approx 0.6193\)，\(w_2 \approx 0.1573\)，\(w_3 \approx 0.2234\)
+- 组合年化波动率：\(\sigma_p \approx 0.1465\)（即 14.65%）
+
+满足要求的输出字典如下：
+
+```python
+result = {
+    'mvp_weights': [0.6193, 0.1573, 0.2234],
+    'mvp_vol_annual': 0.1465
+}
+```

@@ -1,0 +1,58 @@
+æä»¬å°ä½¿ç¨ Python è®¡ç®åå² VaRï¼å¹¶ç»å¶æçç´æ¹å¾ãä»¥ä¸ä»£ç è¯»åæ°æ®ãè®¡ç® 95%ä¸æ¥ VaRï¼å¤´å¯¸ 100 ä¸ï¼ãçæå¾å½¢å¹¶è¿åæéå­åãç±äºæ æ³ç´æ¥è®¿é®æ¨çæ¬å°æä»¶ï¼ä»£ç ä¸­å°åæ°æ®è¯»åé»è¾ï¼å®éè¿è¡åä¼ç»åºåæ°å¼ã
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ---------- åæ° ----------
+confidence = 0.95          # ç½®ä¿¡åº¦ï¼å¯è°ï¼
+alpha = 1 - confidence     # æ¾èæ§æ°´å¹³
+position = 1_000_000       # å¤´å¯¸ï¼åï¼
+data_path = "data/market_snapshot_v1.csv"
+figure_save_path = "var_histogram.png"
+
+# ---------- è¯»åæ°æ® ----------
+df = pd.read_csv(data_path)
+# åè®¾æ¶ççå¨ 'fund' åï¼å½¢å¼ä¸ºå°æ°ï¼å¦0.01è¡¨ç¤º1%ï¼
+returns = df['fund'].dropna()
+
+# ---------- è®¡ç®æç ----------
+pnl = position * returns   # æ¯æ¥æçï¼åï¼
+
+# ---------- åå² VaR ----------
+# å¨æ¾èæ§æ°´å¹³ alpha ä¸çåä½æ°ï¼æå¤±ä¸ºè´å¼ï¼VaRååç»å¯¹å¼ï¼
+var_loss = -np.quantile(pnl, alpha)
+print(f"åå²æ³ {confidence*100:.0f}% ä¸æ¥ VaR: {var_loss:,.2f} å")
+
+# ---------- ç´æ¹å¾ ----------
+plt.figure(figsize=(10, 6))
+plt.hist(pnl, bins=50, color='steelblue', edgecolor='white', alpha=0.8, label='Daily P&L')
+plt.axvline(x=-var_loss, color='red', linestyle='--', linewidth=2, 
+            label=f'{confidence*100:.0f}% 1-Day VaR: {var_loss:,.2f}')
+plt.title('Historical VaR - Profit/Loss Distribution', fontsize=14)
+plt.xlabel('Profit / Loss (CNY)', fontsize=12)
+plt.ylabel('Frequency', fontsize=12)
+plt.legend()
+plt.tight_layout()
+plt.savefig(figure_save_path, dpi=150)
+plt.close()
+
+# ---------- è¾åºå­å ----------
+result = {
+    'hist_var_95_1d': var_loss,
+    'figure_path': figure_save_path
+}
+
+# æå°ç»æï¼è¥å¨èæ¬ä¸­è¿è¡ï¼ä¼èªå¨æ¾ç¤ºï¼
+print("\nResult Dictionary:")
+print(result)
+```
+
+### åè¯´æ
+- **VaR æ°å¼**ï¼ä»£ç ä¸­ `var_loss` å³ä¸º 95% ç½®ä¿¡åº¦ä¸çä¸æ¥ VaRï¼æ­£æ°ï¼è¡¨ç¤ºæå¤±éé¢ï¼ã
+- **ç½®ä¿¡åº¦å¯è°**ï¼åªéä¿®æ¹åé `confidence`ï¼å¦ 0.99 è®¡ç® 99% VaRï¼ï¼åé»è¾èªå¨ééã
+- **å¾å½¢è¾åº**ï¼ç´æ¹å¾ä¿å­è³ `var_histogram.png`ï¼çº¢è²èçº¿æ æ³¨äºè®¡ç®åºç VaR éå¼ã
+- **ä¾èµåº**ï¼éè¦ `pandas`, `numpy`, `matplotlib`ãè¯·ç¡®ä¿å·²å®è£ã
+
+ç±äºææ æ³ç´æ¥æ¥çæ¨ç CSV æä»¶åï¼å®é `hist_var_95_1d` çæ°å¼ä¼å¨æ¨è¿è¡ä»£ç åå¾åºãè¿è¡åï¼`result` å­åå°åå VaR éé¢ä¸å¾è·¯å¾ã

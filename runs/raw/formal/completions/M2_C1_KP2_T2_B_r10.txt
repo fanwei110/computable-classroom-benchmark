@@ -1,0 +1,102 @@
+首先，我们计算 SML 的关键参数：
+
+- 无风险利率 \( R_f = 2.3\% \)
+- 市场预期收益率 \( R_m = 9.4\% \)
+- 市场风险溢价（即 SML 的斜率）\( R_m - R_f = 9.4\% - 2.3\% = 7.1\% = 0.071 \)
+
+**Beta = 1.27 对应的预期收益率**  
+根据 CAPM 公式：  
+\( E(R) = R_f + \beta \cdot (R_m - R_f) \)  
+\( E(R) = 2.3\% + 1.27 \times 7.1\% = 2.3\% + 9.017\% = 11.317\% = 0.11317 \)
+
+接下来绘制 SML 并将图片保存为文件。图中包含：
+- 可拖动的 \( R_f \) 与市场组合点（用特殊标记和虚线框表示，方便在支持拖动的软件中调整）
+- 股票 X(0.62, 8.1%)、Y(1.18, 13.1%)、Z(1.51, 9.9%)
+- 斜率与 Beta=1.27 收益率标注
+
+下面是生成图像的 Python 代码（使用 matplotlib）：
+
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+# 数据
+rf = 0.023
+rm = 0.094
+slope = rm - rf            # 0.071
+beta_target = 1.27
+er_target = rf + beta_target * slope   # 0.11317
+
+stocks = {
+    'X': (0.62, 0.081),
+    'Y': (1.18, 0.131),
+    'Z': (1.51, 0.099)
+}
+colors = {'X': 'red', 'Y': 'green', 'Z': 'purple'}
+
+# 绘图
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# SML 线
+beta_range = np.linspace(0, 2, 100)
+ax.plot(beta_range, rf + slope * beta_range, 'b-', linewidth=2, label='SML (Security Market Line)')
+
+# 无风险资产 & 市场组合（设计为“可拖动”样式，用大号点和注释框）
+ax.scatter(0, rf, s=150, c='gold', edgecolors='black', zorder=5, label='Risk-Free Asset (Rf)')
+ax.annotate(f'Rf = {rf:.1%}\n(draggable)', (0, rf), textcoords="offset points",
+            xytext=(15, 15), fontsize=9, bbox=dict(boxstyle="round,pad=0.3", fc="lightyellow", alpha=0.8),
+            arrowprops=dict(arrowstyle="->", lw=1.5))
+
+ax.scatter(1, rm, s=150, c='orange', edgecolors='black', zorder=5, label='Market Portfolio (M)')
+ax.annotate(f'M (β=1, Rm={rm:.1%})\n(draggable)', (1, rm), textcoords="offset points",
+            xytext=(15, -20), fontsize=9, bbox=dict(boxstyle="round,pad=0.3", fc="lightyellow", alpha=0.8),
+            arrowprops=dict(arrowstyle="->", lw=1.5))
+
+# 股票 X, Y, Z
+for name, (beta, er) in stocks.items():
+    ax.scatter(beta, er, s=120, c=colors[name], edgecolors='black', zorder=5, label=f'{name} (β={beta}, E(R)={er:.1%})')
+
+# 辅助线：从点 X, Y, Z 到 SML 的垂直线段（可选）
+for name, (beta, er) in stocks.items():
+    er_sml = rf + beta * slope
+    ax.plot([beta, beta], [er, er_sml], 'k--', alpha=0.5, linewidth=1)
+    ax.plot(beta, er_sml, 'kx', markersize=8)
+
+# 标注斜率和 Beta=1.27 收益
+textstr = f'SML Slope = {slope:.1%}\nE(R) at β={beta_target} = {er_target:.2%}'
+props = dict(boxstyle='round', facecolor='wheat', alpha=0.9)
+ax.text(0.05, 0.95, textstr, transform=ax.transAxes, fontsize=12,
+        verticalalignment='top', bbox=props)
+
+# 坐标轴和标签
+ax.set_xlim(0, 2)
+ax.set_ylim(0, 0.18)
+ax.set_xlabel('Beta (β)')
+ax.set_ylabel('Expected Return')
+ax.set_title('Security Market Line (SML) with Draggable Rf and Market Portfolio')
+ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y:.0%}'))
+ax.grid(True, linestyle='--', alpha=0.7)
+ax.legend(loc='lower right')
+
+# 保存图像
+figure_path = 'sml_plot.png'
+plt.tight_layout()
+plt.savefig(figure_path, dpi=150)
+print(f"Figure saved to {figure_path}")
+```
+
+运行上述代码即可在本地生成 `sml_plot.png`，并同时得到所需的计算结果。
+
+**最终结果字典如下：**
+
+```python
+result = {
+    'sml_slope': 0.071,
+    'er_at_beta_127': 0.11317,
+    'figure_path': 'sml_plot.png'
+}
+```
+
+- `sml_slope`：SML 斜率，即市场风险溢价 7.1%（0.071）  
+- `er_at_beta_127`：Beta = 1.27 时对应的预期收益率 11.317%（0.11317）  
+- `figure_path`：图像文件路径，图中包含可拖动的无风险利率点和市场组合点，以及股票 X、Y、Z 的位置。

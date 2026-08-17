@@ -1,0 +1,42 @@
+```python
+import numpy as np
+
+# ---- 参数设定 ----
+w_A = 0.6
+w_B = 0.4
+sigma_A = 0.184   # 年化波动率 18.4%
+sigma_B = 0.297   # 年化波动率 29.7%
+rho_before = 0.3
+rho_after = 0.8
+
+# 组合权重向量
+weights = np.array([w_A, w_B])
+
+# 标准差向量
+sigmas = np.array([sigma_A, sigma_B])
+
+# ---- 构造两个协方差矩阵 ----
+def cov_matrix(sigma1, sigma2, rho):
+    """返回2x2协方差矩阵 [[s1^2, rho*s1*s2], [rho*s1*s2, s2^2]]"""
+    cov = np.array([[sigma1**2, rho * sigma1 * sigma2],
+                    [rho * sigma1 * sigma2, sigma2**2]])
+    return cov
+
+cov_before = cov_matrix(sigma_A, sigma_B, rho_before)
+cov_after = cov_matrix(sigma_A, sigma_B, rho_after)
+
+# ---- 计算组合方差与波动率 ----
+var_before = weights.T @ cov_before @ weights
+var_after = weights.T @ cov_after @ weights
+
+vol_before = np.sqrt(var_before)
+vol_after = np.sqrt(var_after)
+
+# ---- 结果输出 ----
+result = {
+    'vol_before_annual': vol_before,
+    'vol_after_annual': vol_after
+}
+
+print(result)
+```

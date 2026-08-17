@@ -1,0 +1,48 @@
+import numpy as np
+from scipy.stats import norm
+
+# ============================
+# 输入参数
+# ============================
+position_value = 1_850_000.0      # 头寸价值 (人民币)
+sigma_annual   = 0.218            # 年化收益波动率
+# 交易日假设: 通常使用 252 天 (与波动率年化惯例一致)
+trading_days   = 252
+
+# ============================
+# 波动率期限转换
+# ============================
+# 年化 -> 一日 (假设 i.i.d. 收益, 使用平方根规则)
+sigma_daily = sigma_annual / np.sqrt(trading_days)
+
+# ============================
+# Delta-Normal VaR 计算
+# ============================
+# 在 delta-normal 模型中通常假设期望收益为 0，
+# VaR(alpha) = P * sigma * z_alpha，
+# 其中 z_alpha = N^{-1}(alpha) 为标准正态分布的 alpha 上分位数。
+z_95 = norm.ppf(0.95)   # 95% 置信水平
+z_99 = norm.ppf(0.99)   # 99% 置信水平
+
+# (i) 95% 一日 VaR
+var_95_1d = position_value * sigma_daily * z_95
+
+# (ii) 99% 十日 VaR (使用平方根时间规则进行缩放)
+horizon_10d = 10
+var_99_10d = position_value * sigma_daily * np.sqrt(horizon_10d) * z_99
+
+# ============================
+# 存储结果
+# ============================
+result = {
+    'var_95_1d':  var_95_1d,
+    'var_99_10d': var_99_10d
+}
+
+# 课堂展示用输出
+print("=== 在险价值 (VaR) 计算结果 (Delta-Normal 参数法) ===")
+print(f"假设: 年化波动率 {sigma_annual:.1%}, 交易日/年 = {trading_days}")
+print(f"头寸价值: ¥{position_value:,.2f}")
+print(f"95% 一日 VaR : ¥{var_95_1d:,.2f}")
+print(f"99% 十日 VaR : ¥{var_99_10d:,.2f}")
+print("\n结果字典:", result)

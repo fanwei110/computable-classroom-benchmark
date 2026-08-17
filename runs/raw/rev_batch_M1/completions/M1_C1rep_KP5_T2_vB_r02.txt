@@ -1,0 +1,67 @@
+我将按照您的要求计算历史法VaR并绘制损益直方图，以下是实现代码和结果：
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# 读取数据
+data = pd.read_csv('data/market_snapshot_v1.csv')
+returns = data['fund'].pct_change().dropna()  # 日收益率
+
+# 参数设置
+position = 1_000_000  # 头寸100万
+confidence_level = 0.95  # 置信度95%
+
+# 计算损益
+pnl = returns * position
+
+# 计算历史法VaR
+var_95_1d = -np.percentile(pnl, 100 * (1 - confidence_level))
+
+# 绘制直方图
+plt.figure(figsize=(10, 6))
+plt.hist(pnl, bins=50, alpha=0.75, color='blue', edgecolor='black')
+
+# 添加VaR标根线
+plt.axvline(x=-var_95_1d, color='red', linestyle='--', label=f'95% 1-day VaR: {var_95_1d:,.2f}')
+
+plt.title('Profit & Loss Distribution with Historical VaR')
+plt.xlabel('Profit & Loss (CNY)')
+plt.ylabel('Frequency')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 保存图片
+figure_path = 'var_histogram.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 存储结果
+result = {
+    'hist_var_95_1d': var_95_1d,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+print(result)
+```
+
+输出结果示例（具体数值可能因数据而异）：
+```python
+{
+    'hist_var_95_1d': 18562.34,  # 示例值，实际值取决于数据
+    'figure_path': '/path/to/your/project/var_histogram.png'
+}
+```
+
+注意事项：
+1. 请确保数据文件路径正确（'data/market_snapshot_v1.csv'）
+2. 程序会在当前工作目录生成名为'var_histogram.png'的图片文件
+3. 计算结果中的VaR值表示在95%置信水平下，一天内可能的最大损失金额
+4. 如果需要调整置信度，可以修改confidence_level变量的值
+
+图片中会显示：
+- 蓝色直方图：损益分布
+- 红色虚线：95%置信度下的VaR标根线
+- 图例中会显示具体的VaR数值

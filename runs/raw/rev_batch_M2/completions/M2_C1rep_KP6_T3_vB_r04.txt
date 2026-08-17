@@ -1,0 +1,27 @@
+根据您的问题，我们需要计算该基金的年化夏普比率。假设您提供了基金的收益率数据，且无风险利率为2.1%。年化夏普比率的计算公式为：
+
+\[
+\text{Sharpe Annual} = \frac{\text{年化超额收益率}}{\text{年化波动率}}
+\]
+
+其中：
+- 年化超额收益率 = (基金年化收益率 - 无风险利率)
+- 年化波动率 = 基金收益率的标准差 × √(年化因子)
+
+由于您没有提供具体的基金收益率序列数据，我无法进行实际计算。如果您能提供基金的历史收益率数据（如日收益率或月收益率），我可以帮您计算并存入字典。
+
+```python
+# 示例代码结构（需提供数据后才能运行）
+import numpy as np
+
+# 假设有收益率序列 returns
+rf = 0.021
+annual_factor = 252  # 日收益率年化因子，若是月收益率则为12
+
+excess_returns = returns - rf / annual_factor
+sharpe_annual = np.mean(excess_returns) / np.std(excess_returns) * np.sqrt(annual_factor)
+
+result = {'sharpe_annual': sharpe_annual}
+```
+
+请提供具体的收益率数据，以便我完成计算并输出结果。

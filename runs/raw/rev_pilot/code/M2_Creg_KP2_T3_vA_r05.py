@@ -1,0 +1,25 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import constants  # 仅用于展示已导入，实际未使用
+
+# 已知参数
+beta = 1.42
+market_return_monthly = -0.058          # 市场跌了5.8%
+risk_free_annual = 0.047               # 年化无风险利率4.7%
+
+# 将年化无风险利率转换为月利率（单利，符合一般CAPM实践）
+risk_free_monthly = risk_free_annual / 12.0
+
+# 根据CAPM计算预期月收益率
+# E(R_i) = R_f + beta * (E(R_m) - R_f)
+capm_return_monthly = risk_free_monthly + beta * (market_return_monthly - risk_free_monthly)
+
+# 按输出契约，将所有要求的结果存入字典 result
+result = {
+    'capm_return_monthly': capm_return_monthly
+}
+
+# 打印结果以验证
+if __name__ == "__main__":
+    print(result)

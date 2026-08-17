@@ -1,0 +1,150 @@
+=== B0002  任务 KP6_T2 (T2) ===
+
+--- 任务要求的输出键 ---
+rolling_sharpe_last
+
+--- 判分失败明细 ---
+rolling_sharpe_last: 提交值 -1.5446597385186422  |  参考值 -0.09079893488821339
+
+--- 提取出的代码 ---
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ================= 1. 模拟数据准备 =================
+# 如果已有真实数据，请替换此部分读取您的 DataFrame，确保包含 'fund' 列
+np.random.seed(42)
+dates = pd.date_range(start='2023-01-01', periods=500, freq='B')
+fund_nav = np.cumprod(1 + np.random.normal(0.0005, 0.015, 500)) * 1.0
+df = pd.DataFrame({'date': dates, 'fund': fund_nav})
+df.set_index('date', inplace=True)
+
+# ================= 2. 参数设置与计算约定 =================
+rf_annual = 0.021          # 无风险利率 2.1%，小数表示
+trading_days = 252         # 每年252个交易日
+rf_daily = rf_annual / trading_days  # 去年化：日度无风险利率
+
+window_size = 60           # 滚动窗口大小，可在此调整
+
+# ================= 3. 滚动夏普比率计算 =================
+# 计算日度收益率
+df['daily_return'] = df['fund'].pct_change()
+
+# 计算日度超额收益率
+df['excess_return'] = df['daily_return'] - rf_daily
+
+# 计算滚动均值与滚动标准差（ddof=1 符合样本估计量约定，pandas默认即为ddof=1）
+rolling_mean = df['excess_return'].rolling(window=window_size).mean()
+rolling_std = df['excess_return'].rolling(window=window_size).std(ddof=1)
+
+# 年化滚动夏普比率 = (日度超额均值 / 日度标准差) * sqrt(252)
+df['rolling_sharpe'] = (rolling_mean / rolling_std) * np.sqrt(trading_days)
+
+# 处理因标准差极小或为0可能产生的无穷大值
+df['rolling_sharpe'].replace([np.inf, -np.inf], np.nan, inplace=True)
+
+# 获取最后一个窗口的值
+rolling_sharpe_last = float(df['rolling_sharpe'].iloc[-1])
+
+# ================= 4. 绘图与保存 =================
+# 设置中文字体与负号显示
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS']
+plt.rcParams['axes.unicode_minus'] = False
+
+plt.figure(figsize=(12, 6))
+plt.plot(df.index, df['rolling_sharpe'], label=f'{window_size}-Day Rolling Sharpe', color='blue', linewidth=1.2)
+plt.axhline(0, color='red', linestyle='--', linewidth=0.8, alpha=0.7)
+
+plt.title(f'{window_size}天滚动夏普比率 (无风险利率: {rf_annual:.1%})', fontsize=14)
+plt.xlabel('日期', fontsize=12)
+plt.ylabel('夏普比率', fontsize=12)
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 保存图片
+figure_path = 'rolling_sharpe.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ================= 5. 按照输出契约存入字典 =================
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': figure_path
+}
+
+# 打印结果检验
+print(f"最后一个窗口的夏普比率: {result['rolling_sharpe_last']:.4f}")
+print(f"图表保存路径: {result['figure_path']}")
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ================= 1. 模拟数据准备 =================
+# 如果已有真实数据，请替换此部分读取您的 DataFrame，确保包含 'fund' 列
+np.random.seed(42)
+dates = pd.date_range(start='2023-01-01', periods=500, freq='B')
+fund_nav = np.cumprod(1 + np.random.normal(0.0005, 0.015, 500)) * 1.0
+df = pd.DataFrame({'date': dates, 'fund': fund_nav})
+df.set_index('date', inplace=True)
+
+# ================= 2. 参数设置与计算约定 =================
+rf_annual = 0.021          # 无风险利率 2.1%，小数表示
+trading_days = 252         # 每年252个交易日
+rf_daily = rf_annual / trading_days  # 去年化：日度无风险利率
+
+window_size = 60           # 滚动窗口大小，可在此调整
+
+# ================= 3. 滚动夏普比率计算 =================
+# 计算日度收益率
+df['daily_return'] = df['fund'].pct_change()
+
+# 计算日度超额收益率
+df['excess_return'] = df['daily_return'] - rf_daily
+
+# 计算滚动均值与滚动标准差（ddof=1 符合样本估计量约定，pandas默认即为ddof=1）
+rolling_mean = df['excess_return'].rolling(window=window_size).mean()
+rolling_std = df['excess_return'].rolling(window=window_size).std(ddof=1)
+
+# 年化滚动夏普比率 = (日度超额均值 / 日度标准差) * sqrt(252)
+df['rolling_sharpe'] = (rolling_mean / rolling_std) * np.sqrt(trading_days)
+
+# 处理因标准差极小或为0可能产生的无穷大值
+df['rolling_sharpe'].replace([np.inf, -np.inf], np.nan, inplace=True)
+
+# 获取最后一个窗口的值
+rolling_sharpe_last = float(df['rolling_sharpe'].iloc[-1])
+
+# ================= 4. 绘图与保存 =================
+# 设置中文字体与负号显示
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS']
+plt.rcParams['axes.unicode_minus'] = False
+
+plt.figure(figsize=(12, 6))
+plt.plot(df.index, df['rolling_sharpe'], label=f'{window_size}-Day Rolling Sharpe', color='blue', linewidth=1.2)
+plt.axhline(0, color='red', linestyle='--', linewidth=0.8, alpha=0.7)
+
+plt.title(f'{window_size}天滚动夏普比率 (无风险利率: {rf_annual:.1%})', fontsize=14)
+plt.xlabel('日期', fontsize=12)
+plt.ylabel('夏普比率', fontsize=12)
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 保存图片
+figure_path = 'rolling_sharpe.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ================= 5. 按照输出契约存入字典 =================
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': figure_path
+}
+
+# 打印结果检验
+print(f"最后一个窗口的夏普比率: {result['rolling_sharpe_last']:.4f}")
+print(f"图表保存路径: {result['figure_path']}")
+```

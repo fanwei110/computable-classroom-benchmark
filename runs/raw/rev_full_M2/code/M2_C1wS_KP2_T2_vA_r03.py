@@ -1,0 +1,75 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ==================== 可调参数 ====================
+rf = 0.023          # 无风险利率
+market_er = 0.094   # 市场期望收益
+# =================================================
+
+# 计算 SML 斜率
+sml_slope = market_er - rf
+
+# 给定 beta 计算期望收益
+def expected_return(beta):
+    return rf + sml_slope * beta
+
+# 三只股票
+stocks = {
+    'X': (0.62, 0.081),
+    'Y': (1.18, 0.131),
+    'Z': (1.51, 0.099),
+}
+
+# beta=1.27 处的期望收益
+beta_target = 1.27
+er_at_beta_127 = expected_return(beta_target)
+
+# ==================== 画图 ====================
+beta_range = np.linspace(0, 2, 100)
+er_sml = expected_return(beta_range)
+
+fig, ax = plt.subplots(figsize=(8, 6))
+
+# 画 SML
+ax.plot(beta_range, er_sml, 'k-', linewidth=2, label='SML')
+ax.axhline(y=rf, color='gray', linestyle='--', linewidth=0.8, label=f'$r_f$ = {rf:.1%}')
+ax.axvline(x=1.0, color='gray', linestyle='--', linewidth=0.8, label=f'Market $\\beta$=1')
+
+# 标出三只股票的点
+colors = {'X': 'red', 'Y': 'blue', 'Z': 'green'}
+for name, (beta, er) in stocks.items():
+    ax.scatter(beta, er, color=colors[name], s=80, zorder=5, label=f'{name} (β={beta}, ER={er:.1%})')
+    # 画出 alpha 线段（点到 SML 的垂直连线）
+    er_sml_point = expected_return(beta)
+    ax.plot([beta, beta], [er, er_sml_point], color=colors[name], linestyle=':', linewidth=1.2)
+    alpha = er - er_sml_point
+    print(f"{name}: alpha = {alpha:.4f} ({alpha:.2%})")
+
+ax.set_xlabel('Beta (β)', fontsize=12)
+ax.set_ylabel('Expected Return', fontsize=12)
+ax.set_title('Security Market Line (SML)', fontsize=14)
+ax.set_xlim(0, 2)
+ax.set_ylim(0, 0.2)
+ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: f'{y:.1%}'))
+ax.legend(loc='lower right', fontsize=9)
+ax.grid(True, alpha=0.3)
+
+# 保存图形
+figure_path = os.path.abspath('sml_figure.png')
+plt.tight_layout()
+plt.savefig(figure_path, dpi=150)
+plt.show()
+
+# ==================== 输出契约 ====================
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': figure_path,
+}
+
+# 控制台输出关键数值
+print(f"\nSML 斜率 = {sml_slope:.4f} ({sml_slope:.2%})")
+print(f"Beta=1.27 的期望收益 = {er_at_beta_127:.4f} ({er_at_beta_127:.2%})")
+print(f"图形已保存至: {figure_path}")
+print(f"结果字典: {result}")

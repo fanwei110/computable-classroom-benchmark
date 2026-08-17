@@ -1,0 +1,51 @@
+以下是一个自包含的 Python 脚本，使用 `numpy` 和 `scipy` 计算在 delta-normal 模型下的 VaR 值：
+
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+position_value = 1_850_000  # 头寸价值（元）
+annual_volatility = 0.218   # 年化收益波动率（21.8%）
+
+# 常数
+days_in_year = 252         # 交易日天数（通常假设一年有252个交易日）
+confidence_95 = 0.95       # 95%置信水平
+confidence_99 = 0.99       # 99%置信水平
+
+# 计算Z值（标准正态分布的分位数）
+z_95 = norm.ppf(confidence_95)
+z_99 = norm.ppf(confidence_99)
+
+# 计算一日收益波动率（年化波动率转换为日波动率）
+daily_volatility = annual_volatility / np.sqrt(days_in_year)
+
+# 计算95%置信水平下的1日VaR
+var_95_1d = position_value * z_95 * daily_volatility
+
+# 计算99%置信水平下的10日VaR（使用平方根法则调整时间）
+ten_day_volatility = daily_volatility * np.sqrt(10)
+var_99_10d = position_value * z_99 * ten_day_volatility
+
+# 结果存储
+result = {
+    'var_95_1d': round(var_95_1d, 2),
+    'var_99_10d': round(var_99_10d, 2)
+}
+
+print(result)
+```
+
+### 输出说明：
+- `var_95_1d`：95%置信水平下的1日VaR（单位：元）。
+- `var_99_10d`：99%置信水平下的10日VaR（单位：元）。
+
+### 计算逻辑：
+1. **Z值**：通过 `scipy.stats.norm.ppf` 获取标准正态分布的分位数（95%对应1.64485，99%对应2.32635）。
+2. **日波动率**：年化波动率除以 `√252` 转换为日波动率。
+3. **10日波动率**：日波动率乘以 `√10` 调整为10日波动率（平方根法则）。
+4. **VaR**：头寸价值 × Z值 × 波动率（日或10日）。
+
+### 复现性：
+- 脚本不依赖外部数据，仅使用数学公式和标准库，结果确定可复现。
+- 变量命名清晰，避免魔法数字。

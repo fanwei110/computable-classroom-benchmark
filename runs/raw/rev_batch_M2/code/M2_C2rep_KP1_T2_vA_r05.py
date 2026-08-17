@@ -1,0 +1,90 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 资产参数（年化）
+mu = np.array([0.071, 0.124])          # 期望收益
+sigma = np.array([0.163, 0.289])       # 波动率
+rho_list = [0.15, 0.45, 0.75]          # 相关系数集合
+target_rho = 0.45                      # 用于报告的相关系数
+target_return = 0.10                   # 目标期望收益
+
+def portfolio_stats(w1, mu, sigma, rho):
+    """
+    计算满仓组合 (w1, 1-w1) 的期望收益与标准差
+    """
+    w2 = 1.0 - w1
+    port_return = w1 * mu[0] + w2 * mu[1]
+    var1, var2 = sigma[0]**2, sigma[1]**2
+    cov = rho * sigma[0] * sigma[1]
+    port_var = w1**2 * var1 + w2**2 * var2 + 2.0 * w1 * w2 * cov
+    port_std = np.sqrt(port_var)
+    return port_return, port_std
+
+def mvp_weight(sigma, rho):
+    """
+    最小方差组合中资产1的权重（解析解）
+    推导：令 d(Var)/dw1 = 0
+    """
+    s1, s2 = sigma
+    var1, var2 = s1**2, s2**2
+    cov = rho * s1 * s2
+    w1 = (var2 - cov) / (var1 + var2 - 2.0 * cov)
+    return w1
+
+# ------------------------------------------------------------
+# 1. 报告所需的两个波动率 (对于 ρ = 0.45)
+# ------------------------------------------------------------
+# 最小方差组合
+w_mvp = mvp_weight(sigma, target_rho)
+_, mvp_std = portfolio_stats(w_mvp, mu, sigma, target_rho)
+mvp_vol_at_rho45 = mvp_std
+
+# 目标期望收益 10 % 对应的最小波动率（满仓下权重唯一确定）
+if mu[0] != mu[1]:
+    w_target = (target_return - mu[1]) / (mu[0] - mu[1])
+    _, target_std = portfolio_stats(w_target, mu, sigma, target_rho)
+    frontier_vol_at_target = target_std
+else:
+    raise ValueError("两个资产的期望收益不能相等")
+
+# ------------------------------------------------------------
+# 2. 绘制均值-方差前沿
+# ------------------------------------------------------------
+w_range = np.linspace(-1.5, 2.5, 600)   # 足够宽的权重扫描范围以展示卖空情形
+colors = ['#1f77b4', '#2ca02c', '#d62728']  # 蓝、绿、红
+
+plt.figure(figsize=(10, 7))
+for i, rho in enumerate(rho_list):
+    ret, std = portfolio_stats(w_range, mu, sigma, rho)
+    # 曲线：波动率-期望收益（转换为百分数显示）
+    plt.plot(std * 100, ret * 100,
+             color=colors[i], linewidth=2, label=f'ρ = {rho}')
+    # 最小方差组合点
+    w_mvp = mvp_weight(sigma, rho)
+    ret_mvp, std_mvp = portfolio_stats(w_mvp, mu, sigma, rho)
+    plt.scatter(std_mvp * 100, ret_mvp * 100,
+                color=colors[i], marker='*', s=150, zorder=5, edgecolors='k')
+
+# 添加一个独立图例项表示最小方差组合
+plt.scatter([], [], color='black', marker='*', s=150, label='MVP', edgecolors='k')
+plt.xlabel('Annualized Volatility (%)')
+plt.ylabel('Expected Return (%)')
+plt.title('Mean-Variance Frontier for Two Risky Assets')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+
+figure_path = 'mean_variance_frontier.png'
+plt.savefig(figure_path, dpi=150)
+plt.close()
+
+# ------------------------------------------------------------
+# 3. 输出结果
+# ------------------------------------------------------------
+result = {
+    'mvp_vol_at_rho45': mvp_vol_at_rho45,
+    'frontier_vol_at_target': frontier_vol_at_target,
+    'figure_path': figure_path
+}
+
+print(result)

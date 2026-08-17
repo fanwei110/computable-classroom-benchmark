@@ -1,0 +1,53 @@
+import numpy as np
+import pandas as pd
+from scipy.optimize import minimize
+
+# ---------- 步骤1：构造协方差矩阵 ----------
+# 年化波动率
+vol = np.array([0.187, 0.243, 0.312])
+# 相关系数矩阵
+corr = np.array([
+    [1.00,  0.21, -0.13],
+    [0.21,  1.00,  0.37],
+    [-0.13, 0.37,  1.00]
+])
+# 协方差矩阵 = diag(vol) * corr * diag(vol)
+cov_matrix = np.diag(vol) @ corr @ np.diag(vol)  # 等价于 vol * corr * vol[:, None]
+
+# ---------- 步骤2：求全局最小方差权重 ----------
+# 目标函数: 组合方差
+def portfolio_variance(weights):
+    return weights @ cov_matrix @ weights
+
+# 约束：权重和为1（满仓）
+constraints = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1.0})
+# 无上下界（允许卖空），但为数值稳定可给一个很大的范围
+bounds = [(-5, 5)] * 3
+
+# 初始猜测：等权重
+w0 = np.array([1/3, 1/3, 1/3])
+res = minimize(portfolio_variance, w0, method='SLSQP', bounds=bounds, constraints=constraints)
+
+# 闭式解验证（可选）：w = Σ^{-1}*1 / (1' Σ^{-1} 1)
+inv_cov = np.linalg.inv(cov_matrix)
+ones = np.ones(3)
+mvp_weights_closed = inv_cov @ ones / (ones @ inv_cov @ ones)
+
+# 使用闭式解以保证精度
+mvp_weights = mvp_weights_closed
+
+# ---------- 步骤3：组合波动率 ----------
+mvp_var = mvp_weights @ cov_matrix @ mvp_weights
+mvp_vol = np.sqrt(mvp_var)
+
+# ---------- 步骤4：构造 result 字典 ----------
+result = {
+    'mvp_weights': mvp_weights,
+    'mvp_vol_annual': mvp_vol
+}
+
+# ---------- 输出查看 ----------
+print("全局最小方差组合权重：", mvp_weights)
+print("年化波动率（小数）：", mvp_vol)
+
+# 生成的 result 即满足输出契约

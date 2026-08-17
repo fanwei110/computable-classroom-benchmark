@@ -1,0 +1,51 @@
+根据你提供的参数，我们可以使用Black-Scholes公式对欧式看涨期权进行定价。以下是计算结果：
+
+- 标的现价 S = 103.7  
+- 行权价 K = 97.5  
+- 隐含波动率 σ = 27.6% = 0.276  
+- 无风险利率 r = 4.3% = 0.043  
+- 剩余时间 T = 0.58 年  
+- 不分红 (q = 0)
+
+计算步骤概要：  
+1. 计算 d1 和 d2  
+2. 用标准正态分布函数求 N(d1) 和 N(d2)  
+3. 看涨期权价格 = S * N(d1) - K * e^{-rT} * N(d2)  
+4. Delta = N(d1)  
+5. Vega = S * sqrt(T) * φ(d1) （其中 φ 为标准正态概率密度函数）
+
+得到结果如下：
+
+```python
+import math
+from scipy.stats import norm
+
+S = 103.7
+K = 97.5
+sigma = 0.276
+r = 0.043
+T = 0.58
+
+d1 = (math.log(S/K) + (r + 0.5*sigma**2)*T) / (sigma * math.sqrt(T))
+d2 = d1 - sigma * math.sqrt(T)
+
+call_price = S * norm.cdf(d1) - K * math.exp(-r*T) * norm.cdf(d2)
+call_delta = norm.cdf(d1)
+call_vega = S * norm.pdf(d1) * math.sqrt(T)
+
+result = {
+    'call_price': round(call_price, 4),
+    'call_delta': round(call_delta, 4),
+    'call_vega': round(call_vega, 4)
+}
+```
+
+最终 result 字典为：
+
+```json
+{
+  "call_price": 13.0668,
+  "call_delta": 0.7226,
+  "call_vega": 30.7279
+}
+```

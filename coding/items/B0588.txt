@@ -1,0 +1,51 @@
+=== B0588  任务 KP4_T3 (T3) ===
+
+--- 任务要求的输出键 ---
+price_change
+
+--- 判分失败明细 ---
+matched: vega_approximation
+evidence: {'vega_approximation': True}
+harness声明探测: {'vega_approximation': True}
+
+--- 提取出的代码 ---
+import math
+
+S = 103.7
+K = 97.5
+sigma = 0.276
+r = 0.043
+T = 0.58
+
+d1 = (math.log(S / K) + (r + sigma**2 / 2) * T) / (sigma * math.sqrt(T))
+vega = S * math.exp(-d1**2 / 2) / math.sqrt(2 * math.pi) * math.sqrt(T)
+price_change = vega * 0.01
+
+result = {'price_change': price_change}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+根据提供的期权参数（标的现价 103.7，执行价 97.5，隐含波动率 27.6%，无风险连续复利 4.3%，剩余期限 0.58 年），隐含波动率上升 1 个百分点（即 0.01）引起的期权价格变化可通过计算 Vega 乘以 0.01 得到。欧式看涨与看跌期权的 Vega 相同，结果如下：
+
+```python
+import math
+
+S = 103.7
+K = 97.5
+sigma = 0.276
+r = 0.043
+T = 0.58
+
+d1 = (math.log(S / K) + (r + sigma**2 / 2) * T) / (sigma * math.sqrt(T))
+vega = S * math.exp(-d1**2 / 2) / math.sqrt(2 * math.pi) * math.sqrt(T)
+price_change = vega * 0.01
+
+result = {'price_change': price_change}
+```
+
+计算得出 `price_change` 约为 **0.2757**。
+
+最终输出：
+```python
+result = {'price_change': 0.275673...}  # 实际值约为 0.2757
+```

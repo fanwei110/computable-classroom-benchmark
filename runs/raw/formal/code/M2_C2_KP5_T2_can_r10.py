@@ -1,0 +1,62 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+# ============================================================
+# 0. åæ°ä¸è·¯å¾
+# ============================================================
+CONFIDENCE_LEVEL = 0.95            # å¯è°åæ°ï¼ç½®ä¿¡æ°´å¹³
+HEAD_VALUE = 1_000_000.0           # å¤´å¯¸è§æ¨¡ï¼åï¼
+CSV_PATH = "data/market_snapshot_v1.csv"
+FIGURE_PATH = "var_histogram.png"  # è¾åºå¾å½¢æä»¶
+
+# ============================================================
+# 1. è¯»åå¿«ç CSVï¼æé å¤´å¯¸æ¥æç
+# ============================================================
+df = pd.read_csv(CSV_PATH)
+# æå fund åçæ¥æ¶çï¼ç¡®ä¿ä¸ºå°æ°å½¢å¼
+returns_raw = df["fund"].dropna().values.astype(float)
+
+# åè®¾ï¼è¥æ¶çç»å¯¹å¼æ®éå¤§äº0.1ï¼åå¯è½æ¯ç¾åæ¯è¡¨ç¤ºï¼èªå¨è½¬æ¢
+if np.median(np.abs(returns_raw)) > 0.1:
+    returns = returns_raw / 100.0
+else:
+    returns = returns_raw
+
+# æ¥æçåºå = å¤´å¯¸ Ã æ¥æ¶çç
+pnl = HEAD_VALUE * returns
+
+# ============================================================
+# 2. ç±ç»éªåå¸è®¡ç®åå² VaRï¼äººæ°å¸ï¼
+# ============================================================
+alpha = 1.0 - CONFIDENCE_LEVEL  # å·¦å°¾æ¦ç
+var_cutoff = np.percentile(pnl, alpha * 100)  # æçåä½æ°ï¼è´å¼ï¼
+hist_var_95_1d = -var_cutoff    # ä»¥æ­£æ°æ¥åç VaR éé¢
+
+# ============================================================
+# 3. ç»ç´æ¹å¾å¹¶å å¸¦æ æ³¨ç VaR çº¿
+# ============================================================
+plt.figure(figsize=(10, 6))
+plt.hist(pnl, bins=50, edgecolor='black', alpha=0.7, color='steelblue')
+plt.axvline(var_cutoff, color='red', linestyle='--', linewidth=2,
+            label=f'{CONFIDENCE_LEVEL*100:.0f}% Historical VaR: Â¥{hist_var_95_1d:,.2f}')
+plt.xlabel("Daily PnL (CNY)")
+plt.ylabel("Frequency")
+plt.title(f"Distribution of Daily PnL (Position: Â¥{HEAD_VALUE:,.0f})")
+plt.legend()
+plt.tight_layout()
+plt.savefig(FIGURE_PATH, dpi=150)
+plt.close()
+
+# ============================================================
+# 4. å¡«åç»æå­å
+# ============================================================
+result = {
+    'hist_var_95_1d': hist_var_95_1d,
+    'figure_path': os.path.abspath(FIGURE_PATH)
+}
+
+# æ¾ç¤ºç»æä»¥ä¾è¯¾å æå±éªè¯
+print(f"95% ä¸æ¥åå² VaR (äººæ°å¸): Â¥{hist_var_95_1d:,.2f}")
+print(f"å¾å½¢ä¿å­è³: {result['figure_path']}")

@@ -1,0 +1,54 @@
+import numpy as np
+
+# ==================== 债券参数设定 ====================
+face_value = 100          # 面值
+coupon_rate = 0.046       # 票息率 4.6%
+n_years = 7              # 期限 7年
+ytm = 0.053              # 到期收益率 5.3%
+freq = 1                 # 假设：年付息频率为1次/年
+
+# ==================== 现金流构建 ====================
+periods = np.arange(1, n_years * freq + 1)  # 期数序列: [1, 2, ..., 7]
+coupon = face_value * coupon_rate            # 每期票息: 4.6
+
+# 各期现金流：前6期仅为票息，第7期为票息+面值
+cash_flows = np.full(len(periods), coupon)
+cash_flows[-1] += face_value
+
+# ==================== 1. 债券定价 ====================
+discount_rate_per_period = ytm / freq
+discount_factors = (1 + discount_rate_per_period) ** periods
+pv_cash_flows = cash_flows / discount_factors
+
+price = np.sum(pv_cash_flows)
+
+# ==================== 2. 久期计算 ====================
+# 麦考利久期（期） = Σ(t * PV(CF_t)) / Price
+macaulay_duration_periods = np.sum(periods * pv_cash_flows) / price
+
+# 麦考利久期（年） = 麦考利久期（期） / 付息频率
+macaulay_duration_years = macaulay_duration_periods / freq
+
+# 修正久期 = 麦考利久期（年） / (1 + 到期收益率/付息频率)
+modified_duration_years = macaulay_duration_years / (1 + discount_rate_per_period)
+
+# ==================== 3. 凸性计算 ====================
+# 标准年化凸性公式：
+# Conv = (1/P) * (1/freq^2) * Σ [ t*(t+1) * PV(CF_t) / (1+y/freq)^2 ]
+# 由于 t*(t+1)/(1+y)^2 * PV(CF_t) = t*(t+1) * CF_t / (1+y)^(t+2)
+# 可以用已有的 pv_cash_flows 进行简化计算
+convexity = (1 / price) * (1 / freq**2) * np.sum(
+    periods * (periods + 1) * pv_cash_flows / (discount_rate_per_period + 1)**2
+)
+
+# ==================== 4. 填充结果 ====================
+result = {
+    'price': price,
+    'macaulay_duration_years': macaulay_duration_years,
+    'modified_duration_years': modified_duration_years,
+    'convexity': convexity
+}
+
+# 课堂投屏展示结果（保留4位小数以便阅读，字典中存储高精度浮点数）
+for key, value in result.items():
+    print(f"{key}: {value:.4f}")

@@ -1,0 +1,64 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+import os
+
+def black_scholes_delta(S, K, T, r, sigma, option_type='call'):
+    """
+    计算Black-Scholes模型下的期权Delta
+    :param S: 标的价格
+    :param K: 行权价
+    :param T: 剩余期限（年）
+    :param r: 无风险利率（连续复利）
+    :param sigma: 波动率
+    :param option_type: 期权类型（'call'或'put'）
+    :return: Delta值
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    if option_type == 'call':
+        delta = norm.cdf(d1)
+    else:
+        delta = norm.cdf(d1) - 1
+    return delta
+
+# 参数设置
+K = 97.5  # 行权价
+r = np.log(1 + 0.043)  # 连续复利转换
+T = 0.58  # 剩余期限（年）
+S_range = np.linspace(70, 140, 100)  # 标的价格范围
+volatilities = [0.15, 0.276, 0.40]  # 波动率列表
+
+# 计算Delta
+deltas = {}
+for sigma in volatilities:
+    deltas[sigma] = [black_scholes_delta(S, K, T, r, sigma) for S in S_range]
+
+# 绘制图形
+plt.figure(figsize=(10, 6))
+for sigma in volatilities:
+    plt.plot(S_range, deltas[sigma], label=f'Volatility = {sigma * 100:.1f}%')
+
+plt.axvline(x=K, color='gray', linestyle='--', label='Strike Price (97.5)')
+plt.xlabel('Underlying Price')
+plt.ylabel('Delta')
+plt.title('Delta vs Underlying Price for Different Volatilities')
+plt.legend()
+plt.grid(True)
+
+# 保存图形
+figure_path = 'delta_vs_underlying.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 计算S=110, sigma=27.6%时的Delta
+S_110 = 110
+sigma_276 = 0.276
+delta_at_s110 = black_scholes_delta(S_110, K, T, r, sigma_276)
+
+# 存储结果
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+print(result)

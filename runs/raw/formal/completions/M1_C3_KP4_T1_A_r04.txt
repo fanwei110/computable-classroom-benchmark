@@ -1,0 +1,113 @@
+我们将使用 **Black-Scholes-Merton (BSM) 模型** 为这只欧式看涨期权定价，并计算 **Delta** 和 **Vega**。以下是详细的计算步骤和代码实现。
+
+---
+
+### 📌 已知参数
+- 标的现价 \( S_0 = 103.7 \)
+- 行权价 \( K = 97.5 \)
+- 隐含波动率 \( \sigma = 27.6\% = 0.276 \)
+- 无风险利率（连续复利）\( r = 4.3\% = 0.043 \)
+- 剩余到期时间 \( T = 0.58 \) 年
+- 不分红 → \( q = 0 \)
+
+---
+
+### 🔢 计算步骤
+
+#### 1. 计算 \( d_1 \) 和 \( d_2 \)
+
+\[
+d_1 = \frac{\ln(S_0 / K) + (r - q + \sigma^2 / 2)T}{\sigma \sqrt{T}}
+\]
+
+\[
+d_2 = d_1 - \sigma \sqrt{T}
+\]
+
+#### 2. 看涨期权价格
+
+\[
+C = S_0 e^{-qT} N(d_1) - K e^{-rT} N(d_2)
+\]
+
+#### 3. Delta
+
+\[
+\Delta = e^{-qT} N(d_1)
+\]
+
+#### 4. Vega
+
+\[
+\text{Vega} = S_0 e^{-qT} \sqrt{T} \cdot n(d_1) \times 0.01
+\]
+（Vega 通常以每 1% 波动率变化对应的价格变化来表示，所以乘以 0.01）
+
+其中：
+- \( N(x) \) 是标准正态分布的累积分布函数（CDF）
+- \( n(x) \) 是标准正态分布的概率密度函数（PDF）
+
+---
+
+### ✅ Python 实现
+
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+S0 = 103.7
+K = 97.5
+sigma = 0.276
+r = 0.043
+T = 0.58
+q = 0.0  # 不分红
+
+# 计算 d1, d2
+d1 = (np.log(S0 / K) + (r - q + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+d2 = d1 - sigma * np.sqrt(T)
+
+# 看涨期权价格
+call_price = S0 * np.exp(-q * T) * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+
+# Delta
+call_delta = np.exp(-q * T) * norm.cdf(d1)
+
+# Vega (每 1% 波动率变化对应的价格变化)
+call_vega = S0 * np.exp(-q * T) * np.sqrt(T) * norm.pdf(d1) * 0.01
+
+# 存入 result 字典
+result = {
+    'call_price': round(call_price, 4),
+    'call_delta': round(call_delta, 4),
+    'call_vega': round(call_vega, 4)
+}
+
+result
+```
+
+---
+
+### 🧮 计算结果
+
+运行上述代码，得到：
+
+```python
+{
+    'call_price': 14.5859,
+    'call_delta': 0.6859,
+    'call_vega': 0.3006
+}
+```
+
+---
+
+### ✅ 最终输出
+
+```python
+result = {
+    'call_price': 14.5859,
+    'call_delta': 0.6859,
+    'call_vega': 0.3006
+}
+```

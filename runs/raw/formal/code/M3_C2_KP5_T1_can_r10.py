@@ -1,0 +1,47 @@
+import numpy as np
+from scipy.stats import norm
+
+# ==================== 输入参数 ====================
+position_value = 1_850_000  # 头寸价值（元）
+sigma_annual = 0.218       # 年化收益波动率
+
+# ==================== 假设处理 ====================
+# 假设：一年有252个交易日（金融市场的标准假设）
+trading_days_per_year = 252
+
+# ==================== 步骤1：年化波动率换算到一日期限 ====================
+# 参数法下，波动率随时间的平方根缩放：sigma_1d = sigma_annual / sqrt(T)
+sigma_1d = sigma_annual / np.sqrt(trading_days_per_year)
+
+# ==================== 步骤2：套用正态分位数 ====================
+# 95%和99%置信水平下的标准正态分布分位数（上侧分位数）
+z_95 = norm.ppf(0.95)
+z_99 = norm.ppf(0.99)
+
+# ==================== 步骤3：计算VaR及期限缩放 ====================
+# VaR = 头寸价值 × 一日波动率 × 正态分位数
+# (i) 95% 一日 VaR
+var_95_1d = position_value * sigma_1d * z_95
+
+# (ii) 99% 十日 VaR
+# 十日波动率 = 一日波动率 × sqrt(10)
+# 十日 VaR = 头寸价值 × 十日波动率 × z_99
+scaling_factor_10d = np.sqrt(10)
+var_99_10d = position_value * sigma_1d * scaling_factor_10d * z_99
+
+# ==================== 步骤4：填充 result ====================
+# 金额型指标按惯例保留两位小数（人民币元、角、分）
+result = {
+    'var_95_1d': round(var_95_1d, 2),
+    'var_99_10d': round(var_99_10d, 2)
+}
+
+# 投屏展示计算结果与关键中间变量
+if __name__ == "__main__":
+    print(f"假设一年交易日: {trading_days_per_year} 天")
+    print(f"一日波动率: {sigma_1d:.6f}")
+    print(f"正态分位数 Z(95%): {z_95:.6f}")
+    print(f"正态分位数 Z(99%): {z_99:.6f}")
+    print("-" * 30)
+    print(f"95% 一日 VaR: ¥{result['var_95_1d']:,.2f}")
+    print(f"99% 十日 VaR: ¥{result['var_99_10d']:,.2f}")

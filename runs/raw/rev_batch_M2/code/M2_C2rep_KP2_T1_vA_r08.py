@@ -1,0 +1,41 @@
+import numpy as np  # 可用，但此处仅用基本运算
+
+def main():
+    # 给定参数（以小数表示）
+    rf = 0.023          # 无风险利率 2.3%
+    market_ret = 0.094  # 市场期望收益 9.4%
+    market_premium = market_ret - rf  # 市场风险溢价
+
+    # 各股票的 beta
+    beta_x = 0.62
+    beta_y = 1.18
+    beta_z = 1.51
+
+    # 股票 Y 当年实际收益
+    actual_ret_y = 0.131  # 13.1%
+
+    # 1. CAPM 期望收益：E[Ri] = rf + beta * (E[Rm] - rf)
+    er_x = rf + beta_x * market_premium
+    er_y = rf + beta_y * market_premium
+    er_z = rf + beta_z * market_premium
+
+    # 2. 股票 Y 的 alpha = 实际收益 - CAPM 预测收益
+    alpha_y = actual_ret_y - er_y
+
+    # 3. 填充结果字典（键名严格按契约）
+    result = {
+        'er_x': er_x,
+        'er_y': er_y,
+        'er_z': er_z,
+        'alpha_y': alpha_y
+    }
+
+    # 输出结果，方便课堂投屏查看
+    print("CAPM 计算结果：")
+    for k, v in result.items():
+        print(f"  {k}: {v:.6f}  ({v*100:.4f}%)")
+
+    return result
+
+if __name__ == "__main__":
+    result = main()

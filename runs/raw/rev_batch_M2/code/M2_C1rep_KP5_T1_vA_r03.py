@@ -1,0 +1,25 @@
+import math
+
+# 参数
+position = 1_850_000  # 头寸价值
+annual_vol = 0.218    # 年化波动率
+trading_days = 252    # 假设一年252个交易日
+
+# 置信水平对应的Z值（标准正态分布分位数）
+z_95 = 1.6448536269514722   # 95%
+z_99 = 2.3263478740408408   # 99%
+
+# 一日VaR 95%
+daily_vol = annual_vol / math.sqrt(trading_days)
+var_95_1d = position * daily_vol * z_95
+
+# 十日VaR 99%
+ten_day_vol = annual_vol * math.sqrt(10 / trading_days)
+var_99_10d = position * ten_day_vol * z_99
+
+result = {
+    'var_95_1d': round(var_95_1d, 2),
+    'var_99_10d': round(var_99_10d, 2)
+}
+
+result

@@ -1,0 +1,38 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+# =========================
+# 参数设定
+# =========================
+annual_vol = 0.24          # 年化波动率 24%
+position = 2_700_000       # 头寸（元）
+confidence = 0.95          # 置信水平
+trading_days = 250         # 假设一年有250个交易日（亦可选252，此处用250以保证内部一致）
+
+# =========================
+# 1. 年化波动率转日波动率
+# =========================
+daily_vol = annual_vol / np.sqrt(trading_days)
+
+# =========================
+# 2. 95% 正态分位数
+# =========================
+# ppf(0.05) 给出左尾分位数，对于标准正态分布约为 -1.645
+z_alpha = norm.ppf(1 - confidence)   # 负值
+var_95_1d = position * daily_vol * abs(z_alpha)
+
+# =========================
+# 3. 结果存入字典
+# =========================
+result = {
+    'var_95_1d': var_95_1d
+}
+
+# 打印结果（便于课堂投屏展示）
+print(f"交易日假设：{trading_days} 天/年")
+print(f"日波动率：{daily_vol:.6f} ({daily_vol*100:.4f}%)")
+print(f"95% 置信水平对应的正态分位数：{z_alpha:.4f}")
+print(f"一日 95% VaR：{var_95_1d:,.2f} 元")
+print("\nresult =", result)
+```

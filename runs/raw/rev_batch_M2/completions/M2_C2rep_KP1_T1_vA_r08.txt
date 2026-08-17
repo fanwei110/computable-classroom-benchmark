@@ -1,0 +1,47 @@
+以下脚本使用解析法计算全局最小方差组合，满足“允许卖空且资金全部投出”的要求。代码仅依赖 `numpy`，结果直接填入字典 `result`，可直接运行并无任何外部依赖。
+
+```python
+import numpy as np
+
+# 资产年化波动率（小数形式）
+sigma = np.array([0.187, 0.243, 0.312])
+
+# 相关系数矩阵
+corr = np.array([
+    [1.0,  0.21, -0.13],
+    [0.21, 1.0,   0.37],
+    [-0.13, 0.37,  1.0 ]
+])
+
+# 1. 构建协方差矩阵 (Σ)
+D = np.diag(sigma)
+Sigma = D @ corr @ D
+
+# 2. 全局最小方差组合权重： w = (Σ^{-1} 1) / (1^T Σ^{-1} 1)
+ones = np.ones(len(sigma))
+inv_Sigma = np.linalg.inv(Sigma)
+w_mvp = (inv_Sigma @ ones) / (ones @ inv_Sigma @ ones)
+
+# 3. 组合年化波动率
+var_mvp = w_mvp @ Sigma @ w_mvp
+mvp_vol = np.sqrt(var_mvp)
+
+# 4. 按契约输出
+result = {
+    'mvp_weights': w_mvp.tolist(),   # 列表，按资产顺序
+    'mvp_vol_annual': float(mvp_vol) # 年化波动率（小数）
+}
+
+# 以下输出供教师投屏查看（可选）
+if __name__ == "__main__":
+    print("全局最小方差组合：")
+    for i, w in enumerate(w_mvp, 1):
+        print(f"  资产{i}: {w:.6f}  ({w*100:.4f}%)")
+    print(f"年化波动率: {mvp_vol:.6f}  ({mvp_vol*100:.4f}%)")
+```
+
+**结果要点**（运行时直接得出）：  
+- 权重之和必为 1。  
+- 允许卖空时部分权重可能为负，这完全符合题意。  
+
+该脚本可直接作为课堂演示代码，变量名清晰，没有占位值。

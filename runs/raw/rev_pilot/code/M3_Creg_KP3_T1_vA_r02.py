@@ -1,0 +1,52 @@
+import numpy as np
+
+def calculate_bond_metrics():
+    # 债券基本参数
+    face_value = 100          # 面值
+    coupon_rate = 0.046       # 票息率 4.6%
+    ytm = 0.053               # 到期收益率 5.3%
+    years = 7                 # 期限 7 年
+    
+    # 假设每年付息一次（默认规则），计算期数与现金流
+    periods = years
+    coupon_payment = face_value * coupon_rate
+    
+    # 生成现金流向量：前 6 期为票息，第 7 期为票息+面值
+    cash_flows = np.full(periods, coupon_payment, dtype=float)
+    cash_flows[-1] += face_value
+    
+    # 对应的时间期数（年）
+    times = np.arange(1, periods + 1, dtype=float)
+    
+    # 贴现因子
+    discount_factors = (1 + ytm) ** times
+    
+    # 各期现金流现值
+    pv_cash_flows = cash_flows / discount_factors
+    
+    # 1. 计算价格 (Price)
+    price = np.sum(pv_cash_flows)
+    
+    # 2. 计算麦考利久期 (Macaulay Duration)，单位：年
+    macaulay_duration_years = np.sum(times * pv_cash_flows) / price
+    
+    # 3. 计算修正久期 (Modified Duration)，单位：年
+    modified_duration_years = macaulay_duration_years / (1 + ytm)
+    
+    # 4. 计算凸性 (Convexity)
+    # 凸性公式: (1/P) * sum[ (CF_t * t * (t+1)) / (1+y)^(t+2) ]
+    convexity = np.sum(cash_flows * times * (times + 1) / ((1 + ytm) ** (times + 2))) / price
+    
+    # 按要求将结果存入字典
+    result = {
+        'price': price,
+        'macaulay_duration_years': macaulay_duration_years,
+        'modified_duration_years': modified_duration_years,
+        'convexity': convexity
+    }
+    
+    return result
+
+# 执行计算并输出
+result = calculate_bond_metrics()
+print(result)

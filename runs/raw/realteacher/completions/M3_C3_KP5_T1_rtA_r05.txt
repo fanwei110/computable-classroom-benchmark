@@ -1,0 +1,43 @@
+根据计算约定，计算过程如下：
+
+1. **参数设定**：
+   - 头寸 $P = 1,850,000$
+   - 年化波动率 $\sigma_{annual} = 0.218$
+   - 交易日 $T_{annual} = 252$
+   - 标准正态分布分位数：$Z_{95\%} = 1.6449$，$Z_{99\%} = 2.3263$
+
+2. **波动率换算**：
+   - 日波动率：$\sigma_{1d} = \frac{\sigma_{annual}}{\sqrt{T_{annual}}} = \frac{0.218}{\sqrt{252}} \approx 0.013724$
+   - 10天波动率：$\sigma_{10d} = \sigma_{1d} \times \sqrt{10} = 0.013724 \times \sqrt{10} \approx 0.043382$
+
+3. **计算VaR**（报告为正的损失金额）：
+   - 95%一天VaR：$VaR_{95\%, 1d} = P \times \sigma_{1d} \times Z_{95\%} = 1,850,000 \times 0.013724 \times 1.6449 \approx 41568.48$
+   - 99%十天VaR：$VaR_{99\%, 10d} = P \times \sigma_{10d} \times Z_{99\%} = 1,850,000 \times 0.043382 \times 2.3263 \approx 185363.17$
+
+以下是满足输出契约的Python代码，将结果存入`result`字典：
+
+```python
+import math
+
+position = 1850000
+vol_annual = 0.218
+trading_days = 252
+
+# 标准正态分布单侧分位数
+z_95 = 1.6448536269514722
+z_99 = 2.3263478740408408
+
+# 波动率换算
+vol_1d = vol_annual / math.sqrt(trading_days)
+vol_10d = vol_1d * math.sqrt(10)
+
+# 计算 VaR
+var_95_1d = position * vol_1d * z_95
+var_99_10d = position * vol_10d * z_99
+
+# 存入字典
+result = {
+    'var_95_1d': var_95_1d,
+    'var_99_10d': var_99_10d
+}
+```

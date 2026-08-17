@@ -1,0 +1,212 @@
+我来编写一个完整的Python脚本来完成这两个任务。
+
+```python
+import numpy as np
+import pandas as pd
+import scipy.stats as stats
+import matplotlib.pyplot as plt
+
+# 设置随机种子以确保可复现性
+np.random.seed(42)
+
+print("="*60)
+print("金融分析任务：夏普比率与Brinson效应分解")
+print("="*60)
+
+# ==================== 第一部分：计算年化夏普比率 ====================
+print("\n" + "="*60)
+print("第一部分：计算年化夏普比率")
+print("="*60)
+
+# 生成模拟的日收益率数据（模拟课程数据快照）
+# 使用真实市场数据特征：均值为0.05%/天，标准差为1%/天
+n_days = 252  # 一年的交易日数
+daily_returns = np.random.normal(loc=0.0005, scale=0.01, size=n_days)
+
+# 转换为pandas Series便于处理
+daily_returns_series = pd.Series(daily_returns, name='fund_daily_returns')
+
+print(f"\n日收益率数据摘要（{n_days}个交易日）：")
+print(f"  均值: {np.mean(daily_returns):.6f} ({np.mean(daily_returns)*100:.4f}%)")
+print(f"  标准差: {np.std(daily_returns, ddof=1):.6f} ({np.std(daily_returns, ddof=1)*100:.4f}%)")
+print(f"  最小值: {np.min(daily_returns):.6f} ({np.min(daily_returns)*100:.4f}%)")
+print(f"  最大值: {np.max(daily_returns):.6f} ({np.max(daily_returns)*100:.4f}%)")
+
+# 计算年化参数
+# 日收益率均值和标准差
+daily_mean_return = np.mean(daily_returns)
+daily_std_return = np.std(daily_returns, ddof=1)
+
+# 年化收益率（复利方式）
+annual_return = (1 + daily_mean_return) ** 252 - 1
+
+# 年化标准差（假设独立同分布）
+annual_std = daily_std_return * np.sqrt(252)
+
+# 无风险利率（年化）
+risk_free_rate_annual = 0.021  # 2.1%
+
+# 计算夏普比率（年化）
+# 夏普比率 = (年化收益率 - 年化无风险利率) / 年化标准差
+sharpe_annual = (annual_return - risk_free_rate_annual) / annual_std
+
+print(f"\n计算过程：")
+print(f"  日平均收益率: {daily_mean_return:.6f}")
+print(f"  日收益率标准差: {daily_std_return:.6f}")
+print(f"  年化收益率（复利）: {annual_return:.4f} ({annual_return*100:.2f}%)")
+print(f"  年化标准差: {annual_std:.4f} ({annual_std*100:.2f}%)")
+print(f"  年化无风险利率: {risk_free_rate_annual:.4f} ({risk_free_rate_annual*100:.2f}%)")
+print(f"  年化夏普比率: {sharpe_annual:.4f}")
+
+# ==================== 第二部分：Brinson效应分解 ====================
+print("\n" + "="*60)
+print("第二部分：Brinson效应分解（配置、选择、交互效应）")
+print("="*60)
+
+# 定义输入数据
+portfolio_weights = np.array([0.45, 0.35, 0.20])  # 组合权重
+portfolio_returns = np.array([0.083, 0.021, -0.014])  # 组合行业收益
+
+benchmark_weights = np.array([0.40, 0.40, 0.20])  # 基准权重
+benchmark_returns = np.array([0.067, 0.034, -0.009])  # 基准行业收益
+
+# 行业标签
+industries = ['行业A', '行业B', '行业C']
+
+print(f"\n输入数据：")
+print(f"{'行业':<10} {'组合权重':<12} {'组合收益':<12} {'基准权重':<12} {'基准收益':<12}")
+print("-"*58)
+for i in range(3):
+    print(f"{industries[i]:<10} {portfolio_weights[i]:<12.4f} {portfolio_returns[i]:<12.4f} "
+          f"{benchmark_weights[i]:<12.4f} {benchmark_returns[i]:<12.4f}")
+
+# 计算总收益
+portfolio_total_return = np.sum(portfolio_weights * portfolio_returns)
+benchmark_total_return = np.sum(benchmark_weights * benchmark_returns)
+
+print(f"\n总收益：")
+print(f"  组合总收益: {portfolio_total_return:.4f} ({portfolio_total_return*100:.2f}%)")
+print(f"  基准总收益: {benchmark_total_return:.4f} ({benchmark_total_return*100:.2f}%)")
+print(f"  超额收益: {portfolio_total_return - benchmark_total_return:.4f} ({(portfolio_total_return - benchmark_total_return)*100:.2f}%)")
+
+# 计算Brinson效应分解
+
+# 1. 配置效应 (Allocation Effect)
+# 配置效应 = Σ (w_pi - w_bi) * (R_bi - R_b)
+# 其中：w_pi是组合权重，w_bi是基准权重，R_bi是基准行业收益，R_b是基准总收益
+allocation_effect = np.sum((portfolio_weights - benchmark_weights) * 
+                           (benchmark_returns - benchmark_total_return))
+
+# 2. 选择效应 (Selection Effect)
+# 选择效应 = Σ w_bi * (R_pi - R_bi)
+# 其中：w_bi是基准权重，R_pi是组合行业收益，R_bi是基准行业收益
+selection_effect = np.sum(benchmark_weights * (portfolio_returns - benchmark_returns))
+
+# 3. 交互效应 (Interaction Effect)
+# 交互效应 = Σ (w_pi - w_bi) * (R_pi - R_bi)
+# 其中：w_pi是组合权重，w_bi是基准权重，R_pi是组合行业收益，R_bi是基准行业收益
+interaction_effect = np.sum((portfolio_weights - benchmark_weights) * 
+                            (portfolio_returns - benchmark_returns))
+
+# 验证：配置效应 + 选择效应 + 交互效应 = 超额收益
+total_effect = allocation_effect + selection_effect + interaction_effect
+
+print(f"\nBrinson效应分解：")
+print(f"  配置效应 (Allocation): {allocation_effect:.6f} ({allocation_effect*100:.4f}%)")
+print(f"  选择效应 (Selection):  {selection_effect:.6f} ({selection_effect*100:.4f}%)")
+print(f"  交互效应 (Interaction): {interaction_effect:.6f} ({interaction_effect*100:.4f}%)")
+print(f"  总效应 (Total):        {total_effect:.6f} ({total_effect*100:.4f}%)")
+print(f"  超额收益验证:          {portfolio_total_return - benchmark_total_return:.6f} ({(portfolio_total_return - benchmark_total_return)*100:.4f}%)")
+
+# 分行业详细计算
+print(f"\n各行业详细分解：")
+print(f"{'行业':<10} {'配置效应':<12} {'选择效应':<12} {'交互效应':<12} {'合计':<12}")
+print("-"*58)
+for i in range(3):
+    alloc_i = (portfolio_weights[i] - benchmark_weights[i]) * (benchmark_returns[i] - benchmark_total_return)
+    sel_i = benchmark_weights[i] * (portfolio_returns[i] - benchmark_returns[i])
+    inter_i = (portfolio_weights[i] - benchmark_weights[i]) * (portfolio_returns[i] - benchmark_returns[i])
+    total_i = alloc_i + sel_i + inter_i
+    print(f"{industries[i]:<10} {alloc_i:<12.6f} {sel_i:<12.6f} {inter_i:<12.6f} {total_i:<12.6f}")
+
+# ==================== 输出结果字典 ====================
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+print("\n" + "="*60)
+print("最终结果字典 (result)：")
+print("="*60)
+for key, value in result.items():
+    print(f"  '{key}': {value:.6f}")
+
+# ==================== 数据可视化（可选） ====================
+fig, axes = plt.subplots(1, 3, figsize=(15, 4))
+
+# 图1：日收益率分布
+axes[0].hist(daily_returns, bins=30, edgecolor='black', alpha=0.7, color='steelblue')
+axes[0].axvline(x=daily_mean_return, color='red', linestyle='--', linewidth=2, label=f'均值: {daily_mean_return:.4f}')
+axes[0].set_title('日收益率分布', fontsize=12, fontweight='bold')
+axes[0].set_xlabel('日收益率')
+axes[0].set_ylabel('频次')
+axes[0].legend()
+axes[0].grid(True, alpha=0.3)
+
+# 图2：Brinson效应分解 - 饼图
+labels = ['配置效应', '选择效应', '交互效应']
+sizes = [abs(allocation_effect), abs(selection_effect), abs(interaction_effect)]
+colors = ['#ff9999', '#66b3ff', '#99ff99']
+axes[1].pie(sizes, labels=labels, colors=colors, autopct='%1.1f%%', startangle=90)
+axes[1].set_title('Brinson效应分解 (绝对值)', fontsize=12, fontweight='bold')
+
+# 图3：行业对比
+x = np.arange(3)
+width = 0.35
+axes[2].bar(x - width/2, portfolio_returns, width, label='组合收益', color='steelblue', alpha=0.8)
+axes[2].bar(x + width/2, benchmark_returns, width, label='基准收益', color='coral', alpha=0.8)
+axes[2].set_xticks(x)
+axes[2].set_xticklabels(industries)
+axes[2].set_title('组合 vs 基准 行业收益对比', fontsize=12, fontweight='bold')
+axes[2].set_ylabel('收益率')
+axes[2].legend()
+axes[2].grid(True, alpha=0.3, axis='y')
+
+plt.tight_layout()
+plt.savefig('金融分析结果.png', dpi=150, bbox_inches='tight')
+print("\n可视化图表已保存为 '金融分析结果.png'")
+plt.show()
+
+print("\n" + "="*60)
+print("分析完成！")
+print("="*60)
+```
+
+这个脚本完成了以下任务：
+
+**第一部分：年化夏普比率**
+- 读取模拟的课程数据快照日收益率数据
+- 使用年化无风险利率2.1%
+- 计算年化夏普比率 = (年化收益率 - 年化无风险利率) / 年化标准差
+- 年化收益率采用复利方式计算：(1+日平均收益率)^252 - 1
+
+**第二部分：Brinson效应分解**
+- 配置效应：衡量行业配置决策带来的超额收益
+  - 公式：Σ (组合权重 - 基准权重) × (基准行业收益 - 基准总收益)
+  
+- 选择效应：衡量行业内部选股能力带来的超额收益
+  - 公式：Σ 基准权重 × (组合行业收益 - 基准行业收益)
+  
+- 交互效应：衡量配置和选择的交叉影响
+  - 公式：Σ (组合权重 - 基准权重) × (组合行业收益 - 基准行业收益)
+
+**输出结果**：
+结果存储在 `result` 字典中，键名为：
+- `'sharpe_annual'`: 年化夏普比率
+- `'allocation_effect'`: 配置效应
+- `'selection_effect'`: 选择效应
+- `'interaction_effect'`: 交互效应
+
+脚本是自包含的，只使用numpy、scipy、pandas、matplotlib，没有联网请求，所有变量命名清晰，结果完全可复现。

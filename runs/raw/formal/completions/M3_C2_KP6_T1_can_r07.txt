@@ -1,0 +1,78 @@
+```python
+import pandas as pd
+import numpy as np
+
+# ==========================================
+# 第一部分：年化夏普比率计算
+# ==========================================
+
+# 读取课程数据快照
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 提取基金日收益列，确保为数值类型并剔除缺失值
+fund_returns = pd.to_numeric(df['fund'], errors='coerce').dropna()
+
+# 假设处理说明：
+# 1. 一年按252个交易日计算（学术与业界标准）。
+# 2. 日无风险利率采用单利折算：rf_daily = rf_annual / 252。
+# 3. 收益率标准差采用样本标准差（ddof=1）。
+rf_annual = 0.021
+trading_days = 252
+rf_daily = rf_annual / trading_days
+
+# 计入无风险利率，得到日超额收益
+excess_returns = fund_returns - rf_daily
+
+# 计算日夏普比率
+mean_excess_daily = excess_returns.mean()
+std_excess_daily = excess_returns.std(ddof=1)
+sharpe_daily = mean_excess_daily / std_excess_daily
+
+# 年化夏普比率
+sharpe_annual = sharpe_daily * np.sqrt(trading_days)
+
+# ==========================================
+# 第二部分：业绩归因（Brinson-Hood-Beebower模型）
+# ==========================================
+
+# 组合与基准的行业权重与收益
+wp = np.array([0.45, 0.35, 0.20])  # 组合权重
+rp = np.array([0.083, 0.021, -0.014])  # 组合内行业收益
+wb = np.array([0.40, 0.40, 0.20])  # 基准权重
+rb = np.array([0.067, 0.034, -0.009])  # 基准内行业收益
+
+# 假设处理说明：
+# 采用经典BHB归因模型：
+# 配置效应 (Allocation Effect) = Σ (组合权重 - 基准权重) * 基准收益
+# 选择效应 (Selection Effect) = Σ 基准权重 * (组合收益 - 基准收益)
+# 交互效应 (Interaction Effect) = Σ (组合权重 - 基准权重) * (组合收益 - 基准收益)
+
+allocation_effect = np.sum((wp - wb) * rb)
+selection_effect = np.sum(wb * (rp - rb))
+interaction_effect = np.sum((wp - wb) * (rp - rb))
+
+# ==========================================
+# 填充结果字典
+# ==========================================
+
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+# 课堂投屏展示结果（可选，便于直接运行查看）
+if __name__ == '__main__':
+    print("=== 课堂实时编程运行结果 ===")
+    for key, value in result.items():
+        if key == 'sharpe_annual':
+            print(f"{key}: {value:.4f}")
+        else:
+            print(f"{key}: {value:.4f} ({value*100:.2f}%)")
+    
+    # 交叉验证：主动收益应等于三大效应之和
+    active_return = np.sum(wp * rp) - np.sum(wb * rb)
+    sum_effects = allocation_effect + selection_effect + interaction_effect
+    print(f"\n[验证] 主动收益: {active_return:.4f}, 三大效应之和: {sum_effects:.4f} (两者一致: {np.isclose(active_return, sum_effects)})")
+```

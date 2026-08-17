@@ -1,0 +1,42 @@
+根据参数法VaR的计算要求，我们按照以下步骤计算95%置信水平下的1天VaR和99%置信水平下的10天VaR：
+
+### 1. 计算日波动率
+年化波动率（vol）为21.8%，即0.218。根据252个交易日，日波动率为：
+\[
+\sigma_{\text{daily}} = \frac{\sigma_{\text{annual}}}{\sqrt{252}} = \frac{0.218}{\sqrt{252}} \approx 0.01373
+\]
+
+### 2. 计算95%置信水平下的1天VaR
+95%置信水平对应的标准正态分布分位数（Z值）为1.645（单尾）。
+1天VaR的计算公式为：
+\[
+\text{VaR}_{95\%,1d} = \text{Position} \times \sigma_{\text{daily}} \times Z_{95\%} = 1,850,000 \times 0.01373 \times 1.645 \approx 41,800
+\]
+
+### 3. 计算99%置信水平下的10天VaR
+99%置信水平对应的Z值为2.326（单尾）。
+10天VaR需要考虑时间调整，波动率按平方根时间法则调整：
+\[
+\sigma_{10d} = \sigma_{\text{daily}} \times \sqrt{10} = 0.01373 \times \sqrt{10} \approx 0.0434
+\]
+10天VaR的计算公式为：
+\[
+\text{VaR}_{99\%,10d} = \text{Position} \times \sigma_{10d} \times Z_{99\%} = 1,850,000 \times 0.0434 \times 2.326 \approx 187,000
+\]
+
+### 4. 结果存储
+将结果存入字典`result`：
+```python
+result = {
+    'var_95_1d': 41800,
+    'var_99_10d': 187000
+}
+```
+
+最终答案为：
+```python
+result = {
+    'var_95_1d': 41800,
+    'var_99_10d': 187000
+}
+```

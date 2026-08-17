@@ -1,0 +1,94 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==================== 参数 ====================
+FACE = 100.0               # 面值
+COUPON_RATE = 0.046        # 票息率
+MATURITY = 7               # 期限(年)
+YIELD_CURRENT = 0.053      # 当前到期收益率
+YIELD_MIN = 0.02           # 作图收益率下限
+YIELD_MAX = 0.09           # 作图收益率上限
+NUM_POINTS = 200           # 作图点数
+
+# 收益率变动幅度 (基点)，可调参数
+YIELD_CHANGE_BPS = 100     # 100个基点
+YIELD_CHANGE = YIELD_CHANGE_BPS / 10000.0
+
+# 假设：每年付息一次 (annual compounding)
+COUPON = FACE * COUPON_RATE
+
+# ==================== 定价函数 ====================
+def bond_price(ytm, face, coupon, maturity):
+    """按年付息的债券价格"""
+    t = np.arange(1, maturity + 1)
+    pv_coupons = np.sum(coupon / (1 + ytm)**t)
+    pv_face = face / (1 + ytm)**maturity
+    return pv_coupons + pv_face
+
+def macaulay_duration(ytm, face, coupon, maturity):
+    """麦考利久期"""
+    price = bond_price(ytm, face, coupon, maturity)
+    t = np.arange(1, maturity + 1)
+    pv_cf = coupon / (1 + ytm)**t
+    pv_face = face / (1 + ytm)**maturity
+    weighted_t = np.sum(t * pv_cf) + maturity * pv_face
+    return weighted_t / price
+
+# ==================== 精确价格曲线 ====================
+yields = np.linspace(YIELD_MIN, YIELD_MAX, NUM_POINTS)
+precise_prices = np.array([bond_price(y, FACE, COUPON, MATURITY) for y in yields])
+
+# 当前收益率处的价格与久期
+P0 = bond_price(YIELD_CURRENT, FACE, COUPON, MATURITY)
+D_mac = macaulay_duration(YIELD_CURRENT, FACE, COUPON, MATURITY)
+MD = D_mac / (1 + YIELD_CURRENT)          # 修正久期
+
+# 基于久期的近似价格 (切线)
+approx_prices = P0 - P0 * MD * (yields - YIELD_CURRENT)
+
+# ==================== 报告项 ====================
+# 收益率上升100bp后的精确价格
+y_up = YIELD_CURRENT + YIELD_CHANGE
+price_at_up100bp = bond_price(y_up, FACE, COUPON, MATURITY)
+
+# 久期法估计的相对价格变化
+dur_approx_change_up100bp = -MD * YIELD_CHANGE
+
+# ==================== 画图 ====================
+plt.figure(figsize=(10, 6))
+plt.plot(yields * 100, precise_prices, label='Precise Price', linewidth=2)
+plt.plot(yields * 100, approx_prices, '--', label='Duration Approximation', linewidth=2)
+plt.axvline(YIELD_CURRENT * 100, color='gray', linestyle=':', alpha=0.7, label='Current Yield (5.3%)')
+plt.axhline(P0, color='gray', linestyle=':', alpha=0.3)
+
+# 标记当前点
+plt.scatter([YIELD_CURRENT * 100], [P0], color='red', zorder=5)
+plt.annotate(f'  P0={P0:.2f}', (YIELD_CURRENT * 100, P0),
+             textcoords="offset points", xytext=(10, 10), fontsize=9)
+
+plt.xlabel('Yield to Maturity (%)')
+plt.ylabel('Bond Price')
+plt.title('Price-Yield Curve with Duration Approximation')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+
+# 保存图片
+figure_path = 'bond_price_duration.png'
+plt.savefig(figure_path, dpi=150)
+plt.close()
+
+# ==================== 结果字典 ====================
+result = {
+    'price_at_up100bp': price_at_up100bp,
+    'dur_approx_change_up100bp': dur_approx_change_up100bp,
+    'figure_path': figure_path
+}
+
+# 打印结果供课堂查看
+print("===== Result Dictionary =====")
+for k, v in result.items():
+    print(f"{k}: {v}")
+print("=============================")
+```

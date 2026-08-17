@@ -1,0 +1,54 @@
+以下脚本计算了给定债券的价格、麦考利久期、修正久期和凸性，并按要求将结果存入字典 `result`。
+
+```python
+import numpy as np
+
+# 债券参数
+face_value = 100.0
+coupon_rate = 0.046        # 票息率 4.6%
+years_to_maturity = 7      # 剩余期限（年）
+yield_to_maturity = 0.053  # 到期收益率 5.3%
+frequency = 1              # 付息频率（每年一次）
+
+# 现金流时间点（年）
+t = np.arange(1, years_to_maturity * frequency + 1) / frequency
+
+# 每期现金流（本金在最后一期支付）
+coupon_payment = face_value * coupon_rate / frequency
+cash_flows = np.full_like(t, coupon_payment)
+cash_flows[-1] += face_value
+
+# 折现因子
+discount_factors = (1 + yield_to_maturity / frequency) ** (-t * frequency)
+
+# 现金流现值
+pv_cash_flows = cash_flows * discount_factors
+
+# 价格（全价）
+price = np.sum(pv_cash_flows)
+
+# 麦考利久期（以年为单位）
+macaulay_duration_years = np.sum(t * pv_cash_flows) / price
+
+# 修正久期（以年为单位）
+modified_duration_years = macaulay_duration_years / (1 + yield_to_maturity / frequency)
+
+# 凸性（标准离散复利公式）
+# 凸性 = Σ[ t*(t+1/(frequency))? 注意：如果每年付息一次，公式为 Σ[t*(t+1)*PV(CF)] / (P*(1+y)^2)
+# 更精确按复利频次调整：时间以年为单位，t为年数，权重为 t*(t+1/frequency)，此处 frequency=1
+convexity = np.sum(t * (t + 1.0/frequency) * pv_cash_flows) / (price * (1 + yield_to_maturity/frequency)**2)
+
+# 存入结果字典
+result = {
+    'price': price,
+    'macaulay_duration_years': macaulay_duration_years,
+    'modified_duration_years': modified_duration_years,
+    'convexity': convexity
+}
+
+# 打印结果（保留6位小数）
+for key, value in result.items():
+    print(f"{key}: {value:.6f}")
+```
+
+运行该脚本可直接得到结果字典并输出。所有计算均基于 numpy 实现，无外部依赖，数值完全可复现。

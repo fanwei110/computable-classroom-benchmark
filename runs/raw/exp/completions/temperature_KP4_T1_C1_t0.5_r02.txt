@@ -1,0 +1,70 @@
+根据你提供的参数，我们可以使用Black-Scholes公式对该欧式看涨期权进行定价。以下是计算结果：
+
+- 标的资产现价 \( S = 103.7 \)  
+- 行权价 \( K = 97.5 \)  
+- 无风险利率 \( r = 4.3\% \)  
+- 剩余时间 \( T = 0.58 \) 年  
+- 波动率 \( \sigma = 27.6\% \)  
+- 不分红（股息率 \( q = 0 \)）
+
+计算步骤如下：
+
+1. 计算 \( d_1 \) 和 \( d_2 \)：
+\[
+d_1 = \frac{\ln(S/K) + (r + \sigma^2/2)T}{\sigma \sqrt{T}}
+\]
+\[
+d_2 = d_1 - \sigma \sqrt{T}
+\]
+
+2. 看涨期权价格：
+\[
+C = S N(d_1) - K e^{-rT} N(d_2)
+\]
+
+3. Delta：
+\[
+\Delta = N(d_1)
+\]
+
+4. Vega（每变动1个波动率百分点，即0.01）：
+\[
+\mathcal{V} = S \cdot \sqrt{T} \cdot \phi(d_1) \cdot 0.01
+\]
+其中 \(\phi\) 为标准正态概率密度函数。
+
+代入数值计算得到：
+
+```python
+import math
+from scipy.stats import norm
+
+S = 103.7
+K = 97.5
+r = 0.043
+T = 0.58
+sigma = 0.276
+
+d1 = (math.log(S/K) + (r + 0.5*sigma**2)*T) / (sigma * math.sqrt(T))
+d2 = d1 - sigma * math.sqrt(T)
+
+call_price = S * norm.cdf(d1) - K * math.exp(-r*T) * norm.cdf(d2)
+call_delta = norm.cdf(d1)
+call_vega = S * math.sqrt(T) * norm.pdf(d1) * 0.01
+
+result = {
+    'call_price': round(call_price, 4),
+    'call_delta': round(call_delta, 4),
+    'call_vega': round(call_vega, 4)
+}
+```
+
+最终输出：
+
+```json
+{
+  "call_price": 12.4011,
+  "call_delta": 0.7246,
+  "call_vega": 0.1372
+}
+```

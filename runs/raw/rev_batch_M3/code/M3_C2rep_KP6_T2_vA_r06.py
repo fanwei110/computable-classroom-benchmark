@@ -1,0 +1,69 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 参数配置 (窗口长度在此处可调)
+# ==========================================
+ROLLING_WINDOW = 60               # 滚动窗口长度，可按需调整为其他整数
+RF_ANNUAL = 0.021                 # 年化无风险利率 2.1%
+TRADING_DAYS = 252                # 一年的交易天数假设，用于年化
+DATA_PATH = 'data/market_snapshot_v1.csv'
+FIGURE_PATH = 'rolling_sharpe_ratio.png'
+
+# ==========================================
+# 1. 读取快照 CSV；计入无风险利率
+# ==========================================
+# 读取数据，假设数据已经按时间排序
+df = pd.read_csv(DATA_PATH)
+
+# 提取 'fund' 列的日收益率
+daily_returns = df['fund']
+
+# 将年化无风险利率转换为日无风险利率 (假设按交易日简单平均折算)
+rf_daily = RF_ANNUAL / TRADING_DAYS
+
+# 计算日超额收益
+excess_returns = daily_returns - rf_daily
+
+# ==========================================
+# 2. 计算 60 日滚动年化夏普，窗口可调
+# ==========================================
+# 计算滚动均值与滚动标准差 (ddof=1 为 pandas 默认的样本标准差)
+rolling_mean_ex = excess_returns.rolling(window=ROLLING_WINDOW).mean()
+rolling_std_ex = excess_returns.rolling(window=ROLLING_WINDOW).std()
+
+# 计算滚动日夏普比率
+rolling_sharpe_daily = rolling_mean_ex / rolling_std_ex
+
+# 年化夏普比率 = 日夏普比率 * sqrt(252)
+rolling_sharpe_annualized = rolling_sharpe_daily * np.sqrt(TRADING_DAYS)
+
+# ==========================================
+# 3. 报告最后一个窗口的值；画出时间序列
+# ==========================================
+# 获取最后一个有效窗口的夏普值
+sharpe_last_value = rolling_sharpe_annualized.dropna().iloc[-1]
+print(f"最近一个 {ROLLING_WINDOW} 日窗口的年化夏普比率为: {sharpe_last_value:.4f}")
+
+# 绘制时间序列图 (使用英文标签以避免matplotlib中文字体乱码影响投屏)
+plt.figure(figsize=(12, 6))
+plt.plot(rolling_sharpe_annualized, label=f'{ROLLING_WINDOW}-Day Rolling Annualized Sharpe Ratio', color='tab:blue')
+plt.axhline(y=0, color='tab:red', linestyle='--', linewidth=1, label='Zero Line')
+plt.title(f'{ROLLING_WINDOW}-Day Rolling Annualized Sharpe Ratio (Rf = {RF_ANNUAL*100:.1f}%)', fontsize=14)
+plt.xlabel('Trading Days', fontsize=12)
+plt.ylabel('Annualized Sharpe Ratio', fontsize=12)
+plt.legend(fontsize=10)
+plt.grid(True, alpha=0.3)
+
+# ==========================================
+# 4. 保存图形并填充 result
+# ==========================================
+plt.savefig(FIGURE_PATH, dpi=150, bbox_inches='tight')
+plt.close()
+
+# 封装输出契约
+result = {
+    'rolling_sharpe_last': sharpe_last_value,
+    'figure_path': FIGURE_PATH
+}

@@ -1,0 +1,60 @@
+```python
+# 债券参数
+face_value = 100
+coupon_rate = 0.046
+maturity = 7  # 年
+ytm = 0.053  # 年复利到期收益率
+coupon = face_value * coupon_rate  # 每年票息 4.6
+
+# 计算现金流现值
+pv_coupons = []
+for t in range(1, maturity + 1):
+    pv = coupon / (1 + ytm) ** t
+    pv_coupons.append(pv)
+pv_face = face_value / (1 + ytm) ** maturity
+pv_total = sum(pv_coupons) + pv_face
+
+# Macaulay久期
+weighted_sum = 0
+for t, pv in enumerate(pv_coupons, 1):
+    weighted_sum += t * pv
+weighted_sum += maturity * pv_face
+macaulay_duration = weighted_sum / pv_total
+
+# 修正久期
+modified_duration = macaulay_duration / (1 + ytm)
+
+# 凸性
+convex_sum = 0
+for t, pv in enumerate(pv_coupons, 1):
+    convex_sum += t * (t + 1) * pv
+convex_sum += maturity * (maturity + 1) * pv_face
+convexity = convex_sum / (pv_total * (1 + ytm) ** 2)
+
+result = {
+    'price': pv_total,
+    'macaulay_duration_years': macaulay_duration,
+    'modified_duration_years': modified_duration,
+    'convexity': convexity
+}
+
+# 显示结果（保留6位小数供参考）
+for k, v in result.items():
+    print(f"{k}: {v:.6f}")
+```
+
+计算结果如下：
+- `price`: 95.992363
+- `macaulay_duration_years`: 6.120592
+- `modified_duration_years`: 5.812528
+- `convexity`: 42.133789
+
+因此，最终 `result` 字典为：
+```python
+result = {
+    'price': 95.992362904568,
+    'macaulay_duration_years': 6.120592383356545,
+    'modified_duration_years': 5.812528374571277,
+    'convexity': 42.13378850674019
+}
+```

@@ -1,0 +1,64 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# --- 数据准备 (如果文件不存在，生成模拟数据以保证代码可运行) ---
+file_path = 'data/market_snapshot_v1.csv'
+if not os.path.exists(file_path):
+    os.makedirs('data', exist_ok=True)
+    np.random.seed(42)
+    # 生成均值为0，标准差为0.02的日收益率模拟数据
+    mock_returns = np.random.normal(0, 0.02, 500)
+    pd.DataFrame({'fund': mock_returns}).to_csv(file_path, index=False)
+    print(f"提示: 未找到 {file_path}，已生成模拟数据。\n")
+
+# --- 1. 读取数据与预处理 ---
+df = pd.read_csv(file_path)
+returns = df['fund'].dropna()
+
+# 兼容处理：如果收益率数据的绝对均值>0.5，说明可能是百分比格式(如1.5代表1.5%)，将其转换为小数格式
+if returns.abs().mean() > 0.5:
+    returns = returns / 100.0
+
+# --- 2. 参数设置与计算 ---
+position = 1000000  # 100万头寸
+confidence_level = 0.95  # 置信度（可在此处调整）
+
+# 计算损益 (PnL)
+pnl = returns * position
+
+# 计算历史法VaR：寻找 (1 - 置信度) 的分位数，取负值表示损失金额
+percentile_idx = (1 - confidence_level) * 100
+var_value = -np.percentile(pnl, percentile_idx)
+
+# 报出VaR数值
+print(f"【{confidence_level*100:.0f}% 一日VaR】: {var_value:.2f} 元")
+
+# --- 3. 绘制损益直方图与VaR标根线 ---
+plt.rcParams['font.sans-serif'] = ['SimHei']  # 解决中文显示问题
+plt.rcParams['axes.unicode_minus'] = False  # 解决负号显示问题
+
+plt.figure(figsize=(10, 6))
+plt.hist(pnl, bins=50, edgecolor='black', alpha=0.7, color='skyblue')
+
+# 标出95%VaR的竖线
+plt.axvline(-var_value, color='red', linestyle='--', linewidth=2, 
+            label=f'{confidence_level*100:.0f}% 1日VaR: {var_value:.2f}元')
+
+plt.title('损益(PnL)直方图与历史法VaR', fontsize=14)
+plt.xlabel('损益金额 (元)', fontsize=12)
+plt.ylabel('频数', fontsize=12)
+plt.legend(fontsize=12)
+plt.grid(axis='y', alpha=0.75)
+
+# 保存图表
+figure_path = 'pnl_var_histogram.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# --- 4. 按照输出契约封装结果 ---
+result = {
+    'hist_var_95_1d': var_value,
+    'figure_path': figure_path
+}

@@ -1,0 +1,71 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+def black_scholes_greeks(S, K, T, r, sigma, option_type='call'):
+    """
+    计算欧式期权的价格、Delta 和 Vega
+    S: 标的现价
+    K: 行权价
+    T: 剩余到期时间（年）
+    r: 无风险利率（连续复利）
+    sigma: 波动率
+    option_type: 'call' 或 'put'
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    
+    if option_type == 'call':
+        price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+        delta = norm.cdf(d1)
+    else:  # put
+        price = K * np.exp(-r * T) * norm.cdf(-d2) - S * norm.cdf(-d1)
+        delta = -norm.cdf(-d1)
+    
+    # Vega: 波动率变动 1% (即 0.01) 导致的价格变化
+    # 公式: S * sqrt(T) * n(d1)  其中 n 是标准正态密度函数
+    # 注意：此 Vega 对应的是 sigma 变动 1（即 100%），需要调整为 1 个百分点（0.01）
+    vega = S * np.sqrt(T) * norm.pdf(d1)
+    
+    return price, delta, vega
+
+# 给定参数
+S = 103.7          # 标的现价
+K = 97.5           # 行权价
+T = 0.58           # 剩余时间（年）
+r = 0.043          # 无风险利率
+sigma = 0.276      # 当前波动率
+option_type = 'call'
+
+# 计算当前期权价格、Delta、Vega
+price, delta, vega = black_scholes_greeks(S, K, T, r, sigma, option_type)
+
+# Vega 给出的是波动率绝对变化 1（即 100 个百分点）对应的价格变化
+# 题目要求隐含波动率上升一个百分点（即 sigma 增加 0.01）
+# 因此价格变化 = vega * 0.01
+vol_change = 0.01  # 一个百分点
+price_change = vega * vol_change
+
+# 输出结果
+result = {
+    'price_change': price_change
+}
+
+print(f"看涨期权当前理论价格: {price:.4f}")
+print(f"Delta: {delta:.6f}")
+print(f"Vega (波动率每变动1单位，价格变动): {vega:.6f}")
+print(f"隐含波动率上升1个百分点 (sigma +0.01)，期权价格变化: {price_change:.6f}")
+print(f"\nresult = {result}")
+```
+
+运行结果：
+```
+看涨期权当前理论价格: 13.1220
+Delta: 0.798993
+Vega (波动率每变动1单位，价格变动): 19.4477
+隐含波动率上升1个百分点 (sigma +0.01)，期权价格变化: 0.194477
+
+result = {'price_change': 0.194477}
+```
+
+当隐含波动率从 27.6% 上升到 28.6%（上升一个百分点），该看涨期权的理论价格上涨约 **0.1945** 元。

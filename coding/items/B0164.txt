@@ -1,0 +1,116 @@
+=== B0164  任务 KP3_T1 (T1) ===
+
+--- 任务要求的输出键 ---
+price, macaulay_duration_years, modified_duration_years, convexity
+
+--- 判分失败明细 ---
+price: 提交值 97.6916  |  参考值 95.99321007078622
+macaulay_duration_years: 提交值 6.064  |  参考值 6.120582751660975
+modified_duration_years: 提交值 5.759  |  参考值 5.812519232346605
+convexity: 提交值 36.23  |  参考值 42.13363299470055
+
+--- 提取出的代码 ---
+result = {
+    'price': 97.6916,
+    'macaulay_duration_years': 6.064,
+    'modified_duration_years': 5.759,
+    'convexity': 36.23
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+我们需要计算以下债券的各项指标：
+
+- **债券参数**：
+  - 面值（Face Value）：100
+  - 票息率（Coupon Rate）：4.6%
+  - 期限（Maturity）：7年
+  - 收益率（Yield to Maturity, YTM）：5.3%
+
+- **要求计算**：
+  - 价格（Price）
+  - 麦考利久期（Macaulay Duration，单位：年）
+  - 修正久期（Modified Duration，单位：年）
+  - 凸性（Convexity）
+
+---
+
+### 1. 计算价格（Price）
+债券价格是未来现金流的现值总和。每年支付的票息为：
+\[ C = 100 \times 4.6\% = 4.6 \]
+
+债券价格公式：
+\[ P = \sum_{t=1}^{7} \frac{C}{(1 + y)^t} + \frac{F}{(1 + y)^7} \]
+其中 \( y = 5.3\% \)，\( F = 100 \)。
+
+计算过程：
+\[ P = \sum_{t=1}^{7} \frac{4.6}{(1 + 0.053)^t} + \frac{100}{(1 + 0.053)^7} \]
+
+具体计算（逐年贴现）：
+\[
+\begin{align*}
+P &= \frac{4.6}{1.053} + \frac{4.6}{1.053^2} + \frac{4.6}{1.053^3} + \frac{4.6}{1.053^4} + \frac{4.6}{1.053^5} + \frac{4.6}{1.053^6} + \frac{4.6 + 100}{1.053^7} \\
+&\approx 4.3685 + 4.1486 + 3.9398 + 3.7415 + 3.5530 + 3.3736 + \frac{104.6}{1.053^7} \\
+&\approx 4.3685 + 4.1486 + 3.9398 + 3.7415 + 3.5530 + 3.3736 + 73.5666 \\
+&\approx 97.6916
+\end{align*}
+\]
+
+---
+
+### 2. 计算麦考利久期（Macaulay Duration）
+麦考利久期公式：
+\[ \text{Macaulay Duration} = \frac{1}{P} \sum_{t=1}^{7} \frac{t \cdot C}{(1 + y)^t} + \frac{7 \cdot F}{(1 + y)^7} \]
+
+计算加权现金流：
+\[
+\begin{align*}
+\text{Weighted PV} &= \frac{1 \times 4.6}{1.053} + \frac{2 \times 4.6}{1.053^2} + \frac{3 \times 4.6}{1.053^3} + \frac{4 \times 4.6}{1.053^4} + \frac{5 \times 4.6}{1.053^5} + \frac{6 \times 4.6}{1.053^6} + \frac{7 \times 104.6}{1.053^7} \\
+&\approx 4.3685 + 8.2972 + 11.8194 + 14.9660 + 17.7650 + 20.2416 + 514.9662 \\
+&\approx 592.4239
+\end{align*}
+\]
+
+麦考利久期：
+\[ \text{Macaulay Duration} = \frac{592.4239}{97.6916} \approx 6.064 \text{ 年} \]
+
+---
+
+### 3. 计算修正久期（Modified Duration）
+修正久期公式：
+\[ \text{Modified Duration} = \frac{\text{Macaulay Duration}}{1 + y} \]
+
+计算：
+\[ \text{Modified Duration} = \frac{6.064}{1 + 0.053} \approx 5.759 \text{ 年} \]
+
+---
+
+### 4. 计算凸性（Convexity）
+凸性公式：
+\[ \text{Convexity} = \frac{1}{P} \sum_{t=1}^{7} \frac{t(t+1) \cdot C}{(1 + y)^{t+2}} + \frac{7 \times 8 \times F}{(1 + y)^9} \]
+
+计算加权现金流（凸性部分）：
+\[
+\begin{align*}
+\text{Convexity PV} &= \frac{1 \times 2 \times 4.6}{1.053^3} + \frac{2 \times 3 \times 4.6}{1.053^4} + \frac{3 \times 4 \times 4.6}{1.053^5} + \frac{4 \times 5 \times 4.6}{1.053^6} + \frac{5 \times 6 \times 4.6}{1.053^7} + \frac{6 \times 7 \times 4.6}{1.053^8} + \frac{7 \times 8 \times 104.6}{1.053^9} \\
+&\approx \frac{9.2}{1.1685} + \frac{27.6}{1.2313} + \frac{55.2}{1.2978} + \frac{92}{1.3678} + \frac{138}{1.4416} + \frac{193.2}{1.5194} + \frac{5857.6}{1.5999} \\
+&\approx 7.874 + 22.415 + 42.533 + 67.260 + 95.728 + 127.156 + 3661.216 \\
+&\approx 3924.182
+\end{align*}
+\]
+
+凸性：
+\[ \text{Convexity} = \frac{3924.182}{(1 + 0.053)^2 \times 97.6916} \approx \frac{3924.182}{1.1088 \times 97.6916} \approx \frac{3924.182}{108.32} \approx 36.23 \]
+（注：凸性计算需除以 \((1 + y)^2\)，且单位为“年²”）
+
+---
+
+### 最终结果
+```python
+result = {
+    'price': 97.6916,
+    'macaulay_duration_years': 6.064,
+    'modified_duration_years': 5.759,
+    'convexity': 36.23
+}
+```

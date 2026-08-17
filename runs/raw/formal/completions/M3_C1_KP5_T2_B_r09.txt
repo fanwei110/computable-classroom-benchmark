@@ -1,0 +1,62 @@
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ==================== 参数设置 ====================
+file_path = 'data/market_snapshot_v1.csv'
+position = 1000000  # 头寸 100万
+confidence_level = 0.95  # 置信度可调（例如改为0.99即为99%VaR）
+figure_path = 'pnl_hist_var.png'  # 图片保存路径
+
+# ==================== 数据处理与计算 ====================
+# 读取数据
+df = pd.read_csv(file_path)
+
+# 提取fund列日收益率，并计算损益 (PnL)
+# 假设fund列为日收益率（如0.01表示1%），PnL = 头寸 * 日收益率
+daily_returns = df['fund'].dropna()
+pnl = daily_returns * position
+
+# 历史法VaR计算：取损益序列的下侧分位数，VaR通常报告为正数（表示损失）
+var_percentile = (1 - confidence_level) * 100
+var_threshold = np.percentile(pnl, var_percentile)
+hist_var_95_1d = -var_threshold  # 取反转为正数表示预期最大损失
+
+# ==================== 绘图 ====================
+plt.figure(figsize=(10, 6))
+# 绘制损益直方图
+plt.hist(pnl, bins=50, alpha=0.75, edgecolor='black', color='steelblue')
+
+# 绘制VaR标根线（红色虚线）
+plt.axvline(x=var_threshold, color='red', linestyle='--', linewidth=2,
+            label=f'{confidence_level*100:.0f}% 1-Day VaR = {hist_var_95_1d:.2f}')
+
+plt.title(f'PnL Histogram & Historical VaR (Confidence={confidence_level*100:.0f}%)')
+plt.xlabel('Profit and Loss (PnL)')
+plt.ylabel('Frequency')
+plt.legend()
+plt.grid(axis='y', alpha=0.5)
+
+# 保存图片
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ==================== 结果输出 ====================
+# 按照输出契约组装字典
+result = {
+    'hist_var_95_1d': hist_var_95_1d,
+    'figure_path': figure_path
+}
+
+# 打印VaR数值报告
+print(f"【计算结果报告】")
+print(f"头寸金额: {position:,.0f}")
+print(f"置信度: {confidence_level*100:.0f}%")
+print(f"一日历史法VaR: {hist_var_95_1d:,.2f} 元")
+print(f"直方图已保存至: {figure_path}")
+
+# 供外部调用的结果字典
+result
+```

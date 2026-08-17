@@ -1,0 +1,66 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import matplotlib as mpl
+
+# 尝试设置中文字体，以防图表中出现中文乱码（兼容Windows/Mac常见环境）
+mpl.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS', 'DejaVu Sans']
+mpl.rcParams['axes.unicode_minus'] = False # 确保负号正常显示
+
+# ================== 可调参数 ==================
+POSITION = 1_000_000       # 头寸（人民币元）
+CONFIDENCE_LEVEL = 0.95    # 置信水平（可调参数，例如 0.95, 0.99）
+DATA_PATH = 'data/market_snapshot_v1.csv'
+FIG_SAVE_PATH = 'var_histogram.png'
+# ============================================
+
+# 1. 读取快照 CSV，构造头寸的日损益
+df = pd.read_csv(DATA_PATH)
+
+# 题目指明 "fund" 列为日收益序列，直接提取并清理可能的空值
+daily_returns = df['fund'].dropna()
+
+# 构造日损益序列 (PnL = 头寸金额 × 日收益率)
+pnl = POSITION * daily_returns
+
+# 2. 由经验分布计算历史 VaR（人民币）
+# 置信水平为 c 时，历史 VaR 取损益分布的第 (1 - c) 分位数，取负数表示损失额度
+alpha = 1 - CONFIDENCE_LEVEL
+var_quantile_value = np.quantile(pnl, alpha)
+hist_var_value = -var_quantile_value  # 报告为正数代表潜在损失金额
+
+# 3. 画直方图并加带标注的 VaR 线；置信水平参数化
+plt.figure(figsize=(10, 6))
+
+# 绘制日损益直方图
+plt.hist(pnl, bins=50, color='steelblue', edgecolor='black', alpha=0.75)
+
+# 绘制 VaR 竖线（标注在损益分布的对应分位数点上）
+plt.axvline(
+    var_quantile_value, 
+    color='red', 
+    linestyle='--', 
+    linewidth=2,
+    label=f'{CONFIDENCE_LEVEL*100:.0f}% 1-Day Hist VaR\n= {hist_var_value:,.2f} RMB'
+)
+
+# 图表修饰
+plt.title(f'Daily PnL Distribution and {CONFIDENCE_LEVEL*100:.0f}% Historical VaR', fontsize=14)
+plt.xlabel('Daily Profit and Loss (RMB)', fontsize=12)
+plt.ylabel('Frequency', fontsize=12)
+plt.legend(fontsize=11, loc='upper right')
+plt.grid(axis='y', linestyle='--', alpha=0.7)
+
+# 4. 保存图形并填充 result
+plt.savefig(FIG_SAVE_PATH, dpi=150, bbox_inches='tight')
+plt.close()
+
+# 按照输出契约封装结果
+result = {
+    'hist_var_95_1d': hist_var_value,
+    'figure_path': FIG_SAVE_PATH
+}
+
+# 课堂投屏展示用打印
+print(f"【计算结果】{CONFIDENCE_LEVEL*100:.0f}% 一日历史 VaR (人民币): {result['hist_var_95_1d']:,.2f} 元")
+print(f"【图形输出】图表已保存至: {result['figure_path']}")

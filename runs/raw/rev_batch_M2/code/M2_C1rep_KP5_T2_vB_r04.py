@@ -1,0 +1,48 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# 参数设置
+CONFIDENCE = 0.95          # 置信度，可调
+POSITION = 1_000_000       # 头寸 100 万
+FUND_COL = 'fund'          # 收益率列名
+DATA_PATH = 'data/market_snapshot_v1.csv'
+FIGURE_PATH = 'var_histogram.png'   # 图片保存路径
+
+# 读取数据
+df = pd.read_csv(DATA_PATH)
+returns = df[FUND_COL].dropna().values  # 日收益率（假设为小数形式，如 0.01 表示 1%）
+
+# 计算头寸损益
+pnl = POSITION * returns
+
+# 历史模拟 VaR（损失为正数或负数？通常 VaR 用绝对值表示损失）
+# 对于多头，损失为负收益；直接取 pnl 的分位数
+var_threshold = np.percentile(pnl, (1 - CONFIDENCE) * 100)  # 5% 分位数，通常是负值
+# 转换为通常报告的正数（损失值）
+hist_var_95_1d = abs(var_threshold)
+
+# 绘制直方图并标注 VaR 线
+plt.figure(figsize=(10, 6))
+plt.hist(pnl, bins=50, alpha=0.75, color='skyblue', edgecolor='black')
+plt.axvline(x=var_threshold, color='red', linestyle='--', linewidth=2,
+            label=f'Historical VaR {CONFIDENCE*100:.0f}%: {hist_var_95_1d:,.2f}')
+plt.xlabel('Profit & Loss')
+plt.ylabel('Frequency')
+plt.title('Historical VaR - Daily P&L Distribution')
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 保存图片
+plt.savefig(FIGURE_PATH, dpi=150, bbox_inches='tight')
+plt.close()
+
+# 构建结果字典
+result = {
+    'hist_var_95_1d': hist_var_95_1d,
+    'figure_path': os.path.abspath(FIGURE_PATH)
+}
+
+print("计算结果：")
+print(result)

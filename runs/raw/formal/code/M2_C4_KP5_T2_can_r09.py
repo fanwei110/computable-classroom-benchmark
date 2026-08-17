@@ -1,0 +1,53 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+# -------------------------- 可调参数 --------------------------
+CONFIDENCE_LEVEL = 0.95          # 置信水平
+POSITION_VALUE = 1_000_000.0     # 头寸金额（人民币）
+DATA_PATH = Path("data/market_snapshot_v1.csv")
+FIGURE_PATH = Path("var_figure.png")
+# -------------------------------------------------------------
+
+# 1. 读取数据并构造日损益序列
+df = pd.read_csv(DATA_PATH)
+# 假设 "fund" 列为小数形式的日收益率
+daily_returns = df["fund"].dropna().astype(float)
+daily_pnl = POSITION_VALUE * daily_returns   # 日损益序列
+
+# 2. 计算历史 VaR（正的人民币损失金额）
+alpha = 1.0 - CONFIDENCE_LEVEL
+# 线性插值经验分位数，numpy 默认方法
+var_quantile = np.quantile(daily_pnl, alpha)   # 损益的左尾分位数（通常为负）
+hist_var = -var_quantile                       # 报为正的损失金额
+
+# 3. 绘制直方图并标注 VaR 线
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.hist(daily_pnl, bins=50, color="steelblue", edgecolor="white",
+        alpha=0.7, label="日损益分布")
+ax.axvline(var_quantile, color="firebrick", linestyle="--", linewidth=2,
+           label=f"{CONFIDENCE_LEVEL*100:.0f}% 历史 VaR")
+# 添加金额标注
+ax.text(var_quantile, ax.get_ylim()[1] * 0.9,
+        f"VaR = {hist_var:,.2f} 元",
+        color="firebrick", ha="right", va="top",
+        bbox=dict(boxstyle="round,pad=0.3", facecolor="white", alpha=0.8))
+ax.set_xlabel("日损益 (元)")
+ax.set_ylabel("频数")
+ax.set_title(f"头寸 {POSITION_VALUE:,.0f} 元的日损益分布与历史 VaR")
+ax.legend()
+plt.tight_layout()
+
+# 4. 保存图形
+fig.savefig(FIGURE_PATH, dpi=150)
+plt.close(fig)  # 释放资源
+
+# 5. 输出契约
+result = {
+    "hist_var_95_1d": round(hist_var, 2),   # 人民币金额（保留两位小数）
+    "figure_path": str(FIGURE_PATH.resolve())
+}
+
+# 显示结果，便于投屏查看
+print(result)

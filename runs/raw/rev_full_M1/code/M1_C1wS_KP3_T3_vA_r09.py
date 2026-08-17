@@ -1,0 +1,62 @@
+import numpy as np
+from scipy.optimize import root
+
+# 债券参数
+face_value = 100.0
+coupon_rate = 0.046
+ytm_current = 0.053
+years_to_maturity = 7
+coupon_frequency = 2  # 半年付息一次（常见假设）
+ytm_increase_bps = 80  # 基点变化
+
+# 计算当前价格、久期和凸性
+def bond_price(ytm, face_value, coupon_rate, years_to_maturity, coupon_frequency):
+    periods = years_to_maturity * coupon_frequency
+    coupon_payment = face_value * coupon_rate / coupon_frequency
+    discount_rates = (1 + ytm / coupon_frequency) ** np.arange(1, periods + 1)
+    cash_flows = np.full(periods, coupon_payment)
+    cash_flows[-1] += face_value  # 最后一期加上面值
+    price = np.sum(cash_flows / discount_rates)
+    return price
+
+def bond_duration_convexity(ytm, face_value, coupon_rate, years_to_maturity, coupon_frequency):
+    periods = years_to_maturity * coupon_frequency
+    coupon_payment = face_value * coupon_rate / coupon_frequency
+    cash_flows = np.full(periods, coupon_payment)
+    cash_flows[-1] += face_value
+
+    # 计算久期
+    discount_rates = (1 + ytm / coupon_frequency) ** np.arange(1, periods + 1)
+    discounted_cash_flows = cash_flows / discount_rates
+    price = np.sum(discounted_cash_flows)
+    time_weighted_cash_flows = discounted_cash_flows * np.arange(1, periods + 1)
+    macaulay_duration = np.sum(time_weighted_cash_flows) / price
+    modified_duration = macaulay_duration / (1 + ytm / coupon_frequency)
+
+    # 计算凸性
+    time_squared_cash_flows = discounted_cash_flows * np.arange(1, periods + 1) * np.arange(1, periods + 1)
+    convexity = np.sum(time_squared_cash_flows) / (price * (1 + ytm / coupon_frequency)**2)
+
+    return modified_duration, convexity
+
+# 1. 计算当前收益率下的利率敏感性
+price_current = bond_price(ytm_current, face_value, coupon_rate, years_to_maturity, coupon_frequency)
+modified_duration, convexity = bond_duration_convexity(ytm_current, face_value, coupon_rate, years_to_maturity, coupon_frequency)
+
+# 2. 估算收益率上升80个基点的价格影响
+ytm_new = ytm_current + ytm_increase_bps / 10000  # 基点转换为小数
+price_new = bond_price(ytm_new, face_value, coupon_rate, years_to_maturity, coupon_frequency)
+
+# 使用久期和凸性估算价格变化
+price_drop_estimate = -modified_duration * (ytm_increase_bps / 10000) + 0.5 * convexity * (ytm_increase_bps / 10000)**2
+price_drop_pct_estimate = price_drop_estimate * 100
+
+# 精确计算价格跌幅
+price_drop_pct_actual = ((price_current - price_new) / price_current) * 100
+
+# 3. 存储结果
+result = {
+    'price_drop_pct': price_drop_pct_actual  # 使用精确计算的跌幅
+}
+
+print(result)

@@ -1,0 +1,42 @@
+根据给定条件计算 95% 一日 VaR：
+
+**已知条件：**
+- 年化波动率 σ = 0.24（24%）
+- 头寸规模 = 2,700,000
+- 置信水平 95%，对应正态分布分位数 z = 1.64485
+- 交易日 T = 252
+
+**计算步骤：**
+
+1. 日波动率 = 年化波动率 / √252  
+   σ_daily = 0.24 / √252 = 0.24 / 15.8745 ≈ 0.015118
+
+2. 一日 VaR（百分比）= z × σ_daily  
+   VaR_% = 1.64485 × 0.015118 ≈ 0.024866
+
+3. 一日 VaR（金额）= 头寸 × VaR_%  
+   VaR = 2,700,000 × 0.024866 ≈ 67,138.20
+
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 参数
+vol_annual = 0.24
+position = 2700000
+confidence = 0.95
+T = 252
+
+# 计算
+z_score = norm.ppf(1 - confidence)  # 左尾分位数（负数）
+z_score_abs = abs(z_score)          # VaR 报告为正的损失
+vol_daily = vol_annual / np.sqrt(T)
+var_pct = z_score_abs * vol_daily
+var_amount = position * var_pct
+
+result = {'var_95_1d': round(var_amount, 2)}
+```
+
+```json
+{"var_95_1d": 67138.2}
+```

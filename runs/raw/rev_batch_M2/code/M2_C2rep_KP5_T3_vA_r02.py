@@ -1,0 +1,25 @@
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+annual_vol = 0.24          # 年化波动率
+position = 2_700_000       # 头寸金额（元）
+confidence = 0.95          # 置信水平
+trading_days = 252         # 假设一年252个交易日
+
+# 1. 把年化波动率换算为一日期限波动率
+daily_vol = annual_vol / np.sqrt(trading_days)
+
+# 2. 95% 正态分位数（标准正态分布的左侧分位数，因为VaR关心损失）
+z_score = norm.ppf(1 - confidence)  # 结果为负值，例如约 -1.64485
+# 在VaR公式中常取绝对值
+z_score_abs = np.abs(z_score)
+
+# 3. 计算一日 VaR（金额）
+var_95_1d = position * daily_vol * z_score_abs
+
+# 输出字典
+result = {'var_95_1d': var_95_1d}
+
+# 可选：打印结果以便投屏展示（不污染输出字典，但课堂运行会可见）
+print(result)

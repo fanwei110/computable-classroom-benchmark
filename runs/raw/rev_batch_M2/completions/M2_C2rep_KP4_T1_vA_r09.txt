@@ -1,0 +1,43 @@
+以下脚本实现了 Black-Scholes 公式，计算欧式看涨期权的价格、Delta 和 Vega，并将结果存入字典 `result`。
+
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 市场参数
+S0 = 103.7       # 标的现价
+K = 97.5         # 行权价
+sigma = 0.276    # 年化波动率
+r = 0.043        # 无风险利率
+T = 0.58         # 剩余期限（年）
+
+# 1. 计算 d1 与 d2
+d1 = (np.log(S0 / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+d2 = d1 - sigma * np.sqrt(T)
+
+# 2. 计算期权价格与 Delta
+call_price = S0 * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+call_delta = norm.cdf(d1)
+
+# 3. 计算 Vega (dC/dσ)
+call_vega = S0 * norm.pdf(d1) * np.sqrt(T)
+
+# 4. 填充结果
+result = {
+    'call_price': call_price,
+    'call_delta': call_delta,
+    'call_vega': call_vega
+}
+
+# 可选：打印结果以供核对
+if __name__ == '__main__':
+    for key, value in result.items():
+        print(f"{key}: {value:.6f}")
+```
+
+**结果说明**：
+- `call_price`: 期权的理论价格（货币单位与现价相同）。
+- `call_delta`: 期权价格对标的资产价格的偏导数（无量纲）。
+- `call_vega`: 期权价格对波动率（小数形式）的偏导数，即波动率增加1（如从0.276变为1.276）时价格的理论变化量。实际中常将 vega 表示为波动率变化1个百分点（0.01）的影响，此时只需将本结果除以100即可。
+
+运行上述脚本将输出确定且可复现的数值。

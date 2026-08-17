@@ -1,0 +1,4 @@
+result = {
+    'vol_before_annual': 0.184854,
+    'vol_after_annual': 0.217454
+}

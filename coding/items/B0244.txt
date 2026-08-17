@@ -1,0 +1,60 @@
+=== B0244  任务 KP3_T1 (T1) ===
+
+--- 任务要求的输出键 ---
+price, macaulay_duration_years, modified_duration_years, convexity
+
+--- 判分失败明细 ---
+macaulay_duration_years: 提交值 6.1222  |  参考值 6.120582751660975
+modified_duration_years: 提交值 5.8143  |  参考值 5.812519232346605
+convexity: 提交值 42.1389  |  参考值 42.13363299470055
+
+--- 提取出的代码 ---
+result = {
+    'price': 95.9923,
+    'macaulay_duration_years': 6.1222,
+    'modified_duration_years': 5.8143,
+    'convexity': 42.1389
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+为了计算该债券的各项指标，我们基于每年付息一次的标准假设进行计算。
+
+已知参数：
+*   面值 ($F$) = 100
+*   票息率 = 4.6%，即每期票息 ($C$) = 4.6
+*   期限 ($n$) = 7年
+*   收益率 ($y$) = 5.3%
+
+**1. 计算债券价格**
+价格 $P$ 为未来现金流按收益率折现的现值总和：
+$$P = \sum_{t=1}^{7} \frac{C}{(1+y)^t} + \frac{F}{(1+y)^7} = C \times \frac{1 - (1+y)^{-n}}{y} + F \times (1+y)^{-n}$$
+$$P = 4.6 \times \frac{1 - 1.053^{-7}}{0.053} + 100 \times 1.053^{-7} \approx 4.6 \times 5.725204 + 100 \times 0.696564 \approx 26.33594 + 69.65641 = 95.99235$$
+
+**2. 计算麦考利久期**
+麦考利久期 $MacD$ 为现金流现值加权回收时间的平均值：
+$$MacD = \frac{1}{P} \sum_{t=1}^{7} \frac{t \times CF_t}{(1+y)^t}$$
+利用年金公式 $\sum_{t=1}^{n} t \cdot v^t = \frac{a_{\overline{n}|}(1+y) - nv^n}{y}$，其中 $v = \frac{1}{1+y}$：
+$$MacD = \frac{1}{P} \left[ C \times \frac{a_{\overline{7}|}(1+y) - 7v^7}{y} + F \times 7v^7 \right]$$
+$$MacD = \frac{1}{95.99235} \left[ 4.6 \times \frac{5.725204 \times 1.053 - 7 \times 0.696564}{0.053} + 700 \times 0.696564 \right]$$
+$$MacD = \frac{1}{95.99235} \left[ 4.6 \times 21.74323 + 487.59486 \right] = \frac{100.01886 + 487.59486}{95.99235} = \frac{587.61372}{95.99235} \approx 6.12216 \text{ 年}$$
+
+**3. 计算修正久期**
+修正久期 $ModD$ 衡量价格对收益率的一阶敏感度：
+$$ModD = \frac{MacD}{1+y} = \frac{6.12216}{1.053} \approx 5.81431$$
+
+**4. 计算凸性**
+凸性 $Convexity$ 衡量价格对收益率的二阶敏感度：
+$$Convexity = \frac{1}{P(1+y)^2} \sum_{t=1}^{7} \frac{t(t+1) \times CF_t}{(1+y)^t}$$
+分步计算各期 $t(t+1) \times CF_t \times v^t$ 并加总：
+$$\sum_{t=1}^{7} \frac{t(t+1) \times CF_t}{(1+y)^t} \approx 4484.7612$$
+$$Convexity = \frac{4484.7612}{95.99235 \times 1.053^2} = \frac{4484.7612}{106.44385} \approx 42.1389$$
+
+```python
+result = {
+    'price': 95.9923,
+    'macaulay_duration_years': 6.1222,
+    'modified_duration_years': 5.8143,
+    'convexity': 42.1389
+}
+```

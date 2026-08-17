@@ -1,0 +1,38 @@
+import numpy as np
+
+# ================== 题目给定参数 ==================
+beta = 1.42                     # 股票的 Beta 值
+market_return_monthly = -0.058  # 上个月市场收益率 (跌了 5.8%)
+risk_free_rate_annual = 0.047   # 年化无风险利率 (每年 4.7%)
+
+# ================== 步骤 1: 折算年无风险利率为月利率 ==================
+# 采用复利折算方式，确保月度与年度之间的几何一致性: (1 + R_annual) = (1 + R_monthly)^12
+risk_free_rate_monthly = (1 + risk_free_rate_annual) ** (1 / 12) - 1
+
+# ================== 步骤 2: 在月度层面套用 CAPM ==================
+# CAPM 公式: E(R_i) = R_f + Beta * (E(R_m) - R_f)
+# 其中 R_f 和 E(R_m) 均为月度数据
+capm_return_monthly = risk_free_rate_monthly + beta * (market_return_monthly - risk_free_rate_monthly)
+
+# ================== 步骤 3: 填充 result ==================
+result = {
+    'capm_return_monthly': capm_return_monthly
+}
+
+# ================== 课堂投屏输出展示 ==================
+print("=" * 50)
+print("《证券投资学》- CAPM 月度期望收益计算")
+print("=" * 50)
+print(f"输入参数:")
+print(f"  Beta                  : {beta}")
+print(f"  市场月度收益率 (Rm)   : {market_return_monthly:.4%}")
+print(f"  无风险年利率 (Rf_ann) : {risk_free_rate_annual:.4%}")
+print("-" * 50)
+print(f"计算中间过程:")
+print(f"  无风险月利率 (Rf_mon) : {risk_free_rate_monthly:.6%}")
+print(f"  市场风险溢价 (Rm-Rf)  : {market_return_monthly - risk_free_rate_monthly:.6%}")
+print("-" * 50)
+print(f"计算结果:")
+print(f"  CAPM 预期月度收益率   : {capm_return_monthly:.4%}")
+print("=" * 50)
+print(f"返回字典: {result}")

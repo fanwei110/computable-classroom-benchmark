@@ -1,0 +1,74 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ========== 债券参数 ==========
+face_value = 100.0
+coupon_rate = 0.046      # 4.6%
+coupon = face_value * coupon_rate
+n_years = 7
+ytm0 = 0.053             # 初始收益率 (5.3%)
+
+# ========== 计算初始精确价格 P0 ==========
+t = np.arange(1, n_years + 1)
+disc = (1 + ytm0) ** t
+pv_coupons = coupon / disc
+pv_face = face_value / disc[-1]
+P0 = np.sum(pv_coupons) + pv_face
+
+# ========== 计算修正久期 (Modified Duration) ==========
+weights = t * pv_coupons
+weights[-1] += n_years * pv_face   # 面值现金流加权
+macaulay_duration = np.sum(weights) / P0
+modified_duration = macaulay_duration / (1 + ytm0)
+
+# ========== 收益率范围 2% ~ 9% ==========
+y_range = np.linspace(0.02, 0.09, 500)
+
+# 精确价格 (向量化计算)
+disc_range = (1 + y_range) ** t[:, np.newaxis]
+pv_coupons_range = coupon / disc_range
+pv_face_range = face_value / disc_range[-1, :]
+exact_prices = np.sum(pv_coupons_range, axis=0) + pv_face_range
+
+# 久期近似价格: P_approx = P0 * [1 - MD * (y - ytm0)]
+approx_prices = P0 * (1 - modified_duration * (y_range - ytm0))
+
+# ========== 绘图 ==========
+plt.figure(figsize=(10, 6))
+plt.plot(y_range * 100, exact_prices, label='精确价格 (Exact Price)', linewidth=2)
+plt.plot(y_range * 100, approx_prices, label='久期近似 (Duration Approximation)',
+         linestyle='--', linewidth=2)
+plt.axvline(ytm0 * 100, color='gray', linestyle=':', alpha=0.7)
+plt.axhline(P0, color='gray', linestyle=':', alpha=0.7)
+plt.xlabel('收益率 (%)')
+plt.ylabel('债券价格')
+plt.title('债券价格-收益率曲线 (面值100, 票息4.6%, 7年, YTM=5.3%)')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+
+# 保存图片
+figure_path = 'price_yield_curve.png'
+plt.savefig(figure_path, dpi=150)
+plt.close()
+
+# ========== 收益率 +100 bp ==========
+dy = 0.01
+ytm_up = ytm0 + dy
+
+# 精确价格
+disc_up = (1 + ytm_up) ** t
+price_up_exact = np.sum(coupon / disc_up) + face_value / disc_up[-1]
+
+# 久期法估计的相对变化 (近似百分比变化，用小数表示)
+dur_approx_change = -modified_duration * dy
+
+# ========== 结果存入字典 ==========
+result = {
+    'price_at_up100bp': round(price_up_exact, 6),
+    'dur_approx_change_up100bp': round(dur_approx_change, 6),
+    'figure_path': figure_path
+}
+
+# 打印结果供查看
+print(result)

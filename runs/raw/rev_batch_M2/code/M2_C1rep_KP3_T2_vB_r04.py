@@ -1,0 +1,65 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 债券参数
+face_value = 100
+coupon_rate = 0.046
+ytm = 0.053
+years = 7
+coupon = face_value * coupon_rate
+shift_bp = 100  # 变动幅度（可调）
+dy = shift_bp / 10000  # 100bp = 0.01
+
+# 现金流时间
+t = np.arange(1, years + 1)
+cf = np.full(years, coupon)
+cf[-1] += face_value
+
+# 当前收益率下价格和久期
+disc = (1 + ytm) ** (-t)
+pv_cf = cf * disc
+price0 = np.sum(pv_cf)
+# 麦考利久期
+mac_dur = np.sum(t * pv_cf) / price0
+# 修正久期
+mod_dur = mac_dur / (1 + ytm)
+
+# 收益率范围 2% 到 9%
+yields = np.linspace(0.02, 0.09, 500)
+
+# 精确价格
+disc_grid = (1 + yields) ** (-t[:, None])  # shape (7, len(yields))
+pv_grid = cf[:, None] * disc_grid
+exact_prices = np.sum(pv_grid, axis=0)
+
+# 久期近似价格（线性近似）
+approx_prices = price0 - price0 * mod_dur * (yields - ytm)
+
+# 收益率+100bp后的精确价格
+y_up = ytm + dy
+disc_up = (1 + y_up) ** (-t)
+price_up_exact = np.sum(cf * disc_up)
+
+# 久期法估计的相对变化（ΔP/P）
+dur_approx_change = -mod_dur * dy
+
+# 绘图
+plt.figure(figsize=(8, 5))
+plt.plot(yields * 100, exact_prices, label='Exact Price', linewidth=2)
+plt.plot(yields * 100, approx_prices, label='Duration Approximation', linestyle='--', linewidth=2)
+plt.xlabel('Yield to Maturity (%)')
+plt.ylabel('Price')
+plt.title('Price-Yield Curve')
+plt.legend()
+plt.grid(True)
+figure_path = 'price_curve.png'
+plt.savefig(figure_path, dpi=150)
+plt.close()
+
+# 结果存为字典
+result = {
+    'price_at_up100bp': round(price_up_exact, 4),
+    'dur_approx_change_up100bp': round(dur_approx_change, 6),
+    'figure_path': figure_path
+}
+result

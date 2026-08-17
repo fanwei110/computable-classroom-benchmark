@@ -1,0 +1,77 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ============================
+# 参数设置（窗口可调）
+# ============================
+WINDOW = 60                # 滚动窗口长度（交易日）
+RISK_FREE_RATE = 0.021     # 年化无风险利率
+TRADING_DAYS = 252         # 一年交易日数
+FIGURE_FILENAME = "rolling_sharpe_ratio.png"  # 输出图文件名
+
+# ============================
+# 1. 读取快照 CSV
+# ============================
+# 假定数据文件位于 data/market_snapshot_v1.csv
+df = pd.read_csv("data/market_snapshot_v1.csv")
+
+# 如果有 'date' 列则设为日期索引，否则保留整数索引
+if 'date' in df.columns:
+    df['date'] = pd.to_datetime(df['date'])
+    df.set_index('date', inplace=True)
+
+# 提取 fund 列（日收益率，假设为小数形式，如 0.01 表示 1%）
+fund_returns = df['fund'].astype(float)
+
+# ============================
+# 2. 计算 60 日滚动年化夏普比率
+# ============================
+rf_daily = RISK_FREE_RATE / TRADING_DAYS  # 日度无风险利率
+
+def annualized_sharpe(window_returns):
+    """计算窗口内收益的年化夏普比率"""
+    if len(window_returns) < 2:
+        return np.nan
+    excess = window_returns - rf_daily
+    mean_excess = excess.mean()
+    std_excess = excess.std(ddof=0)  # 使用总体标准差或样本标准差？通常夏普用样本标准差，但为可复现，用 ddof=1 也可。这里使用 ddof=1 更常见。
+    # 注：业界常用样本标准差 ddof=1，但无明确要求时用 ddof=1（默认）或 ddof=0 均可。使用 pandas 默认 std(ddof=1)。
+    # 为了与 pandas rolling apply 一致，手动计算时用 ddof=1。
+    if std_excess == 0:
+        return np.nan
+    sharpe = np.sqrt(TRADING_DAYS) * (mean_excess / std_excess)
+    return sharpe
+
+# 使用 rolling apply（窗口长度 WINDOW）
+rolling_sharpe = fund_returns.rolling(window=WINDOW).apply(annualized_sharpe, raw=True)
+
+# ============================
+# 3. 报告最后一个窗口的夏普值
+# ============================
+last_sharpe = rolling_sharpe.iloc[-1]
+# 若为 NaN，保留为 float('nan')
+
+# ============================
+# 4. 画图并保存
+# ============================
+plt.figure(figsize=(10, 5))
+plt.plot(rolling_sharpe.index, rolling_sharpe.values, linewidth=1.2, color='navy')
+plt.title(f"{WINDOW}-Day Rolling Annualized Sharpe Ratio", fontsize=14)
+plt.xlabel("Date" if isinstance(rolling_sharpe.index, pd.DatetimeIndex) else "Observation")
+plt.ylabel("Sharpe Ratio")
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.savefig(FIGURE_FILENAME, dpi=150)
+plt.close()
+
+# ============================
+# 输出契约字典
+# ============================
+result = {
+    'rolling_sharpe_last': float(last_sharpe),   # 即使为 nan 也是合法的 float
+    'figure_path': FIGURE_FILENAME
+}
+
+# 可选打印，便于教师查看
+print("Result:", result)

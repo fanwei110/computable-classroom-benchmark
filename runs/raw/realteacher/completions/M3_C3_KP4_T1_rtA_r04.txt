@@ -1,0 +1,42 @@
+根据题目给定的条件，使用Black-Scholes模型计算欧式看涨期权的各项指标：
+
+**已知参数：**
+- 标的现价 $S = 103.7$
+- 行权价 $K = 97.5$
+- 隐含波动率 $\sigma = 0.276$
+- 无风险利率 $r = 0.043$ （按连续复利）
+- 到期时间 $T = 0.58$ 年
+- 标的不分红 $q = 0$
+
+**计算过程：**
+1. **计算 $d_1$ 和 $d_2$：**
+$$d_1 = \frac{\ln(S/K) + (r + 0.5\sigma^2)T}{\sigma\sqrt{T}}$$
+$$\ln(103.7/97.5) \approx 0.061654$$
+$$(r + 0.5\sigma^2)T = (0.043 + 0.5 \times 0.276^2) \times 0.58 \approx 0.047231$$
+$$\sigma\sqrt{T} = 0.276 \times \sqrt{0.58} \approx 0.210273$$
+$$d_1 = \frac{0.061654 + 0.047231}{0.210273} \approx 0.515874$$
+$$d_2 = d_1 - \sigma\sqrt{T} = 0.515874 - 0.210273 \approx 0.305601$$
+
+2. **计算期权价格 (Call Price)：**
+$$C = S \cdot N(d_1) - K \cdot e^{-rT} \cdot N(d_2)$$
+$$N(d_1) \approx 0.69737$$
+$$N(d_2) \approx 0.62008$$
+$$K \cdot e^{-rT} = 97.5 \times e^{-0.043 \times 0.58} \approx 95.10847$$
+$$C = 103.7 \times 0.69737 - 95.10847 \times 0.62008 \approx 72.2575 - 58.9778 \approx 13.2797$$
+
+3. **计算 Delta：**
+$$\text{Delta} = N(d_1) \approx 0.6974$$
+
+4. **计算 Vega：**
+$$\text{Vega} = S \cdot \sqrt{T} \cdot N'(d_1)$$
+$$N'(d_1) = \frac{1}{\sqrt{2\pi}} e^{-d_1^2 / 2} \approx 0.34921$$
+$$\text{Vega} = 103.7 \times \sqrt{0.58} \times 0.34921 \approx 79.0796 \times 0.34921 \approx 27.6280$$
+*(注：此处Vega为波动率$\sigma$变动1个小数单位即100%时的价格变动值，符合用小数表示波动率的约定)*
+
+```python
+result = {
+    'call_price': 13.2797,
+    'call_delta': 0.6974,
+    'call_vega': 27.6280
+}
+```

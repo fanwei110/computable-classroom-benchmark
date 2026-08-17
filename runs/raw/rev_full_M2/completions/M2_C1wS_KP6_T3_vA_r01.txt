@@ -1,0 +1,38 @@
+```python
+import pandas as pd
+import numpy as np
+
+# 读取 CSV 快照
+df = pd.read_csv('快照.csv')
+
+# 确认 fund 列存在
+fund_col = 'fund'
+
+# 计算 fund 列的日收益率
+# 假设 CSV 中的 fund 列为每日净值或价格
+daily_returns = df[fund_col].pct_change().dropna()
+
+# 无风险利率（年化）
+rf_annual = 0.021
+
+# 交易日数（约 252 天/年）
+trading_days = 252
+
+# 日均无风险利率
+rf_daily = rf_annual / trading_days
+
+# 超额收益（日度）
+excess_returns = daily_returns - rf_daily
+
+# 日度夏普比率 = 日度超额收益均值 / 日度超额收益标准差
+sharpe_daily = excess_returns.mean() / excess_returns.std()
+
+# 年化夏普比率 = 日度夏普比率 * sqrt(252)
+sharpe_annual = sharpe_daily * np.sqrt(trading_days)
+
+# 存入结果字典
+result = {'sharpe_annual': sharpe_annual}
+
+# 打印结果以便课堂展示
+print(result)
+```

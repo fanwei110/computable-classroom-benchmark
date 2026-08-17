@@ -1,0 +1,12 @@
+# FinEdu-CodeGen benchmark — Python dependencies (Python 3.10+)
+# Analysis / figures / oracles / judge. Generation & coding also use `requests`
+# to call the OpenRouter API (set OPENROUTER_API_KEY in the environment).
+numpy>=1.24
+pandas>=2.0
+scipy>=1.10
+statsmodels>=0.14
+matplotlib>=3.7
+pyyaml>=6.0
+mpmath>=1.3
+requests>=2.31
+openpyxl>=3.1

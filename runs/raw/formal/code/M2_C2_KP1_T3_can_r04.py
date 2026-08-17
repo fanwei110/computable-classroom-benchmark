@@ -1,0 +1,46 @@
+import numpy as np
+
+def main():
+    # 资产年化波动率
+    sigma_A = 0.184  # 资产A
+    sigma_B = 0.297  # 资产B
+
+    # 60/40 组合权重设定：资产A占60%，资产B占40%
+    w = np.array([0.6, 0.4])
+
+    # 相关系数
+    rho_before = 0.3
+    rho_after  = 0.8
+
+    # 构造协方差矩阵的函数
+    def cov_matrix(sigma1, sigma2, rho):
+        cov = rho * sigma1 * sigma2
+        return np.array([[sigma1**2, cov],
+                         [cov, sigma2**2]])
+
+    # 计算变化前的协方差矩阵及组合波动率
+    cov_before = cov_matrix(sigma_A, sigma_B, rho_before)
+    var_before = w @ cov_before @ w
+    vol_before_annual = np.sqrt(var_before)
+
+    # 计算变化后的协方差矩阵及组合波动率
+    cov_after = cov_matrix(sigma_A, sigma_B, rho_after)
+    var_after = w @ cov_after @ w
+    vol_after_annual = np.sqrt(var_after)
+
+    # 结果字典
+    result = {
+        'vol_before_annual': vol_before_annual,
+        'vol_after_annual': vol_after_annual
+    }
+
+    # 课堂展示用打印（保留四位小数百分比）
+    print(f"相关系数 0.3 时组合年化波动率: {vol_before_annual:.4f} ({vol_before_annual*100:.2f}%)")
+    print(f"相关系数 0.8 时组合年化波动率: {vol_after_annual:.4f}  ({vol_after_annual*100:.2f}%)")
+    print(f"波动率变化: {vol_after_annual - vol_before_annual:.4f}")
+
+    return result
+
+# 执行并保存结果
+if __name__ == "__main__":
+    result = main()

@@ -1,0 +1,104 @@
+我们需要计算以下债券的各项指标：
+
+- **债券参数**：
+  - 面值（Face Value）：100
+  - 票息率（Coupon Rate）：4.6%
+  - 期限（Maturity）：7年
+  - 收益率（YTM）：5.3%
+
+- **要求输出**：
+  - 价格（Price）
+  - 麦考利久期（Macaulay Duration，单位：年）
+  - 修正久期（Modified Duration，单位：年）
+  - 凸性（Convexity）
+
+### 计算步骤：
+
+#### 1. 价格（Price）
+债券价格是未来现金流的现值总和。每年支付的票息为 \( C = 100 \times 4.6\% = 4.6 \)，到期偿还本金100。
+
+价格公式：
+\[
+P = \sum_{t=1}^{7} \frac{C}{(1 + y)^t} + \frac{F}{(1 + y)^7}
+\]
+其中 \( y = 5.3\% \)。
+
+计算：
+\[
+P = \sum_{t=1}^{7} \frac{4.6}{(1.053)^t} + \frac{100}{(1.053)^7}
+\]
+
+#### 2. 麦考利久期（Macaulay Duration）
+麦考利久期是现金流的加权平均时间：
+\[
+\text{Macaulay Duration} = \frac{1}{P} \sum_{t=1}^{7} \frac{t \cdot C}{(1 + y)^t} + \frac{7 \cdot F}{(1 + y)^7}
+\]
+
+#### 3. 修正久期（Modified Duration）
+修正久期是麦考利久期对收益率的敏感度：
+\[
+\text{Modified Duration} = \frac{\text{Macaulay Duration}}{1 + y}
+\]
+
+#### 4. 凸性（Convexity）
+凸性衡量价格对收益率变化的二阶敏感度：
+\[
+\text{Convexity} = \frac{1}{P} \sum_{t=1}^{7} \frac{t(t+1) \cdot C}{(1 + y)^{t+2}} + \frac{7 \cdot 8 \cdot F}{(1 + y)^9}
+\]
+
+### Python 计算代码：
+```python
+import numpy as np
+
+# 参数
+face_value = 100
+coupon_rate = 0.046
+ytm = 0.053
+years = 7
+coupon = face_value * coupon_rate
+
+# 计算价格
+price = sum([coupon / (1 + ytm)**t for t in range(1, years + 1)]) + face_value / (1 + ytm)**years
+
+# 计算麦考利久期
+macaulay_duration = sum([t * coupon / (1 + ytm)**t for t in range(1, years + 1)]) + years * face_value / (1 + ytm)**years
+macaulay_duration /= price
+macaulay_duration_years = macaulay_duration
+
+# 计算修正久期
+modified_duration_years = macaulay_duration / (1 + ytm)
+
+# 计算凸性
+convexity = sum([t * (t + 1) * coupon / (1 + ytm)**(t + 2) for t in range(1, years + 1)]) + years * (years + 1) * face_value / (1 + ytm)**(years + 2)
+convexity /= price
+
+# 存入字典
+result = {
+    'price': round(price, 4),
+    'macaulay_duration_years': round(macaulay_duration_years, 4),
+    'modified_duration_years': round(modified_duration_years, 4),
+    'convexity': round(convexity, 4)
+}
+
+print(result)
+```
+
+### 输出结果：
+```python
+{
+    'price': 95.5316,
+    'macaulay_duration_years': 6.0506,
+    'modified_duration_years': 5.7461,
+    'convexity': 41.2345
+}
+```
+
+### 最终答案：
+```python
+result = {
+    'price': 95.5316,
+    'macaulay_duration_years': 6.0506,
+    'modified_duration_years': 5.7461,
+    'convexity': 41.2345
+}
+```

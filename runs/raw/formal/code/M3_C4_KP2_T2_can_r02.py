@@ -1,0 +1,91 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 1. 参数化设置 (小数表示)
+# ==========================================
+rf = 0.023      # 无风险利率 2.3%
+rm = 0.094      # 市场期望收益 9.4%
+
+# 股票数据
+stocks = {
+    'X': {'beta': 0.62, 'return': 0.081},
+    'Y': {'beta': 1.18, 'return': 0.131},
+    'Z': {'beta': 1.51, 'return': 0.099}
+}
+
+# ==========================================
+# 2. 计算 SML 斜率与 beta=1.27 处的期望收益
+# ==========================================
+sml_slope = rm - rf
+beta_target = 1.27
+er_at_beta_127 = rf + beta_target * sml_slope
+
+# ==========================================
+# 3. 绘制 SML 与股票点
+# ==========================================
+# 生成 beta 序列与对应的 SML 期望收益
+betas = np.linspace(0, 2, 100)
+er_sml = rf + betas * sml_slope
+
+# 创建画布
+plt.figure(figsize=(10, 6))
+
+# 绘制证券市场线 (SML)
+plt.plot(betas, er_sml, label='Security Market Line (SML)', color='blue', linewidth=2)
+
+# 标注无风险利率与市场组合点
+plt.scatter(0, rf, color='black', zorder=5)
+plt.annotate(f'Rf = {rf:.1%}', xy=(0, rf), xytext=(15, -10), textcoords='offset points')
+plt.scatter(1, rm, color='black', zorder=5)
+plt.annotate(f'Market = {rm:.1%}', xy=(1, rm), xytext=(15, -10), textcoords='offset points')
+
+# 绘制并标注三只股票
+for name, data in stocks.items():
+    beta = data['beta']
+    ret = data['return']
+    er_capm = rf + beta * sml_slope
+    alpha = ret - er_capm
+    
+    # 画点
+    plt.scatter(beta, ret, color='red', zorder=5)
+    
+    # 调整文本位置以避免重叠
+    if name == 'X':
+        xytext = (15, -20)
+    elif name == 'Y':
+        xytext = (15, 10)
+    else: # Z
+        xytext = (15, -20)
+        
+    # 添加标注 (包含 Beta, 实际收益与 Alpha)
+    plt.annotate(f'Stock {name}\nβ={beta:.2f}, E(R)={ret:.1%}\nα={alpha:.2%}', 
+                 xy=(beta, ret), 
+                 xytext=xytext, 
+                 textcoords='offset points',
+                 bbox=dict(boxstyle='round,pad=0.3', fc='lightyellow', alpha=0.8),
+                 arrowprops=dict(arrowstyle='->', connectionstyle='arc3'))
+
+# 图表格式设置
+plt.title('CAPM & Security Market Line (SML)', fontsize=14)
+plt.xlabel('Beta (β)', fontsize=12)
+plt.ylabel('Expected Return E(R)', fontsize=12)
+plt.xlim(0, 2)
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.legend()
+
+# ==========================================
+# 4. 保存图形并填充 result
+# ==========================================
+fig_path = 'sml_plot.png'
+plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': fig_path
+}
+
+# 输出结果验证
+print(result)

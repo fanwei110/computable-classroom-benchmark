@@ -1,0 +1,61 @@
+=== B0139  任务 KP3_T1 (T1) ===
+
+--- 任务要求的输出键 ---
+price, macaulay_duration_years, modified_duration_years, convexity
+
+--- 判分失败明细 ---
+macaulay_duration_years: 提交值 6.11987  |  参考值 6.120582751660975
+convexity: 提交值 42.129406  |  参考值 42.13363299470055
+
+--- 提取出的代码 ---
+result = {
+    'price': 95.988928,
+    'macaulay_duration_years': 6.119870,
+    'modified_duration_years': 5.811947,
+    'convexity': 42.129406
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+根据给定的计算约定和债券参数，我们进行如下计算：
+
+**参数梳理：**
+- 面值 ($F$) = 100
+- 票面利率 ($c$) = 0.046
+- 年付息 ($C$) = $100 \times 0.046 = 4.6$
+- 期限 ($n$) = 7 年
+- 到期收益率 ($y$) = 0.053
+- 折现因子 $v = 1 / (1+y)$
+
+**1. 债券价格 (Price)**
+$$P = \sum_{t=1}^{7} \frac{C}{(1+y)^t} + \frac{F}{(1+y)^7} = C \frac{1 - v^7}{y} + F v^7$$
+$$v^7 = (1/1.053)^7 \approx 0.6965899$$
+$$P = 4.6 \times \frac{1 - 0.6965899}{0.053} + 100 \times 0.6965899 \approx 26.329938 + 69.658990 = 95.988928$$
+
+**2. 麦考利久期 (Macaulay Duration)**
+$$MacD = \frac{1}{P} \left( \sum_{t=1}^{7} \frac{t \cdot C}{(1+y)^t} + \frac{7 \cdot F}{(1+y)^7} \right)$$
+分子部分 $\sum t \cdot PV(CF_t) = 587.505079$
+$$MacD = \frac{587.505079}{95.988928} \approx 6.119870 \text{ 年}$$
+
+**3. 修正久期 (Modified Duration)**
+由于收益率按年复利报价：
+$$ModD = \frac{MacD}{1+y} = \frac{6.119870}{1.053} \approx 5.811947 \text{ 年}$$
+
+**4. 凸性 (Convexity)**
+根据严格的二阶导数定义，年复利下的凸性公式为：
+$$Convexity = \frac{1}{P(1+y)^2} \left( \sum_{t=1}^{7} \frac{t(t+1) \cdot C}{(1+y)^t} + \frac{7 \times 8 \cdot F}{(1+y)^7} \right)$$
+分子部分 $\sum t(t+1) \cdot PV(CF_t) = 4484.391909$
+$$Convexity = \frac{4484.391909}{95.988928 \times 1.053^2} = \frac{4484.391909}{95.988928 \times 1.108809} \approx 42.129406$$
+
+*(注：计算约定中提到的 252 个交易日、连续复利等规则在当前单纯年复利债券的久期与凸性计算中无直接调用需求，仅作全局约定申明。)*
+
+最终按要求格式输出：
+
+```python
+result = {
+    'price': 95.988928,
+    'macaulay_duration_years': 6.119870,
+    'modified_duration_years': 5.811947,
+    'convexity': 42.129406
+}
+```

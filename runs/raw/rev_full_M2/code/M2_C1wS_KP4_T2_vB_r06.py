@@ -1,0 +1,51 @@
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+import os
+
+# ============ 参数设置 ============
+K = 97.5         # 行权价
+r = 0.043        # 无风险利率
+T = 0.58         # 到期时间（年）
+S_grid = np.linspace(70, 140, 600)  # 标的价格网格
+volatility_list = [0.15, 0.276, 0.40]  # 三个波动率
+S_target = 110.0
+vol_target = 0.276
+
+# ============ 欧式看涨期权 Delta 函数 ============
+def delta_call(S, K, T, r, sigma):
+    """计算欧式看涨期权的 Delta (闭式解)"""
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# ============ 计算并画图 ============
+fig, ax = plt.subplots(figsize=(10, 6))
+
+for sigma in volatility_list:
+    delta_vals = delta_call(S_grid, K, T, r, sigma)
+    ax.plot(S_grid, delta_vals, linewidth=2, label=f'σ = {sigma*100:.1f}%')
+
+# 标出 S=110, σ=27.6% 的点
+delta_target = delta_call(S_target, K, T, vol_target)
+ax.scatter(S_target, delta_target, color='red', zorder=5)
+ax.text(S_target, delta_target, f'  ({S_target}, {delta_target:.4f})',
+        verticalalignment='bottom', color='red', fontsize=10)
+
+ax.set_xlabel('Underlying Price (S)')
+ax.set_ylabel('Delta')
+ax.set_title('Delta of European Call Option')
+ax.legend()
+ax.grid(True, linestyle='--', alpha=0.6)
+
+# 保存图像
+figure_path = 'delta_curve.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ============ 组装结果字典 ============
+result = {
+    'delta_at_s110': delta_target,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+print(result)

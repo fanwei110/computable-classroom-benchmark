@@ -1,0 +1,8 @@
+```python
+result = {
+    'sharpe_annual': None,  # 缺少标准差等关键信息，无法计算年化夏普比率
+    'allocation_effect': 0.00165,   # 16.5 bp
+    'selection_effect': 0.0002,     # 2 bp
+    'interaction_effect': 0.00145   # 14.5 bp
+}
+```

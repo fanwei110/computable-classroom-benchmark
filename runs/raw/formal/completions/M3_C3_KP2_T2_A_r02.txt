@@ -1,0 +1,73 @@
+```python
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+from matplotlib.ticker import PercentFormatter
+import numpy as np
+
+# --- 1. 参数设定与计算 ---
+rf = 0.023       # 无风险利率 2.3%
+erm = 0.094      # 市场期望收益 9.4%
+
+# SML斜率
+sml_slope = erm - rf
+
+# Beta = 1.27 时的期望收益
+beta_target = 1.27
+er_at_beta_127 = rf + beta_target * sml_slope
+
+# 三个给定的点
+points = {
+    'X': (0.62, 0.081),
+    'Y': (1.18, 0.131),
+    'Z': (1.51, 0.099)
+}
+
+# --- 2. 绘图与交互设置 ---
+fig, ax = plt.subplots(figsize=(10, 7))
+plt.subplots_adjust(bottom=0.3)  # 为底部滑块腾出空间
+
+# Beta 范围
+beta_range = np.linspace(0, 2, 100)
+
+# 初始SML线
+line, = ax.plot(beta_range, rf + beta_range * sml_slope, color='blue', lw=2, label='SML')
+
+# 标出三个点，并用不同颜色区分在SML上方还是下方
+colors = {'X': 'green', 'Y': 'green', 'Z': 'red'}  # X,Y被低估(绿)，Z被高估(红)
+annotations = []
+for lbl, (b, r) in points.items():
+    ax.scatter(b, r, color=colors[lbl], s=80, zorder=5, 
+               label=f'{lbl} (β={b}, E={r:.1%})')
+    ann = ax.annotate(f'{lbl} ({r:.1%})', xy=(b, r), xytext=(10, 10),
+                      textcoords='offset points', fontsize=11, fontweight='bold',
+                      arrowprops=dict(arrowstyle='->', connectionstyle='arc3'))
+    annotations.append(ann)
+
+# 标出 Beta=1 (市场组合) 的点
+ax.scatter(1, erm, color='black', marker='D', s=100, zorder=5, label=f'Market (β=1, E={erm:.1%})')
+
+# 添加动态文本（随滑块更新）
+slope_text = ax.text(0.02, 0.95, f'SML Slope: {sml_slope:.4f}\nE(R) at β=1.27: {er_at_beta_127:.4f}', 
+                     transform=ax.transAxes, fontsize=12, verticalalignment='top',
+                     bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.5))
+
+# 美化图表
+ax.yaxis.set_major_formatter(PercentFormatter(1.0, decimals=1))
+ax.set_xlabel('Beta (β)', fontsize=12)
+ax.set_ylabel('Expected Return E(R)', fontsize=12)
+ax.set_title('Security Market Line (SML)', fontsize=14)
+ax.legend(loc='upper left', fontsize=10)
+ax.grid(True, linestyle='--', alpha=0.7)
+ax.set_xlim(0, 2)
+ax.set_ylim(0, 0.20)
+
+# --- 3. 添加交互滑块 ---
+ax_rf = plt.axes([0.25, 0.15, 0.65, 0.03])
+ax_erm = plt.axes([0.25, 0.08, 0.65, 0.03])
+
+slider_rf = Slider(ax_rf, 'Risk-free Rate ($r_f$)', 0.0, 0.10, valinit=rf, valstep=0.001)
+slider_erm = Slider(ax_erm, 'Market Return ($E[R_m]$)', 0.0, 0.20, valinit=erm, valstep=0.001)
+
+def update(val):
+    rf_new = slider_rf.val
+   

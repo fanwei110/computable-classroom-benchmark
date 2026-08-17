@@ -1,0 +1,38 @@
+import numpy as np
+
+# 债券参数
+face_value = 100.0
+coupon_rate = 0.046        # 票息率 4.6%
+yield_initial = 0.053      # 初始收益率 5.3%
+yield_change = 0.008       # 收益率上升 80 个基点
+yield_new = yield_initial + yield_change
+maturity = 7               # 7 年期
+freq = 1                   # 假设每年付息一次（若为半年付息可改为 2）
+
+def bond_price(face, coupon_rate, yield_rate, maturity, freq=1):
+    """
+    计算债券价格（按固定频率付息）
+    """
+    coupon = face * coupon_rate / freq
+    periods = int(maturity * freq)
+    rate_per_period = yield_rate / freq
+
+    # 生成各期现金流
+    cashflows = np.full(periods, coupon)
+    cashflows[-1] += face
+
+    # 折现因子
+    discount_factors = (1 + rate_per_period) ** np.arange(1, periods + 1)
+    price = np.sum(cashflows / discount_factors)
+    return price
+
+# 计算收益率变动前后的价格
+price_initial = bond_price(face_value, coupon_rate, yield_initial, maturity, freq)
+price_new = bond_price(face_value, coupon_rate, yield_new, maturity, freq)
+
+# 价格跌幅百分比：(原价 - 新价) / 原价 * 100
+price_drop_pct = (price_initial - price_new) / price_initial * 100
+
+# 输出结果
+result = {'price_drop_pct': price_drop_pct}
+print(result)

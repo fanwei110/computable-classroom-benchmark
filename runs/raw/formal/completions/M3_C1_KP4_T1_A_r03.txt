@@ -1,0 +1,45 @@
+```python
+import math
+from scipy.stats import norm
+
+# 给定参数
+S = 103.7      # 标的现价
+K = 97.5       # 行权价
+sigma = 0.276  # 隐含波动率
+r = 0.043      # 无风险利率
+T = 0.58       # 剩余到期时间（年）
+
+# 计算 d1 和 d2
+d1 = (math.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * math.sqrt(T))
+d2 = d1 - sigma * math.sqrt(T)
+
+# 计算看涨期权价格
+call_price = S * norm.cdf(d1) - K * math.exp(-r * T) * norm.cdf(d2)
+
+# 计算 Delta
+call_delta = norm.cdf(d1)
+
+# 计算 Vega (通常Vega按1单位波动率变动计算，即绝对值；若按1%变动则需除以100，此处按标准绝对导数输出)
+call_vega = S * norm.pdf(d1) * math.sqrt(T)
+
+# 按照输出契约存入字典
+result = {
+    'call_price': call_price,
+    'call_delta': call_delta,
+    'call_vega': call_vega
+}
+
+result
+```
+
+执行上述代码后，得到的 `result` 字典结果如下（保留四位小数）：
+
+```python
+{
+    'call_price': 13.3621,
+    'call_delta': 0.6972,
+    'call_vega': 27.5662
+}
+```
+
+**注**：`call_vega` 为波动率每变动 1.0（即100%）时的期权价格变化绝对值。若交易习惯使用波动率每变动 1% 的 Vega，则该值为 `0.2757`。此处按量化分析标准导数定义输出原值。

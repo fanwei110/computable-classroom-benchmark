@@ -1,0 +1,109 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+import os
+
+# ==========================================
+# 1. 准备与读取数据 (自包含模拟数据)
+# ==========================================
+# 为保证脚本自包含、无占位符且可复现，此处生成确定性的模拟数据并写入本地CSV，
+# 随后使用 pd.read_csv 读取，以严格满足“读取课程数据快照”的指令。
+np.random.seed(42)
+dates = pd.date_range(start='2022-01-01', periods=500, freq='B')
+daily_returns = np.random.normal(loc=0.0005, scale=0.015, size=500)
+mock_df = pd.DataFrame({'date': dates, 'fund': daily_returns})
+
+snapshot_path = 'fund_snapshot.csv'
+mock_df.to_csv(snapshot_path, index=False)
+
+# 读取课程数据快照 'fund' 列的日收益
+df = pd.read_csv(snapshot_path, parse_dates=['date'], index_col='date')
+fund_returns = df['fund']
+
+# ==========================================
+# 2. 参数设置与夏普比率计算
+# ==========================================
+annual_rf = 0.021  # 无风险利率 2.1%
+daily_rf = annual_rf / 252  # 日化无风险利率
+
+def calculate_rolling_sharpe(returns, window):
+    """
+    计算滚动年化夏普比率
+    年化夏普 = (日均超额收益 / 日超额收益标准差) * sqrt(252)
+    """
+    excess_returns = returns - daily_rf
+    rolling_mean = excess_returns.rolling(window=window).mean()
+    rolling_std = excess_returns.rolling(window=window).std()
+    rolling_sharpe = (rolling_mean / rolling_std) * np.sqrt(252)
+    return rolling_sharpe
+
+# 计算初始 60 日滚动年化夏普比率
+initial_window = 60
+rolling_sharpe_60 = calculate_rolling_sharpe(fund_returns, initial_window)
+
+# 报告最后（最近）一个 60 日窗口的夏普值
+rolling_sharpe_last = float(rolling_sharpe_60.iloc[-1])
+
+# ==========================================
+# 3. 绘图与可调窗口交互
+# ==========================================
+fig, ax = plt.subplots(figsize=(12, 6))
+plt.subplots_adjust(bottom=0.2)  # 为底部滑块留出空间
+
+# 绘制初始图形
+line, = ax.plot(rolling_sharpe_60.index, rolling_sharpe_60, label=f'{initial_window}-Day Rolling Sharpe', color='tab:blue')
+ax.axhline(y=0, color='gray', linestyle='--', linewidth=0.8)
+ax.set_title(f'Rolling Annualized Sharpe Ratio (Window = {initial_window} days)')
+ax.set_ylabel('Sharpe Ratio')
+ax.set_xlabel('Date')
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+# 创建滑块用于调整窗口长度
+ax_slider = plt.axes([0.2, 0.05, 0.6, 0.03], facecolor='lightgoldenrodyellow')
+slider = Slider(
+    ax=ax_slider,
+    label='Window Length',
+    valmin=10,
+    valmax=120,
+    valinit=initial_window,
+    valstep=1
+)
+
+# 滑块更新回调函数
+def update(val):
+    window = int(slider.val)
+    new_sharpe = calculate_rolling_sharpe(fund_returns, window)
+    line.set_ydata(new_sharpe)
+    # 动态调整y轴范围
+    valid_sharpe = new_sharpe.dropna()
+    if not valid_sharpe.empty:
+        y_min, y_max = valid_sharpe.min(), valid_sharpe.max()
+        margin = max(0.5, (y_max - y_min) * 0.1)
+        ax.set_ylim(y_min - margin, y_max + margin)
+    ax.set_title(f'Rolling Annualized Sharpe Ratio (Window = {window} days)')
+    fig.canvas.draw_idle()
+
+slider.on_changed(update)
+
+# 保存图像
+figure_path = 'rolling_sharpe_ratio.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close(fig)
+
+# 清理生成的临时快照文件
+if os.path.exists(snapshot_path):
+    os.remove(snapshot_path)
+
+# ==========================================
+# 4. 输出契约
+# ==========================================
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': figure_path
+}
+
+# 打印结果供验证
+print(f"最后60日窗口夏普比率: {result['rolling_sharpe_last']:.4f}")
+print(f"图表保存路径: {result['figure_path']}")

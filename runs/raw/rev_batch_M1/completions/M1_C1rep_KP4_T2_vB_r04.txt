@@ -1,0 +1,69 @@
+以下是根据您的要求绘制delta曲线并输出结果的Python代码：
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+import os
+
+def black_scholes_delta(S, K, T, r, sigma, option_type='call'):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    if option_type == 'call':
+        delta = norm.cdf(d1)
+    else:
+        delta = norm.cdf(d1) - 1
+    return delta
+
+# 参数设置
+K = 97.5  # 行权价
+r = 0.043  # 无风险利率
+T = 0.58  # 到期时间（年）
+vols = [0.15, 0.276, 0.40]  # 波动率列表
+S_range = np.linspace(70, 140, 100)  # 标的价格范围
+
+# 计算delta曲线
+plt.figure(figsize=(10, 6))
+for vol in vols:
+    deltas = [black_scholes_delta(S, K, T, r, vol) for S in S_range]
+    plt.plot(S_range, deltas, label=f'Vol = {vol*100:.1f}%')
+
+# 标记S=110, vol=27.6%的delta值
+S_110 = 110
+vol_276 = 0.276
+delta_at_110 = black_scholes_delta(S_110, K, T, r, vol_276)
+plt.scatter(S_110, delta_at_110, color='red', zorder=5)
+plt.text(S_110, delta_at_110 + 0.02, f'Δ={delta_at_110:.4f}',
+         ha='center', color='red')
+
+# 图形设置
+plt.title('Delta Curve for Different Volatilities')
+plt.xlabel('Underlying Price')
+plt.ylabel('Delta')
+plt.legend()
+plt.grid(True)
+plt.axvline(x=K, color='gray', linestyle='--', alpha=0.5)
+plt.axhline(y=0, color='black', linestyle='-', alpha=0.3)
+
+# 保存图形
+figure_path = 'delta_curve.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 准备结果
+result = {
+    'delta_at_s110': delta_at_110,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+print(result)
+```
+
+输出结果将存储在`result`字典中，包含以下内容：
+1. `'delta_at_s110'`: 标的价格为110，波动率为27.6%时的delta值
+2. `'figure_path'`: 保存的delta曲线图的文件路径
+
+运行代码后，您会得到：
+- 一张显示不同波动率下delta曲线的图片（保存在当前目录下的delta_curve.png）
+- 一个包含所需结果的字典
+
+注意：代码默认计算的是看涨期权的delta值。如果需要看跌期权，可以在调用black_scholes_delta函数时设置option_type='put'。

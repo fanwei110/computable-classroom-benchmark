@@ -1,0 +1,40 @@
+import numpy as np
+from scipy.stats import norm
+
+# ==========================================
+# 证券投资学 - 在险价值计算
+# ==========================================
+
+# 1. 基础参数设置
+V = 1_850_000.0          # 头寸价值（元）
+sigma_annual = 0.218     # 年化收益波动率（小数表示）
+trading_days = 252       # 每年交易日数
+
+# 2. 去年化：计算一日波动率
+# 波动率按 sqrt(T) 缩放
+sigma_daily = sigma_annual / np.sqrt(trading_days)
+
+# 3. 获取单尾正态分位数（均值取零）
+z_95 = norm.ppf(0.95)
+z_99 = norm.ppf(0.99)
+
+# 4. 计算 VaR（报为正的损失金额）
+# (i) 95% 一日 VaR
+var_95_1d = V * z_95 * sigma_daily
+
+# (ii) 99% 十日 VaR (按 sqrt(10) 缩放)
+var_99_10d = V * z_99 * sigma_daily * np.sqrt(10)
+
+# 5. 填充结果字典
+result = {
+    'var_95_1d': var_95_1d,
+    'var_99_10d': var_99_10d
+}
+
+# 课堂投屏展示输出
+print(f"头寸价值: {V:,.2f} 元")
+print(f"年化波动率: {sigma_annual:.1%}")
+print(f"一日波动率: {sigma_daily:.4%}")
+print("-" * 30)
+print(f"95% 一日 VaR: {result['var_95_1d']:,.2f} 元")
+print(f"99% 十日 VaR: {result['var_99_10d']:,.2f} 元")

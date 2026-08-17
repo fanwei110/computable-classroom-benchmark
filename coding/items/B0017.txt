@@ -1,0 +1,55 @@
+=== B0017  任务 KP3_T3 (T3) ===
+
+--- 任务要求的输出键 ---
+price_drop_pct
+
+--- 判分失败明细 ---
+price_drop_pct: 提交值 -4.64  |  参考值 0.04650015385877284
+
+--- 提取出的代码 ---
+result = {
+    'price_drop_pct': -4.64
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+要计算收益率上升80个基点（即0.8%）时债券价格的下跌幅度，我们可以使用债券久期（Duration）的近似公式。具体步骤如下：
+
+1. **计算修正久期（Modified Duration）**：
+   对于票息为4.6%、收益率为5.3%、剩余期限为7年的债券，其久期可以近似计算为：
+   \[
+   \text{Modified Duration} \approx \frac{1 + \frac{y}{m}}{y} - \frac{(1 + \frac{y}{m}) + T \cdot (c - y)}{c \cdot [(1 + \frac{y}{m})^T - 1] + y}
+   \]
+   其中：
+   - \( y = 5.3\% \)（初始收益率）
+   - \( c = 4.6\% \)（票息率）
+   - \( T = 7 \)（剩余期限）
+   - \( m = 1 \)（每年付息次数）
+
+   简化计算，我们可以使用近似公式：
+   \[
+   \text{Modified Duration} \approx \frac{1 + y}{y} - \frac{1 + y + T \cdot (c - y)}{c \cdot ( (1 + y)^T - 1 ) + y}
+   \]
+   代入数值：
+   \[
+   \text{Modified Duration} \approx \frac{1 + 0.053}{0.053} - \frac{1 + 0.053 + 7 \cdot (0.046 - 0.053)}{0.046 \cdot ( (1 + 0.053)^7 - 1 ) + 0.053}
+   \]
+   计算得：
+   \[
+   \text{Modified Duration} \approx 5.8 \quad (\text{近似值})
+   \]
+
+2. **计算价格变化百分比**：
+   收益率变化为+80个基点（即+0.8%），价格变化百分比为：
+   \[
+   \text{Price Drop \%} \approx -\text{Modified Duration} \times \Delta y = -5.8 \times 0.008 = -0.0464 \quad (\text{即-4.64\%})
+   \]
+
+因此，价格大约下跌 **4.64%**。
+
+将结果存入 `result` 字典：
+```python
+result = {
+    'price_drop_pct': -4.64
+}
+```

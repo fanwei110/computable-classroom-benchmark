@@ -1,0 +1,41 @@
+由于没有直接接入您的课程数据文件（如CSV或Excel），我无法给出一个具体的数值，但可以根据题目约定的计算规则，提供完整的计算逻辑和Python代码。您可以直接运行代码得到结果。
+
+### 计算逻辑解析：
+1. **日超额收益率**：基金日收益率减去日无风险利率。
+2. **日无风险利率的折算**：题目约定“债券收益率按年复利报价”，且无风险利率为2.1%（即0.021），因此日无风险利率需按年复利折算：$R_{f,daily} = (1 + 0.021)^{1/252} - 1$。
+3. **标准差**：使用样本估计量，即自由度 `ddof=1`。
+4. **年化夏普比率**：将日超额收益均值和日标准差分别年化。公式为：
+   $$Sharpe_{annual} = \frac{\text{日超额收益均值} \times 252}{\text{日标准差} \times \sqrt{252}} = \frac{\text{日超额收益均值}}{\text{日标准差}} \times \sqrt{252}$$
+
+### Python 代码实现：
+
+```python
+import pandas as pd
+import numpy as np
+
+# 假设您的数据已加载为 df，且包含 'fund' 列
+# df = pd.read_csv('your_course_data.csv')
+
+# 提取基金日收益率序列（假设已经是收益率，若是净值需先 .pct_change().dropna()）
+r = df['fund']
+
+# 1. 计算日收益率均值
+mu = r.mean()
+
+# 2. 计算日收益率样本标准差 (ddof=1)
+sigma = r.std(ddof=1)
+
+# 3. 计算日无风险利率 (年复利报价2.1%，每年252个交易日)
+Rf_annual = 0.021
+Rf_daily = (1 + Rf_annual) ** (1 / 252) - 1
+
+# 4. 计算年化夏普比率
+sharpe_annual = (mu - Rf_daily) / sigma * np.sqrt(252)
+
+# 按输出契约存入字典
+result = {'sharpe_annual': sharpe_annual}
+
+print(result)
+```
+
+运行上述代码后，`result` 字典中将包含符合所有计算约定的年化夏普比率值。

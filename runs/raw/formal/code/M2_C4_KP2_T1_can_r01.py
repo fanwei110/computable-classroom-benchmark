@@ -1,0 +1,40 @@
+import numpy as np
+
+# 给定参数（小数表示）
+rf = 0.023          # 无风险利率 2.3%
+er_m = 0.094        # 市场期望收益 9.4%
+
+# 股票的 beta 值
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+
+# 股票 Y 的实际收益
+actual_y = 0.131    # 13.1%
+
+# 1. CAPM 计算期望收益
+def capm_expected_return(beta, rf, er_m):
+    """根据 CAPM 公式计算期望收益"""
+    return rf + beta * (er_m - rf)
+
+er_x = capm_expected_return(beta_x, rf, er_m)
+er_y = capm_expected_return(beta_y, rf, er_m)
+er_z = capm_expected_return(beta_z, rf, er_m)
+
+# 2. 计算 alpha
+alpha_y = actual_y - er_y
+
+# 3. 存储结果
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+
+# 打印结果以便验证
+for key, value in result.items():
+    print(f"{key} = {value:.6f} ({value*100:.4f}%)")
+
+# 额外展示 CAPM 公式的计算过程
+print(f"\n市场风险溢价 E[Rm] - rf = {er_m - rf:.4f} ({100*(er_m - rf):.2f}%)")

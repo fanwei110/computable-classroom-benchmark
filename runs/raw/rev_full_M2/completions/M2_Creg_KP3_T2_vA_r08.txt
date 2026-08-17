@@ -1,0 +1,95 @@
+以下脚本完成了全部要求：计算精确价格和久期近似，绘制价格-收益率曲线并叠加切线，切线范围可调，最后输出指定字典。
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ==================== 参数定义 ====================
+FACE_VALUE = 100.0          # 面值
+COUPON_RATE = 0.046         # 票息率
+MATURITY = 7                # 剩余期限(年)
+YIELD_CURRENT = 0.053       # 当前到期收益率
+YIELD_SHIFT_BPS = 100       # 收益率上升幅度(基点)，可调整
+TANGENT_RANGE_BPS = 200     # 久期近似切线显示范围(基点)，可调整
+
+# ==================== 计算函数 ====================
+def bond_price(face, coupon_rate, maturity, ytm):
+    """计算债券价格（按年付息，到期还本）"""
+    coupon = face * coupon_rate
+    t = np.arange(1, maturity + 1)
+    cash_flows = np.full(maturity, coupon)
+    cash_flows[-1] += face          # 最后一期加入本金
+    pv = np.sum(cash_flows / (1 + ytm)**t)
+    return pv
+
+def bond_duration(face, coupon_rate, maturity, ytm):
+    """返回(麦考利久期, 修正久期)"""
+    coupon = face * coupon_rate
+    t = np.arange(1, maturity + 1)
+    cash_flows = np.full(maturity, coupon)
+    cash_flows[-1] += face
+    pv_cf = cash_flows / (1 + ytm)**t
+    price = np.sum(pv_cf)
+    mac_dur = np.sum(t * pv_cf) / price
+    mod_dur = mac_dur / (1 + ytm)
+    return mac_dur, mod_dur
+
+# ==================== 核心计算 ====================
+price_current = bond_price(FACE_VALUE, COUPON_RATE, MATURITY, YIELD_CURRENT)
+_, mod_dur = bond_duration(FACE_VALUE, COUPON_RATE, MATURITY, YIELD_CURRENT)
+
+# 1. 收益率上升100个基点后的精确价格
+shift_yield = YIELD_CURRENT + YIELD_SHIFT_BPS / 10000.0
+price_up100bp = bond_price(FACE_VALUE, COUPON_RATE, MATURITY, shift_yield)
+
+# 2. 久期法估计的相对价格变化（ΔP/P ≈ -D_mod * Δy）
+delta_y = YIELD_SHIFT_BPS / 10000.0
+dur_approx_change_up100bp = -mod_dur * delta_y   # 小数形式，例如 -0.05 表示 -5%
+
+# ==================== 画图 ====================
+yield_range = np.linspace(0.02, 0.09, 500)   # 收益率 2% ~ 9%
+prices_exact = bond_price(FACE_VALUE, COUPON_RATE, MATURITY, yield_range)
+
+# 切线范围（在当前收益率附近）
+tangent_half_range = TANGENT_RANGE_BPS / 2 / 10000.0
+tangent_y = np.linspace(
+    YIELD_CURRENT - tangent_half_range,
+    YIELD_CURRENT + tangent_half_range,
+    50
+)
+# 切线方程: P ≈ P0 - P0 * D_mod * (y - y0)
+tangent_price = price_current - price_current * mod_dur * (tangent_y - YIELD_CURRENT)
+
+plt.figure(figsize=(8, 5))
+plt.plot(yield_range * 100, prices_exact, label='精确价格', linewidth=2)
+plt.plot(tangent_y * 100, tangent_price, '--', label='久期近似切线', linewidth=2)
+plt.axvline(YIELD_CURRENT * 100, color='gray', linestyle=':', alpha=0.7)
+plt.axhline(price_current, color='gray', linestyle=':', alpha=0.7)
+plt.xlabel('到期收益率 (%)')
+plt.ylabel('价格')
+plt.title('债券价格-收益率曲线及久期近似')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+
+# 保存图片
+figure_path = os.path.abspath('bond_price_yield_curve.png')
+plt.savefig(figure_path, dpi=150)
+plt.close()
+
+# ==================== 输出结果 ====================
+result = {
+    'price_at_up100bp': price_up100bp,                 # 精确价格
+    'dur_approx_change_up100bp': dur_approx_change_up100bp,  # 相对价格变化(小数)
+    'figure_path': figure_path
+}
+
+# 可打印查看（非必须，方便确认）
+if __name__ == '__main__':
+    print(f"当前收益率: {YIELD_CURRENT*100:.2f}%")
+    print(f"收益率上升{YIELD_SHIFT_BPS}个基点后的精确价格: {price_up100bp:.4f}")
+    print(f"修正久期: {mod_dur:.4f}")
+    print(f"久期近似相对价格变化: {dur_approx_change_up100bp*100:.4f}%")
+    print(f"图片保存路径: {figure_path}")
+    print(f"result字典: {result}")
+```

@@ -1,0 +1,115 @@
+我们需要计算以下债券的各项指标：
+
+- **债券参数**：
+  - 面值（Face Value）：100
+  - 票息率（Coupon Rate）：4.6%
+  - 期限（Maturity）：7年
+  - 收益率（Yield to Maturity, YTM）：5.3%
+
+- **要求计算**：
+  - 价格（Price）
+  - 麦考利久期（Macaulay Duration，单位：年）
+  - 修正久期（Modified Duration，单位：年）
+  - 凸性（Convexity）
+
+---
+
+### 1. 计算价格（Price）
+债券价格是未来现金流的现值总和。每年支付的票息为 `100 * 4.6% = 4.6`，到期偿还面值100。
+
+价格公式：
+\[
+P = \sum_{t=1}^{7} \frac{4.6}{(1 + 0.053)^t} + \frac{100}{(1 + 0.053)^7}
+\]
+
+计算过程：
+\[
+P = 4.6 \times \left( \frac{1 - (1 + 0.053)^{-7}}{0.053} \right) + \frac{100}{(1 + 0.053)^7}
+\]
+
+计算结果：
+\[
+P \approx 4.6 \times 5.766 + 70.36 \approx 26.52 + 70.36 = 96.88
+\]
+
+---
+
+### 2. 计算麦考利久期（Macaulay Duration）
+麦考利久期是现金流的加权平均时间，权重为现金流的现值占价格的比例。
+
+公式：
+\[
+\text{Macaulay Duration} = \frac{1}{P} \sum_{t=1}^{7} \frac{t \times 4.6}{(1 + 0.053)^t} + \frac{7 \times 100}{(1 + 0.053)^7}
+\]
+
+计算过程：
+\[
+\text{Macaulay Duration} = \frac{1}{96.88} \left( \sum_{t=1}^{7} \frac{t \times 4.6}{(1.053)^t} + \frac{700}{(1.053)^7} \right)
+\]
+
+计算各期现金流的现值及其时间加权：
+\[
+\sum_{t=1}^{7} \frac{t \times 4.6}{(1.053)^t} \approx 4.6 \times (0.95 + 1.80 + 2.56 + 3.24 + 3.85 + 4.39 + 4.87) \approx 4.6 \times 21.66 \approx 99.64
+\]
+\[
+\frac{700}{(1.053)^7} \approx 700 \times 0.7036 \approx 492.52
+\]
+\[
+\text{Macaulay Duration} = \frac{99.64 + 492.52}{96.88} \approx \frac{592.16}{96.88} \approx 6.11 \text{ 年}
+\]
+
+---
+
+### 3. 计算修正久期（Modified Duration）
+修正久期衡量债券价格对收益率变化的敏感度。
+
+公式：
+\[
+\text{Modified Duration} = \frac{\text{Macaulay Duration}}{1 + \frac{YTM}{m}}
+\]
+其中 \( m \) 是每年付息次数，这里假设每年付息一次（\( m = 1 \)）。
+
+计算结果：
+\[
+\text{Modified Duration} = \frac{6.11}{1 + 0.053} \approx \frac{6.11}{1.053} \approx 5.80 \text{ 年}
+\]
+
+---
+
+### 4. 计算凸性（Convexity）
+凸性衡量久期随收益率变化的曲率。
+
+公式：
+\[
+\text{Convexity} = \frac{1}{P} \sum_{t=1}^{7} \frac{t(t+1) \times 4.6}{(1 + 0.053)^{t+2}} + \frac{7 \times 8 \times 100}{(1 + 0.053)^9}
+\]
+
+计算过程：
+\[
+\text{Convexity} = \frac{1}{96.88} \left( \sum_{t=1}^{7} \frac{t(t+1) \times 4.6}{(1.053)^{t+2}} + \frac{5600}{(1.053)^9} \right)
+\]
+
+计算各期现金流的时间平方加权现值：
+\[
+\sum_{t=1}^{7} \frac{t(t+1) \times 4.6}{(1.053)^{t+2}} \approx 4.6 \times (0.86 + 3.24 + 6.80 + 11.16 + 16.00 + 21.12 + 26.40) \approx 4.6 \times 85.58 \approx 393.67
+\]
+\[
+\frac{5600}{(1.053)^9} \approx 5600 \times 0.6302 \approx 3529.12
+\]
+\[
+\text{Convexity} = \frac{393.67 + 3529.12}{96.88} \approx \frac{3922.79}{96.88} \approx 40.49
+\]
+
+---
+
+### 最终结果
+将所有计算结果存入字典 `result`：
+
+```python
+result = {
+    'price': 96.88,
+    'macaulay_duration_years': 6.11,
+    'modified_duration_years': 5.80,
+    'convexity': 40.49
+}
+```

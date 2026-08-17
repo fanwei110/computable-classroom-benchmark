@@ -1,0 +1,28 @@
+import numpy as np
+from scipy.stats import norm
+
+# 参数
+annual_vol = 0.24          # 年化波动率 24%
+position = 2_700_000       # 头寸 2,700,000 元
+trading_days = 252         # 每年交易日数
+confidence_level = 0.95    # 置信水平
+
+# 步骤1：去年化到一日波动率
+daily_vol = annual_vol / np.sqrt(trading_days)
+
+# 步骤2：单尾95%正态分位数（均值取0）
+z_score = norm.ppf(confidence_level)  # 注意：对于损失分布，95% VaR对应左尾5%，这里用单尾右侧分位数实际上要取负号
+
+# VaR通常定义为损失金额（正数），所以用 -z_score 乘以波动率和头寸
+# 因为z_score是正数，我们要的是左尾5%对应的负偏离，所以取负号
+var_95_1d = -z_score * daily_vol * position
+
+# 步骤3：存入result字典
+result = {
+    'var_95_1d': var_95_1d
+}
+
+# 输出结果验证
+print(f"一日波动率: {daily_vol:.6f}")
+print(f"95% 分位数 (z): {z_score:.4f}")
+print(f"95% 一日 VaR: {result['var_95_1d']:.2f} 元")

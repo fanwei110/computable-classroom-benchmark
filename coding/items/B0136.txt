@@ -1,0 +1,91 @@
+=== B0136  任务 KP6_T1 (T1) ===
+
+--- 任务要求的输出键 ---
+sharpe_annual, allocation_effect, selection_effect, interaction_effect
+
+--- 判分失败明细 ---
+sharpe_annual: 提交值 None  |  参考值 0.21202128793473451
+
+--- 提取出的代码 ---
+result = {
+    'sharpe_annual': None,  # 缺少数据，无法计算
+    'allocation_effect': 0.00165,
+    'selection_effect': 0.0002,
+    'interaction_effect': 0.00145
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+根据题目要求，我们分别计算两部分内容：
+
+### 1. 年化夏普比率（Sharpe Ratio）
+题目给出了日收益率 `rf = 2.1%`（即无风险日收益率为 0.021），但缺少组合的日收益率和日波动率。假设题目中给出的 `fund列日收益` 是指组合的日超额收益（即组合日收益率减去无风险日收益率），但这里可能理解有误。更可能的是题目直接给出了组合的日收益率（假设为 `r_daily`），但未明确给出。
+
+由于题目描述不完整，我们假设 `fund列日收益` 是指组合的日收益率（记为 `r_daily`），且无风险日收益率 `rf_daily = 0.021`。如果题目实际给出的是超额收益，则无需减去 `rf_daily`。
+
+年化夏普比率的计算公式为：
+\[
+\text{Sharpe}_{\text{annual}} = \frac{\text{Annualized Return} - \text{Annualized Risk-Free Rate}}{\text{Annualized Volatility}}
+\]
+其中：
+- 年化收益率 = 日收益率均值 × 252
+- 年化无风险收益率 = 日无风险收益率 × 252（若 `rf` 是年化值，则直接使用 0.021）
+- 年化波动率 = 日收益率标准差 × √252
+
+由于题目未给出组合的日收益率数据，我们无法直接计算。假设题目隐含的意思是 `rf = 2.1%` 是年化无风险收益率，且组合的年化收益率和波动率已知或可推导，但这里缺失信息。因此，我们暂时无法计算 `sharpe_annual`，可能需要补充数据。
+
+不过，根据题目描述，可能 `fund列日收益` 是指组合的日收益率序列，但未给出具体值。因此，我们假设题目要求的是基于给定的 `rf = 2.1%`（年化）和组合的年化收益率/波动率来计算夏普比率。由于缺失数据，我们暂时跳过这一步，或假设 `sharpe_annual` 无法计算。
+
+---
+
+### 2. 归因分析（Allocation, Selection, Interaction Effects）
+给定：
+- 组合权重：`w_p = [0.45, 0.35, 0.2]`
+- 行业收益：`r_p = [0.083, 0.021, -0.014]`
+- 基准权重：`w_b = [0.4, 0.4, 0.2]`
+- 基准收益：`r_b = [0.067, 0.034, -0.009]`
+
+归因分析的三个效应计算如下：
+
+#### (1) 配置效应（Allocation Effect）
+\[
+\text{Allocation Effect} = \sum (w_{p,i} - w_{b,i}) \times r_{b,i}
+\]
+计算：
+\[
+(0.45 - 0.4) \times 0.067 + (0.35 - 0.4) \times 0.034 + (0.2 - 0.2) \times (-0.009) = 0.00335 - 0.0017 + 0 = 0.00165
+\]
+
+#### (2) 选择效应（Selection Effect）
+\[
+\text{Selection Effect} = \sum w_{b,i} \times (r_{p,i} - r_{b,i})
+\]
+计算：
+\[
+0.4 \times (0.083 - 0.067) + 0.4 \times (0.021 - 0.034) + 0.2 \times (-0.014 - (-0.009)) = 0.0064 - 0.0052 - 0.001 = 0.0002
+\]
+
+#### (3) 交互效应（Interaction Effect）
+\[
+\text{Interaction Effect} = \sum (w_{p,i} - w_{b,i}) \times (r_{p,i} - r_{b,i})
+\]
+计算：
+\[
+(0.45 - 0.4) \times (0.083 - 0.067) + (0.35 - 0.4) \times (0.021 - 0.034) + (0.2 - 0.2) \times (-0.014 - (-0.009)) = 0.0008 + 0.00065 + 0 = 0.00145
+\]
+
+---
+
+### 输出结果
+由于夏普比率缺少必要数据，我们暂时只输出归因分析的结果：
+
+```python
+result = {
+    'sharpe_annual': None,  # 缺少数据，无法计算
+    'allocation_effect': 0.00165,
+    'selection_effect': 0.0002,
+    'interaction_effect': 0.00145
+}
+```
+
+如果题目中 `fund列日收益` 是指组合的日收益率序列，请提供具体数据以计算 `sharpe_annual`。否则，上述结果仅包含归因分析部分。

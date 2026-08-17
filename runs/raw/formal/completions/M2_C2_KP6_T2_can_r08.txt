@@ -1,0 +1,67 @@
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ---------- 可调参数 ----------
+WINDOW = 60                # 滚动窗口（交易日数量）
+ANNUAL_RF = 0.021          # 年化无风险利率
+TRADING_DAYS = 252         # 每年交易日
+# -----------------------------
+
+RF_DAILY = ANNUAL_RF / TRADING_DAYS   # 日化无风险利率
+
+# 1. 读取快照数据
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 如果数据包含日期列，则将其作为索引，保证按时间顺序
+if 'date' in df.columns:
+    df['date'] = pd.to_datetime(df['date'])
+    df = df.set_index('date').sort_index()
+
+# 提取基金日收益率
+fund_ret = df['fund']
+
+# 2. 计算日超额收益
+excess_ret = fund_ret - RF_DAILY
+
+# 3. 滚动计算年化夏普比率
+def rolling_sharpe(series, window):
+    def sharpe_func(x):
+        mu = x.mean()
+        sigma = x.std(ddof=1)          # 使用样本标准差
+        if sigma == 0:
+            return np.nan
+        return np.sqrt(TRADING_DAYS) * (mu / sigma)
+    return series.rolling(window).apply(sharpe_func, raw=True)
+
+rolling_sharpe_series = rolling_sharpe(excess_ret, WINDOW)
+
+# 4. 最近一个窗口的夏普值
+last_sharpe = rolling_sharpe_series.iloc[-1]
+rolling_sharpe_last = float(last_sharpe) if not np.isnan(last_sharpe) else None
+
+# 5. 绘制时间序列图并保存
+plt.figure(figsize=(12, 5))
+plt.plot(rolling_sharpe_series.index, rolling_sharpe_series.values,
+         color='darkblue', linewidth=1.2, label=f'{WINDOW}-Day Rolling Annualized Sharpe')
+plt.title(f'Rolling {WINDOW}-Day Annualized Sharpe Ratio (Risk‑free = {ANNUAL_RF:.1%})')
+plt.xlabel('Date' if 'date' in df.columns or (hasattr(df.index, 'name') and df.index.name == 'date') else 'Period End')
+plt.ylabel('Sharpe Ratio')
+plt.legend()
+plt.grid(alpha=0.3)
+plt.tight_layout()
+
+figure_path = 'rolling_sharpe.png'
+plt.savefig(figure_path, dpi=150)
+plt.close()
+
+# 6. 输出契约
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': figure_path
+}
+
+# 可在控制台查看结果
+print(result)
+```

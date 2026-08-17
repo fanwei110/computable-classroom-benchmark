@@ -1,0 +1,26 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+annualized_volatility = 0.24          # 年化波动率 24%
+position_size = 2_700_000             # 头寸 2,700,000 元
+
+# 计算 95% 一日 VaR
+# 1. 将年化波动率转换为日波动率
+daily_volatility = annualized_volatility / np.sqrt(252)
+
+# 2. 95% 置信水平对应的标准正态分位数（单尾）
+z_score_95 = norm.ppf(0.95)
+
+# 3. 计算 VaR
+var_95_1d = position_size * daily_volatility * z_score_95
+
+# 结果存入字典
+result = {
+    'var_95_1d': round(var_95_1d, 2)  # 保留两位小数，确保可复现
+}
+
+# 输出结果（可选，便于调试）
+print(result)
+```

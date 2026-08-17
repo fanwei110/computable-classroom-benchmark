@@ -1,0 +1,24 @@
+```python
+import math
+
+# 输入参数
+vol_A = 0.184
+vol_B = 0.297
+w_A = 0.6
+w_B = 0.4
+rho_before = 0.3
+rho_after = 0.8
+
+# 计算组合方差函数
+def portfolio_vol(w_a, vol_a, w_b, vol_b, rho):
+    var = (w_a**2 * vol_a**2) + (w_b**2 * vol_b**2) + (2 * w_a * w_b * rho * vol_a * vol_b)
+    return math.sqrt(var)
+
+vol_before = portfolio_vol(w_A, vol_A, w_B, vol_B, rho_before)
+vol_after = portfolio_vol(w_A, vol_A, w_B, vol_B, rho_after)
+
+result = {
+    'vol_before_annual': round(vol_before, 6),
+    'vol_after_annual': round(vol_after, 6)
+}
+```

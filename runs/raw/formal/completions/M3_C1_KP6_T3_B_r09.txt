@@ -1,0 +1,24 @@
+由于你没有提供具体的基金收益率数据（即包含 `fund` 列的 DataFrame），我将为你提供计算年化夏普比率的 Python 代码逻辑。假设 `df` 为包含全样本数据的 DataFrame，`fund` 列为日频收益率，无风险利率 `rf` 为 2.1%。
+
+```python
+import numpy as np
+import pandas as pd
+
+# 假设 df 为包含基金数据的 DataFrame，'fund' 列为日度收益率
+# rf = 2.1%
+rf_annual = 0.021
+
+# 将年化无风险利率转换为日度无风险利率（假设一年252个交易日）
+rf_daily = (1 + rf_annual) ** (1/252) - 1
+
+# 计算 fund 列全样本的日超额收益率
+excess_returns = df['fund'] - rf_daily
+
+# 计算年化夏普比率：(日均超额收益 / 日超额收益标准差) * sqrt(252)
+sharpe_annual = (excess_returns.mean() / excess_returns.std()) * np.sqrt(252)
+
+# 按照输出契约存入字典
+result = {'sharpe_annual': sharpe_annual}
+```
+
+如果你使用的是周频或月频数据，请将上述代码中的 `252` 替换为 `52` 或 `12`，并相应调整 `rf_daily` 的计算周期。

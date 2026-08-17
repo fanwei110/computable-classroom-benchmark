@@ -1,0 +1,48 @@
+import math
+
+# 输入参数
+S = 103.7      # 标的价格
+K = 97.5       # 行权价
+sigma = 0.276  # 波动率
+r = 0.043      # 无风险利率
+T = 0.58       # 剩余时间（年）
+
+# 计算 d1 和 d2
+d1 = (math.log(S / K) + (r + sigma**2 / 2) * T) / (sigma * math.sqrt(T))
+d2 = d1 - sigma * math.sqrt(T)
+
+# 标准正态分布的CDF和PDF
+def norm_cdf(x):
+    # 使用近似公式计算标准正态累积分布函数
+    # 系数来自Abramowitz和Stegun
+    a1 =  0.254829592
+    a2 = -0.284496736
+    a3 =  1.421413741
+    a4 = -1.453152027
+    a5 =  1.061405429
+    p =  0.3275911
+
+    sign = 1 if x >= 0 else -1
+    x = abs(x)
+    t = 1 / (1 + p * x)
+    y = 1 - (((((a5 * t + a4) * t) + a3) * t + a2) * t + a1) * t * math.exp(-x * x)
+    return 0.5 * (1 + sign * y)
+
+def norm_pdf(x):
+    return (1 / math.sqrt(2 * math.pi)) * math.exp(-0.5 * x * x)
+
+# 计算Greeks
+call_delta = norm_cdf(d1)
+call_vega = S * math.sqrt(T) * norm_pdf(d1)  # 原始BS vega（波动率每变动1单位的价格变化）
+
+# 计算期权价格
+call_price = S * norm_cdf(d1) - K * math.exp(-r * T) * norm_cdf(d2)
+
+# 结果存入字典
+result = {
+    'call_price': round(call_price, 6),
+    'call_delta': round(call_delta, 6),
+    'call_vega': round(call_vega, 6)
+}
+
+result

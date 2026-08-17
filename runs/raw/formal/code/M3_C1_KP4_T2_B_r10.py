@@ -1,0 +1,67 @@
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+
+# 参数设置
+K = 97.5
+r = 0.043
+T = 0.58
+S_min, S_max = 70, 140
+vols = [0.15, 0.276, 0.40]
+
+# 定义Black-Scholes欧式看涨期权Delta计算函数
+def bs_call_delta(S, K, r, T, vol):
+    d1 = (np.log(S / K) + (r + 0.5 * vol ** 2) * T) / (vol * np.sqrt(T))
+    return norm.cdf(d1)
+
+# 计算标的110，vol 27.6%的delta
+delta_s110 = bs_call_delta(110, K, r, T, 0.276)
+
+# 生成标的价格序列
+S_range = np.linspace(S_min, S_max, 500)
+
+# 绘图
+fig, ax = plt.subplots(figsize=(10, 6))
+plt.subplots_adjust(bottom=0.2)  # 为底部滑块留出空间
+
+# 绘制三条指定vol的曲线
+for v in vols:
+    deltas = bs_call_delta(S_range, K, r, T, v)
+    ax.plot(S_range, deltas, label=f'vol={v*100}%')
+
+# 增加可调vol的滑块
+ax_vol = plt.axes([0.2, 0.05, 0.6, 0.03])
+slider_vol = Slider(ax_vol, 'Vol(%)', 5, 80, valinit=25)
+
+# 滑块控制的动态曲线
+dynamic_line, = ax.plot(S_range, bs_call_delta(S_range, K, r, T, slider_vol.val / 100), 
+                        '--', color='grey', label=f'Adjustable vol={slider_vol.val:.1f}%')
+
+# 滑块更新事件
+def update(val):
+    dynamic_line.set_ydata(bs_call_delta(S_range, K, r, T, val / 100))
+    dynamic_line.set_label(f'Adjustable vol={val:.1f}%')
+    ax.legend()
+    fig.canvas.draw_idle()
+
+slider_vol.on_changed(update)
+
+# 设置图表格式
+ax.set_title(f'Delta Curve (K={K}, r={r*100}%, T={T})')
+ax.set_xlabel('Underlying Price')
+ax.set_ylabel('Delta')
+ax.legend()
+ax.grid(True)
+
+# 保存图片
+fig_path = 'delta_curve.png'
+plt.savefig(fig_path)
+
+# 按照契约输出结果
+result = {
+    'delta_at_s110': delta_s110,
+    'figure_path': fig_path
+}
+
+print(result)

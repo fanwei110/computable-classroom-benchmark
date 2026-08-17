@@ -1,0 +1,110 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ============================================================
+# 配置参数（可根据需要调整）
+# ============================================================
+WINDOW = 60                # 滚动窗口长度（交易日数）
+ANNUAL_RF = 0.021          # 年化无风险利率
+TRADING_DAYS = 252         # 每年交易日数
+DATA_PATH = 'data/market_snapshot_v1.csv'
+FIGURE_NAME = 'rolling_sharpe.png'
+
+# ============================================================
+# 1. 读取数据
+# ============================================================
+df = pd.read_csv(DATA_PATH)
+
+# ---- 日期列识别与索引设置 ----
+# 常见日期列名称
+date_candidates = ['date', 'trade_date', 'Date', 'TRADE_DATE', 'DATE']
+date_col = None
+for col in date_candidates:
+    if col in df.columns:
+        date_col = col
+        break
+
+if date_col is not None:
+    # 将日期列转换为 datetime 并设为索引，同时排序以保证滚动窗口正确
+    df[date_col] = pd.to_datetime(df[date_col])
+    df = df.set_index(date_col).sort_index()
+else:
+    # 若无日期列，使用默认整数索引，并确保按原始顺序
+    df = df.reset_index(drop=True)
+
+# ---- 检查必要列 ----
+if 'fund' not in df.columns:
+    raise KeyError("数据中缺少 'fund' 列，请检查 CSV 文件内容。")
+
+# 提取基金日收益（假设为小数形式，如 0.01 代表 1%）
+fund_returns = df['fund'].dropna()
+
+# ============================================================
+# 2. 计算无风险利率与超额收益
+# ============================================================
+# 将年化无风险利率转换为日无风险利率（简单利率法）
+rf_daily = ANNUAL_RF / TRADING_DAYS
+
+# 超额收益序列
+excess_returns = fund_returns - rf_daily
+
+# ============================================================
+# 3. 计算滚动年化夏普比率
+# ============================================================
+def annualized_sharpe(series: np.ndarray) -> float:
+    """计算给定窗口内超额收益的年化夏普比率"""
+    if len(series) < 2:          # 至少需要2个数据点才能计算标准差
+        return np.nan
+    mu = np.mean(series)
+    sigma = np.std(series, ddof=1)   # 样本标准差
+    if sigma == 0:
+        return np.nan
+    # 年化
+    return (mu / sigma) * np.sqrt(TRADING_DAYS)
+
+# 滚动应用
+rolling_sharpe = excess_returns.rolling(window=WINDOW).apply(annualized_sharpe, raw=True)
+
+# 将结果存入 DataFrame（便于后续使用索引）
+result_df = pd.DataFrame({'rolling_sharpe': rolling_sharpe}, index=excess_returns.index)
+
+# ============================================================
+# 4. 报告最后一个窗口的夏普值
+# ============================================================
+# 删除 NaN（不足窗口长度的位置），取最后一个值
+valid_sharpes = result_df['rolling_sharpe'].dropna()
+if valid_sharpes.empty:
+    raise ValueError(f"数据量不足，无法形成任何一个长度为 {WINDOW} 的滚动窗口。")
+rolling_sharpe_last = valid_sharpes.iloc[-1]
+
+# ============================================================
+# 5. 绘制时间序列图并保存
+# ============================================================
+fig, ax = plt.subplots(figsize=(12, 6))
+ax.plot(result_df.index, result_df['rolling_sharpe'], linewidth=1.2, color='steelblue')
+ax.axhline(y=0, color='gray', linestyle='--', linewidth=0.8)
+ax.set_title(f'{WINDOW}-Day Rolling Annualized Sharpe Ratio (fund)', fontsize=14)
+ax.set_xlabel('Date' if date_col is not None else 'Observation Index', fontsize=12)
+ax.set_ylabel('Annualized Sharpe Ratio', fontsize=12)
+ax.grid(True, alpha=0.3)
+fig.tight_layout()
+
+# 保存图形
+fig.savefig(FIGURE_NAME, dpi=150)
+plt.close(fig)   # 释放内存
+
+# ============================================================
+# 6. 构建输出字典
+# ============================================================
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': os.path.abspath(FIGURE_NAME)   # 提供绝对路径以明确位置
+}
+
+# 将结果打印到控制台，方便教师查看
+print("========== 计算结果 ==========")
+print(f"最后一个{WINDOW}日滚动年化夏普比率: {rolling_sharpe_last:.4f}")
+print(f"图形已保存至: {result['figure_path']}")
+print("==============================")

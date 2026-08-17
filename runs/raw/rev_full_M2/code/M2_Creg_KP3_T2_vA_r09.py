@@ -1,0 +1,96 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ------------------ 可调参数 ------------------
+FACE = 100.0            # 面值
+COUPON_RATE = 0.046     # 票息率
+YEARS = 7               # 期限（年）
+FREQ = 1                # 付息频率（1 = 年付）
+YTM_CURRENT = 0.053     # 当前到期收益率
+
+SHIFT_BPS = 100                     # 收益率上移基点（可调）
+SHIFT = SHIFT_BPS / 10_000.0        # 转换为小数
+
+PLOT_TANGENT_RANGE = 0.02           # 久期近似线在收益率上的显示范围（±，可调）
+# ------------------------------------------------
+
+# 年付息债券的现金流时间点（年末）
+times = np.arange(1, YEARS + 1, dtype=float)
+coupon = COUPON_RATE * FACE
+cashflows = np.full(YEARS, coupon)
+cashflows[-1] += FACE  # 最后一期归还本金
+
+def bond_price(ytm):
+    """计算年付息债券价格（支持标量或数组 ytm）"""
+    ytm = np.asarray(ytm, dtype=float)
+    # 折现因子: (1 + ytm)^{-times}，通过广播自动适配 ytm 的维度
+    # times 形状 (YEARS,)，ytm 形状 (...)，需要扩展以便广播
+    # 方式：times.reshape(1, -1) 与 ytm.reshape(-1, 1) 结合
+    t = times.reshape(1, -1)                # (1, YEARS)
+    y = ytm.reshape(-1, 1)                  # (N, 1) 或 (1, 1)
+    df = (1 + y) ** -t                       # 折现因子矩阵
+    price = np.sum(cashflows * df, axis=-1)  # 沿时间轴求和
+    return price.item() if price.ndim == 1 and price.size == 1 else price
+
+def modified_duration(ytm):
+    """返回修正久期和当前价格（基于中央差分求导）"""
+    eps = 1e-6
+    P = bond_price(ytm)
+    P_up = bond_price(ytm + eps)
+    P_down = bond_price(ytm - eps)
+    dP_dy = (P_up - P_down) / (2 * eps)
+    MD = -dP_dy / P
+    return MD, P
+
+# ---------- 核心计算 ----------
+P_now = bond_price(YTM_CURRENT)
+MD_now, _ = modified_duration(YTM_CURRENT)
+
+# 收益率上升 100 bp 后的精确价格
+YTM_up = YTM_CURRENT + SHIFT
+P_up_exact = bond_price(YTM_up)
+
+# 久期法估计的相对价格变化 (ΔP/P)
+approx_rel_change = -MD_now * SHIFT
+
+# ---------- 准备输出字典 ----------
+result = {
+    'price_at_up100bp': P_up_exact,
+    'dur_approx_change_up100bp': approx_rel_change
+}
+
+# ---------- 画图 ----------
+y_plot = np.linspace(0.02, 0.09, 500)
+prices_exact = bond_price(y_plot)
+
+# 切线（久期近似线）仅在当前收益率附近绘制
+y_tang = np.linspace(YTM_CURRENT - PLOT_TANGENT_RANGE,
+                     YTM_CURRENT + PLOT_TANGENT_RANGE, 100)
+tangent_prices = P_now - MD_now * P_now * (y_tang - YTM_CURRENT)
+
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.plot(y_plot * 100, prices_exact, label='Exact price–yield', linewidth=1.5)
+ax.plot(y_tang * 100, tangent_prices, '--', label='Duration approximation (tangent)',
+        linewidth=1.5)
+ax.axvline(YTM_CURRENT * 100, color='gray', linestyle=':',
+           label=f'Current YTM ({YTM_CURRENT*100:.2f}%)')
+ax.set_xlabel('Yield to maturity (%)')
+ax.set_ylabel('Bond price')
+ax.set_title('Price–Yield Curve with Duration Approximation')
+ax.legend()
+ax.grid(True, alpha=0.3)
+fig.tight_layout()
+
+figure_path = 'price_yield_curve.png'
+fig.savefig(figure_path, dpi=150)
+plt.close(fig)
+
+result['figure_path'] = figure_path
+
+# ---------- 打印结果 ----------
+print("计算完成，结果存入字典 result：")
+for key, val in result.items():
+    if isinstance(val, float):
+        print(f"  {key}: {val:.6f}")
+    else:
+        print(f"  {key}: {val}")

@@ -1,0 +1,34 @@
+import numpy as np
+from scipy.stats import norm
+
+def bs_call_price(S, K, r, T, sigma):
+    """
+    计算无股息欧式看涨期权的 Black-Scholes 价格
+    S: 标的现价
+    K: 行权价
+    r: 无风险利率 (连续复利)
+    T: 剩余期限 (年)
+    sigma: 波动率
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    return call_price
+
+# 已知参数
+S0 = 103.7       # 标的现价
+K = 97.5         # 行权价
+r = 0.043        # 无风险利率 (连续复利)
+T = 0.58         # 剩余期限 (年)
+sigma_base = 0.276  # 初始波动率 27.6%
+sigma_up = 0.286    # 隐含波动率上升一个百分点后的波动率 28.6%
+
+# 1. 分别在波动率 28.6% 与 27.6% 下精确重定价
+price_base = bs_call_price(S0, K, r, T, sigma_base)
+price_up = bs_call_price(S0, K, r, T, sigma_up)
+
+# 2. 计算精确价差并存入 result
+price_change = price_up - price_base
+
+# 输出契约
+result = {'price_change': price_change}

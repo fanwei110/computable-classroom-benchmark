@@ -1,0 +1,62 @@
+import numpy as np
+import pandas as pd
+
+# ------------------------------------------------------------------
+# 1. 读取数据并计算年化夏普比率
+# ------------------------------------------------------------------
+# 请确保数据文件 data.csv 在当前工作目录，并包含 'fund' 列
+# 假设 'fund' 列的日收益为小数形式（例如 0.001 代表 0.1%）
+data = pd.read_csv('data.csv')
+fund_returns = data['fund'].values
+
+# 年化无风险利率
+rf_annual = 0.021
+# 交易日假设
+trading_days = 252
+# 每日无风险利率（简单比例法）
+rf_daily = rf_annual / trading_days
+
+# 超额日收益
+excess_returns = fund_returns - rf_daily
+mean_excess = np.mean(excess_returns)
+std_excess = np.std(excess_returns, ddof=1)   # 样本标准差
+
+# 年化夏普比率
+sharpe_annual = np.sqrt(trading_days) * mean_excess / std_excess
+
+# ------------------------------------------------------------------
+# 2. 业绩归因：配置效应、选择效应、交互效应
+# ------------------------------------------------------------------
+# 组合权重与收益
+w_p = np.array([0.45, 0.35, 0.20])
+r_p = np.array([0.083, 0.021, -0.014])   # 8.3%, 2.1%, -1.4%
+
+# 基准权重与收益
+w_b = np.array([0.40, 0.40, 0.20])
+r_b = np.array([0.067, 0.034, -0.009])   # 6.7%, 3.4%, -0.9%
+
+# 配置效应 = Σ (w_p - w_b) * r_b
+allocation_effect = np.sum((w_p - w_b) * r_b)
+
+# 选择效应 = Σ w_b * (r_p - r_b)
+selection_effect = np.sum(w_b * (r_p - r_b))
+
+# 交互效应 = Σ (w_p - w_b) * (r_p - r_b)
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+
+# 验证总主动收益是否等于三项之和（可选，此处仅用于内部检验）
+# active_return = np.dot(w_p, r_p) - np.dot(w_b, r_b)
+# total_effects = allocation_effect + selection_effect + interaction_effect
+# assert np.isclose(active_return, total_effects)
+
+# ------------------------------------------------------------------
+# 3. 填充结果字典
+# ------------------------------------------------------------------
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+print(result)

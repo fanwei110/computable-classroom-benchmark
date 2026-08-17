@@ -1,0 +1,60 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+
+# ================= 参数设置 =================
+K = 97.5              # 行权价
+r = 0.043             # 无风险利率 (连续复利)
+T = 0.58              # 期限 (年)
+S_min, S_max = 70, 140 # 标的资产价格范围
+vols = [0.15, 0.276, 0.40] # 波动率列表 (vol可调：直接修改此列表即可增减或改变波动率曲线)
+
+# ================= Black-Scholes Call Delta 计算 =================
+def call_delta(S, K, r, T, vol):
+    """
+    计算欧式看涨期权的Delta
+    S: 标的资产价格
+    K: 行权价
+    r: 无风险利率
+    T: 剩余期限(年)
+    vol: 年化波动率
+    """
+    d1 = (np.log(S / K) + (r + vol**2 / 2) * T) / (vol * np.sqrt(T))
+    return norm.cdf(d1)
+
+# ================= 绘制 Delta 曲线 =================
+S_range = np.linspace(S_min, S_max, 700)
+
+plt.figure(figsize=(10, 6))
+for vol in vols:
+    deltas = call_delta(S_range, K, r, T, vol)
+    plt.plot(S_range, deltas, label=f'Vol = {vol*100:.1f}%')
+
+plt.title('Call Option Delta vs Underlying Price')
+plt.xlabel('Underlying Price (S)')
+plt.ylabel('Delta')
+plt.legend(title='Volatility')
+plt.grid(True, linestyle='--', alpha=0.7)
+
+# 保存图像
+fig_path = 'delta_curve.png'
+plt.savefig(fig_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# ================= 计算特定点的 Delta =================
+S_target = 110
+vol_target = 0.276
+
+d1_target = (np.log(S_target / K) + (r + vol_target**2 / 2) * T) / (vol_target * np.sqrt(T))
+delta_target = float(norm.cdf(d1_target))
+
+# ================= 输出结果 =================
+result = {
+    'delta_at_s110': delta_target,
+    'figure_path': fig_path
+}
+
+# 打印结果以供核对
+print(f"标的110，Vol 27.6% 的 Call Delta 为: {delta_target:.4f}")
+print(f"图表已保存至: {fig_path}")
+print("Result Dictionary:", result)

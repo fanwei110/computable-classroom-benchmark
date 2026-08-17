@@ -1,0 +1,74 @@
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ===================== 可调参数 =====================
+WINDOW = 60                  # 滚动窗口长度（交易日）
+RISK_FREE_RATE = 0.021       # 年化无风险利率
+TRADING_DAYS = 252           # 一年交易日数
+DATA_FILE = "fund_data.csv"  # 数据文件路径
+FIGURE_FILE = "sharpe_ratio.png"  # 输出图片路径
+# ===================================================
+
+def main():
+    # ---------- 1. 读取数据 ----------
+    # 期望 CSV 文件至少包含 'fund' 列，存储日收益率（小数形式）
+    # 若有 'date' 列则自动设为索引，否则使用默认整数索引
+    try:
+        df = pd.read_csv(DATA_FILE)
+    except FileNotFoundError:
+        raise FileNotFoundError(f"数据文件 {DATA_FILE} 不存在，请确认路径。")
+
+    if 'date' in df.columns:
+        df['date'] = pd.to_datetime(df['date'])
+        df = df.set_index('date')
+    elif 'Date' in df.columns:
+        df['Date'] = pd.to_datetime(df['Date'])
+        df = df.set_index('Date')
+
+    if 'fund' not in df.columns:
+        raise ValueError("CSV 文件中缺少 'fund' 列，请检查数据格式。")
+
+    daily_returns = df['fund'].astype(float)
+
+    # ---------- 2. 计算超额收益 ----------
+    rf_daily = RISK_FREE_RATE / TRADING_DAYS
+    excess_returns = daily_returns - rf_daily
+
+    # ---------- 3. 滚动年化夏普比率 ----------
+    rolling_mean = excess_returns.rolling(window=WINDOW).mean()
+    rolling_std = excess_returns.rolling(window=WINDOW).std()
+    rolling_sharpe = np.sqrt(TRADING_DAYS) * (rolling_mean / rolling_std)
+
+    # ---------- 4. 最近一个窗口的夏普值 ----------
+    valid_sharpe = rolling_sharpe.dropna()
+    if valid_sharpe.empty:
+        rolling_sharpe_last = np.nan
+    else:
+        rolling_sharpe_last = float(valid_sharpe.iloc[-1])
+
+    # ---------- 5. 绘制并保存图像 ----------
+    plt.figure(figsize=(10, 6))
+    plt.plot(rolling_sharpe.index, rolling_sharpe.values, 
+             label=f'{WINDOW}-Day Rolling Sharpe', color='steelblue')
+    plt.axhline(y=0, color='gray', linestyle='--', linewidth=0.8)
+    plt.title(f'{WINDOW}-Day Rolling Annualized Sharpe Ratio')
+    plt.xlabel('Time')
+    plt.ylabel('Sharpe Ratio')
+    plt.legend()
+    plt.tight_layout()
+    plt.savefig(FIGURE_FILE, dpi=150)
+    plt.close()
+
+    # ---------- 6. 输出结果 ----------
+    result = {
+        'rolling_sharpe_last': rolling_sharpe_last,
+        'figure_path': FIGURE_FILE
+    }
+    return result
+
+if __name__ == "__main__":
+    result = main()
+    print(result)
+```

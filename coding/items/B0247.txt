@@ -1,0 +1,71 @@
+=== B0247  任务 KP1_T3 (T3) ===
+
+--- 任务要求的输出键 ---
+vol_before_annual, vol_after_annual
+
+--- 判分失败明细 ---
+vol_before_annual: 提交值 18.49  |  参考值 0.18485375841459106
+vol_after_annual: 提交值 21.75  |  参考值 0.21745443660684413
+
+--- 提取出的代码 ---
+import math
+
+# 已知参数
+sigma_A = 0.184
+sigma_B = 0.297
+w_A = 0.6
+w_B = 0.4
+
+# 相关系数变化前后的波动率计算
+# 公式: sigma_p = sqrt(w_A^2 * sigma_A^2 + w_B^2 * sigma_B^2 + 2 * w_A * w_B * sigma_A * sigma_B * rho)
+
+# 变化前（rho = 0.3）
+rho_before = 0.3
+var_before = (w_A**2 * sigma_A**2) + (w_B**2 * sigma_B**2) + (2 * w_A * w_B * sigma_A * sigma_B * rho_before)
+vol_before = math.sqrt(var_before)
+
+# 变化后（rho = 0.8）
+rho_after = 0.8
+var_after = (w_A**2 * sigma_A**2) + (w_B**2 * sigma_B**2) + (2 * w_A * w_B * sigma_A * sigma_B * rho_after)
+vol_after = math.sqrt(var_after)
+
+# 存入字典，转化为百分比并保留两位小数
+result = {
+    'vol_before_annual': round(vol_before * 100, 2),
+    'vol_after_annual': round(vol_after * 100, 2)
+}
+
+print(result)
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+```python
+import math
+
+# 已知参数
+sigma_A = 0.184
+sigma_B = 0.297
+w_A = 0.6
+w_B = 0.4
+
+# 相关系数变化前后的波动率计算
+# 公式: sigma_p = sqrt(w_A^2 * sigma_A^2 + w_B^2 * sigma_B^2 + 2 * w_A * w_B * sigma_A * sigma_B * rho)
+
+# 变化前（rho = 0.3）
+rho_before = 0.3
+var_before = (w_A**2 * sigma_A**2) + (w_B**2 * sigma_B**2) + (2 * w_A * w_B * sigma_A * sigma_B * rho_before)
+vol_before = math.sqrt(var_before)
+
+# 变化后（rho = 0.8）
+rho_after = 0.8
+var_after = (w_A**2 * sigma_A**2) + (w_B**2 * sigma_B**2) + (2 * w_A * w_B * sigma_A * sigma_B * rho_after)
+vol_after = math.sqrt(var_after)
+
+# 存入字典，转化为百分比并保留两位小数
+result = {
+    'vol_before_annual': round(vol_before * 100, 2),
+    'vol_after_annual': round(vol_after * 100, 2)
+}
+
+print(result)
+```

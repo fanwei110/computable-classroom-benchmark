@@ -1,0 +1,171 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import brentq
+import os
+
+# ==================== 债券参数设置 ====================
+FACE_VALUE = 100.0          # 面值
+COUPON_RATE = 0.046         # 票息率 4.6%
+YTM = 0.053                 # 到期收益率 5.3%
+MATURITY = 7.0              # 期限 7 年
+COUPON = FACE_VALUE * COUPON_RATE  # 年票息 4.6
+
+# ==================== 辅助函数 ====================
+def bond_price(ytm, face, coupon, maturity):
+    """
+    计算债券精确价格（现金流贴现）
+    假设每年付息一次，最后一期还本付息
+    """
+    # 生成现金流时间点（整数年）
+    t = np.arange(1, int(maturity) + 1)
+    cashflows = np.full_like(t, coupon, dtype=float)
+    cashflows[-1] += face  # 最后一期加上面值
+    
+    # 贴现因子
+    discount_factors = (1 + ytm) ** (-t)
+    price = np.sum(cashflows * discount_factors)
+    return price
+
+def bond_duration(ytm, face, coupon, maturity):
+    """
+    计算债券的麦考利久期（年）
+    """
+    t = np.arange(1, int(maturity) + 1)
+    cashflows = np.full_like(t, coupon, dtype=float)
+    cashflows[-1] += face
+    
+    discount_factors = (1 + ytm) ** (-t)
+    pv = cashflows * discount_factors
+    price = np.sum(pv)
+    
+    # 麦考利久期 = Σ(t * PV(CF_t)) / Price
+    macaulay_duration = np.sum(t * pv) / price
+    
+    # 修正久期 = 麦考利久期 / (1 + ytm)
+    modified_duration = macaulay_duration / (1 + ytm)
+    
+    return modified_duration
+
+def approximate_price_duration(ytm_target, ytm_current, price_current, modified_duration):
+    """
+    基于久期的线性近似价格
+    P(y + Δy) ≈ P(y) - MD * P(y) * Δy
+    """
+    delta_y = ytm_target - ytm_current
+    price_approx = price_current * (1 - modified_duration * delta_y)
+    return price_approx
+
+# ==================== 计算核心价格 ====================
+# 当前收益率下的精确价格和久期
+P0 = bond_price(YTM, FACE_VALUE, COUPON, MATURITY)
+MD0 = bond_duration(YTM, FACE_VALUE, COUPON, MATURITY)
+
+print(f"当前YTM = {YTM*100:.1f}%")
+print(f"精确价格 P0 = {P0:.4f}")
+print(f"修正久期 MD = {MD0:.4f}")
+
+# ==================== 收益率网格 ====================
+yield_grid = np.linspace(0.02, 0.09, 500)  # 2% 到 9%
+
+# 精确价格曲线
+exact_prices = np.array([bond_price(y, FACE_VALUE, COUPON, MATURITY) for y in yield_grid])
+
+# ==================== 久期近似价格曲线 ====================
+# 在 5.3% 附近叠加基于久期的近似线
+# 使用当前YTM点的切线近似
+approx_prices = np.array([
+    approximate_price_duration(y, YTM, P0, MD0) for y in yield_grid
+])
+
+# ==================== 定价计算（+100bp） ====================
+YTM_UP100BP = YTM + 0.01  # 5.3% + 100bp = 6.3%
+P_up100bp_exact = bond_price(YTM_UP100BP, FACE_VALUE, COUPON, MATURITY)
+P_up100bp_dur_approx = approximate_price_duration(YTM_UP100BP, YTM, P0, MD0)
+
+# 相对变化
+rel_change_exact = (P_up100bp_exact - P0) / P0  # 精确相对变化
+rel_change_dur = (P_up100bp_dur_approx - P0) / P0  # 久期法估计的相对变化
+
+print(f"\n收益率上升 100bp 后:")
+print(f"  新收益率 = {YTM_UP100BP*100:.1f}%")
+print(f"  精确价格 = {P_up100bp_exact:.4f}")
+print(f"  精确价格相对变化 = {rel_change_exact*100:.4f}%")
+print(f"  久期近似价格 = {P_up100bp_dur_approx:.4f}")
+print(f"  久期法估计价格相对变化 = {rel_change_dur*100:.4f}%")
+
+# ==================== 可视化 ====================
+fig, ax = plt.subplots(figsize=(12, 7))
+
+# 绘制精确价格曲线
+ax.plot(yield_grid * 100, exact_prices, 
+        'b-', linewidth=2.5, label='Exact Price (Full Valuation)', alpha=0.8)
+
+# 绘制久期近似线（虚线，浅色）
+ax.plot(yield_grid * 100, approx_prices, 
+        'r--', linewidth=2.0, label='Duration-Based Approximation', alpha=0.7)
+
+# 标注当前YTM点
+ax.scatter([YTM * 100], [P0], color='green', s=100, zorder=5, 
+           label=f'Current YTM = {YTM*100:.1f}%')
+
+# 标注 +100bp 点
+ax.scatter([YTM_UP100BP * 100], [P_up100bp_exact], color='orange', s=100, zorder=5,
+           marker='s', label=f'+100bp YTM = {YTM_UP100BP*100:.1f}%')
+ax.scatter([YTM_UP100BP * 100], [P_up100bp_dur_approx], color='purple', s=100, zorder=5,
+           marker='^', label=f'Duration Approx at +100bp')
+
+# 添加当前YTM的垂直线
+ax.axvline(x=YTM * 100, color='gray', linestyle=':', alpha=0.5, linewidth=1)
+
+# 设置标签和标题
+ax.set_xlabel('Yield to Maturity (%)', fontsize=13, fontweight='bold')
+ax.set_ylabel('Bond Price', fontsize=13, fontweight='bold')
+ax.set_title('Price-Yield Curve: Exact vs Duration Approximation\n'
+             f'{MATURITY:.0f}-Year Bond, Coupon={COUPON_RATE*100:.1f}%, Face={FACE_VALUE}',
+             fontsize=14, fontweight='bold')
+
+# 图例和网格
+ax.legend(loc='upper right', fontsize=10, framealpha=0.9)
+ax.grid(True, alpha=0.3, linestyle='--')
+ax.set_xlim(2, 9)
+
+# 添加文本信息框
+textstr = f'Current YTM: {YTM*100:.1f}%\n'
+textstr += f'Price P0: {P0:.2f}\n'
+textstr += f'Modified Duration: {MD0:.2f}\n'
+textstr += f'Convexity Gap: {P_up100bp_exact - P_up100bp_dur_approx:.3f}'
+props = dict(boxstyle='round', facecolor='wheat', alpha=0.8)
+ax.text(0.02, 0.15, textstr, transform=ax.transAxes, fontsize=10,
+        verticalalignment='top', bbox=props)
+
+plt.tight_layout()
+
+# 保存图像
+figure_path = 'bond_price_yield_curve.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+print(f"\n图形已保存至: {figure_path}")
+
+# ==================== 输出结果 ====================
+result = {
+    'price_at_up100bp': P_up100bp_exact,
+    'dur_approx_change_up100bp': rel_change_dur,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+print("\n" + "="*50)
+print("RESULT DICTIONARY:")
+print("="*50)
+for key, value in result.items():
+    if key == 'figure_path':
+        print(f"  '{key}': '{value}'")
+    else:
+        print(f"  '{key}': {value:.6f}")
+print("="*50)
+
+# 验证结果
+print(f"\n验证:")
+print(f"  price_at_up100bp = {result['price_at_up100bp']:.4f}")
+print(f"  dur_approx_change_up100bp = {result['dur_approx_change_up100bp']*100:.4f}%")
+print(f"  图文件路径: {result['figure_path']}")

@@ -1,0 +1,83 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+
+# 资产参数
+r1 = 0.071
+r2 = 0.124
+v1 = 0.163
+v2 = 0.289
+rhos = [0.15, 0.45, 0.75]
+
+# 生成资产1的权重范围，稍微扩大范围以完整展示双曲线
+weights = np.linspace(-0.5, 1.5, 1000)
+
+# 初始化特定条件下的计算结果变量
+mvp_vol_rho45 = None
+target_vol_rho45 = None
+
+# 创建画布
+plt.figure(figsize=(10, 7))
+
+# 遍历不同的相关系数
+for rho in rhos:
+    # 计算组合期望收益
+    port_ret = weights * r1 + (1 - weights) * r2
+    
+    # 计算组合波动率
+    port_var = (weights * v1)**2 + ((1 - weights) * v2)**2 + 2 * weights * (1 - weights) * rho * v1 * v2
+    port_vol = np.sqrt(port_var)
+    
+    # 计算最小方差组合 (MVP) 的权重
+    w_mvp = (v2**2 - rho * v1 * v2) / (v1**2 + v2**2 - 2 * rho * v1 * v2)
+    
+    # 计算 MVP 的收益和波动率
+    r_mvp = w_mvp * r1 + (1 - w_mvp) * r2
+    var_mvp = (w_mvp * v1)**2 + ((1 - w_mvp) * v2)**2 + 2 * w_mvp * (1 - w_mvp) * rho * v1 * v2
+    v_mvp = np.sqrt(var_mvp)
+    
+    # 绘制有效前沿
+    plt.plot(port_vol, port_ret, label=f'ρ = {rho}')
+    
+    # 标出最小方差组合点
+    plt.scatter(v_mvp, r_mvp, marker='o', s=50, zorder=5)
+    plt.text(v_mvp + 0.003, r_mvp - 0.002, f'MVP (ρ={rho})', fontsize=9)
+    
+    # 当 rho = 0.45 时，计算要求的具体数值
+    if rho == 0.45:
+        mvp_vol_rho45 = v_mvp
+        
+        # 目标收益 10% 时的权重
+        r_target = 0.10
+        w_target = (r_target - r2) / (r1 - r2)
+        
+        # 目标收益 10% 时的最小波动率
+        var_target = (w_target * v1)**2 + ((1 - w_target) * v2)**2 + 2 * w_target * (1 - w_target) * rho * v1 * v2
+        target_vol_rho45 = np.sqrt(var_target)
+
+# 图表美化
+plt.title('Efficient Frontiers for Two Assets with Different Correlations', fontsize=14)
+plt.xlabel('Volatility (Annualized)', fontsize=12)
+plt.ylabel('Expected Return (Annualized)', fontsize=12)
+plt.gca().xaxis.set_major_formatter(mticker.PercentFormatter(1.0))
+plt.gca().yaxis.set_major_formatter(mticker.PercentFormatter(1.0))
+plt.legend()
+plt.grid(True, linestyle='--', alpha=0.7)
+
+# 保存图表
+fig_path = 'efficient_frontier.png'
+plt.savefig(fig_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# 按照输出契约构建 result 字典
+result = {
+    'mvp_vol_at_rho45': mvp_vol_rho45,
+    'frontier_vol_at_target': target_vol_rho45,
+    'figure_path': fig_path
+}
+
+# 打印结果供查看
+print(f"ρ=0.45 时最小方差组合的波动率: {mvp_vol_rho45:.4%}")
+print(f"ρ=0.45 且目标收益10%时的最小波动率: {target_vol_rho45:.4%}")
+print(f"图表已保存至: {fig_path}")
+print(f"Result字典: {result}")

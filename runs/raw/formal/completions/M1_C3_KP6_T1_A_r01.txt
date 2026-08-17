@@ -1,0 +1,80 @@
+下面分别计算两个问题，并将结果存入 `result` 字典中。
+
+---
+
+### **第一问：年化夏普比率**
+**步骤：**
+1. 计算日收益率的样本均值（`mean_daily_return`）和样本标准差（`std_daily_return`，`ddof=1`）。
+2. 年化收益率 = `mean_daily_return * 252`
+3. 年化波动率 = `std_daily_return * sqrt(252)`
+4. 年化夏普比率 = `(年化收益率 - 无风险利率) / 年化波动率`，其中无风险利率为 `2.1%`（即 `0.021`）。
+
+**注意：**
+- 由于题目未提供具体的 `fund` 列数据，假设你已计算出 `mean_daily_return` 和 `std_daily_return`。这里仅给出公式。
+- 如果 `fund` 列数据为 `daily_returns`，则代码示例如下：
+  ```python
+  import numpy as np
+
+  daily_returns = ...  # 替换为实际数据
+  mean_daily_return = np.mean(daily_returns)
+  std_daily_return = np.std(daily_returns, ddof=1)
+
+  annual_return = mean_daily_return * 252
+  annual_vol = std_daily_return * np.sqrt(252)
+  sharpe_annual = (annual_return - 0.021) / annual_vol
+  ```
+
+---
+
+### **第二问：业绩归因（Brinson 模型）**
+**组合和基准的行业权重及收益：**
+| 行业 | 组合权重 (w_p) | 组合收益 (r_p) | 基准权重 (w_b) | 基准收益 (r_b) |
+|------|----------------|----------------|----------------|----------------|
+| 1    | 0.45           | 0.083          | 0.40           | 0.067          |
+| 2    | 0.35           | 0.021          | 0.40           | 0.034          |
+| 3    | 0.20           | -0.014         | 0.20           | -0.009         |
+
+**Brinson 模型的三种效应：**
+1. **配置效应（Allocation Effect）**：
+   \[
+   \sum (w_{p,i} - w_{b,i}) \cdot r_{b,i}
+   \]
+2. **选择效应（Selection Effect）**：
+   \[
+   \sum w_{b,i} \cdot (r_{p,i} - r_{b,i})
+   \]
+3. **交互效应（Interaction Effect）**：
+   \[
+   \sum (w_{p,i} - w_{b,i}) \cdot (r_{p,i} - r_{b,i})
+   \]
+
+**计算过程：**
+1. 配置效应：
+   \[
+   (0.45 - 0.40) \cdot 0.067 + (0.35 - 0.40) \cdot 0.034 + (0.20 - 0.20) \cdot (-0.009) = 0.00335 - 0.0017 + 0 = 0.00165
+   \]
+2. 选择效应：
+   \[
+   0.40 \cdot (0.083 - 0.067) + 0.40 \cdot (0.021 - 0.034) + 0.20 \cdot (-0.014 - (-0.009)) = 0.0064 - 0.0052 - 0.001 = 0.0002
+   \]
+3. 交互效应：
+   \[
+   (0.45 - 0.40) \cdot (0.083 - 0.067) + (0.35 - 0.40) \cdot (0.021 - 0.034) + (0.20 - 0.20) \cdot (-0.014 - (-0.009)) = 0.0008 - 0.00065 + 0 = 0.00015
+   \]
+
+---
+
+### **最终结果**
+将所有结果存入 `result` 字典：
+```python
+result = {
+    'sharpe_annual': sharpe_annual,  # 替换为实际计算值
+    'allocation_effect': 0.00165,
+    'selection_effect': 0.0002,
+    'interaction_effect': 0.00015
+}
+```
+
+**注意：**
+- `sharpe_annual` 需根据实际 `fund` 列数据计算。如果数据缺失，可假设一个示例值（如 `1.2`）。
+- 业绩归因的结果已精确计算。

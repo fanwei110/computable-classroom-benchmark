@@ -1,0 +1,94 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+
+# ===================== 初始参数 =====================
+rf_initial = 0.023       # 无风险利率 2.3%
+rm_initial = 0.094       # 市场期望收益 9.4%
+beta_target = 1.27       # 需要计算期望收益的 beta 值
+
+# 三只股票的数据 (beta, 期望收益)
+stocks = {
+    'X': (0.62, 0.081),
+    'Y': (1.18, 0.131),
+    'Z': (1.51, 0.099)
+}
+
+# ===================== 计算初始结果 =====================
+slope_initial = rm_initial - rf_initial                # 市场风险溢价 (SML 斜率)
+er_target_initial = rf_initial + beta_target * slope_initial
+
+result = {
+    'sml_slope': slope_initial,
+    'er_at_beta_127': er_target_initial,
+    'figure_path': 'sml_interactive.png'
+}
+
+# 打印结果到控制台（方便课堂查看）
+print("=== 初始参数下的计算结果 ===")
+print(f"SML 斜率 (市场风险溢价) : {slope_initial:.4f} ({slope_initial*100:.2f}%)")
+print(f"beta = {beta_target} 时的期望收益 : {er_target_initial:.4f} ({er_target_initial*100:.2f}%)")
+
+# ===================== 创建交互式图形 =====================
+fig, ax = plt.subplots(figsize=(9, 6))
+plt.subplots_adjust(left=0.15, bottom=0.30)   # 为滑块留出空间
+
+# 绘制初始 SML 线
+beta_range = np.linspace(0, 2, 200)
+sml_line, = ax.plot(beta_range, rf_initial + slope_initial * beta_range,
+                    'b-', linewidth=2, label='Security Market Line')
+
+# 标出三只股票
+for name, (b, er) in stocks.items():
+    ax.plot(b, er, 'ro', markersize=8)
+    ax.text(b + 0.02, er, name, fontsize=12, verticalalignment='center')
+
+# 标出 beta=1.27 对应的期望收益点
+target_point, = ax.plot(beta_target, er_target_initial, 'go', markersize=10,
+                        label=f'beta = {beta_target}')
+ax.axvline(beta_target, color='gray', linestyle='--', alpha=0.5)
+
+# 图形装饰
+ax.set_xlabel('Beta', fontsize=12)
+ax.set_ylabel('Expected Return', fontsize=12)
+ax.set_title('Security Market Line (SML) with Interactive Risk-Free Rate and Market Return',
+             fontsize=13)
+ax.set_xlim(0, 2)
+ax.set_ylim(0, 0.20)
+ax.grid(True, alpha=0.3)
+ax.legend(loc='upper left')
+
+# ===================== 滑块 =====================
+# 滑块位置
+ax_rf = plt.axes([0.15, 0.15, 0.65, 0.03])
+ax_rm = plt.axes([0.15, 0.10, 0.65, 0.03])
+
+# 创建滑块
+slider_rf = Slider(ax_rf, 'Risk-free rate', 0.0, 0.10, valinit=rf_initial, valstep=0.001)
+slider_rm = Slider(ax_rm, 'Market return', 0.0, 0.20, valinit=rm_initial, valstep=0.001)
+
+# 更新函数
+def update(val):
+    rf = slider_rf.val
+    rm = slider_rm.val
+    slope = rm - rf
+    # 更新 SML 线
+    sml_line.set_ydata(rf + slope * beta_range)
+    # 更新 beta_target 点
+    er_target_new = rf + beta_target * slope
+    target_point.set_ydata([er_target_new])
+    fig.canvas.draw_idle()
+
+# 绑定滑块事件
+slider_rf.on_changed(update)
+slider_rm.on_changed(update)
+
+# ===================== 保存静态图并显示 =====================
+plt.savefig(result['figure_path'], dpi=150, bbox_inches='tight')
+plt.show()
+
+# 最终结果字典
+print("\n结果字典 result:")
+print(result)
+```

@@ -1,0 +1,131 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.optimize import brentq
+
+# =====================
+# 0. 债券基本参数设定
+# =====================
+FACE_VALUE = 100.0          # 面值
+COUPON_RATE = 0.046         # 票息率 4.6%
+MATURITY = 7.0              # 剩余期限（年）
+YIELD_CURRENT = 0.053       # 当前收益率 5.3%
+CASH_FLOW_PERIODS = 7        # 每年付息一次，共7次现金流（最后一次含本金）
+COUPON = FACE_VALUE * COUPON_RATE  # 每年票息 = 4.6
+
+# ======================
+# 1. 精确价格-收益率曲线
+# ======================
+# 生成从2%到9%的收益率网格（足够精细以绘制平滑曲线）
+yield_grid = np.linspace(0.02, 0.09, 200)
+
+def exact_price(ytm):
+    """
+    计算给定到期收益率ytm下的债券价格（每年付息一次）
+    假设：刚刚付息，距下一付息日恰好1年（整年计息）
+    """
+    t = np.arange(1, MATURITY + 1)            # 现金流发生年份：1,2,...,7
+    cash_flows = np.full_like(t, COUPON)      # 前6年票息
+    cash_flows[-1] += FACE_VALUE              # 最后一年加上本金
+    pv_factors = 1.0 / (1.0 + ytm) ** t
+    return np.sum(cash_flows * pv_factors)
+
+# 计算精确价格向量
+prices_exact = np.array([exact_price(ytm) for ytm in yield_grid])
+
+# ==============================
+# 2. 在当前收益率处计算久期与凸性
+# ==============================
+# 现金流时间与金额
+times = np.arange(1.0, MATURITY + 1.0)
+cfs = np.full(len(times), COUPON)
+cfs[-1] += FACE_VALUE
+
+# 贴现因子（基于当前收益率）
+disc_factors = (1.0 + YIELD_CURRENT) ** (-times)
+pv_cfs = cfs * disc_factors
+
+# 当前精确价格
+price_current = np.sum(pv_cfs)
+
+# 麦考利久期（权重乘以时间）
+weights = pv_cfs / price_current
+macaulay_duration = np.sum(times * weights)
+
+# 修正久期（Modified Duration）
+mod_duration = macaulay_duration / (1.0 + YIELD_CURRENT)
+
+# 凸性（Convexity）
+convexity = np.sum(times * (times + 1) * pv_cfs) / (price_current * (1 + YIELD_CURRENT)**2)
+
+# ---------------------------
+# 构建“仅基于久期”的近似价格-收益率直线
+# 近似公式：P_approx(y) ≈ P0 * [1 - D_mod * (y - y0)]
+# ---------------------------
+# 在当前收益率附近（我们使用整个2%-9%区间来画直线，以展示全局近似效果）
+prices_dur_approx = price_current * (1.0 - mod_duration * (yield_grid - YIELD_CURRENT))
+
+# ==============================
+# 3. 收益率上升100个基点场景
+# ==============================
+delta_y_up = 0.01  # 100 基点
+ytm_up = YIELD_CURRENT + delta_y_up   # 6.3%
+
+# 精确价格（收益率↑1%）
+price_up_exact = exact_price(ytm_up)
+
+# 久期法估计的相对价格变化（ΔP/P ≈ -D_mod * Δy）
+approx_relative_change = -mod_duration * delta_y_up
+
+# 注意：要求报告“久期法估计的相对价格变化”，返回小数形式（如 -0.0X）
+# 同时也可以保留数值，避免模糊
+
+# ==============================
+# 4. 绘图并保存
+# ==============================
+plt.figure(figsize=(10, 6))
+# 精确价格曲线
+plt.plot(yield_grid * 100, prices_exact, 'b-', linewidth=2, label='Exact Price-Yield Curve')
+# 久期近似直线（在当前收益率附近展开）
+plt.plot(yield_grid * 100, prices_dur_approx, 'r--', linewidth=2, label='Duration-Based Approximation')
+# 标记当前点
+plt.axvline(x=YIELD_CURRENT*100, color='gray', linestyle=':', alpha=0.7)
+plt.scatter([YIELD_CURRENT*100], [price_current], color='k', zorder=5)
+plt.annotate(f'Current YTM={YIELD_CURRENT*100:.1f}%\nPrice={price_current:.2f}',
+             (YIELD_CURRENT*100, price_current),
+             textcoords="offset points", xytext=(-15, 10),
+             fontsize=9, arrowprops=dict(arrowstyle="->"))
+plt.xlabel('Yield to Maturity (%)')
+plt.ylabel('Bond Price')
+plt.title('Bond Price-Yield Curve with Duration Approximation\n'
+          f'Face=100, Coupon={COUPON_RATE*100:.1f}%, Maturity={MATURITY}Y')
+plt.grid(True, linestyle='--', alpha=0.5)
+plt.legend()
+plt.tight_layout()
+
+# 保存图形
+fig_path = 'bond_price_yield_curve.png'
+plt.savefig(fig_path, dpi=150)
+plt.close()
+
+# ======================
+# 5. 填充结果字典
+# ======================
+result = {
+    'price_at_up100bp': price_up_exact,                    # 精确价格（收益率+100bp）
+    'dur_approx_change_up100bp': approx_relative_change,   # 久期法估计的相对价格变化（小数）
+    'figure_path': fig_path
+}
+
+# 输出到控制台，便于课堂查看
+print("=== 债券定价与久期近似结果 ===")
+print(f"当前收益率: {YIELD_CURRENT*100:.2f}%")
+print(f"当前精确价格: {price_current:.4f}")
+print(f"修正久期: {mod_duration:.4f}")
+print(f"凸性: {convexity:.6f}")
+print(f"收益率上升100bp后精确价格: {price_up_exact:.4f}")
+print(f"久期法估计的相对价格变化: {approx_relative_change:.6f}  ({approx_relative_change*100:.4f}%)")
+print(f"图形保存至: {fig_path}")
+
+# 如果运行在notebook或脚本环境，result字典即为所需输出
+# 确保result变量保存于工作空间

@@ -1,0 +1,60 @@
+```python
+import numpy as np
+
+# ==================== 1. 参数设定 ====================
+# 无风险利率与市场期望收益（以小数形式表示）
+rf = 0.023
+rm = 0.094
+
+# 股票 X, Y, Z 的 Beta 值
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+
+# 股票 Y 的实际收益
+actual_ry = 0.131
+
+# ==================== 2. 套用 CAPM 公式 ====================
+# 市场风险溢价
+mrp = rm - rf
+
+# E[Ri] = rf + beta * (E[Rm] - rf)
+er_x = rf + beta_x * mrp
+er_y = rf + beta_y * mrp
+er_z = rf + beta_z * mrp
+
+# ==================== 3. 计算 Y 的 Alpha ====================
+# Alpha = 实际收益 - CAPM 期望收益
+alpha_y = actual_ry - er_y
+
+# ==================== 4. 填充结果字典 ====================
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+
+# ==================== 5. 课堂演示输出 ====================
+if __name__ == "__main__":
+    print("=== CAPM 期望收益与 Alpha 计算 ===")
+    print(f"无风险利率 (rf): {rf:.2%}")
+    print(f"市场期望收益 (rm): {rm:.2%}")
+    print(f"市场风险溢价 (mrp): {mrp:.2%}\n")
+    
+    print("--- CAPM 期望收益 ---")
+    print(f"股票 X (Beta={beta_x}): {er_x:.4%}")
+    print(f"股票 Y (Beta={beta_y}): {er_y:.4%}")
+    print(f"股票 Z (Beta={beta_z}): {er_z:.4%}\n")
+    
+    print("--- 股票 Y 的 Alpha ---")
+    print(f"实际收益: {actual_ry:.4%}")
+    print(f"CAPM预测: {er_y:.4%}")
+    print(f"Alpha_Y:  {alpha_y:.4%}")
+```
+
+**代码说明：**
+1. **参数设定**：将题目中的百分数统一转换为浮点小数（如 2.3% 转为 0.023），避免计算中的歧义。
+2. **CAPM 计算**：严格按照 $E[R_i] = r_f + \beta_i \times (E[R_m] - r_f)$ 公式计算，提取了市场风险溢价 `mrp` 以保持代码逻辑与金融直觉一致。
+3. **Alpha 计算**：根据定义，Alpha 为实际收益超过 CAPM 理论预期收益的部分，即 $\alpha_Y = R_{Y, \text{actual}} - E[R_Y]$。
+4. **输出格式**：`result` 字典中的值保留了原始浮点精度（如 `0.06702`），同时在终端打印时采用 `:.4%` 格式化为易读的百分比，便于课堂投屏讲解。

@@ -1,0 +1,120 @@
+我会为您编写一个自包含的Python脚本，完成夏普比率计算和业绩归因分析。
+
+```python
+import pandas as pd
+import numpy as np
+from scipy import stats
+
+# ==================== 第一部分：读取数据并计算年化夏普比率 ====================
+
+# 读取课程数据快照
+data = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 提取基金日收益
+fund_returns_daily = data['fund'].values
+
+# 设定无风险利率（年化2.1%）
+risk_free_rate_annual = 0.021
+# 转换为日化无风险利率（假设一年有252个交易日）
+risk_free_rate_daily = risk_free_rate_annual / 252
+
+# 计算超额收益（日度）
+excess_returns_daily = fund_returns_daily - risk_free_rate_daily
+
+# 计算年化夏普比率
+# 年化平均超额收益 = 日度平均超额收益 * 252
+mean_excess_return_annual = np.mean(excess_returns_daily) * 252
+# 年化标准差 = 日度标准差 * sqrt(252)
+std_excess_return_annual = np.std(excess_returns_daily, ddof=1) * np.sqrt(252)
+# 夏普比率 = 年化超额收益 / 年化标准差
+sharpe_annual = mean_excess_return_annual / std_excess_return_annual
+
+print(f"年化夏普比率: {sharpe_annual:.4f}")
+print(f"年化平均超额收益: {mean_excess_return_annual:.4f}")
+print(f"年化超额收益标准差: {std_excess_return_annual:.4f}")
+
+# ==================== 第二部分：业绩归因分析 ====================
+
+# 组合权重和行业收益
+portfolio_weights = np.array([0.45, 0.35, 0.20])
+portfolio_returns = np.array([0.083, 0.021, -0.014])
+
+# 基准权重和行业收益
+benchmark_weights = np.array([0.40, 0.40, 0.20])
+benchmark_returns = np.array([0.067, 0.034, -0.009])
+
+# 计算组合总收益和基准总收益
+portfolio_total_return = np.sum(portfolio_weights * portfolio_returns)
+benchmark_total_return = np.sum(benchmark_weights * benchmark_returns)
+
+print(f"\n组合总收益: {portfolio_total_return:.4f}")
+print(f"基准总收益: {benchmark_total_return:.4f}")
+print(f"主动收益: {portfolio_total_return - benchmark_total_return:.4f}")
+
+# 1. 配置效应（Allocation Effect）
+# 公式：Σ[(Wp,i - Wb,i) * Rb,i]
+allocation_effect = np.sum((portfolio_weights - benchmark_weights) * benchmark_returns)
+print(f"\n配置效应: {allocation_effect:.4f}")
+print("计算过程：")
+for i in range(3):
+    contribution = (portfolio_weights[i] - benchmark_weights[i]) * benchmark_returns[i]
+    print(f"  行业{i+1}: ({portfolio_weights[i]:.2f} - {benchmark_weights[i]:.2f}) * {benchmark_returns[i]:.3f} = {contribution:.4f}")
+
+# 2. 选择效应（Selection Effect）
+# 公式：Σ[Wb,i * (Rp,i - Rb,i)]
+selection_effect = np.sum(benchmark_weights * (portfolio_returns - benchmark_returns))
+print(f"\n选择效应: {selection_effect:.4f}")
+print("计算过程：")
+for i in range(3):
+    contribution = benchmark_weights[i] * (portfolio_returns[i] - benchmark_returns[i])
+    print(f"  行业{i+1}: {benchmark_weights[i]:.2f} * ({portfolio_returns[i]:.3f} - {benchmark_returns[i]:.3f}) = {contribution:.4f}")
+
+# 3. 交互效应（Interaction Effect）
+# 公式：Σ[(Wp,i - Wb,i) * (Rp,i - Rb,i)]
+interaction_effect = np.sum((portfolio_weights - benchmark_weights) * (portfolio_returns - benchmark_returns))
+print(f"\n交互效应: {interaction_effect:.4f}")
+print("计算过程：")
+for i in range(3):
+    contribution = (portfolio_weights[i] - benchmark_weights[i]) * (portfolio_returns[i] - benchmark_returns[i])
+    print(f"  行业{i+1}: ({portfolio_weights[i]:.2f} - {benchmark_weights[i]:.2f}) * ({portfolio_returns[i]:.3f} - {benchmark_returns[i]:.3f}) = {contribution:.4f}")
+
+# 验证：主动收益 = 配置效应 + 选择效应 + 交互效应
+total_attribution = allocation_effect + selection_effect + interaction_effect
+active_return = portfolio_total_return - benchmark_total_return
+print(f"\n验证：")
+print(f"配置效应 + 选择效应 + 交互效应 = {total_attribution:.6f}")
+print(f"主动收益 = {active_return:.6f}")
+print(f"差异 = {abs(total_attribution - active_return):.10f}")
+
+# ==================== 输出结果 ====================
+
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+print("\n" + "="*50)
+print("最终结果字典：")
+print(f"年化夏普比率: {result['sharpe_annual']:.4f}")
+print(f"配置效应: {result['allocation_effect']:.6f}")
+print(f"选择效应: {result['selection_effect']:.6f}")
+print(f"交互效应: {result['interaction_effect']:.6f}")
+```
+
+这个脚本完成了以下任务：
+
+**第一部分：夏普比率计算**
+1. 读取CSV文件中的基金日收益数据
+2. 将年化无风险利率2.1%转换为日化利率（除以252个交易日）
+3. 计算日度超额收益
+4. 年化处理：均值乘以252，标准差乘以√252
+5. 计算年化夏普比率 = 年化超额收益 / 年化标准差
+
+**第二部分：业绩归因分析**
+1. **配置效应**：衡量超配/低配特定行业带来的收益，公式为 Σ[(Wp,i - Wb,i) × Rb,i]
+2. **选择效应**：衡量在给定权重下选股能力，公式为 Σ[Wb,i × (Rp,i - Rb,i)]
+3. **交互效应**：衡量配置和选择的交互影响，公式为 Σ[(Wp,i - Wb,i) × (Rp,i - Rb,i)]
+
+所有结果都存储在`result`字典中，包含四个键：'sharpe_annual'、'allocation_effect'、'selection_effect'、'interaction_effect'。代码包含详细的计算过程输出和验证步骤，确保归因分解的准确性。

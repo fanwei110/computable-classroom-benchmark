@@ -1,0 +1,34 @@
+import numpy as np
+
+# 课程计算约定
+rf = 0.023          # 无风险利率 (2.3%)
+market_er = 0.094   # 市场期望收益 (9.4%)
+betas = {
+    'x': 0.62,
+    'y': 1.18,
+    'z': 1.51
+}
+
+# 1. 计算各股票的 CAPM 期望收益
+er_x = rf + betas['x'] * (market_er - rf)
+er_y = rf + betas['y'] * (market_er - rf)
+er_z = rf + betas['z'] * (market_er - rf)
+
+# 2. 计算股票 Y 的 alpha
+actual_return_y = 0.131  # 实际收益 (13.1%)
+alpha_y = actual_return_y - er_y
+
+# 3. 填充 result 字典
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+
+# 打印结果以便课堂展示
+print("CAPM 计算结果：")
+print(f"股票 X 期望收益: {er_x:.4f} ({er_x*100:.2f}%)")
+print(f"股票 Y 期望收益: {er_y:.4f} ({er_y*100:.2f}%)")
+print(f"股票 Z 期望收益: {er_z:.4f} ({er_z*100:.2f}%)")
+print(f"股票 Y 的 alpha: {alpha_y:.4f} ({alpha_y*100:.2f}%)")

@@ -1,0 +1,95 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 可调参数
+# ==========================================
+RISK_FREE_RATE = 0.023  # 无风险利率 2.3%
+MARKET_RETURN = 0.094   # 市场期望收益 9.4%
+
+# ==========================================
+# 核心计算
+# ==========================================
+# SML 斜率即为市场风险溢价
+sml_slope = MARKET_RETURN - RISK_FREE_RATE
+
+def capm_expected_return(beta, rf, rm):
+    """根据 CAPM 模型计算期望收益"""
+    return rf + beta * (rm - rf)
+
+# 计算 beta = 1.27 处的 CAPM 期望收益
+beta_target = 1.27
+er_at_beta_127 = capm_expected_return(beta_target, RISK_FREE_RATE, MARKET_RETURN)
+
+# ==========================================
+# 股票数据
+# ==========================================
+stocks = {
+    'X': {'beta': 0.62, 'return': 0.081},
+    'Y': {'beta': 1.18, 'return': 0.131},
+    'Z': {'beta': 1.51, 'return': 0.099}
+}
+
+# ==========================================
+# 绘图
+# ==========================================
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 1. 绘制 SML 线 (beta 从 0 到 2)
+beta_vals = np.linspace(0, 2, 200)
+sml_returns = capm_expected_return(beta_vals, RISK_FREE_RATE, MARKET_RETURN)
+ax.plot(beta_vals, sml_returns * 100, label='SML', color='blue', linewidth=2)
+
+# 2. 绘制股票点及标注
+colors = {'X': 'red', 'Y': 'green', 'Z': 'purple'}
+# 设置偏移量以避免标签重叠
+offsets = {'X': (10, 15), 'Y': (10, 15), 'Z': (10, -30)}
+
+for stock_name, data in stocks.items():
+    beta_stock = data['beta']
+    ret_stock = data['return'] * 100  # 转换为百分比以配合Y轴
+    
+    ax.scatter(beta_stock, ret_stock, color=colors[stock_name], s=100, zorder=5)
+    ax.annotate(
+        f"Stock {stock_name}\n(β={beta_stock}, R={ret_stock:.1f}%)",
+        xy=(beta_stock, ret_stock),
+        xytext=offsets[stock_name],
+        textcoords='offset points',
+        arrowprops=dict(arrowstyle='->', color='black'),
+        bbox=dict(boxstyle='round,pad=0.3', fc=colors[stock_name], alpha=0.2),
+        fontsize=10
+    )
+
+# 3. 图表格式设置
+ax.set_xlabel('Beta (β)', fontsize=12)
+ax.set_ylabel('Expected Return (%)', fontsize=12)
+ax.set_title('Security Market Line (SML) and Stock Valuation', fontsize=14)
+ax.set_xlim(0, 2)
+
+# 添加基准线与参考点
+ax.axhline(RISK_FREE_RATE * 100, color='gray', linestyle='--', linewidth=0.8, 
+           label=f'Risk-Free Rate ({RISK_FREE_RATE*100:.1f}%)')
+ax.axvline(1, color='gray', linestyle=':', linewidth=0.8, 
+           label='Market Beta (1.0)')
+ax.scatter(1, MARKET_RETURN * 100, color='black', marker='*', s=150, zorder=5, 
+           label=f'Market Return ({MARKET_RETURN*100:.1f}%)')
+
+ax.legend()
+ax.grid(True, linestyle=':', alpha=0.6)
+
+# 保存图表
+figure_path = 'sml_plot.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ==========================================
+# 输出契约
+# ==========================================
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': figure_path
+}
+
+# 打印结果以便检验
+print(result)

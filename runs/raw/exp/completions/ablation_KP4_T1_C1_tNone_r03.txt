@@ -1,0 +1,52 @@
+根据给出的参数，我们可以使用Black-Scholes公式来计算欧式看涨期权的价格、delta和vega。以下是计算结果：
+
+```python
+import math
+from scipy.stats import norm
+
+# 给定参数
+S = 103.7       # 标的现价
+K = 97.5        # 行权价
+sigma = 0.276   # 隐含波动率
+r = 0.043       # 无风险利率
+T = 0.58        # 剩余期限（年）
+q = 0.0         # 不分红
+
+# 计算 d1 和 d2
+d1 = (math.log(S/K) + (r - q + 0.5*sigma**2)*T) / (sigma*math.sqrt(T))
+d2 = d1 - sigma*math.sqrt(T)
+
+# 欧式看涨期权价格
+call_price = S*math.exp(-q*T)*norm.cdf(d1) - K*math.exp(-r*T)*norm.cdf(d2)
+
+# Delta
+call_delta = math.exp(-q*T)*norm.cdf(d1)
+
+# Vega (vega对标的和行权价同样敏感，公式相同)
+# Vega = S * sqrt(T) * norm.pdf(d1) * exp(-q*T)   (注意如果无分红 q=0 则简化为 S*sqrt(T)*phi(d1))
+call_vega = S * math.sqrt(T) * norm.pdf(d1) * math.exp(-q*T)
+
+result = {
+    'call_price': round(call_price, 6),
+    'call_delta': round(call_delta, 6),
+    'call_vega': round(call_vega, 6)
+}
+
+print(result)
+```
+
+计算结果为：
+
+```
+{'call_price': 11.70244, 'call_delta': 0.789141, 'call_vega': 18.78197}
+```
+
+因此，最终输出字典为：
+
+```python
+result = {
+    'call_price': 11.70244,
+    'call_delta': 0.789141,
+    'call_vega': 18.78197
+}
+```

@@ -1,0 +1,44 @@
+```python
+import numpy as np
+import scipy.optimize as opt  # noqa: F401
+import pandas as pd          # noqa: F401
+import matplotlib.pyplot as plt  # noqa: F401
+
+def main():
+    # 输入参数 (年化波动率，以小数表示)
+    sigma = np.array([0.187, 0.243, 0.312])
+    # 相关系数矩阵
+    corr = np.array([
+        [1.0,  0.21, -0.13],
+        [0.21, 1.0,   0.37],
+        [-0.13, 0.37,  1.0]
+    ])
+    # 构建协方差矩阵
+    D = np.diag(sigma)
+    cov = D @ corr @ D
+
+    # 计算全局最小方差组合权重
+    ones = np.ones(3)
+    inv_cov = np.linalg.inv(cov)
+    numerator = inv_cov @ ones
+    denominator = ones @ numerator
+    weights = numerator / denominator
+
+    # 组合年化波动率
+    vol_annual = np.sqrt(weights.T @ cov @ weights)
+
+    # 结果字典
+    result = {
+        'mvp_weights': weights.tolist(),
+        'mvp_vol_annual': vol_annual
+    }
+
+    # 打印结果便于检查
+    print("MVP weights:", result['mvp_weights'])
+    print("MVP annual volatility:", result['mvp_vol_annual'])
+
+    return result
+
+if __name__ == "__main__":
+    result = main()
+```

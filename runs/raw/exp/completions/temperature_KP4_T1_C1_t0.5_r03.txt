@@ -1,0 +1,15 @@
+根据你提供的参数，我们可以使用Black-Scholes模型来为欧式看涨期权定价。以下是计算结果：
+
+- 期权价格（call_price）：约 14.20  
+- Delta（call_delta）：约 0.756  
+- Vega（call_vega）：约 0.354  
+
+结果已按要求存入字典：
+
+```python
+result = {
+    'call_price': 14.20,
+    'call_delta': 0.756,
+    'call_vega': 0.354
+}
+```

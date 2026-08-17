@@ -1,0 +1,70 @@
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+
+# 参数设定
+K = 97.5
+r = 0.043
+T = 0.58
+S = np.linspace(70, 140, 500)
+
+# Black-Scholes 看涨期权 Delta 计算函数
+def bs_call_delta(S, K, r, T, sigma):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# 计算标的等于110、波动率27.6%时的delta
+delta_110 = bs_call_delta(110, K, r, T, 0.276)
+
+# 绘图
+fig, ax = plt.subplots(figsize=(10, 6))
+plt.subplots_adjust(bottom=0.35)  # 为底部滑块留出空间
+
+sigmas_init = [0.15, 0.276, 0.40]
+colors = ['blue', 'orange', 'green']
+lines = []
+for sigma, color in zip(sigmas_init, colors):
+    l, = ax.plot(S, bs_call_delta(S, K, r, T, sigma), color=color, label=f'σ = {sigma*100:.1f}%')
+    lines.append(l)
+
+ax.set_xlabel('Underlying Price')
+ax.set_ylabel('Delta')
+ax.set_title('Delta vs Underlying Price')
+ax.legend()
+ax.grid(True)
+
+# 添加可调波动率滑块
+ax_s1 = plt.axes([0.15, 0.20, 0.75, 0.03], facecolor='lightgoldenrodyellow')
+ax_s2 = plt.axes([0.15, 0.15, 0.75, 0.03], facecolor='lightgoldenrodyellow')
+ax_s3 = plt.axes([0.15, 0.10, 0.75, 0.03], facecolor='lightgoldenrodyellow')
+
+s1 = Slider(ax_s1, 'σ1 (%)', 5.0, 80.0, valinit=15.0, valstep=0.1)
+s2 = Slider(ax_s2, 'σ2 (%)', 5.0, 80.0, valinit=27.6, valstep=0.1)
+s3 = Slider(ax_s3, 'σ3 (%)', 5.0, 80.0, valinit=40.0, valstep=0.1)
+
+# 滑块更新函数
+def update(val):
+    sliders = [s1, s2, s3]
+    for i, slider in enumerate(sliders):
+        sigma_val = slider.val / 100.0
+        lines[i].set_ydata(bs_call_delta(S, K, r, T, sigma_val))
+        lines[i].set_label(f'σ = {slider.val:.1f}%')
+    ax.legend()
+    fig.canvas.draw_idle()
+
+s1.on_changed(update)
+s2.on_changed(update)
+s3.on_changed(update)
+
+# 保存图片
+figure_path = 'delta_vs_price.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+
+# 按输出契约要求组装字典
+result = {
+    'delta_at_s110': float(delta_110),
+    'figure_path': figure_path
+}
+
+print(result)

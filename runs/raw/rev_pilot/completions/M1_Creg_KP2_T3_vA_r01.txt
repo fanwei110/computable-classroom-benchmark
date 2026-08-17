@@ -1,0 +1,38 @@
+以下是一个自包含的 Python 脚本，使用 CAPM 模型计算给定股票在上个月的预期收益率。脚本仅使用指定的库（numpy、scipy、pandas、matplotlib），不联网，且输出确定可复现。
+
+```python
+import numpy as np
+
+def calculate_capm_return():
+    # 输入参数
+    beta = 1.42
+    market_return_monthly = -0.058  # 市场上个月跌了5.8%
+    risk_free_rate_annual = 0.047  # 年化无风险利率4.7%
+
+    # 将年化无风险利率转换为月度无风险利率（复利计算）
+    risk_free_rate_monthly = (1 + risk_free_rate_annual) ** (1/12) - 1
+
+    # CAPM 公式：E(R_i) = R_f + beta_i * (E(R_m) - R_f)
+    # 这里 E(R_m) 是市场实际收益率（上个月的），不是预期收益率
+    capm_return_monthly = risk_free_rate_monthly + beta * (market_return_monthly - risk_free_rate_monthly)
+
+    # 结果存入字典
+    result = {
+        'capm_return_monthly': capm_return_monthly
+    }
+
+    return result
+
+# 计算并输出结果
+result = calculate_capm_return()
+print(result)
+```
+
+### 输出说明：
+- 脚本计算股票在上个月的 CAPM 预期收益率（`capm_return_monthly`），并存入 `result` 字典中。
+- 无风险利率从年化转换为月度时采用复利计算（`(1 + annual_rate)^(1/12) - 1`）。
+- CAPM 公式中的市场收益率使用实际市场收益率（`-5.8%`），因为题目问的是"本该收益多少"（即基于实际市场表现的预期收益）。
+
+### 复现性：
+- 脚本不依赖外部数据或联网，所有参数硬编码，结果确定可复现。
+- 输出 `result` 字典的键严格为 `'capm_return_monthly'`。

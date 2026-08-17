@@ -1,0 +1,69 @@
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+# ==================== 可调参数 ====================
+rf = 0.023          # 无风险利率
+E_rm = 0.094        # 市场期望收益
+# =================================================
+
+# 计算 SML 斜率
+sml_slope = E_rm - rf
+
+# 给定点
+points = {
+    'X': (0.62, 0.081),
+    'Y': (1.18, 0.131),
+    'Z': (1.51, 0.099)
+}
+
+# 计算 beta=1.27 对应的期望收益
+beta_target = 1.27
+er_at_beta_127 = rf + sml_slope * beta_target
+
+# 画图
+beta_vals = np.linspace(0, 2, 100)
+er_vals = rf + sml_slope * beta_vals
+
+plt.figure(figsize=(8, 5))
+plt.plot(beta_vals, er_vals, 'b-', label='SML')
+plt.axhline(y=rf, color='gray', linestyle='--', alpha=0.7, label=f'rf = {rf:.1%}')
+plt.axvline(x=1, color='gray', linestyle='--', alpha=0.7)
+
+# 标注市场组合
+plt.scatter([1], [E_rm], color='blue', s=80, zorder=5)
+plt.text(1, E_rm, f' Market (1, {E_rm:.1%})', verticalalignment='bottom')
+
+# 标注 X, Y, Z
+for name, (b, er) in points.items():
+    plt.scatter(b, er, color='red', s=60, zorder=5)
+    plt.text(b, er, f' {name}({b}, {er:.1%})', verticalalignment='bottom', color='red')
+
+# 标注 beta=1.27 的点
+plt.scatter(beta_target, er_at_beta_127, color='green', s=60, zorder=5)
+plt.text(beta_target, er_at_beta_127,
+         f' β={beta_target}\n E(R)={er_at_beta_127:.3%}',
+         verticalalignment='bottom', color='green')
+
+plt.xlabel('Beta (β)')
+plt.ylabel('Expected Return')
+plt.title(f'Security Market Line (rf={rf:.1%}, E(Rm)={E_rm:.1%})')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.xlim(0, 2)
+plt.ylim(0, 0.2)
+
+# 保存图形
+figure_path = 'sml.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ==================== 输出契约 ====================
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': figure_path
+}
+
+result
+```

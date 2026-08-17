@@ -1,0 +1,47 @@
+import numpy as np
+
+def main():
+    # ç»å®å¹´åæ³¢å¨ç
+    sigma = np.array([0.187, 0.243, 0.312])
+    
+    # ç»å®ç¸åæ°ç©éµçä¸ä¸è§ï¼ä¸å«å¯¹è§çº¿ï¼
+    corr = np.array([
+        [1.0,  0.21, -0.13],
+        [0.21, 1.0,   0.37],
+        [-0.13, 0.37,  1.0]
+    ])
+    
+    # 1. åæ¹å·®ç©éµ
+    # åæ¹å·®(i,j) = ç¸åæ°(i,j) * sigma_i * sigma_j
+    cov_matrix = np.diag(sigma) @ corr @ np.diag(sigma)
+    # æèç´æ¥ç¨å¤ç§¯ï¼
+    # cov_matrix = corr * np.outer(sigma, sigma)
+    
+    # 2. åæå°æ¹å·®ç»åï¼ååç©ºï¼æ»¡ä»ï¼
+    # é­å¼è§£: w = (Sigma^-1 * 1) / (1' * Sigma^-1 * 1)
+    inv_cov = np.linalg.inv(cov_matrix)
+    ones = np.ones(len(sigma))
+    numerator = inv_cov @ ones        # Sigma^-1 * 1
+    denominator = ones @ numerator    # 1' * Sigma^-1 * 1
+    mvp_weights = numerator / denominator
+    
+    # 3. ç»åå¹´åæ³¢å¨ç
+    mvp_var = mvp_weights @ cov_matrix @ mvp_weights
+    mvp_vol = np.sqrt(mvp_var)
+    
+    # æé è¾åºå­å
+    result = {
+        'mvp_weights': mvp_weights.tolist(),  # è½¬ä¸ºPythonåè¡¨ä¾¿äºæ¥ç
+        'mvp_vol_annual': float(mvp_vol)
+    }
+    
+    # æå°ç»æï¼æå±å±ç¤ºï¼
+    print("åæ¹å·®ç©éµï¼\n", cov_matrix)
+    print("\nåæå°æ¹å·®ç»åæéï¼èµäº§1,2,3ï¼ï¼", result['mvp_weights'])
+    print(f"ç»åå¹´åæ³¢å¨çï¼{result['mvp_vol_annual']:.6f} ({result['mvp_vol_annual']*100:.4f}%)")
+    print("\nç»æå­åï¼", result)
+    
+    return result
+
+if __name__ == "__main__":
+    result = main()

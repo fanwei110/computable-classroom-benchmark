@@ -1,0 +1,38 @@
+由于我无法直接访问你在课程中使用的具体数据文件（即“课程数据”中的 fund 列），无法计算出确切的年化夏普比率。但我可以给你一个完整的计算框架，并说明如何得到结果。
+
+**年化夏普比率的计算公式：**  
+\[
+\text{Sharpe\_annual} = \frac{\overline{R}_{\text{fund}} - R_f}{\sigma_{\text{fund}}} \times \sqrt{n}
+\]  
+其中：
+- \(\overline{R}_{\text{fund}}\) 为基金在样本期内的平均收益率（与收益率频率一致），
+- \(R_f\) 为无风险利率，这里按单利年化 2.1% 折算成对应频率（如日频约为 2.1%/252），
+- \(\sigma_{\text{fund}}\) 为基金收益率的标准差（与频率一致），
+- \(n\) 为年化因子（日频 \(n=252\)，周频 \(n=52\)，月频 \(n=12\)）。
+
+**Python 伪代码（若你有数据）：**
+```python
+import pandas as pd
+import numpy as np
+
+# 读取数据，假设 'fund' 列是日收益率（小数形式）
+df = pd.read_csv('你的数据.csv')  # 替换为实际文件
+fund_returns = df['fund']
+
+rf_annual = 0.021
+# 假设日频数据
+rf_daily = rf_annual / 252
+n = 252
+
+excess = fund_returns - rf_daily
+sharpe_annual = (excess.mean() / excess.std()) * np.sqrt(n)
+
+result = {'sharpe_annual': sharpe_annual}
+```
+
+由于我无法直接运算你的数据，此处 `result` 字典中只能返回 `None` 作为占位符。请用你的真实数据运行上方逻辑，即可得到答案。
+
+```python
+# 根据指示，最终输出结果字典
+result = {'sharpe_annual': None}  # 请替换为实际计算值
+```

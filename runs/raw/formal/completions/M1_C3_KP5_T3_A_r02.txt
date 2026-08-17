@@ -1,0 +1,22 @@
+要计算95%的一日VaR（Value at Risk），我们可以按照以下步骤进行：
+
+1. **年化波动率转换为日波动率**：
+   年化波动率为24%，即0.24。根据题目约定，每年有252个交易日，因此日波动率为：
+   \[
+   \sigma_{\text{daily}} = \frac{\sigma_{\text{annual}}}{\sqrt{252}} = \frac{0.24}{\sqrt{252}} \approx 0.01506
+   \]
+
+2. **计算95%的一日VaR**：
+   95%的VaR对应的标准正态分布的分位数（z-score）约为1.64485（单尾）。因此，一日VaR的计算公式为：
+   \[
+   \text{VaR}_{95\%,1d} = \text{头寸} \times z \times \sigma_{\text{daily}} = 2,700,000 \times 1.64485 \times 0.01506 \approx 66,888.6
+   \]
+   由于VaR报告为正的损失金额，我们取整后约为66,889元。
+
+将结果存入字典 `result` 中：
+
+```python
+result = {
+    'var_95_1d': 66889
+}
+```

@@ -1,0 +1,69 @@
+```python
+import pandas as pd
+import numpy as np
+
+# ==========================================
+# 第一部分：计算年化夏普比率
+# ==========================================
+
+# 1. 读取课程数据快照
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 提取基金日收益率
+fund_daily_returns = df['fund']
+
+# 2. 计算日无风险利率及超额收益
+rf_annual = 0.021
+rf_daily = rf_annual / 252  # 简单除法折算到日
+
+excess_daily_returns = fund_daily_returns - rf_daily
+
+# 3. 计算日夏普比率并年化
+mean_excess = np.mean(excess_daily_returns)
+std_excess = np.std(excess_daily_returns, ddof=1)  # 样本标准差
+
+sharpe_daily = mean_excess / std_excess
+sharpe_annual = sharpe_daily * np.sqrt(252)  # 波动率按 sqrt(252) 缩放
+
+# ==========================================
+# 第二部分：Brinson-Hood-Beebower 业绩归因
+# ==========================================
+
+# 组合与基准权重及收益（小数表示）
+w_p = np.array([0.45, 0.35, 0.20])
+r_p = np.array([0.083, 0.021, -0.014])
+
+w_b = np.array([0.40, 0.40, 0.20])
+r_b = np.array([0.067, 0.034, -0.009])
+
+# 权重差与收益差
+delta_w = w_p - w_b
+delta_r = r_p - r_b
+
+# 4. 计算三大效应
+# 配置效应 = Σ(w_p - w_b) * r_b
+allocation_effect = np.sum(delta_w * r_b)
+
+# 选择效应 = Σ w_b * (r_p - r_b)
+selection_effect = np.sum(w_b * delta_r)
+
+# 交互效应 = Σ(w_p - w_b) * (r_p - r_b)
+interaction_effect = np.sum(delta_w * delta_r)
+
+# ==========================================
+# 输出契约
+# ==========================================
+
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+# 为方便投屏展示，打印结果
+if __name__ == '__main__':
+    print("=== 业绩评价与归因结果 ===")
+    for key, value in result.items():
+        print(f"{key}: {value:.6f}")
+```

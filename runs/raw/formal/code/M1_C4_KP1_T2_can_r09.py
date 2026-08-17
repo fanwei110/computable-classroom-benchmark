@@ -1,0 +1,92 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import minimize
+
+# 资产参数
+mu = np.array([0.071, 0.124])  # 期望收益
+vol = np.array([0.163, 0.289])  # 波动率
+
+# 相关系数列表
+correlations = [0.15, 0.45, 0.75]
+
+# 目标收益
+target_return = 0.10
+
+# 存储结果的字典
+result = {}
+
+# 绘图设置
+plt.figure(figsize=(10, 6))
+
+# 处理每个相关系数
+for rho in correlations:
+    # 构建协方差矩阵
+    Sigma = np.array([
+        [vol[0]**2, rho * vol[0] * vol[1]],
+        [rho * vol[0] * vol[1], vol[1]**2]
+    ])
+
+    # 计算最小方差组合
+    def portfolio_variance(w):
+        return w.T @ Sigma @ w
+
+    # 满仓约束 (w1 + w2 = 1)
+    constraints = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1})
+    bounds = ((-np.inf, np.inf), (-np.inf, np.inf))  # 允许卖空
+
+    # 初始猜测
+    w0 = np.array([0.5, 0.5])
+
+    # 优化
+    res = minimize(portfolio_variance, w0, constraints=constraints, bounds=bounds)
+    w_mvp = res.x
+    mu_mvp = w_mvp @ mu
+    vol_mvp = np.sqrt(portfolio_variance(w_mvp))
+
+    # 计算有效前沿
+    n_points = 100
+    target_returns = np.linspace(mu.min(), mu.max(), n_points)
+    frontier_vols = []
+
+    for r in target_returns:
+        # 约束: 收益 = r, 满仓
+        constraints = (
+            {'type': 'eq', 'fun': lambda w: w @ mu - r},
+            {'type': 'eq', 'fun': lambda w: np.sum(w) - 1}
+        )
+        res = minimize(portfolio_variance, w0, constraints=constraints, bounds=bounds)
+        frontier_vols.append(np.sqrt(res.fun))
+
+    # 绘制前沿
+    plt.plot(frontier_vols, target_returns, label=f'ρ={rho}')
+
+    # 标记最小方差组合
+    plt.scatter(vol_mvp, mu_mvp, color='red', zorder=5)
+    plt.text(vol_mvp, mu_mvp, 'MVP', fontsize=9, verticalalignment='bottom')
+
+    # 计算特定相关系数下的结果
+    if rho == 0.45:
+        result['mvp_vol_at_rho45'] = float(vol_mvp)
+
+        # 计算目标收益10%下的最小波动率
+        constraints = (
+            {'type': 'eq', 'fun': lambda w: w @ mu - target_return},
+            {'type': 'eq', 'fun': lambda w: np.sum(w) - 1}
+        )
+        res = minimize(portfolio_variance, w0, constraints=constraints, bounds=bounds)
+        result['frontier_vol_at_target'] = float(np.sqrt(res.fun))
+
+# 图形设置
+plt.title('Mean-Variance Frontier for Two Assets')
+plt.xlabel('Annualized Volatility')
+plt.ylabel('Expected Annual Return')
+plt.legend()
+plt.grid(True)
+
+# 保存图形
+figure_path = 'mean_variance_frontier.png'
+plt.savefig(figure_path)
+result['figure_path'] = figure_path
+
+# 显示结果（可选，课堂演示时可注释掉）
+print(result)

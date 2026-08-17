@@ -1,0 +1,23 @@
+# CAPM计算
+rf = 2.3
+market_return = 9.4
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+actual_y = 13.1
+
+market_premium = market_return - rf
+
+er_x = rf + beta_x * market_premium
+er_y = rf + beta_y * market_premium
+er_z = rf + beta_z * market_premium
+alpha_y = actual_y - er_y
+
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+
+result

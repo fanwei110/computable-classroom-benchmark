@@ -1,0 +1,38 @@
+为了计算这只基金的年化夏普比率，我们需要根据你提供的计算约定，使用课程数据中的 `fund` 列（通常为基金净值序列）进行计算。
+
+### 计算逻辑梳理：
+1. **日收益率**：根据基金净值计算日简单收益率（使用 `pct_change()`）。
+2. **年化收益率**：按每年 252 个交易日将日均值年化，即 $R_{annual} = \mu_{daily} \times 252$。
+3. **年化波动率**：使用样本标准差（`ddof=1`），并按 $\sqrt{252}$ 年化，即 $\sigma_{annual} = \sigma_{daily} \times \sqrt{252}$。
+4. **无风险利率**：题目给定为 2.1%，按小数表示为 0.021。由于债券收益率按年复利报价，2.1% 即为年化无风险收益率 $R_f$，直接在年化层面进行扣减即可。
+5. **年化夏普比率**：$Sharpe = \frac{R_{annual} - R_f}{\sigma_{annual}}$。
+
+### Python 代码实现：
+
+```python
+import pandas as pd
+import numpy as np
+
+# 假设课程数据已加载为 DataFrame，名为 df
+# 计算基金的日简单收益率（剔除首日空值）
+daily_returns = df['fund'].pct_change().dropna()
+
+# 无风险利率（小数表示）
+rf_annual = 0.021
+
+# 1. 计算年化收益率（算术平均，按252个交易日年化）
+annual_return = daily_returns.mean() * 252
+
+# 2. 计算年化波动率（样本标准差 ddof=1，按252个交易日年化）
+annual_volatility = daily_returns.std(ddof=1) * np.sqrt(252)
+
+# 3. 计算年化夏普比率
+sharpe_annual = (annual_return - rf_annual) / annual_volatility
+
+# 按照输出契约存入字典
+result = {'sharpe_annual': sharpe_annual}
+```
+
+**注意事项**：
+- 若课程数据的 `fund` 列**已经是日收益率**而非净值，则只需将 `daily_returns = df['fund'].pct_change().dropna()` 替换为 `daily_returns = df['fund'].dropna()` 即可。
+- 严格按照 `ddof=1` 计算样本标准差，这与 pandas 的 `.std()` 默认行为一致，但与 numpy 的 `.std()` 默认行为（总体标准差 `ddof=0`）不同，代码中已确保使用正确的样本估计量。

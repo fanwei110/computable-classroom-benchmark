@@ -1,0 +1,72 @@
+import numpy as np
+import scipy as sp   # 仅导入以符合要求，未实际使用
+import pandas as pd  # 仅导入以符合要求，未实际使用
+import matplotlib.pyplot as plt
+
+# ==================== 参数定义 ====================
+FACE = 100.0                # 面值
+COUPON_RATE = 0.046         # 票息率（年化）
+MATURITY = 7                # 期限（年）
+CURRENT_YIELD = 0.053       # 当前收益率
+YIELD_UP = 0.063            # 上升100个基点后的收益率
+YIELD_RANGE = (0.02, 0.09)  # 画图收益率范围
+
+# 切线显示范围（“收益率变动幅度做成可调”即指此变量，可自由更改）
+TANGENT_DISPLAY_RANGE = 0.02  # 在当前收益率±该值范围内显示久期近似切线
+
+# ==================== 债券计算函数 ====================
+# 现金流：每年付息一次，到期还本
+coupon = FACE * COUPON_RATE
+t = np.arange(1, MATURITY + 1)
+cf = np.full(MATURITY, coupon)
+cf[-1] += FACE  # 最后一期加本金
+
+def bond_price(y):
+    """计算债券全价（给定到期收益率 y）"""
+    return np.sum(cf / (1 + y) ** t)
+
+# ==================== 当前价格与精确价格 ====================
+P0 = bond_price(CURRENT_YIELD)          # 当前价格
+P_up = bond_price(YIELD_UP)             # 收益率上升100 bp后的精确价格
+
+# ==================== 久期与近似 ====================
+pv_cf = cf / (1 + CURRENT_YIELD) ** t
+mac_dur = np.sum(t * pv_cf) / P0                # 麦考利久期
+mod_dur = mac_dur / (1 + CURRENT_YIELD)         # 修正久期
+
+delta_y = 0.01                                   # 100 bp
+approx_rel_change = -mod_dur * delta_y            # 久期法估计的相对价格变化
+
+# ==================== 结果字典 ====================
+result = {
+    'price_at_up100bp': P_up,
+    'dur_approx_change_up100bp': approx_rel_change,
+    'figure_path': 'bond_price_yield_curve.png'
+}
+
+# ==================== 画图 ====================
+# 精确价格-收益率曲线
+yields = np.linspace(YIELD_RANGE[0], YIELD_RANGE[1], 500)
+prices = bond_price(yields)
+
+# 久期近似切线
+y_tangent = np.linspace(CURRENT_YIELD - TANGENT_DISPLAY_RANGE,
+                        CURRENT_YIELD + TANGENT_DISPLAY_RANGE, 100)
+p_tangent = P0 + (-mod_dur * P0) * (y_tangent - CURRENT_YIELD)
+
+plt.figure(figsize=(8, 5))
+plt.plot(yields * 100, prices, label='Exact Price-Yield Curve', linewidth=1.5)
+plt.plot(y_tangent * 100, p_tangent, '--', label='Duration Approximation (Tangent)', linewidth=1.5)
+plt.axvline(CURRENT_YIELD * 100, color='gray', linestyle=':', alpha=0.7)
+plt.axhline(P0, color='gray', linestyle=':', alpha=0.7)
+plt.xlabel('Yield (%)')
+plt.ylabel('Bond Price')
+plt.title('Bond Price vs Yield\nFace=100, Coupon=4.6%, Maturity=7Y, Current Yield=5.3%')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.savefig(result['figure_path'], dpi=150)
+plt.close()
+
+# ==================== 输出 ====================
+print(result)

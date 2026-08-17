@@ -1,0 +1,29 @@
+import numpy as np
+from scipy.stats import norm
+
+# ==================== 市场与期权参数 ====================
+S = 103.7       # 标的资产价格
+K = 97.5        # 行权价
+sigma = 0.276   # 波动率 (27.6%)
+r = 0.043       # 无风险利率 (4.3%)
+T = 0.58        # 剩余到期时间（年）
+
+# ==================== 中间变量计算 ====================
+# 计算 Black-Scholes 模型中的 d1
+d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+
+# ==================== 希腊字母 Vega 计算 ====================
+# Vega 的闭式解：Vega = S * N'(d1) * sqrt(T)
+# 注：欧式看涨期权与看跌期权的 Vega 完全相同，因此无需指定期权类型
+vega = S * norm.pdf(d1) * np.sqrt(T)
+
+# ==================== 波动率变化对价格的影响推算 ====================
+# 隐含波动率上涨 1 个百分点，即 Delta_sigma = 0.01
+# 根据希腊字母定义，期权价格变化近似为：Delta_Price ≈ Vega * Delta_sigma
+delta_sigma = 0.01
+price_change = vega * delta_sigma
+
+# ==================== 输出契约 ====================
+result = {
+    'price_change': price_change
+}

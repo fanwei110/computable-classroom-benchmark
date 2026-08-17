@@ -1,0 +1,53 @@
+import numpy as np
+import matplotlib
+matplotlib.use('Agg')          # 非交互后端，确保保存图片成功
+import matplotlib.pyplot as plt
+from scipy.stats import norm   # 标准正态累积分布
+
+# ============ 可调参数 ============
+K    = 97.5          # 行权价
+r    = 0.043         # 无风险利率
+T    = 0.58          # 剩余到期时间（年）
+S_min, S_max = 70, 140
+num_S = 500          # 标的网格点数
+sigmas = [0.15, 0.276, 0.40]   # 波动率列表（可自由调整）
+S_target = 110.0                # 要报告 delta 的标的价格
+sigma_target = 0.276            # 要报告 delta 的波动率
+figure_name = "delta_vs_S.png" # 输出图片文件名
+# =================================
+
+def bs_delta(S, K, r, T, sigma):
+    """欧式看涨期权的 Black-Scholes Delta = N(d1)"""
+    d1 = (np.log(S / K) + (r + sigma**2 / 2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# ---- 1. 在标的网格上计算各波动率的 delta ----
+S_grid = np.linspace(S_min, S_max, num_S)
+
+plt.figure(figsize=(10, 6))
+for sigma in sigmas:
+    delta_vals = bs_delta(S_grid, K, r, T, sigma)
+    plt.plot(S_grid, delta_vals, lw=2, label=f"σ = {sigma*100:.1f}%")
+
+# ---- 2. 绘图并参数化波动率 ----
+plt.xlabel("Spot Price S", fontsize=12)
+plt.ylabel("Delta", fontsize=12)
+plt.title("Black-Scholes Call Delta vs Spot Price", fontsize=14)
+plt.legend(title="Volatility", fontsize=10, title_fontsize=11)
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.savefig(figure_name, dpi=150)
+plt.close()
+
+# ---- 3. 报告特定点的 delta ----
+delta_s110 = bs_delta(S_target, K, r, T, sigma_target)
+
+# ---- 4. 组装并输出 result 字典 ----
+result = {
+    'delta_at_s110': delta_s110,
+    'figure_path': figure_name
+}
+
+# 简单打印，方便教师查看
+print(f"Delta at S=110, σ=27.6%: {delta_s110:.6f}")
+print(f"Figure saved to: {figure_name}")

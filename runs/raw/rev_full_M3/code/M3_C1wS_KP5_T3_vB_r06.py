@@ -1,0 +1,43 @@
+import numpy as np
+from scipy import stats
+
+# =====================
+// 参数与假设
+// =====================
+annual_volatility = 0.24      # 年化波动率 24%
+position_value = 2_700_000    # 头寸 270万
+confidence_level = 0.95       # 95% 置信水平
+trading_days_per_year = 252  # 假设一年有252个交易日（市场惯例）
+
+# =====================
+// 步骤1：年化波动率换算到一日期限
+// =====================
+# 根据平方根法则
+daily_volatility = annual_volatility / np.sqrt(trading_days_per_year)
+
+# =====================
+// 步骤2：套用 95% 正态分位数
+// =====================
+# 使用 Delta-Normal 参数法，假设损益服从正态分布
+z_score = stats.norm.ppf(confidence_level)
+
+# =====================
+// 步骤3：计算 VaR 金额
+// =====================
+# VaR = 头寸金额 × 日波动率 × 正态分位数
+var_95_1d = position_value * daily_volatility * z_score
+
+# =====================
+// 输出契约
+// =====================
+result = {
+    'var_95_1d': var_95_1d
+}
+
+# 课堂投屏辅助打印（便于学生观察计算过程）
+print(f"--- 计算过程 ---")
+print(f"1. 日波动率 = 24% / sqrt(252) = {daily_volatility:.6%}")
+print(f"2. 95%正态分位数 Z = {z_score:.6f}")
+print(f"3. 95%一日VaR = 2700000 × {daily_volatility:.6%} × {z_score:.6f} = {var_95_1d:.2f} 元")
+print(f"\n--- 最终输出字典 ---")
+print(result)

@@ -1,0 +1,41 @@
+import numpy as np
+from scipy.stats import norm
+
+# ==================== 参数设定 ====================
+S = 103.7      # 标的资产现价
+K = 97.5       # 行权价
+sigma = 0.276  # 波动率 (27.6%)
+r = 0.043      # 无风险利率 (4.3%)
+T = 0.58       # 剩余期限 (年)
+
+# 隐含波动率上升一个百分点 (1%)
+delta_sigma = 0.01
+
+# ==================== 闭式解计算 ====================
+# 计算 d1
+d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+
+# 计算 Vega (闭式解)
+# Vega 表示波动率每变动 1 个单位(100%)时期权价格的变化量
+# 在量纲上，金融实务常将 Vega 定义为波动率变动 1%(0.01) 时的价格变化，这里按数学严格定义
+vega = S * np.sqrt(T) * norm.pdf(d1)
+
+# ==================== 推算价格响应 ====================
+# 根据泰勒展开一阶近似，期权价格对微小波动率变化的响应为：
+# delta_C ≈ Vega * delta_sigma
+price_change = vega * delta_sigma
+
+# 注：若求精确差值，可通过新波动率重新定价做差 (price_change_exact = C(sigma+0.01) - C(sigma))
+# 但题干指出“推算”响应，且强调了“Vega 由闭式解给出”，故采用 Vega 线性推算符合期权希腊字母应用语境。
+
+# ==================== 输出契约 ====================
+result = {
+    'price_change': price_change
+}
+
+# 课堂投屏辅助打印
+print(f"Black-Scholes 欧式看涨期权参数:")
+print(f"  现价 S = {S}, 行权价 K = {K}, 波动率 σ = {sigma*100}%, 利率 r = {r*100}%, 期限 T = {T} 年")
+print(f"推算结果:")
+print(f"  闭式解 Vega = {vega:.4f}")
+print(f"  波动率上升1%时，期权价格变化(推算) = {result['price_change']:.4f}")

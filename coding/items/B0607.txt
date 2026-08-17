@@ -1,0 +1,59 @@
+=== B0607  任务 KP3_T3 (T3) ===
+
+--- 任务要求的输出键 ---
+price_drop_pct
+
+--- 判分失败明细 ---
+price_drop_pct: 提交值 4.62  |  参考值 0.04650015385877284
+
+--- 提取出的代码 ---
+result = {
+    'price_drop_pct': 4.62
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+要计算收益率上升80个基点（即0.8%）时债券价格的下跌幅度，我们可以使用久期（Duration）和凸性（Convexity）的近似公式。对于小幅收益率变化，久期近似足够准确。
+
+### 步骤：
+1. **计算债券的久期（Duration）**：
+   对于票息债券，修正久期（Modified Duration）的计算公式为：
+   \[
+   \text{Modified Duration} = \frac{1}{P} \sum_{t=1}^{T} \frac{t \cdot C}{(1 + y)^t} + \frac{T \cdot F}{(1 + y)^T} \Bigg / (1 + y)
+   \]
+   其中：
+   - \( P \) 是债券价格，
+   - \( C \) 是每期票息（\( 100 \times 4.6\% / 2 = 2.3 \) 元，假设半年付息一次），
+   - \( y \) 是每期收益率（\( 5.3\% / 2 = 2.65\% \)），
+   - \( F \) 是面值（100元），
+   - \( T \) 是总期数（\( 7 \times 2 = 14 \) 期）。
+
+   首先计算债券价格 \( P \)：
+   \[
+   P = \sum_{t=1}^{14} \frac{2.3}{(1 + 0.0265)^t} + \frac{100}{(1 + 0.0265)^{14}} \approx 95.34 \text{ 元}
+   \]
+
+   然后计算久期：
+   \[
+   \text{Macaulay Duration} = \frac{1}{P} \left( \sum_{t=1}^{14} \frac{t \cdot 2.3}{(1 + 0.0265)^t} + \frac{14 \cdot 100}{(1 + 0.0265)^{14}} \right) \approx 5.92
+   \]
+   修正久期：
+   \[
+   \text{Modified Duration} = \frac{5.92}{1 + 0.0265} \approx 5.77
+   \]
+
+2. **计算价格变化**：
+   收益率变化 \( \Delta y = 0.8\% = 0.008 \)，价格变化的近似公式为：
+   \[
+   \frac{\Delta P}{P} \approx -\text{Modified Duration} \cdot \Delta y = -5.77 \times 0.008 \approx -0.0462 \text{（即-4.62%）}
+   \]
+
+### 结果：
+收益率上升80个基点时，债券价格大约下跌 **4.62%**。
+
+### 输出：
+```python
+result = {
+    'price_drop_pct': 4.62
+}
+```

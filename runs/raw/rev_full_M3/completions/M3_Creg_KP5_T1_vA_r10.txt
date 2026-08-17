@@ -1,0 +1,42 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+def calculate_var():
+    """
+    在 delta-normal (参数法) 模型下计算 VaR
+    """
+    # 初始参数
+    V = 1_850_000       # 头寸价值 (元)
+    sigma_y = 0.218     # 年化收益波动率
+    
+    # 假设一年有 252 个交易日（金融风险管理参数法标准惯例）
+    TRADING_DAYS_PER_YEAR = 252
+    
+    # 将年化波动率转换为日波动率 (时间平方根法则)
+    sigma_1d = sigma_y / np.sqrt(TRADING_DAYS_PER_YEAR)
+    
+    # (i) 95% 一日 VaR
+    # delta-normal 模型下，VaR = Z_alpha * V * sigma_1d
+    z_95 = norm.ppf(0.95)
+    var_95_1d = z_95 * V * sigma_1d
+    
+    # (ii) 99% 十日 VaR
+    # 10日波动率 = 日波动率 * sqrt(10)
+    sigma_10d = sigma_1d * np.sqrt(10)
+    z_99 = norm.ppf(0.99)
+    var_99_10d = z_99 * V * sigma_10d
+    
+    # 按照输出契约存入字典
+    result = {
+        'var_95_1d': var_95_1d,
+        'var_99_10d': var_99_10d
+    }
+    
+    return result
+
+if __name__ == '__main__':
+    result = calculate_var()
+    for key, value in result.items():
+        print(f"{key}: {value:.2f} 元")
+```

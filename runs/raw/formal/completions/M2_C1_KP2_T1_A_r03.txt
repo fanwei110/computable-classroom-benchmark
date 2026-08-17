@@ -1,0 +1,32 @@
+```python
+# ç»å®åæ°
+R_f = 0.023       # æ é£é©å©ç
+E_R_m = 0.094     # å¸åºæææ¶ç
+market_premium = E_R_m - R_f  # å¸åºé£é©æº¢ä»·
+
+# Beta å¼
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+
+# Y çå®éå¹´æ¶ç
+actual_y = 0.131
+
+# CAPM æææ¶çè®¡ç®
+er_x = R_f + beta_x * market_premium
+er_y = R_f + beta_y * market_premium
+er_z = R_f + beta_z * market_premium
+
+# Alpha è®¡ç®
+alpha_y = actual_y - er_y
+
+# æçè¦æ±å­åå­å
+result = {
+    'er_x': round(er_x, 6),
+    'er_y': round(er_y, 6),
+    'er_z': round(er_z, 6),
+    'alpha_y': round(alpha_y, 6)
+}
+
+result
+```

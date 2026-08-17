@@ -1,0 +1,123 @@
+我将为您计算这只债券的价格、Macaulay久期、修正久期和凸性，并将结果存入名为 `result` 的字典中。
+
+**债券参数：**
+- 面值（Face Value, FV）：100
+- 息票率（Coupon Rate）：4.6%
+- 期限（Maturity）：7年
+- 到期收益率（YTM）：5.3%
+- 息票支付频率：假设为每年支付一次（Annual）
+
+---
+
+### 1. 价格（Price）计算
+债券价格是未来现金流的现值总和：
+\[
+P = \sum_{t=1}^{N} \frac{C}{(1 + y)^t} + \frac{FV}{(1 + y)^N}
+\]
+其中：
+- \( C = FV \times \text{Coupon Rate} = 100 \times 4.6\% = 4.6 \)
+- \( y = YTM = 5.3\% \)
+- \( N = 7 \)
+
+计算过程：
+\[
+P = \sum_{t=1}^{7} \frac{4.6}{(1 + 0.053)^t} + \frac{100}{(1 + 0.053)^7}
+\]
+
+逐项计算：
+\[
+\begin{align*}
+PV(\text{Coupon}_1) &= \frac{4.6}{1.053} \approx 4.3685 \\
+PV(\text{Coupon}_2) &= \frac{4.6}{1.053^2} \approx 4.1486 \\
+PV(\text{Coupon}_3) &= \frac{4.6}{1.053^3} \approx 3.9398 \\
+PV(\text{Coupon}_4) &= \frac{4.6}{1.053^4} \approx 3.7415 \\
+PV(\text{Coupon}_5) &= \frac{4.6}{1.053^5} \approx 3.5532 \\
+PV(\text{Coupon}_6) &= \frac{4.6}{1.053^6} \approx 3.3743 \\
+PV(\text{Coupon}_7) &= \frac{4.6}{1.053^7} \approx 3.2045 \\
+PV(\text{Face Value}) &= \frac{100}{1.053^7} \approx 69.6628 \\
+\end{align*}
+\]
+总和：
+\[
+P \approx 4.3685 + 4.1486 + 3.9398 + 3.7415 + 3.5532 + 3.3743 + 3.2045 + 69.6628 \approx 96.9932
+\]
+
+---
+
+### 2. Macaulay久期（Macaulay Duration）计算
+Macaulay久期是现金流的加权平均时间：
+\[
+\text{Macaulay Duration} = \frac{1}{P} \sum_{t=1}^{N} \frac{t \times C}{(1 + y)^t} + \frac{N \times FV}{(1 + y)^N}
+\]
+
+计算加权现金流：
+\[
+\begin{align*}
+t \times PV(\text{Coupon}_1) &= 1 \times 4.3685 = 4.3685 \\
+t \times PV(\text{Coupon}_2) &= 2 \times 4.1486 = 8.2972 \\
+t \times PV(\text{Coupon}_3) &= 3 \times 3.9398 = 11.8194 \\
+t \times PV(\text{Coupon}_4) &= 4 \times 3.7415 = 14.9660 \\
+t \times PV(\text{Coupon}_5) &= 5 \times 3.5532 = 17.7660 \\
+t \times PV(\text{Coupon}_6) &= 6 \times 3.3743 = 20.2458 \\
+t \times PV(\text{Coupon}_7) &= 7 \times 3.2045 = 22.4315 \\
+t \times PV(\text{Face Value}) &= 7 \times 69.6628 = 487.6396 \\
+\end{align*}
+\]
+总和：
+\[
+\sum t \times PV = 4.3685 + 8.2972 + 11.8194 + 14.9660 + 17.7660 + 20.2458 + 22.4315 + 487.6396 \approx 587.5340
+\]
+Macaulay久期：
+\[
+\text{Macaulay Duration} = \frac{587.5340}{96.9932} \approx 6.0575 \text{ 年}
+\]
+
+---
+
+### 3. 修正久期（Modified Duration）计算
+修正久期衡量债券价格对收益率变化的敏感性：
+\[
+\text{Modified Duration} = \frac{\text{Macaulay Duration}}{1 + y} = \frac{6.0575}{1.053} \approx 5.7526
+\]
+
+---
+
+### 4. 凸性（Convexity）计算
+凸性衡量久期随收益率变化的曲率：
+\[
+\text{Convexity} = \frac{1}{P \times (1 + y)^2} \left[ \sum_{t=1}^{N} \frac{t(t + 1) \times C}{(1 + y)^t} + \frac{N(N + 1) \times FV}{(1 + y)^N} \right]
+\]
+
+计算 \( t(t + 1) \times PV \)：
+\[
+\begin{align*}
+t(t + 1) \times PV(\text{Coupon}_1) &= 1 \times 2 \times 4.3685 = 8.7370 \\
+t(t + 1) \times PV(\text{Coupon}_2) &= 2 \times 3 \times 4.1486 = 24.8916 \\
+t(t + 1) \times PV(\text{Coupon}_3) &= 3 \times 4 \times 3.9398 = 47.2776 \\
+t(t + 1) \times PV(\text{Coupon}_4) &= 4 \times 5 \times 3.7415 = 74.8300 \\
+t(t + 1) \times PV(\text{Coupon}_5) &= 5 \times 6 \times 3.5532 = 106.5960 \\
+t(t + 1) \times PV(\text{Coupon}_6) &= 6 \times 7 \times 3.3743 = 141.7206 \\
+t(t + 1) \times PV(\text{Coupon}_7) &= 7 \times 8 \times 3.2045 = 179.4520 \\
+t(t + 1) \times PV(\text{Face Value}) &= 7 \times 8 \times 69.6628 = 3901.1168 \\
+\end{align*}
+\]
+总和：
+\[
+\sum t(t + 1) \times PV = 8.7370 + 24.8916 + 47.2776 + 74.8300 + 106.5960 + 141.7206 + 179.4520 + 3901.1168 \approx 4484.6216
+\]
+凸性：
+\[
+\text{Convexity} = \frac{4484.6216}{96.9932 \times (1.053)^2} \approx \frac{4484.6216}{107.3366} \approx 41.7809
+\]
+
+---
+
+### 最终结果
+```python
+result = {
+    'price': 96.9932,
+    'macaulay_duration_years': 6.0575,
+    'modified_duration_years': 5.7526,
+    'convexity': 41.7809
+}
+```

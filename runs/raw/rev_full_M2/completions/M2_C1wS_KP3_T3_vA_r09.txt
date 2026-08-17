@@ -1,0 +1,80 @@
+```python
+import numpy as np
+
+def bond_price(coupon_rate, ytm, n, face=100, freq=1):
+    """
+    计算债券价格 (假设每年付息, freq=1)
+    coupon_rate: 年票息率 (如 0.046)
+    ytm: 到期收益率 (如 0.053)
+    n: 剩余年数
+    face: 面值
+    freq: 每年付息次数，默认为1 (年付)
+    """
+    if freq != 1:
+        raise NotImplementedError("目前只支持年付息 freq=1")
+    c = coupon_rate * face  # 每年票息金额
+    t = np.arange(1, n+1)
+    cf = np.full(n, c)
+    cf[-1] += face
+    pv = cf / (1 + ytm)**t
+    price = np.sum(pv)
+    return price, pv, t
+
+def macaulay_duration(pv, t, price):
+    """麦考利久期 (年)"""
+    return np.sum(t * pv) / price
+
+def modified_duration(mac_dur, ytm, freq=1):
+    """修正久期 (年)"""
+    return mac_dur / (1 + ytm / freq)
+
+def convexity(pv, t, price, ytm, freq=1):
+    """凸性 (年^2)"""
+    # 离散复利, 年付息时公式: Σ t*(t+1)*PV(t) / (P*(1+y)^2)
+    # 对于 freq=1
+    num = np.sum(t * (t + 1) * pv)
+    denom = price * (1 + ytm / freq)**2
+    return num / denom
+
+if __name__ == "__main__":
+    # 参数设定
+    face_value = 100.0      # 面值
+    coupon_rate = 0.046     # 票息率 4.6%
+    yield_mkt = 0.053       # 当前到期收益率 5.3%
+    years = 7               # 剩余年限
+    delta_y = 0.008         # 收益率上升80个基点 (0.8%)
+
+    # 计算当前价格及现金流现值
+    price0, pv_cf, times = bond_price(coupon_rate, yield_mkt, years, face=face_value)
+
+    # 利率敏感性指标
+    mac_dur = macaulay_duration(pv_cf, times, price0)
+    mod_dur = modified_duration(mac_dur, yield_mkt)
+    conv = convexity(pv_cf, times, price0, yield_mkt)
+
+    # 用修正久期和凸性近似价格变动百分比
+    # ΔP/P ≈ -ModDur * Δy + 0.5 * Convexity * (Δy)^2
+    approx_price_change_ratio = -mod_dur * delta_y + 0.5 * conv * (delta_y**2)
+
+    # 由于收益率上升，价格下跌，跌幅为正的百分比
+    # 此处 approx_price_change_ratio 为负值
+    price_drop_ratio = -approx_price_change_ratio  # 小数形式
+    price_drop_pct = price_drop_ratio * 100        # 转换为百分比点数
+
+    # 输出结果字典
+    result = {
+        'price_drop_pct': price_drop_pct
+    }
+
+    # 投屏友好输出
+    print(f"债券面值: {face_value}, 年票息率: {coupon_rate*100:.1f}%, 剩余年限: {years}年")
+    print(f"当前到期收益率: {yield_mkt*100:.2f}%")
+    print(f"当前价格: {price0:.4f}")
+    print(f"麦考利久期: {mac_dur:.4f} 年")
+    print(f"修正久期: {mod_dur:.4f}")
+    print(f"凸性: {conv:.4f}")
+    print(f"收益率上升 {delta_y*100:.0f} 个基点")
+    print(f"近似价格变动率: {approx_price_change_ratio*100:.4f}% (负值表示下跌)")
+    print(f"估计价格跌幅: {price_drop_pct:.4f}%")
+    print(f"\n结果字典: {result}")
+```

@@ -1,0 +1,28 @@
+```python
+# 输入数据
+R_f = 2.3
+R_m = 9.4
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+actual_return_y = 13.1
+
+# 市场风险溢价
+market_premium = R_m - R_f
+
+# CAPM 期望收益
+er_x = R_f + beta_x * market_premium
+er_y = R_f + beta_y * market_premium
+er_z = R_f + beta_z * market_premium
+
+# Alpha for Y
+alpha_y = actual_return_y - er_y
+
+# 存储结果
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+```

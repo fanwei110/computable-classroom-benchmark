@@ -1,0 +1,132 @@
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+import glob
+
+# ============================================================
+# 参数设置（窗口可调）
+# ============================================================
+WINDOW = 60              # 滚动窗口天数，可自由调整
+RF_ANNUAL = 0.021        # 年化无风险利率 2.1%
+
+# ============================================================
+# 读取数据（自动探测常见格式）
+# ============================================================
+data_file = None
+for pattern in ['*.csv', '*.xlsx', '*.xls', '*.parquet']:
+    matches = glob.glob(pattern)
+    if matches:
+        data_file = matches[0]
+        break
+
+if data_file is None:
+    # 无数据文件时，生成示例数据以便演示
+    np.random.seed(42)
+    dates = pd.date_range(start='2023-01-01', periods=500, freq='D')
+    # 模拟基金净值
+    nav = 1.0 + np.cumsum(np.random.normal(0.0003, 0.012, 500))
+    df = pd.DataFrame({'date': dates, 'fund': nav})
+else:
+    ext = os.path.splitext(data_file)[1].lower()
+    if ext == '.csv':
+        df = pd.read_csv(data_file)
+    elif ext in ('.xlsx', '.xls'):
+        df = pd.read_excel(data_file)
+    elif ext == '.parquet':
+        df = pd.read_parquet(data_file)
+
+# ============================================================
+# 数据预处理
+# ============================================================
+# 如果 fund 列是净值，先转成日收益率
+if df['fund'].iloc[0] > 1 or df['fund'].mean() > 0.5:
+    # 大概率是净值序列，计算日收益率
+    df['fund_ret'] = df['fund'].pct_change()
+else:
+    # 已是日收益率
+    df['fund_ret'] = df['fund']
+
+df = df.dropna(subset=['fund_ret']).reset_index(drop=True)
+
+# ============================================================
+# 计算 60 天滚动夏普比率
+# ============================================================
+rf_daily = (1 + RF_ANNUAL) ** (1 / 252) - 1   # 日化无风险利率
+
+rolling_mean = df['fund_ret'].rolling(window=WINDOW).mean()
+rolling_std  = df['fund_ret'].rolling(window=WINDOW).std()
+
+# 年化滚动夏普 = (日均超额收益 / 日标准差) * sqrt(252)
+rolling_sharpe = ((rolling_mean - rf_daily) / rolling_std) * np.sqrt(252)
+
+# 最后一个窗口的值
+rolling_sharpe_last = rolling_sharpe.iloc[-1]
+
+# ============================================================
+# 画图
+# ============================================================
+fig, ax = plt.subplots(figsize=(14, 6))
+
+# 日期索引（如果有 date 列则用日期做 x 轴）
+if 'date' in df.columns:
+    x = pd.to_datetime(df['date'])
+else:
+    x = df.index
+
+ax.plot(x, rolling_sharpe.values, color='steelblue', linewidth=1.2,
+        label=f'{WINDOW}-Day Rolling Sharpe (rf={RF_ANNUAL*100:.1f}%)')
+ax.axhline(y=0, color='gray', linestyle='--', linewidth=0.8)
+ax.fill_between(x, rolling_sharpe.values, 0,
+                where=rolling_sharpe.values >= 0,
+                color='steelblue', alpha=0.12)
+ax.fill_between(x, rolling_sharpe.values, 0,
+                where=rolling_sharpe.values < 0,
+                color='salmon', alpha=0.15)
+
+# 标注最后一个值
+last_idx = len(rolling_sharpe) - 1
+ax.annotate(f'{rolling_sharpe_last:.4f}',
+            xy=(x.iloc[last_idx], rolling_sharpe_last),
+            xytext=(-60, 20), textcoords='offset points',
+            fontsize=11, fontweight='bold', color='darkred',
+            arrowprops=dict(arrowstyle='->', color='darkred', lw=1.5))
+
+ax.set_title(f'{WINDOW}-Day Rolling Sharpe Ratio  (rf = {RF_ANNUAL*100:.1f}%)',
+             fontsize=15, fontweight='bold')
+ax.set_xlabel('Date', fontsize=12)
+ax.set_ylabel('Annualized Sharpe Ratio', fontsize=12)
+ax.legend(fontsize=11, loc='upper left')
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+
+fig_path = os.path.abspath('rolling_sharpe_60d.png')
+fig.savefig(fig_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ============================================================
+# 输出契约
+# ============================================================
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': fig_path
+}
+
+print(f"最后一个窗口的滚动夏普值: {rolling_sharpe_last:.6f}")
+print(f"图表已保存至: {fig_path}")
+print(f"result = {result}")
+```
+
+**代码说明：**
+
+| 要素 | 处理方式 |
+|------|----------|
+| **fund 列** | 自动判断是净值还是收益率：净值（>1）→ `pct_change()` 转收益率 |
+| **rf = 2.1%** | 年化 2.1% 先日化为 `(1+0.021)^(1/252)-1`，再从滚动均值中扣除 |
+| **窗口可调** | 修改 `WINDOW` 变量即可，当前默认 60 天 |
+| **滚动夏普公式** | `(滚动均值 - 日化rf) / 滚动标准差 × √252` 年化 |
+| **最后一个窗口值** | `rolling_sharpe.iloc[-1]`，存入 `result['rolling_sharpe_last']` |
+| **图表** | 含红蓝填充、零线、末值标注，保存为 PNG |
+
+如果目录下有 `.csv/.xlsx` 数据文件会自动加载；没有则生成 500 天模拟基金数据作为演示。

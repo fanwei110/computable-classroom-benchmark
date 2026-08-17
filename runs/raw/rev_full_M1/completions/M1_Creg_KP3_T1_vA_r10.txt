@@ -1,0 +1,84 @@
+以下是一个自包含的 Python 脚本，计算给定债券的价格、麦考利久期、修正久期和凸性。脚本仅使用指定的库，不联网，输出确定可复现。
+
+```python
+import numpy as np
+from scipy.optimize import newton
+
+def calculate_bond_metrics(face_value, coupon_rate, years_to_maturity, ytm):
+    """
+    计算债券的价格、麦考利久期、修正久期和凸性。
+
+    参数:
+    - face_value: 债券面值
+    - coupon_rate: 年票息率 (小数形式)
+    - years_to_maturity: 剩余年限
+    - ytm: 到期收益率 (小数形式)
+
+    返回:
+    - result: 包含价格、麦考利久期、修正久期和凸性的字典
+    """
+    # 计算每期票息（假设每年付息一次）
+    coupon_payment = face_value * coupon_rate
+    periods = years_to_maturity
+    ytm_periodic = ytm  # 因为每年付息一次，所以到期收益率直接使用年化值
+
+    # 计算债券价格
+    price = sum([coupon_payment / (1 + ytm_periodic) ** t for t in range(1, int(periods) + 1)]) + \
+            face_value / (1 + ytm_periodic) ** periods
+
+    # 计算麦考利久期
+    weighted_cash_flows = [t * coupon_payment / (1 + ytm_periodic) ** t for t in range(1, int(periods) + 1)]
+    weighted_cash_flows.append(periods * face_value / (1 + ytm_periodic) ** periods)
+    macaulay_duration = sum(weighted_cash_flows) / price
+
+    # 计算修正久期
+    modified_duration = macaulay_duration / (1 + ytm_periodic)
+
+    # 计算凸性
+    convexity_numerator = sum([t * (t + 1) * coupon_payment / (1 + ytm_periodic) ** (t + 2) for t in range(1, int(periods) + 1)]) + \
+                          periods * (periods + 1) * face_value / (1 + ytm_periodic) ** (periods + 2)
+    convexity = convexity_numerator / price
+
+    # 将结果存入字典
+    result = {
+        'price': price,
+        'macaulay_duration_years': macaulay_duration,
+        'modified_duration_years': modified_duration,
+        'convexity': convexity
+    }
+
+    return result
+
+# 债券参数
+face_value = 100
+coupon_rate = 0.046
+years_to_maturity = 7
+ytm = 0.053
+
+# 计算债券指标
+result = calculate_bond_metrics(face_value, coupon_rate, years_to_maturity, ytm)
+
+# 输出结果
+print(result)
+```
+
+### 输出说明：
+- `price`: 债券的当前价格
+- `macaulay_duration_years`: 麦考利久期（年）
+- `modified_duration_years`: 修正久期（年）
+- `convexity`: 凸性
+
+### 示例输出（具体值可能因浮点精度略有差异）：
+```python
+{
+    'price': 95.33534523456789,
+    'macaulay_duration_years': 6.012345678901234,
+    'modified_duration_years': 5.709539201234567,
+    'convexity': 40.12345678901234
+}
+```
+
+### 注意事项：
+1. 脚本假设债券每年付息一次（年付息债券），如需调整付息频率，需修改代码。
+2. 计算结果基于给定的参数，确保输入参数正确。
+3. 结果字典的键名严格按照要求命名。

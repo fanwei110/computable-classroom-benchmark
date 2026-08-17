@@ -1,0 +1,32 @@
+import numpy as np
+from scipy.stats import norm
+
+# 已知参数
+S = 103.7         # 标的资产现价
+K = 97.5          # 行权价
+sigma = 0.276     # 波动率
+r = 0.043         # 连续复利无风险利率
+T = 0.58          # 剩余到期时间（年）
+delta_sigma = 0.01  # 隐含波动率上升一个百分点（绝对变化量 0.01）
+
+# 1. 推算期权价格对这一个百分点波动率变化的响应
+# 计算 Black-Scholes 模型中的 d1
+d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+
+# 计算希腊字母 Vega（看涨与看跌期权 Vega 公式相同）
+# Vega = S * sqrt(T) * N'(d1)，表示波动率每变化 1.0 时期权价格的变化量
+vega = S * np.sqrt(T) * norm.pdf(d1)
+
+# 利用 Vega 进行一阶泰勒近似，推算波动率变化引起的价格响应
+# ΔPrice ≈ Vega × Δσ
+price_change = vega * delta_sigma
+
+# 2. 把价格变化存入 result
+result = {
+    'price_change': price_change
+}
+
+# 课堂投屏辅助打印
+print(f"计算得到的 Vega (每 1.0 波动率变化): {vega:.4f}")
+print(f"波动率上升 1% (0.01) 推算的期权价格变化: {price_change:.4f}")
+print(result)

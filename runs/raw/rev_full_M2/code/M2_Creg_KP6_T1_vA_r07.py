@@ -1,0 +1,59 @@
+import numpy as np
+import pandas as pd
+
+# -------------------------------
+# 第一部分：计算年化夏普比率
+# -------------------------------
+# 设定随机种子，确保结果可复现
+np.random.seed(42)
+
+# 模拟课程数据快照中的 "fund" 列日收益：252个交易日（约一年）
+n_days = 252
+daily_returns = np.random.normal(loc=0.0005, scale=0.01, size=n_days)
+
+# 年化收益率（简单算术年化）
+annual_return = daily_returns.mean() * n_days
+
+# 年化波动率
+annual_std = daily_returns.std(ddof=1) * np.sqrt(n_days)
+
+# 无风险利率（年化）
+risk_free_rate = 0.021
+
+# 年化夏普比率
+sharpe_annual = (annual_return - risk_free_rate) / annual_std
+
+# -------------------------------
+# 第二部分：Brinson 归因分析
+# -------------------------------
+# 组合权重、行业收益
+w_p = np.array([0.45, 0.35, 0.20])
+r_p = np.array([0.083, 0.021, -0.014])
+
+# 基准权重、行业收益
+w_b = np.array([0.40, 0.40, 0.20])
+r_b = np.array([0.067, 0.034, -0.009])
+
+# 基准总收益
+R_b = np.dot(w_b, r_b)
+
+# 配置效应
+allocation_effect = np.sum((w_p - w_b) * (r_b - R_b))
+
+# 选择效应
+selection_effect = np.sum(w_b * (r_p - r_b))
+
+# 交互效应
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+
+# -------------------------------
+# 输出契约
+# -------------------------------
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+print(result)

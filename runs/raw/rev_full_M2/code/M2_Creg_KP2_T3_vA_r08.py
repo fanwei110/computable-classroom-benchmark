@@ -1,0 +1,27 @@
+import numpy as np
+
+def main():
+    # 已知参数
+    beta = 1.42
+    market_return_monthly = -0.058  # 市场上月收益率
+    risk_free_annual = 0.047        # 年化无风险利率
+
+    # 将年化无风险利率转换为月利率（复利方式，几何平均）
+    risk_free_monthly = (1 + risk_free_annual) ** (1/12) - 1
+
+    # CAPM 公式：预期收益 = Rf + beta * (Rm - Rf)
+    capm_return_monthly = risk_free_monthly + beta * (market_return_monthly - risk_free_monthly)
+
+    # 结果字典
+    result = {
+        'capm_return_monthly': capm_return_monthly
+    }
+
+    # 输出，便于查看
+    for key, value in result.items():
+        print(f"{key}: {value:.6f}")
+
+    return result
+
+if __name__ == "__main__":
+    result = main()

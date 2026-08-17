@@ -1,0 +1,37 @@
+根据Black-Scholes期权定价模型，针对不分红的欧式看涨期权，计算过程如下：
+
+**参数梳理：**
+* 标的价格 $S = 103.7$
+* 行权价 $K = 97.5$
+* 波动率 $\sigma = 0.276$
+* 无风险利率 $r = 0.043$（连续复利）
+* 剩余期限 $T = 0.58$（年，已经明确为0.58年，无需按252个交易日折算）
+
+**计算过程：**
+1. 计算 $d_1$ 和 $d_2$：
+   $$d_1 = \frac{\ln(S/K) + (r + \sigma^2/2)T}{\sigma\sqrt{T}} = \frac{\ln(103.7/97.5) + (0.043 + 0.276^2/2) \times 0.58}{0.276 \times \sqrt{0.58}} \approx 0.517164$$
+   $$d_2 = d_1 - \sigma\sqrt{T} = 0.517164 - 0.276 \times 0.761577 \approx 0.306969$$
+
+2. 计算期权价格 (Call Price)：
+   $$N(d_1) \approx 0.697935, \quad N(d_2) \approx 0.620659$$
+   $$C = S \cdot N(d_1) - K \cdot e^{-rT} \cdot N(d_2)$$
+   $$C = 103.7 \times 0.697935 - 97.5 \times e^{-0.043 \times 0.58} \times 0.620659 \approx 13.3532$$
+
+3. 计算Delta：
+   欧式看涨期权的 Delta = $N(d_1) \approx 0.6979$
+
+4. 计算Vega：
+   $$\text{Vega} = S \cdot \phi(d_1) \cdot \sqrt{T}$$
+   其中 $\phi(d_1)$ 为标准正态分布概率密度函数，$\phi(0.517164) \approx 0.348949$
+   $$\text{Vega} = 103.7 \times 0.348949 \times \sqrt{0.58} \approx 27.5588$$
+   *(注：此处Vega为波动率变化1个小数单位即100%时的绝对变动值，若习惯按1%变动则对应0.2756)*
+
+**输出契约：**
+
+```python
+result = {
+    'call_price': 13.3532,
+    'call_delta': 0.6979,
+    'call_vega': 27.5588
+}
+```

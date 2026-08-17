@@ -1,0 +1,38 @@
+import numpy as np
+
+# 年化波动率
+sigma = np.array([0.187, 0.243, 0.312])
+
+# 相关系数矩阵 (从1,2,3索引)
+corr = np.array([
+    [1.00, 0.21, -0.13],
+    [0.21, 1.00,  0.37],
+    [-0.13, 0.37, 1.00]
+])
+
+# 1. 构造协方差矩阵
+# Σ = diag(sigma) @ corr @ diag(sigma)
+cov_matrix = np.diag(sigma) @ corr @ np.diag(sigma)
+
+# 2. 满仓（权重和为1）且允许卖空下的全局最小方差组合权重
+# 闭式解: w = Σ^{-1} 𝟏 / (𝟏^T Σ^{-1} 𝟏)
+inv_cov = np.linalg.inv(cov_matrix)
+ones = np.ones(len(sigma))
+w = inv_cov @ ones
+w = w / (ones @ w)  # 归一化，确保和为1
+mvp_weights = w
+
+# 3. 组合年化波动率
+var = mvp_weights.T @ cov_matrix @ mvp_weights
+mvp_vol_annual = np.sqrt(var)
+
+# 4. 按要求格式保存到 result 字典
+result = {
+    'mvp_weights': mvp_weights.tolist(),  # 转为列表，便于查看
+    'mvp_vol_annual': mvp_vol_annual
+}
+
+# 输出结果（可直接运行查看）
+print("全局最小方差组合（允许卖空，全额投资）：")
+print(f"权重：{result['mvp_weights']}")
+print(f"年化波动率：{result['mvp_vol_annual']:.6f}")

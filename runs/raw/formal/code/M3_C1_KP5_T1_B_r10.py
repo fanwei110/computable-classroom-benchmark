@@ -1,0 +1,27 @@
+import math
+from scipy.stats import norm
+
+# 已知参数
+portfolio_value = 1850000  # 185万
+annual_vol = 0.218         # 年化波动率 21.8%
+trading_days = 252         # 假设一年有252个交易日
+
+# 计算日波动率
+daily_vol = annual_vol / math.sqrt(trading_days)
+
+# --- 95% 1天 VaR ---
+z_95 = norm.ppf(0.95)
+var_95_1d = portfolio_value * z_95 * daily_vol
+
+# --- 99% 10天 VaR ---
+z_99 = norm.ppf(0.99)
+vol_10d = daily_vol * math.sqrt(10)
+var_99_10d = portfolio_value * z_99 * vol_10d
+
+# 按照输出契约存入字典
+result = {
+    'var_95_1d': round(var_95_1d, 2),
+    'var_99_10d': round(var_99_10d, 2)
+}
+
+print(result)

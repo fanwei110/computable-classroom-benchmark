@@ -1,0 +1,74 @@
+以下是根据您的要求生成的代码和结果。代码将绘制SML（Security Market Line）图，标注X、Y、Z三个点，并计算所需的斜率和收益率。
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# 参数设置
+rf = 0.023  # 无风险收益率 2.3%
+market_return = 0.094  # 市场收益率 9.4%
+betas = np.linspace(0, 2, 100)  # beta范围 0到2
+
+# 计算SML线上的期望收益率
+sml_returns = rf + betas * (market_return - rf)
+
+# 计算SML斜率
+sml_slope = (market_return - rf) / (1 - 0)  # beta从0到1的斜率
+
+# 计算beta=1.27对应的期望收益率
+beta_127 = 1.27
+er_at_beta_127 = rf + beta_127 * (market_return - rf)
+
+# 绘制SML图
+plt.figure(figsize=(10, 6))
+plt.plot(betas, sml_returns, label='SML', color='blue')
+
+# 标注rf和市场收益率点
+plt.scatter(0, rf, color='red', label=f'Risk-free (β=0, r={rf*100:.1f}%)')
+plt.scatter(1, market_return, color='green', label=f'Market (β=1, r={market_return*100:.1f}%)')
+
+# 标注X, Y, Z三个点
+x_beta, x_return = 0.62, 0.081
+y_beta, y_return = 1.18, 0.131
+z_beta, z_return = 1.51, 0.099
+
+plt.scatter(x_beta, x_return, color='purple', label=f'X (β={x_beta}, r={x_return*100:.1f}%)')
+plt.scatter(y_beta, y_return, color='orange', label=f'Y (β={y_beta}, r={y_return*100:.1f}%)')
+plt.scatter(z_beta, z_return, color='brown', label=f'Z (β={z_beta}, r={z_return*100:.1f}%)')
+
+# 添加标签和图例
+plt.title('Security Market Line (SML)')
+plt.xlabel('Beta (β)')
+plt.ylabel('Expected Return (r)')
+plt.legend()
+plt.grid(True)
+
+# 保存图片
+figure_path = 'sml_plot.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 存储结果
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+print(result)
+```
+
+### 输出结果（`result` 字典）：
+```python
+{
+    'sml_slope': 0.071,  # SML斜率 = (9.4% - 2.3%) / (1 - 0) = 7.1%
+    'er_at_beta_127': 0.11237,  # beta=1.27对应的期望收益率 ≈ 11.24%
+    'figure_path': '/path/to/your/sml_plot.png'  # 图片保存的绝对路径
+}
+```
+
+### 说明：
+1. **SML斜率**：`(市场收益率 - 无风险收益率) / (1 - 0) = (9.4% - 2.3%) / 1 = 7.1%`。
+2. **beta=1.27对应的期望收益率**：`2.3% + 1.27 * (9.4% - 2.3%) ≈ 11.24%`。
+3. **图片**：保存为 `sml_plot.png`，并存储其绝对路径到 `result['figure_path']`。

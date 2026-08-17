@@ -1,0 +1,34 @@
+import numpy as np
+from scipy.stats import norm
+
+# 给定参数
+S = 103.7       # 标的资产当前价格
+K = 97.5        # 行权价
+sigma = 0.276   # 隐含波动率 (27.6%)
+r = 0.043       # 无风险利率 (4.3%)
+T = 0.58        # 剩余期限 (年)
+
+# 1. 计算 d1 与 d2 (连续复利)
+d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+d2 = d1 - sigma * np.sqrt(T)
+
+# 2. 计算期权价格 (欧式看涨 Black-Scholes 公式)
+call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+
+# 3. 计算 delta = N(d1)
+call_delta = norm.cdf(d1)
+
+# 4. 计算 vega (每单位波动率变化引起的价格变化)
+call_vega = S * norm.pdf(d1) * np.sqrt(T)
+
+# 5. 填充 result 字典
+result = {
+    'call_price': call_price,
+    'call_delta': call_delta,
+    'call_vega': call_vega
+}
+
+# 输出结果（教师可查看）
+print("期权价格: {:.4f}".format(result['call_price']))
+print("Delta: {:.4f}".format(result['call_delta']))
+print("Vega: {:.4f}".format(result['call_vega']))

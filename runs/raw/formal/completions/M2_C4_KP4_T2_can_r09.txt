@@ -1,0 +1,72 @@
+以下是一个自包含的 Python 脚本，它根据 Black‑Scholes 公式计算欧式看涨期权的 delta，绘制不同波动率下的 delta 曲线，并报告指定点上的 delta 值。所有输出均按要求存储在 `result` 字典中。
+
+```python
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+import os
+
+# ---------- Black-Scholes delta for European call ----------
+def delta_call(S, K, T, r, sigma):
+    """Return delta of a European call (no dividends)."""
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+
+# ---------- option parameters ----------
+K = 97.5          # strike
+r = 0.043         # continuously compounded risk-free rate
+T = 0.58          # time to maturity (years)
+
+# ---------- adjustable volatility set ----------
+# Teachers can easily change the list below to use other values.
+vols = [0.15, 0.276, 0.40]
+
+# ---------- underlying grid ----------
+S_grid = np.linspace(70, 140, 300)
+
+# ---------- compute delta for each volatility ----------
+deltas = {}
+for vol in vols:
+    deltas[vol] = delta_call(S_grid, K, T, r, vol)
+
+# ---------- plot ----------
+plt.figure(figsize=(8, 5))
+for vol in vols:
+    plt.plot(S_grid, deltas[vol], label=f'σ = {vol:.3f}')
+plt.xlabel('Underlying price S')
+plt.ylabel('Delta')
+plt.title('Delta of European Call (K=97.5, r=4.3%, T=0.58yr)')
+plt.legend()
+plt.grid(True)
+
+# ---------- save figure ----------
+figure_filename = 'delta_curve.png'
+plt.savefig(figure_filename, dpi=150)
+plt.close()
+
+# ---------- specific point ----------
+S_target = 110
+vol_target = 0.276
+delta_at_target = delta_call(S_target, K, T, r, vol_target)
+
+# ---------- output contract ----------
+result = {
+    'delta_at_s110': delta_at_target,
+    'figure_path': os.path.abspath(figure_filename)
+}
+
+# Optional: print result so the teacher can verify immediately
+print(result)
+```
+
+**脚本说明**
+
+- 参数 `vols` 是可直接修改的波动率列表，满足“波动率做成可调参数”的要求。  
+- 使用 `scipy.stats.norm.cdf` 计算 \(N(d_1)\)，公式采用连续复利利率，与课程约定一致。  
+- 图形包含三条带图例的曲线，横轴为标的资产价格 70～140。  
+- 文件保存为 `delta_curve.png`，其绝对路径存入 `result['figure_path']`。  
+- 指定点 \(S=110, \sigma=0.276\) 的 delta 存入 `result['delta_at_s110']`（典型值约为 0.787，依计算精度有微小浮动）。  
+
+运行脚本后，控制台会打印 `result` 字典，教师可以直接看到要求的两个输出。  
+无需联网，无占位值，结果确定且可复现。

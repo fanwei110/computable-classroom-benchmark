@@ -1,0 +1,52 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+# ==================== 参数与假设 ====================
+V = 1_850_000        # 头寸价值（元）
+sigma_ann = 0.218    # 年化收益波动率
+
+# 假设：金融市场一年有252个交易日（中国A股市场标准惯例）
+trading_days_ann = 252
+
+# ==================== 步骤 1：年化波动率换算到一日期限 ====================
+# 根据独立同分布假设，波动率随时间的平方根缩放：sigma_daily = sigma_ann / sqrt(T)
+sigma_daily = sigma_ann / np.sqrt(trading_days_ann)
+
+# ==================== 步骤 2：套用正态分位数 ====================
+# 在 delta-normal（参数法）模型下，损益服从正态分布
+# 95% 置信水平对应左尾 5% 的分位数
+z_95 = norm.ppf(0.95)
+# 99% 置信水平对应左尾 1% 的分位数
+z_99 = norm.ppf(0.99)
+
+# ==================== 步骤 3：计算 VaR 并缩放至十日期限 ====================
+# (i) 95% 一日 VaR = 头寸价值 × 95%分位数 × 日波动率
+var_95_1d = V * z_95 * sigma_daily
+
+# (ii) 99% 十日 VaR = 头寸价值 × 99%分位数 × 日波动率 × sqrt(10)
+# 采用平方根法则将一日波动率缩放至十日
+var_99_10d = V * z_99 * sigma_daily * np.sqrt(10)
+
+# 课堂投屏展示中间计算过程
+print("=" * 50)
+print("《证券投资学》课堂实时编程：Delta-Normal VaR 计算")
+print("=" * 50)
+print(f"头寸价值 (V): \t\t{V:,.2f} 元")
+print(f"年化波动率 (σ_ann): \t{sigma_ann:.2%}")
+print(f"假设年交易日数 (T): \t{trading_days_ann} 天")
+print("-" * 50)
+print(f"日波动率 (σ_daily): \t{sigma_daily:.6%}")
+print(f"95% 正态分位数 (Z_95): {z_95:.4f}")
+print(f"99% 正态分位数 (Z_99): {z_99:.4f}")
+print("-" * 50)
+print(f"(i)  95% 一日 VaR: \t{var_95_1d:,.2f} 元")
+print(f"(ii) 99% 十日 VaR: \t{var_99_10d:,.2f} 元")
+print("=" * 50)
+
+# ==================== 步骤 4：填充 result ====================
+result = {
+    'var_95_1d': var_95_1d,
+    'var_99_10d': var_99_10d
+}
+```

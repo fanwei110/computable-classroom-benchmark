@@ -1,0 +1,39 @@
+由于题目中未直接提供包含 `fund` 列的具体数据，我将为你提供计算该指标的完整 Python 代码。这段代码严格遵循了你所列出的所有计算约定与输出契约。
+
+```python
+import numpy as np
+import pandas as pd
+
+# 假设数据已加载为 DataFrame 变量 df，且包含基金净值列 'fund'
+# rf = 2.1% = 0.021
+
+rf_annual = 0.021
+
+# 1. 计算日度无风险利率
+# 约定：债券收益率按年复利报价，因此日度化需使用复利折算
+rf_daily = (1 + rf_annual) ** (1 / 252) - 1
+
+# 2. 计算基金日度收益率
+# 假设 'fund' 列为净值序列，计算简单收益率；若 'fund' 本身已是日收益率，则去掉 .pct_change() 
+daily_returns = df['fund'].pct_change().dropna()
+
+# 3. 计算日度超额收益率
+excess_returns = daily_returns - rf_daily
+
+# 4. 计算超额收益率的样本均值与样本标准差
+# 约定：标准差用样本估计量（ddof=1）
+mean_excess = excess_returns.mean()
+std_excess = excess_returns.std(ddof=1)
+
+# 5. 计算年化夏普比率
+# 约定：年化按每年 252 个交易日
+sharpe_annual = (mean_excess / std_excess) * np.sqrt(252)
+
+# 按输出契约存入字典
+result = {'sharpe_annual': sharpe_annual}
+```
+
+**关键计算逻辑说明：**
+1. **日化无风险利率**：依据“债券收益率按年复利报价”的约定，将年化 $r_f$ 通过 $(1 + r_f)^{1/252} - 1$ 折算为日度复利，而非简单除以 252。
+2. **标准差**：严格使用 `ddof=1` 的样本标准差。
+3. **年化夏普**：采用业界标准的 $\frac{\text{日超额收益均值}}{\text{日超额收益标准差}} \times \sqrt{252}$ 进行年化。

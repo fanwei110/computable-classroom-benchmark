@@ -1,0 +1,83 @@
+由于您没有提供“课程数据文件”的具体数据，第一问的年化夏普比率无法直接计算出具体数值，我将提供完整的计算代码和逻辑，并在字典中以占位符表示。第二问的业绩归因有明确数据，已为您详细计算并填入字典。
+
+### 第二问：业绩归因计算过程
+根据 Brinson-Hood-Beebower (BHB) 模型：
+- **配置效应** $= (W_{p} - W_{b}) \times R_{b}$
+- **选择效应** $= W_{b} \times (R_{p} - R_{b})$
+- **交互效应** $= (W_{p} - W_{b}) \times (R_{p} - R_{b})$
+
+**行业1：**
+- 配置效应 = $(0.45 - 0.40) \times 0.067 = 0.00335$
+- 选择效应 = $0.40 \times (0.083 - 0.067) = 0.0064$
+- 交互效应 = $(0.45 - 0.40) \times (0.083 - 0.067) = 0.0008$
+
+**行业2：**
+- 配置效应 = $(0.35 - 0.40) \times 0.034 = -0.0017$
+- 选择效应 = $0.40 \times (0.021 - 0.034) = -0.0052$
+- 交互效应 = $(0.35 - 0.40) \times (0.021 - 0.034) = 0.00065$
+
+**行业3：**
+- 配置效应 = $(0.20 - 0.20) \times (-0.009) = 0$
+- 选择效应 = $0.20 \times (-0.014 - (-0.009)) = -0.001$
+- 交互效应 = $(0.20 - 0.20) \times (-0.014 - (-0.009)) = 0$
+
+**汇总各效应：**
+- 总配置效应 = $0.00335 - 0.0017 + 0 = 0.00165$
+- 总选择效应 = $0.0064 - 0.0052 - 0.001 = 0.0002$
+- 总交互效应 = $0.0008 + 0.00065 + 0 = 0.00145$
+
+*(验证：组合总收益 0.0419 - 基准总收益 0.0386 = 0.0033，恰好等于三种效应之和 0.00165 + 0.0002 + 0.00145 = 0.0033)*
+
+### 第一问：年化夏普比率计算逻辑
+1. 读取数据的 `fund` 列作为日收益率 $R_t$。
+2. 计算日无风险利率：$R_{f,daily} = 0.021 / 252$。
+3. 计算日超额收益均值：$\mu_d = \frac{1}{N}\sum(R_t - R_{f,daily})$。
+4. 计算日收益率样本标准差：$\sigma_d = \sqrt{\frac{\sum(R_t - \bar{R}_t)^2}{N-1}}$ （即 `ddof=1`）。
+5. 计算年化夏普比率：$\text{Sharpe}_{annual} = \frac{\mu_d}{\sigma_d} \times \sqrt{252}$。
+
+### 最终输出字典与代码
+
+```python
+import pandas as pd
+import numpy as np
+
+# ================= 第一问：计算年化夏普比率 =================
+# 注：因缺少实际课程数据文件，以下为计算逻辑代码
+# df = pd.read_csv('课程数据文件.csv') 
+# daily_returns = df['fund']
+# rf_daily = 0.021 / 252
+# excess_returns = daily_returns - rf_daily
+# sharpe_annual = (excess_returns.mean() / daily_returns.std(ddof=1)) * np.sqrt(252)
+sharpe_annual = None  # 无数据文件暂设为 None
+
+# ================= 第二问：业绩归因计算 =================
+wp = np.array([0.45, 0.35, 0.20])
+rp = np.array([0.083, 0.021, -0.014])
+wb = np.array([0.40, 0.40, 0.20])
+rb = np.array([0.067, 0.034, -0.009])
+
+allocation_effect = np.sum((wp - wb) * rb)
+selection_effect = np.sum(wb * (rp - rb))
+interaction_effect = np.sum((wp - wb) * (rp - rb))
+
+# ================= 输出契约 =================
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': float(allocation_effect),
+    'selection_effect': float(selection_effect),
+    'interaction_effect': float(interaction_effect)
+}
+
+print(result)
+```
+
+根据输出契约，包含所有要求输出的 `result` 字典如下（其中 `sharpe_annual` 需待您代入数据得出，此处以实际数值运算结果填入后三项）：
+
+```python
+result = {
+    'sharpe_annual': None,  # 需填入课程数据计算结果，公式: (日均值-0.021/252)/日标准差*sqrt(252)
+    'allocation_effect': 0.00165,
+    'selection_effect': 0.0002,
+    'interaction_effect': 0.00145
+}
+```

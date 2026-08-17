@@ -1,0 +1,63 @@
+import numpy as np
+
+# ==========================================
+# 《证券投资学》课堂演示代码
+# 概念：马科维茨均值-方差组合理论 - 相关系数对组合波动率的影响
+# ==========================================
+
+# 1. 按资产被提及的顺序对应 60/40 权重（A 占 60%）
+# 资产顺序为 A, B
+weights = np.array([0.6, 0.4]) 
+
+# 资产年化波动率（用小数表示）
+vol_A = 0.184
+vol_B = 0.297
+vols = np.array([vol_A, vol_B])
+
+# 2. 构造相关系数 0.3 与 0.8 两个协方差矩阵
+def build_cov_matrix(vols_vec, rho):
+    """根据波动率向量和相关系数构建协方差矩阵"""
+    # 协方差 = 相关系数 * 资产A波动率 * 资产B波动率
+    cov_ab = rho * vols_vec[0] * vols_vec[1]
+    cov_matrix = np.array([
+        [vols_vec[0]**2, cov_ab],
+        [cov_ab, vols_vec[1]**2]
+    ])
+    return cov_matrix
+
+cov_before = build_cov_matrix(vols, rho=0.3)
+cov_after = build_cov_matrix(vols, rho=0.8)
+
+# 3. 计算两个组合波动率，用小数表示
+# 组合方差公式：w'Σw
+var_before = weights.T @ cov_before @ weights
+var_after = weights.T @ cov_after @ weights
+
+# 年化波动率为方差的平方根
+vol_before_annual = np.sqrt(var_before)
+vol_after_annual = np.sqrt(var_after)
+
+# 4. 填充 result
+result = {
+    'vol_before_annual': vol_before_annual,
+    'vol_after_annual': vol_after_annual
+}
+
+# 课堂投屏辅助打印（直观展示变化）
+print("="*50)
+print("马科维茨组合理论 - 相关系数对波动率的影响")
+print("="*50)
+print(f"资产配置: A 占 {weights[0]*100:.0f}%, B 占 {weights[1]*100:.0f}%")
+print(f"资产波动率: A = {vol_A*100:.1f}%, B = {vol_B*100:.1f}%\n")
+
+print(f"【相关系数 = 0.3 时】")
+print(f"组合方差: {var_before:.6f}")
+print(f"组合年化波动率: {vol_before_annual:.4f} ({vol_before_annual*100:.2f}%)\n")
+
+print(f"【相关系数 = 0.8 时】")
+print(f"组合方差: {var_after:.6f}")
+print(f"组合年化波动率: {vol_after_annual:.4f} ({vol_after_annual*100:.2f}%)\n")
+
+print(f"波动率变化: 升高了 {(vol_after_annual - vol_before_annual)*100:.2f}%")
+print("="*50)
+print(f"输出字典 result: {result}")

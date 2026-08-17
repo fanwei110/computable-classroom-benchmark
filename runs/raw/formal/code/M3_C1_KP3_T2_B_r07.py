@@ -1,0 +1,187 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.sans-serif'] = ['SimHei']
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+# ===================== 债券参数 =====================
+F = 100                # 面值
+coupon_rate = 0.046    # 票息率
+C = F * coupon_rate    # 年票息 = 4.6
+n = 7                  # 期限（年）
+ytm_current = 0.053    # 当前到期收益率
+
+# ============= 变动幅度（可调参数） =============
+delta_y_bps = 100      # 单位：基点(bps)，可自由调整
+delta_y = delta_y_bps / 10000  # 转为小数
+
+# ===================== 定价函数 =====================
+def bond_price(ytm, F=100, C=4.6, n=7):
+    """精确债券价格"""
+    if ytm == 0:
+        return F + C * n
+    pv_coupons = C * (1 - (1 + ytm)**(-n)) / ytm
+    pv_face = F * (1 + ytm)**(-n)
+    return pv_coupons + pv_face
+
+def macaulay_duration(ytm, F=100, C=4.6, n=7):
+    """Macaulay久期（解析法）"""
+    P = bond_price(ytm, F, C, n)
+    weighted_sum = 0.0
+    for t in range(1, n + 1):
+        cf = C if t < n else C + F
+        weighted_sum += t * cf / (1 + ytm)**t
+    return weighted_sum / P
+
+def modified_duration(ytm, F=100, C=4.6, n=7):
+    """修正久期"""
+    return macaulay_duration(ytm, F, C, n) / (1 + ytm)
+
+def convexity(ytm, F=100, C=4.6, n=7):
+    """凸性"""
+    P = bond_price(ytm, F, C, n)
+    conv = 0.0
+    for t in range(1, n + 1):
+        cf = C if t < n else C + F
+        conv += t * (t + 1) * cf / (1 + ytm)**(t + 2)
+    return conv / P
+
+# ===================== 核心计算 =====================
+# 当前状态
+P0 = bond_price(ytm_current)
+MD = modified_duration(ytm_current)
+MacD = macaulay_duration(ytm_current)
+Conv = convexity(ytm_current)
+
+# +100bp 后
+ytm_up = ytm_current + delta_y
+P_up_exact = bond_price(ytm_up)
+exact_rel_change = (P_up_exact / P0) - 1
+dur_approx_rel_change = -MD * delta_y  # 久期法估的相对变化
+
+# 久期近似价格
+P_up_dur_approx = P0 * (1 + dur_approx_rel_change)
+
+# 久期+凸性近似
+conv_approx_rel_change = -MD * delta_y + 0.5 * Conv * delta_y**2
+P_up_conv_approx = P0 * (1 + conv_approx_rel_change)
+
+# ===================== 绘制曲线 =====================
+yields = np.linspace(0.02, 0.09, 2000)
+exact_prices = np.array([bond_price(y) for y in yields])
+# 久期近似：在当前YTM处线性展开
+dur_approx_prices = P0 * (1 - MD * (yields - ytm_current))
+# 久期+凸性近似：二阶展开
+conv_approx_prices = P0 * (1 - MD * (yields - ytm_current) + 0.5 * Conv * (yields - ytm_current)**2)
+
+fig, ax = plt.subplots(figsize=(14, 8))
+
+# 精确价格曲线
+ax.plot(yields * 100, exact_prices, 'b-', linewidth=2.5, label='精确价格曲线', zorder=3)
+# 久期近似曲线
+ax.plot(yields * 100, dur_approx_prices, 'r--', linewidth=2, label='久期近似（一阶）', zorder=3)
+# 久期+凸性近似曲线
+ax.plot(yields * 100, conv_approx_prices, 'g-.', linewidth=2, label='久期+凸性近似（二阶）', zorder=3)
+
+# 当前点
+ax.plot(ytm_current * 100, P0, 'ko', markersize=10, zorder=5)
+ax.annotate(f'当前点\nYTM={ytm_current*100:.1f}%\nP={P0:.4f}',
+            xy=(ytm_current * 100, P0),
+            xytext=(ytm_current * 100 - 2.0, P0 + 6),
+            fontsize=10, fontweight='bold',
+            arrowprops=dict(arrowstyle='->', color='black', lw=1.5),
+            bbox=dict(boxstyle='round,pad=0.3', facecolor='lightyellow', alpha=0.9))
+
+# +Δy 精确点
+ax.plot(ytm_up * 100, P_up_exact, 'bs', markersize=10, zorder=5)
+ax.annotate(f'+{delta_y_bps}bp 精确\nYTM={ytm_up*100:.1f}%\nP={P_up_exact:.4f}',
+            xy=(ytm_up * 100, P_up_exact),
+            xytext=(ytm_up * 100 + 0.8, P_up_exact + 5),
+            fontsize=10, color='blue',
+            arrowprops=dict(arrowstyle='->', color='blue', lw=1.5),
+            bbox=dict(boxstyle='round,pad=0.3', facecolor='lightblue', alpha=0.8))
+
+# +Δy 久期近似点
+ax.plot(ytm_up * 100, P_up_dur_approx, 'r^', markersize=10, zorder=5)
+ax.annotate(f'久期近似\nP={P_up_dur_approx:.4f}',
+            xy=(ytm_up * 100, P_up_dur_approx),
+            xytext=(ytm_up * 100 + 0.8, P_up_dur_approx - 5),
+            fontsize=10, color='red',
+            arrowprops=dict(arrowstyle='->', color='red', lw=1.5),
+            bbox=dict(boxstyle='round,pad=0.3', facecolor='lightyellow', alpha=0.8))
+
+# 连线标注误差
+ax.plot([ytm_up * 100, ytm_up * 100], [P_up_exact, P_up_dur_approx],
+        'm-', linewidth=2, alpha=0.7, zorder=4)
+mid_y = (P_up_exact + P_up_dur_approx) / 2
+ax.annotate(f'误差={abs(P_up_exact - P_up_dur_approx):.4f}',
+            xy=(ytm_up * 100, mid_y),
+            xytext=(ytm_up * 100 + 1.5, mid_y),
+            fontsize=9, color='purple',
+            arrowprops=dict(arrowstyle='->', color='purple', lw=1))
+
+# 水平虚线标注变动
+ax.plot([ytm_current * 100, ytm_up * 100], [P0, P0], 'k:', linewidth=1, alpha=0.5)
+ax.plot([ytm_current * 100, ytm_current * 100], [P0, P_up_exact], 'k:', linewidth=1, alpha=0.5)
+
+# 信息框
+info_text = (
+    f'═══ 债券参数 ═══\n'
+    f'面值={F}  票息={coupon_rate*100}%  期限={n}年\n'
+    f'当前YTM = {ytm_current*100:.1f}%\n'
+    f'当前价格 = {P0:.4f}\n'
+    f'Macaulay久期 = {MacD:.4f}年\n'
+    f'修正久期 = {MD:.4f}\n'
+    f'凸性 = {Conv:.4f}\n'
+    f'═══ +{delta_y_bps}bp 变动分析 ═══\n'
+    f'新YTM = {ytm_up*100:.1f}%\n'
+    f'精确价格 = {P_up_exact:.4f}\n'
+    f'精确相对变化 = {exact_rel_change*100:.4f}%\n'
+    f'久期法估相对变化 = {dur_approx_rel_change*100:.4f}%\n'
+    f'久期+凸性估相对变化 = {conv_approx_rel_change*100:.4f}%\n'
+    f'久期法价格 = {P_up_dur_approx:.4f}\n'
+    f'久期+凸性价格 = {P_up_conv_approx:.4f}'
+)
+ax.text(0.02, 0.02, info_text, transform=ax.transAxes,
+        fontsize=9.5, verticalalignment='bottom', family='monospace',
+        bbox=dict(boxstyle='round,pad=0.5', facecolor='lightyellow', edgecolor='gray', alpha=0.9))
+
+ax.set_xlabel('到期收益率 (%)', fontsize=13)
+ax.set_ylabel('债券价格', fontsize=13)
+ax.set_title(
+    f'债券价格-收益率曲线  |  面100 / 票息4.6% / 7年 / YTM=5.3%\n'
+    f'+{delta_y_bps}bp后: 精确价格={P_up_exact:.4f}, 久期法估相对变化={dur_approx_rel_change*100:.4f}%',
+    fontsize=14, fontweight='bold')
+ax.legend(fontsize=11, loc='upper right', framealpha=0.9)
+ax.grid(True, alpha=0.3)
+ax.set_xlim(2, 9)
+
+plt.tight_layout()
+fig_path = 'bond_price_yield_curve.png'
+plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ===================== 输出结果 =====================
+result = {
+    'price_at_up100bp': round(P_up_exact, 6),
+    'dur_approx_change_up100bp': round(dur_approx_rel_change, 6),
+    'figure_path': fig_path
+}
+
+print("=" * 60)
+print("计算结果摘要")
+print("=" * 60)
+print(f"当前 YTM = {ytm_current*100:.1f}%  →  当前精确价格 = {P0:.4f}")
+print(f"Macaulay 久期 = {MacD:.4f} 年")
+print(f"修正久期     = {MD:.4f}")
+print(f"凸性         = {Conv:.4f}")
+print("-" * 60)
+print(f"收益率 +{delta_y_bps}bp → 新 YTM = {ytm_up*100:.1f}%")
+print(f"  精确价格           = {P_up_exact:.4f}")
+print(f"  精确相对变化       = {exact_rel_change*100:.4f}%")
+print(f"  久期法估相对变化   = {dur_approx_rel_change*100:.4f}%")
+print(f"  久期+凸性估相对变化= {conv_approx_rel_change*100:.4f}%")
+print(f"  久期近似价格       = {P_up_dur_approx:.4f}")
+print(f"  久期+凸性近似价格  = {P_up_conv_approx:.4f}")
+print("=" * 60)
+print(f"result = {result}")

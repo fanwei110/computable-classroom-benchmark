@@ -1,0 +1,104 @@
+以下是自包含的 Python 脚本，完成题目要求的所有步骤：
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import newton
+
+# 参数设定
+face_value = 100
+coupon_rate = 0.046
+years_to_maturity = 7
+current_yield = 0.053
+yield_change_bp = 100  # 100 basis points = 1%
+
+# 1. 精确定价函数
+def bond_price(yield_to_maturity, face_value, coupon_rate, years_to_maturity):
+    coupon_payment = face_value * coupon_rate
+    periods = years_to_maturity
+    cash_flows = np.array([coupon_payment] * periods + [face_value + coupon_payment])
+    discount_factors = np.array([(1 + yield_to_maturity) ** (-t) for t in range(1, periods + 2)])
+    price = np.sum(cash_flows * discount_factors)
+    return price
+
+# 2. 久期和凸性计算
+def bond_duration_convexity(yield_to_maturity, face_value, coupon_rate, years_to_maturity):
+    coupon_payment = face_value * coupon_rate
+    periods = years_to_maturity
+    cash_flows = np.array([coupon_payment] * periods + [face_value + coupon_payment])
+    times = np.arange(1, periods + 2)
+
+    # 久期计算
+    discount_factors = (1 + yield_to_maturity) ** (-times)
+    present_values = cash_flows * discount_factors
+    price = np.sum(present_values)
+    weighted_times = times * present_values
+    macaulay_duration = np.sum(weighted_times) / price
+    modified_duration = macaulay_duration / (1 + yield_to_maturity)
+
+    # 凸性计算
+    convexity = np.sum(present_values * times * (times + 1)) / (price * (1 + yield_to_maturity) ** 2)
+
+    return modified_duration, convexity
+
+# 3. 久期近似价格变化
+def duration_approx_price(yield_change, current_price, modified_duration):
+    return current_price * (1 - modified_duration * yield_change)
+
+# 4. 收益率网格
+yield_grid = np.linspace(0.02, 0.09, 100)
+exact_prices = np.array([bond_price(y, face_value, coupon_rate, years_to_maturity) for y in yield_grid])
+
+# 5. 当前收益率附近的久期近似
+current_price = bond_price(current_yield, face_value, coupon_rate, years_to_maturity)
+modified_duration, convexity = bond_duration_convexity(current_yield, face_value, coupon_rate, years_to_maturity)
+
+# 久期近似曲线（线性近似）
+yield_change_for_approx = yield_grid - current_yield
+duration_approx_prices = duration_approx_price(yield_change_for_approx, current_price, modified_duration)
+
+# 6. +100bp 的精确价格和久期估计变化
+yield_up100bp = current_yield + yield_change_bp / 10000
+price_at_up100bp = bond_price(yield_up100bp, face_value, coupon_rate, years_to_maturity)
+dur_approx_change_up100bp = -modified_duration * (yield_change_bp / 10000) * 100  # 相对变化百分比
+
+# 7. 绘图
+plt.figure(figsize=(10, 6))
+plt.plot(yield_grid * 100, exact_prices, label='精确价格-收益率曲线', color='blue')
+plt.plot(yield_grid * 100, duration_approx_prices, label='久期近似', color='red', linestyle='--')
+plt.scatter(current_yield * 100, current_price, color='green', zorder=5, label='当前收益率点')
+plt.xlabel('收益率 (%)')
+plt.ylabel('债券价格')
+plt.title('债券价格-收益率曲线及久期近似')
+plt.legend()
+plt.grid(True)
+
+# 保存图形
+figure_path = 'bond_price_yield_curve.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 8. 结果字典
+result = {
+    'price_at_up100bp': price_at_up100bp,
+    'dur_approx_change_up100bp': dur_approx_change_up100bp,
+    'figure_path': figure_path
+}
+
+# 输出结果以供验证
+print(result)
+```
+
+这个脚本完成了以下工作：
+1. 定义了债券精确定价函数，基于现金流贴现模型
+2. 计算了债券的修正久期和凸性
+3. 在2%到9%的收益率网格上计算了精确价格
+4. 在当前收益率(5.3%)附近叠加了基于久期的线性近似曲线
+5. 计算了收益率上升100基点后的精确价格和久期法估计的相对价格变化
+6. 绘制了价格-收益率曲线并保存为图片
+7. 将所有要求的结果存入result字典
+
+输出的result字典包含：
+- price_at_up100bp: 收益率上升100基点后的精确价格
+- dur_approx_change_up100bp: 久期法估计的相对价格变化百分比
+- figure_path: 保存的图片文件路径

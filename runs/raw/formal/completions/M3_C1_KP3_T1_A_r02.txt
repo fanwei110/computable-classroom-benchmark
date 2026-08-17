@@ -1,0 +1,40 @@
+为了计算这只债券的价格、Macaulay久期、修正久期和凸性，我们基于默认的**每年付息一次**的惯例进行计算。
+
+已知参数：
+- 面值 (F) = 100
+- 票面利率 = 4.6%，即每年利息 (C) = 100 × 4.6% = 4.6
+- 期限 = 7年
+- 到期收益率 = 5.3%
+
+**1. 债券价格**
+价格 P 是未来现金流的折现值：
+$$P = \sum_{t=1}^{7} \frac{4.6}{(1+0.053)^t} + \frac{100}{(1+0.053)^7}$$
+利用年金现值公式计算：
+$$v^7 = \frac{1}{1.053^7} \approx 0.6965858$$
+$$P = 4.6 \times \frac{1 - v^7}{0.053} + 100 \times v^7 \approx 95.9926$$
+
+**2. Macaulay 久期**
+$$MacD = \frac{\sum_{t=1}^{7} \frac{t \times C}{(1+y)^t} + \frac{7 \times F}{(1+y)^7}}{P}$$
+利用闭合公式计算：
+$$MacD = \frac{1+y}{y} - \frac{1+y + 7 \times (c - y)}{c \times [(1+y)^7 - 1] + y}$$
+其中 c = 0.046, y = 0.053：
+$$MacD = \frac{1.053}{0.053} - \frac{1.053 + 7 \times (0.046 - 0.053)}{0.046 \times (1.053^7 - 1) + 0.053} \approx 6.1198 \text{ 年}$$
+
+**3. 修正久期**
+$$ModD = \frac{MacD}{1+y} = \frac{6.1198}{1.053} \approx 5.8116$$
+
+**4. 凸性**
+$$Conv = \frac{1}{P \times (1+y)^2} \left[ \sum_{t=1}^{7} \frac{t(t+1) \times C}{(1+y)^t} + \frac{7 \times 8 \times F}{(1+y)^7} \right]$$
+通过逐项计算折现求和：
+$$Conv \approx \frac{4044.86}{95.9926 \times 1.053^2} \approx 42.1365$$
+
+最终按照契约要求，将结果存入字典：
+
+```python
+result = {
+    'price': 95.9926,
+    'macaulay_duration_years': 6.1198,
+    'modified_duration_years': 5.8116,
+    'convexity': 42.1365
+}
+```

@@ -1,0 +1,41 @@
+```python
+import numpy as np
+from scipy.stats import norm
+
+# ==================== 1. 参数设定 ====================
+S = 103.7       # 标的现价
+K = 97.5        # 行权价
+r = 0.043       # 无风险利率（连续复利，小数表示）
+T = 0.58        # 剩余期限（年）
+
+sigma_base = 0.276  # 原波动率（27.6%）
+sigma_new  = 0.286  # 上升1个百分点后的波动率（28.6%）
+
+# ==================== 2. Black-Scholes 看涨期权定价 ====================
+def bs_call_price(S, K, r, T, sigma):
+    """
+    计算欧式看涨期权的 Black-Scholes 价格
+    参数均为小数形式，利率为连续复利
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    
+    call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    return call_price
+
+# ==================== 3. 精确重定价与价差计算 ====================
+# 波动率为 27.6% 时的期权价格
+price_base = bs_call_price(S, K, r, T, sigma_base)
+
+# 波动率为 28.6% 时的期权价格
+price_new  = bs_call_price(S, K, r, T, sigma_new)
+
+# 精确价差
+price_change = price_new - price_base
+
+# ==================== 4. 输出契约 ====================
+result = {'price_change': price_change}
+
+# 打印结果供课堂投屏验证
+print(result)
+```

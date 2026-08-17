@@ -1,0 +1,99 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import minimize
+
+# 资产参数
+mu = np.array([0.071, 0.124])  # 预期收益
+vol = np.array([0.163, 0.289])  # 波动率
+corr_list = [0.15, 0.45, 0.75]  # 相关系数列表
+
+# 结果字典
+result = {}
+
+# 1. 构造协方差矩阵并绘制有效前沿
+plt.figure(figsize=(10, 6))
+
+for rho in corr_list:
+    # 构造协方差矩阵
+    Sigma = np.array([
+        [vol[0]**2, vol[0] * vol[1] * rho],
+        [vol[0] * vol[1] * rho, vol[1]**2]
+    ])
+
+    # 定义组合方差函数
+    def portfolio_variance(w, Sigma):
+        return w.T @ Sigma @ w
+
+    # 扫描权重生成前沿
+    n_points = 100
+    w1_range = np.linspace(0, 1, n_points)
+    portfolio_returns = []
+    portfolio_vols = []
+
+    for w1 in w1_range:
+        w = np.array([w1, 1 - w1])
+        portfolio_returns.append(w @ mu)
+        portfolio_vols.append(np.sqrt(portfolio_variance(w, Sigma)))
+
+    # 绘制前沿
+    plt.plot(portfolio_vols, portfolio_returns, label=f'ρ={rho}')
+
+    # 2. 找到最小方差组合
+    def objective(w):
+        return portfolio_variance(w, Sigma)
+
+    constraints = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1})
+    bounds = ((0, 1), (0, 1))
+    initial_guess = [0.5, 0.5]
+
+    res = minimize(objective, initial_guess, constraints=constraints, bounds=bounds)
+    w_mvp = res.x
+    mu_mvp = w_mvp @ mu
+    vol_mvp = np.sqrt(portfolio_variance(w_mvp, Sigma))
+
+    plt.scatter(vol_mvp, mu_mvp, color='red', zorder=5)
+    plt.text(vol_mvp, mu_mvp, f'MVP (ρ={rho})', fontsize=9,
+             verticalalignment='bottom', horizontalalignment='right')
+
+    # 保存rho=0.45时的MVP波动率
+    if rho == 0.45:
+        result['mvp_vol_at_rho45'] = vol_mvp
+
+# 3. 对于rho=0.45，计算目标收益10%时的最小波动率
+rho = 0.45
+Sigma = np.array([
+    [vol[0]**2, vol[0] * vol[1] * rho],
+    [vol[0] * vol[1] * rho, vol[1]**2]
+])
+
+def objective(w):
+    return portfolio_variance(w, Sigma)
+
+constraints = (
+    {'type': 'eq', 'fun': lambda w: np.sum(w) - 1},
+    {'type': 'eq', 'fun': lambda w: w @ mu - 0.10}  # 目标收益10%
+)
+bounds = ((0, 1), (0, 1))
+initial_guess = [0.5, 0.5]
+
+res = minimize(objective, initial_guess, constraints=constraints, bounds=bounds)
+w_opt = res.x
+vol_opt = np.sqrt(portfolio_variance(w_opt, Sigma))
+result['frontier_vol_at_target'] = vol_opt
+
+# 完成图形绘制
+plt.title('Efficient Frontier for Two-Asset Portfolio')
+plt.xlabel('Portfolio Volatility')
+plt.ylabel('Portfolio Return')
+plt.legend()
+plt.grid(True)
+
+# 保存图形
+figure_path = 'efficient_frontier.png'
+plt.savefig(figure_path)
+result['figure_path'] = figure_path
+
+# 显示结果（可选，实际使用时可能不需要）
+print(result)
+```

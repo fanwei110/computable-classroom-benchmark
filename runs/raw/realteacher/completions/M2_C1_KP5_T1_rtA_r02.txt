@@ -1,0 +1,27 @@
+```python
+import math
+
+# 给定参数
+position = 1_850_000       # 头寸
+annual_vol = 0.218         # 年化波动率
+trading_days = 252         # 年交易日
+
+# 不同置信水平对应的z值(单尾)
+z_95 = 1.644853627         # 95%
+z_99 = 2.326347874         # 99%
+
+# 计算1天和10天的波动率
+vol_1d = annual_vol * math.sqrt(1 / trading_days)
+vol_10d = annual_vol * math.sqrt(10 / trading_days)
+
+# 计算VaR
+var_95_1d = position * z_95 * vol_1d
+var_99_10d = position * z_99 * vol_10d
+
+result = {
+    'var_95_1d': round(var_95_1d, 2),
+    'var_99_10d': round(var_99_10d, 2)
+}
+
+print(result)
+```

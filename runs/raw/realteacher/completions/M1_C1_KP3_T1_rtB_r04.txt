@@ -1,0 +1,127 @@
+我将为您计算这只债券的价格、Macaulay久期、修正久期和凸性，并将结果存入名为 `result` 的字典中。
+
+**债券参数：**
+- 面值（Face Value, FV）：100
+- 息票率（Coupon Rate）：4.6%
+- 期限（Maturity）：7年
+- 到期收益率（YTM）：5.3%
+- 息票支付频率：假设为每年支付一次（Annual）
+
+---
+
+### 1. 价格（Price）计算
+债券价格公式：
+\[
+P = \sum_{t=1}^{N} \frac{C}{(1 + y)^t} + \frac{FV}{(1 + y)^N}
+\]
+其中：
+- \( C = FV \times \text{Coupon Rate} = 100 \times 4.6\% = 4.6 \)
+- \( y = YTM = 5.3\% \)
+- \( N = 7 \)
+
+计算过程：
+\[
+P = \sum_{t=1}^{7} \frac{4.6}{(1 + 0.053)^t} + \frac{100}{(1 + 0.053)^7}
+\]
+
+逐项计算：
+\[
+\begin{align*}
+\frac{4.6}{1.053^1} &= 4.3685 \\
+\frac{4.6}{1.053^2} &= 4.1486 \\
+\frac{4.6}{1.053^3} &= 3.9398 \\
+\frac{4.6}{1.053^4} &= 3.7434 \\
+\frac{4.6}{1.053^5} &= 3.5586 \\
+\frac{4.6}{1.053^6} &= 3.3846 \\
+\frac{4.6}{1.053^7} &= 3.2207 \\
+\frac{100}{1.053^7} &= 70.0153 \\
+\end{align*}
+\]
+总和：
+\[
+P = 4.3685 + 4.1486 + 3.9398 + 3.7434 + 3.5586 + 3.3846 + 3.2207 + 70.0153 = 96.3795
+\]
+
+---
+
+### 2. Macaulay久期（Macaulay Duration）计算
+Macaulay久期公式：
+\[
+\text{Macaulay Duration} = \frac{1}{P} \sum_{t=1}^{N} \frac{t \times C}{(1 + y)^t} + \frac{N \times FV}{(1 + y)^N}
+\]
+
+计算过程：
+\[
+\begin{align*}
+\frac{1 \times 4.6}{1.053^1} &= 4.3685 \\
+\frac{2 \times 4.6}{1.053^2} &= 8.2972 \\
+\frac{3 \times 4.6}{1.053^3} &= 11.8194 \\
+\frac{4 \times 4.6}{1.053^4} &= 14.9736 \\
+\frac{5 \times 4.6}{1.053^5} &= 17.7930 \\
+\frac{6 \times 4.6}{1.053^6} &= 20.3076 \\
+\frac{7 \times 4.6}{1.053^7} &= 22.5449 \\
+\frac{7 \times 100}{1.053^7} &= 490.1071 \\
+\end{align*}
+\]
+总和：
+\[
+4.3685 + 8.2972 + 11.8194 + 14.9736 + 17.7930 + 20.3076 + 22.5449 + 490.1071 = 590.2113
+\]
+Macaulay久期：
+\[
+\text{Macaulay Duration} = \frac{590.2113}{96.3795} = 6.1238 \text{ 年}
+\]
+
+---
+
+### 3. 修正久期（Modified Duration）计算
+修正久期公式：
+\[
+\text{Modified Duration} = \frac{\text{Macaulay Duration}}{1 + y}
+\]
+计算：
+\[
+\text{Modified Duration} = \frac{6.1238}{1 + 0.053} = 5.8156 \text{ 年}
+\]
+
+---
+
+### 4. 凸性（Convexity）计算
+凸性公式：
+\[
+\text{Convexity} = \frac{1}{P \times (1 + y)^2} \left[ \sum_{t=1}^{N} \frac{t(t + 1) \times C}{(1 + y)^t} + \frac{N(N + 1) \times FV}{(1 + y)^N} \right]
+\]
+
+计算过程：
+\[
+\begin{align*}
+\frac{1 \times 2 \times 4.6}{1.053^1} &= 8.7370 \\
+\frac{2 \times 3 \times 4.6}{1.053^2} &= 24.8916 \\
+\frac{3 \times 4 \times 4.6}{1.053^3} &= 47.2776 \\
+\frac{4 \times 5 \times 4.6}{1.053^4} &= 74.8680 \\
+\frac{5 \times 6 \times 4.6}{1.053^5} &= 106.7580 \\
+\frac{6 \times 7 \times 4.6}{1.053^6} &= 142.1532 \\
+\frac{7 \times 8 \times 4.6}{1.053^7} &= 180.3592 \\
+\frac{7 \times 8 \times 100}{1.053^7} &= 3913.9043 \\
+\end{align*}
+\]
+总和：
+\[
+8.7370 + 24.8916 + 47.2776 + 74.8680 + 106.7580 + 142.1532 + 180.3592 + 3913.9043 = 4500.9499
+\]
+凸性：
+\[
+\text{Convexity} = \frac{4500.9499}{96.3795 \times (1.053)^2} = \frac{4500.9499}{96.3795 \times 1.1088} = \frac{4500.9499}{106.8636} = 42.1186
+\]
+
+---
+
+### 最终结果
+```python
+result = {
+    'price': 96.3795,
+    'macaulay_duration_years': 6.1238,
+    'modified_duration_years': 5.8156,
+    'convexity': 42.1186
+}
+```

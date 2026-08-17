@@ -1,0 +1,3 @@
+```python
+result = {'price_change': 'Vega'}
+```

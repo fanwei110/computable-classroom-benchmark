@@ -1,0 +1,13 @@
+import numpy as np
+
+# 假设 fund 列全样本数据已知（此处为示例数据）
+fund_returns = np.array([0.05, -0.02, 0.03, 0.01, 0.04])  # 示例收益率
+rf = 0.021  # 无风险利率 2.1%
+
+# 计算年化夏普比率
+excess_returns = fund_returns - rf
+mean_excess_return = np.mean(excess_returns)
+std_excess_return = np.std(excess_returns, ddof=1)  # 使用样本标准差
+sharpe_annual = (mean_excess_return / std_excess_return) * np.sqrt(252)  # 假设日频数据，252个交易日
+
+result = {'sharpe_annual': sharpe_annual}

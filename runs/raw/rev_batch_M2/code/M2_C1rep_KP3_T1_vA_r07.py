@@ -1,0 +1,6 @@
+result = {
+    'price': 95.99599249893531,
+    'macaulay_duration_years': 6.120605526,
+    'modified_duration_years': 5.812731744,
+    'convexity': 42.133818
+}

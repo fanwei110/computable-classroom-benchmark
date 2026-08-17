@@ -1,0 +1,39 @@
+import numpy as np
+
+# 债券基本参数
+face_value = 100       # 面值
+coupon_rate = 0.046    # 票息率 4.6%
+y = 0.053              # 收益率 5.3%
+T = 7                  # 期限 7 年
+dy = 0.008             # 收益率上升 80 个基点
+
+# 1. 计算现金流
+t = np.arange(1, T + 1)
+CF = np.full(T, face_value * coupon_rate)  # 每年票息
+CF[-1] += face_value                       # 最后一期加上面值
+
+# 2. 计算债券当前价格 P
+discount_factors = (1 + y) ** t
+PV = CF / discount_factors
+P = np.sum(PV)
+
+# 3. 计算麦考利久期 (Macaulay Duration)
+mac_duration = np.sum(t * PV) / P
+
+# 4. 计算修正久期 (Modified Duration)
+# 课程约定：年复利下 修正久期 = 麦考利久期 / (1+y)
+mod_duration = mac_duration / (1 + y)
+
+# 5. 套用课程经验法则估算价格变动百分比
+# dP/P = -D_mod × dy
+dp_over_p = -mod_duration * dy
+
+# 6. 提取跌幅大小（转为正的小数）
+price_drop_pct = abs(dp_over_p)
+
+# 按输出契约存入字典
+result = {
+    'price_drop_pct': price_drop_pct
+}
+
+print(result)

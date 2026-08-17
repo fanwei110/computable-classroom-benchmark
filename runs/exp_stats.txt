@@ -1,0 +1,26 @@
+================================================================
+PHASE-C EXPERIMENTS  (DeepSeek deepseek-chat; 6 tasks x 5 reps)
+total rows = 330
+================================================================
+
+[A] Template ablation — strict correctness by variant
+  C1                  16.7%  (exec 93%, n=30)  — raw improvised phrasing + contract
+  contract_only       70.0%  (exec 93%, n=30)  — structured task + contract (no framing/scaffold/conv)
+  minus_scaffold      63.3%  (exec 80%, n=30)  — full C4 minus step-scaffold
+  minus_convention    76.7%  (exec 97%, n=30)  — full C4 minus convention (~structure-only)
+  C4_full             80.0%  (exec 93%, n=30)  — full CKU template
+
+  Component contributions (pp):
+    raw -> structured task     (contract_only - C1) = +53.3
+    add scaffold               (C4_full - minus_scaffold) = +16.7
+    add convention             (C4_full - minus_convention) = +3.3
+    structured -> full C4      (C4_full - contract_only) = +10.0
+    total raw -> full C4       (C4_full - C1) = +63.3
+
+[B] Temperature sensitivity — strict correctness (%)
+  cond        T=0.0  T=0.5  T=1.0
+  C1           26.7   26.7   30.0
+  C4_full      83.3   83.3   80.0
+
+  Read: if C4_full >> C1 at every temperature, the structure effect is not
+  a lucky-default artifact.

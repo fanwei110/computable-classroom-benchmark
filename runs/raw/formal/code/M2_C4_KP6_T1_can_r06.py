@@ -1,0 +1,45 @@
+import numpy as np
+import pandas as pd
+
+# --------------------------- 第一部分：夏普比率 ---------------------------
+# 读取市场快照数据
+df = pd.read_csv('data/market_snapshot_v1.csv')
+fund_daily = df['fund']  # 基金日收益率（小数形式）
+
+# 无风险利率设定
+rf_annual = 0.021
+rf_daily = rf_annual / 252.0
+
+# 计算日超额收益
+excess_daily = fund_daily - rf_daily
+
+# 样本均值和样本标准差（ddof=1）
+mean_excess = excess_daily.mean()
+std_excess = excess_daily.std(ddof=1)
+
+# 年化夏普比率
+sharpe_annual = np.sqrt(252) * mean_excess / std_excess
+
+# ------------------------ 第二部分：业绩归因 ---------------------------
+# 组合
+w_p = np.array([0.45, 0.35, 0.20])
+r_p = np.array([0.083, 0.021, -0.014])
+
+# 基准
+w_b = np.array([0.40, 0.40, 0.20])
+r_b = np.array([0.067, 0.034, -0.009])
+
+# Brinson-Hood-Beebower 归因分解
+allocation_effect  = np.sum((w_p - w_b) * r_b)
+selection_effect   = np.sum(w_b * (r_p - r_b))
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+
+# --------------------------- 输出结果字典 ----------------------------
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+print(result)

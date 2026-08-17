@@ -1,0 +1,44 @@
+由于第一部分缺少计算年化夏普所需的基金日收益率序列数据（仅凭“fund列日收益 rf 2.1%”无法获得收益率的均值与标准差），无法计算年化夏普比率。第二部分归因分析数据完整，按 Brinson 模型拆分结果如下：
+
+```python
+import numpy as np
+
+# ========== 第一部分：年化夏普（数据不足） ==========
+sharpe_annual = None  # 缺少日收益率序列，无法计算
+
+# ========== 第二部分：Brinson 归因 ==========
+# 权重与收益（小数形式）
+wp = np.array([0.45, 0.35, 0.20])   # 组合权重
+wb = np.array([0.40, 0.40, 0.20])   # 基准权重
+Rp = np.array([0.083, 0.021, -0.014])  # 组合行业收益
+Rb = np.array([0.067, 0.034, -0.009])  # 基准行业收益
+
+# 总收益
+Rp_total = np.sum(wp * Rp)  # 0.0419
+Rb_total = np.sum(wb * Rb)  # 0.0386
+
+# 配置效应 (Allocation Effect)
+allocation_effect = np.sum((wp - wb) * (Rb - Rb_total))  # 0.00165
+
+# 选择效应 (Selection Effect)
+selection_effect = np.sum(wb * (Rp - Rb))  # 0.0002
+
+# 交互效应 (Interaction Effect)
+interaction_effect = np.sum((wp - wb) * (Rp - Rb))  # 0.00145
+
+# 输出字典
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': round(allocation_effect, 6),
+    'selection_effect': round(selection_effect, 6),
+    'interaction_effect': round(interaction_effect, 6)
+}
+```
+
+**结果：**
+- `sharpe_annual`：`None`（需补充基金日收益率序列数据）
+- `allocation_effect`：`0.00165`（0.165%）
+- `selection_effect`：`0.0002`（0.02%）
+- `interaction_effect`：`0.00145`（0.145%）
+
+**验证：** 三项效应之和为 0.00165 + 0.0002 + 0.00145 = 0.0033，等于组合总超额收益 0.0419 - 0.0386 = 0.0033，拆分正确。

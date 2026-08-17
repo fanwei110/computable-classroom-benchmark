@@ -1,0 +1,26 @@
+# ç»å®åæ°
+rf = 2.3  # æ é£é©å©çï¼%ï¼
+rm = 9.4  # å¸åºæææ¶çï¼%ï¼
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+actual_y = 13.1  # Yå®éå¹´æ¶çï¼%ï¼
+
+# å¸åºé£é©æº¢ä»·
+mrp = rm - rf  # 7.1%
+
+# CAPMæææ¶çè®¡ç®
+er_x = rf + beta_x * mrp
+er_y = rf + beta_y * mrp
+er_z = rf + beta_z * mrp
+
+# Alphaè®¡ç®
+alpha_y = actual_y - er_y
+
+# æè¦æ±å­åå­å
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}

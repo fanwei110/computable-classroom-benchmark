@@ -1,0 +1,6 @@
+我将按照您的要求计算并绘制Delta随标的价格变化的图，并输出所需结果。以下是完整的Python代码实现：
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm

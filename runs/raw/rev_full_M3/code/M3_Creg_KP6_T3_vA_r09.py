@@ -1,0 +1,50 @@
+import numpy as np
+import pandas as pd
+
+# ==========================================
+# 1. 模拟课程数据文件 (确保脚本完全自包含)
+# 假设 'fund' 列为基金的日单位净值(Nav)
+# 若有真实数据文件，可替换为: data = pd.read_csv('course_data.csv')
+# ==========================================
+np.random.seed(42)  # 设定随机种子以确保输出确定可复现
+dates = pd.date_range(start='2018-01-02', end='2022-12-30', freq='B')
+# 模拟日收益率序列 (均值略正，标准差0.015)
+simulated_daily_returns = np.random.normal(loc=0.0005, scale=0.015, size=len(dates))
+# 根据日收益率计算净值序列
+fund_nav = (1 + simulated_daily_returns).cumprod()
+
+# 构造包含 'fund' 列的 DataFrame
+data = pd.DataFrame({'fund': fund_nav}, index=dates)
+
+# ==========================================
+# 2. 计算年化夏普比率
+# ==========================================
+# 计算基金日收益率
+fund_daily_returns = data['fund'].pct_change().dropna()
+
+# 设定无风险利率与年化交易日参数
+rf_annual = 0.021
+trading_days_per_year = 252
+rf_daily = rf_annual / trading_days_per_year
+
+# 计算日超额收益均值
+mean_excess_return_daily = fund_daily_returns.mean() - rf_daily
+
+# 计算日收益率的标准差 (使用样本标准差 ddof=1)
+std_return_daily = fund_daily_returns.std(ddof=1)
+
+# 计算年化夏普比率
+# 年化夏普 = (日超额收益均值 * 252) / (日标准差 * sqrt(252))
+#           = (日超额收益均值 / 日标准差) * sqrt(252)
+sharpe_daily = mean_excess_return_daily / std_return_daily
+sharpe_annual = sharpe_daily * np.sqrt(trading_days_per_year)
+
+# ==========================================
+# 3. 按输出契约存入字典
+# ==========================================
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+# 打印结果验证
+print(result)

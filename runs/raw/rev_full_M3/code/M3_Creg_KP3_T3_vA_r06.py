@@ -1,0 +1,50 @@
+import numpy as np
+
+# ==================== 债券参数设置 ====================
+face_value = 100.0            # 面值
+coupon_rate = 0.046           # 票息率 4.6%
+maturity = 7                  # 期限 7年
+yield_initial = 0.053         # 初始收益率 5.3%
+yield_change_bps = 80         # 收益率上升 80 个基点
+
+# ==================== 债券定价与计算 ====================
+# 计算年票息支付额
+coupon_payment = face_value * coupon_rate
+
+# 计算收益率变动后的新收益率 (80个基点 = 0.80% = 0.008)
+yield_new = yield_initial + yield_change_bps / 10000.0
+
+def calculate_bond_price(face_val, cpn, mat, yld):
+    """
+    计算固定收益债券的现值（全价）
+    """
+    # 生成现金流时间序列 [1, 2, ..., maturity]
+    times = np.arange(1, mat + 1)
+    
+    # 生成现金流序列：每期支付票息，最后一期支付票息+面值
+    cash_flows = np.full(mat, cpn)
+    cash_flows[-1] += face_val
+    
+    # 计算折现因子并求出现值
+    discount_factors = (1 + yld) ** times
+    present_values = cash_flows / discount_factors
+    
+    return np.sum(present_values)
+
+# 计算初始收益率下的债券价格
+price_initial = calculate_bond_price(face_value, coupon_payment, maturity, yield_initial)
+
+# 计算新收益率下的债券价格
+price_new = calculate_bond_price(face_value, coupon_payment, maturity, yield_new)
+
+# 计算价格跌幅百分比
+price_drop_pct = (price_initial - price_new) / price_initial
+
+# ==================== 输出契约 ====================
+result = {'price_drop_pct': price_drop_pct}
+
+# (可选：打印验证过程)
+# print(f"初始价格: {price_initial:.4f}")
+# print(f"新价格: {price_new:.4f}")
+# print(f"价格跌幅: {price_drop_pct:.4%}")
+# print(result)

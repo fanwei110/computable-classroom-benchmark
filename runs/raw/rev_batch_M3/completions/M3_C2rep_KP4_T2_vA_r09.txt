@@ -1,0 +1,70 @@
+```python
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+import os
+
+# ==========================================
+# 1. 参数设置
+# ==========================================
+K = 97.5            # 行权价
+r = 0.043           # 无风险利率 (年化 4.3%)
+T = 0.58            # 剩余期限 (年)
+S_grid = np.linspace(70, 140, 500)  # 标的价格网格
+volatilities = [0.15, 0.276, 0.40]   # 波动率参数列表 (参数化可调)
+
+# ==========================================
+# 2. 定义欧式看涨期权 Delta 闭式解计算函数
+# ==========================================
+def bs_call_delta(S, K, T, r, sigma):
+    """
+    计算标的不分红的欧式看涨期权 Delta
+    Delta = N(d1)
+    d1 = [ln(S/K) + (r + 0.5*sigma^2)*T] / (sigma*sqrt(T))
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# ==========================================
+# 3. 在标的价格网格上计算不同波动率下的 Delta
+# ==========================================
+delta_curves = {}
+for sigma in volatilities:
+    delta_curves[sigma] = bs_call_delta(S_grid, K, T, r, sigma)
+
+# ==========================================
+# 4. 报告标的 110、波动率 27.6% 时的 delta
+# ==========================================
+S_target = 110.0
+sigma_target = 0.276
+delta_at_s110 = float(bs_call_delta(S_target, K, T, r, sigma_target))
+
+# ==========================================
+# 5. 绘制带标注的三条曲线并保存图形
+# ==========================================
+plt.figure(figsize=(10, 6))
+
+# 绘制不同波动率下的 Delta 曲线
+for sigma in volatilities:
+    plt.plot(S_grid, delta_curves[sigma], label=f'$\\sigma$ = {sigma*100:.1f}%')
+
+# 添加图例和标签
+plt.title('European Call Option Delta vs Underlying Price', fontsize=14)
+plt.xlabel('Underlying Price (S)', fontsize=12)
+plt.ylabel('Delta', fontsize=12)
+plt.legend(fontsize=11)
+plt.grid(True, linestyle='--', alpha=0.7)
+
+# 保存图形
+fig_path = os.path.abspath('european_call_delta.png')
+plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ==========================================
+# 6. 封装输出结果
+# ==========================================
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': fig_path
+}
+```

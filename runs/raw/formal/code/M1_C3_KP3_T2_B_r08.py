@@ -1,0 +1,84 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+def calculate_bond_price(ytm, coupon_rate, face_value, years_to_maturity, periods_per_year=1):
+    """
+    计算债券精确价格
+    ytm: 年化收益率
+    coupon_rate: 年票息率
+    face_value: 面值
+    years_to_maturity: 剩余期限（年）
+    periods_per_year: 每年付息次数
+    """
+    coupon = face_value * coupon_rate / periods_per_year
+    total_periods = years_to_maturity * periods_per_year
+    ytm_period = ytm / periods_per_year
+
+    price = sum([coupon / (1 + ytm_period)**t for t in range(1, int(total_periods) + 1)]) + \
+            face_value / (1 + ytm_period)**total_periods
+    return price
+
+def calculate_duration(ytm, coupon_rate, face_value, years_to_maturity, periods_per_year=1):
+    """
+    计算麦考利久期
+    """
+    coupon = face_value * coupon_rate / periods_per_year
+    total_periods = years_to_maturity * periods_per_year
+    ytm_period = ytm / periods_per_year
+
+    cash_flows = [coupon] * int(total_periods)
+    cash_flows[-1] += face_value  # 最后一期加上面值
+
+    price = sum([cf / (1 + ytm_period)**t for t, cf in enumerate(cash_flows, 1)])
+    duration = sum([t * cf / (1 + ytm_period)**t for t, cf in enumerate(cash_flows, 1)]) / price
+
+    return duration / periods_per_year  # 转换为年化久期
+
+# 债券参数
+face_value = 100
+coupon_rate = 0.046
+years_to_maturity = 7
+ytm_initial = 0.053
+
+# 计算初始价格和久期
+initial_price = calculate_bond_price(ytm_initial, coupon_rate, face_value, years_to_maturity)
+initial_duration = calculate_duration(ytm_initial, coupon_rate, face_value, years_to_maturity)
+modified_duration = initial_duration / (1 + ytm_initial)  # 修正久期
+
+# 收益率变化范围
+ytm_range = np.linspace(0.02, 0.09, 100)
+prices_exact = [calculate_bond_price(ytm, coupon_rate, face_value, years_to_maturity) for ytm in ytm_range]
+prices_approx = [initial_price * (1 - modified_duration * (ytm - ytm_initial)) for ytm in ytm_range]
+
+# 计算+100bp后的精确价格和久期近似变化
+ytm_up100bp = ytm_initial + 0.01
+price_up100bp = calculate_bond_price(ytm_up100bp, coupon_rate, face_value, years_to_maturity)
+dur_approx_change = -modified_duration * 0.01 * 100  # 相对变化百分比
+
+# 绘图
+plt.figure(figsize=(10, 6))
+plt.plot(ytm_range, prices_exact, label='精确价格', color='blue')
+plt.plot(ytm_range, prices_approx, label='久期近似', color='red', linestyle='--')
+plt.scatter(ytm_initial, initial_price, color='green', zorder=5, label=f'初始点(YTM={ytm_initial*100:.1f}%)')
+plt.scatter(ytm_up100bp, price_up100bp, color='purple', zorder=5, label=f'+100bp(YTM={ytm_up100bp*100:.1f}%)')
+
+plt.title('债券价格-收益率曲线')
+plt.xlabel('收益率(YTM)')
+plt.ylabel('价格')
+plt.legend()
+plt.grid(True)
+
+# 保存图片
+figure_path = 'bond_price_yield_curve.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 存储结果
+result = {
+    'price_at_up100bp': price_up100bp,
+    'dur_approx_change_up100bp': dur_approx_change,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+print(result)

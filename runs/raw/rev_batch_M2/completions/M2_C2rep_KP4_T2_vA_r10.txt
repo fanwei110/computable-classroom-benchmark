@@ -1,0 +1,62 @@
+```python
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+import os
+
+# ===================== 参数定义（可调） =====================
+K = 97.5               # 行权价
+r = 0.043              # 无风险利率
+T = 0.58               # 剩余期限（年）
+S_grid = np.linspace(70, 140, 500)  # 标的价格网格
+
+# 波动率可调参数
+sigma_values = [0.15, 0.276, 0.40]
+
+# 用于报告的特定点
+S_target = 110
+sigma_target = 0.276
+
+# ===================== 函数定义 =====================
+def bs_call_delta(S, K, r, T, sigma):
+    """
+    计算欧式看涨期权的 Black-Scholes delta
+    delta = N(d1)
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# ===================== 计算 =====================
+# 计算各波动率下的 delta 曲线
+delta_curves = {}
+for sigma in sigma_values:
+    delta_curves[sigma] = bs_call_delta(S_grid, K, r, T, sigma)
+
+# 特定点的 delta
+delta_at_s110 = bs_call_delta(S_target, K, r, T, sigma_target)
+
+# ===================== 绘图 =====================
+plt.figure(figsize=(10, 6))
+for sigma in sigma_values:
+    plt.plot(S_grid, delta_curves[sigma], label=f'σ = {sigma*100:.1f}%')
+
+plt.xlabel('Spot Price')
+plt.ylabel('Delta')
+plt.title('Black-Scholes Call Delta vs Spot Price')
+plt.legend()
+plt.grid(True)
+
+# 保存图形
+figure_path = os.path.abspath('delta_curve.png')
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ===================== 输出结果 =====================
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': figure_path
+}
+
+# 打印结果（课堂投屏可见）
+print(result)
+```

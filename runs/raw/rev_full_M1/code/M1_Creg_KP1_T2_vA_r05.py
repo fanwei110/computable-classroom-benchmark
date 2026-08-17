@@ -1,0 +1,112 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.optimize import minimize
+
+# 定义风险资产参数
+mu = np.array([0.071, 0.124])  # 期望年收益
+sigma = np.array([0.163, 0.289])  # 年化波动率
+correlations = [0.15, 0.45, 0.75]  # 相关系数列表
+
+# 计算协方差矩阵
+def get_cov_matrix(sigma, rho):
+    cov_matrix = np.array([
+        [sigma[0]**2, sigma[0]*sigma[1]*rho],
+        [sigma[0]*sigma[1]*rho, sigma[1]**2]
+    ])
+    return cov_matrix
+
+# 计算组合的期望收益和波动率
+def portfolio_stats(weights, mu, cov_matrix):
+    port_return = weights @ mu
+    port_vol = np.sqrt(weights @ cov_matrix @ weights.T)
+    return port_return, port_vol
+
+# 寻找最小方差组合
+def find_mvp(mu, cov_matrix):
+    n_assets = len(mu)
+    initial_weights = np.ones(n_assets) / n_assets
+    bounds = [(None, None) for _ in range(n_assets)]  # 允许卖空
+
+    def objective(weights):
+        return portfolio_stats(weights, mu, cov_matrix)[1]**2
+
+    constraints = ({'type': 'eq', 'fun': lambda x: np.sum(x) - 1})  # 满仓
+    result = minimize(objective, initial_weights, bounds=bounds, constraints=constraints)
+    return result.x
+
+# 寻找给定期望收益下的最小波动率组合
+def find_min_vol_for_target_return(target_return, mu, cov_matrix):
+    n_assets = len(mu)
+    initial_weights = np.ones(n_assets) / n_assets
+    bounds = [(None, None) for _ in range(n_assets)]  # 允许卖空
+
+    def objective(weights):
+        return portfolio_stats(weights, mu, cov_matrix)[1]**2
+
+    constraints = (
+        {'type': 'eq', 'fun': lambda x: np.sum(x) - 1},  # 满仓
+        {'type': 'eq', 'fun': lambda x: x @ mu - target_return}  # 目标收益
+    )
+    result = minimize(objective, initial_weights, bounds=bounds, constraints=constraints)
+    return result.x
+
+# 生成均值-方差前沿
+def generate_frontier(mu, cov_matrix, n_points=100):
+    mvp_weights = find_mvp(mu, cov_matrix)
+    mvp_return, mvp_vol = portfolio_stats(mvp_weights, mu, cov_matrix)
+
+    target_returns = np.linspace(mvp_return, max(mu) * 1.1, n_points)
+    frontier_vols = []
+
+    for target in target_returns:
+        if target <= max(mu):
+            weights = find_min_vol_for_target_return(target, mu, cov_matrix)
+            _, vol = portfolio_stats(weights, mu, cov_matrix)
+            frontier_vols.append(vol)
+        else:
+            frontier_vols.append(np.nan)
+
+    return target_returns, frontier_vols, mvp_return, mvp_vol
+
+# 主计算过程
+result = {}
+
+# 计算相关系数为0.45时的特定结果
+rho_45 = 0.45
+cov_matrix_45 = get_cov_matrix(sigma, rho_45)
+mvp_weights_45 = find_mvp(mu, cov_matrix_45)
+_, mvp_vol_45 = portfolio_stats(mvp_weights_45, mu, cov_matrix_45)
+result['mvp_vol_at_rho45'] = float(mvp_vol_45)
+
+target_return = 0.10
+weights_target = find_min_vol_for_target_return(target_return, mu, cov_matrix_45)
+_, vol_target = portfolio_stats(weights_target, mu, cov_matrix_45)
+result['frontier_vol_at_target'] = float(vol_target)
+
+# 绘制均值-方差前沿图
+plt.figure(figsize=(10, 6))
+
+for rho in correlations:
+    cov_matrix = get_cov_matrix(sigma, rho)
+    target_returns, frontier_vols, mvp_return, mvp_vol = generate_frontier(mu, cov_matrix)
+
+    plt.plot(frontier_vols, target_returns, label=f'ρ = {rho}')
+    plt.scatter(mvp_vol, mvp_return, color='red', zorder=5)
+    plt.text(mvp_vol, mvp_return, 'MVP', fontsize=9, verticalalignment='bottom')
+
+plt.title('Mean-Variance Frontier with Different Correlations')
+plt.xlabel('Annualized Volatility')
+plt.ylabel('Expected Annual Return')
+plt.legend()
+plt.grid(True)
+
+# 保存图形并记录路径
+figure_path = 'mean_variance_frontier.png'
+plt.savefig(figure_path)
+plt.close()
+
+result['figure_path'] = figure_path
+
+# 输出结果（在实际使用中可以直接使用result字典）
+print(result)

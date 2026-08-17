@@ -1,0 +1,100 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 设置全局字体以支持中文显示（如果环境支持，否则回退英文）
+plt.rcParams['font.sans-serif'] = ['SimHei', 'DejaVu Sans']
+plt.rcParams['axes.unicode_minus'] = False
+
+def main():
+    # 给定参数
+    r1 = 0.071      # 资产1期望年收益
+    r2 = 0.124      # 资产2期望年收益
+    sigma1 = 0.163  # 资产1年化波动率
+    sigma2 = 0.289  # 资产2年化波动率
+    rhos = [0.15, 0.45, 0.75]  # 相关系数列表
+
+    var1 = sigma1 ** 2
+    var2 = sigma2 ** 2
+
+    # 扫描权重范围，覆盖足够多的卖空区域
+    w1_range = np.linspace(-1.5, 2.5, 500)
+
+    # 初始化结果存储
+    result = {}
+
+    # 创建图形
+    plt.figure(figsize=(10, 6))
+
+    for rho in rhos:
+        cov12 = rho * sigma1 * sigma2
+
+        # 组合权重
+        w2_range = 1 - w1_range
+
+        # 组合收益
+        r_p = w1_range * r1 + w2_range * r2
+
+        # 组合方差与波动率
+        var_p = (w1_range**2 * var1 +
+                 w2_range**2 * var2 +
+                 2 * w1_range * w2_range * cov12)
+        std_p = np.sqrt(var_p)
+
+        # 绘制有效前沿曲线
+        line = plt.plot(std_p, r_p, label=f'ρ = {rho}', linewidth=2.0)
+        color = line[0].get_color()
+
+        # 最小方差组合（MVP）解析解
+        w1_mvp = (var2 - cov12) / (var1 + var2 - 2 * cov12)
+        w2_mvp = 1 - w1_mvp
+        r_mvp = w1_mvp * r1 + w2_mvp * r2
+        var_mvp = (w1_mvp**2 * var1 +
+                   w2_mvp**2 * var2 +
+                   2 * w1_mvp * w2_mvp * cov12)
+        std_mvp = np.sqrt(var_mvp)
+
+        # 在曲线上标注最小方差组合
+        plt.scatter(std_mvp, r_mvp, color=color, marker='o', s=80,
+                    zorder=5, edgecolors='k', linewidth=0.5)
+
+        # 针对 ρ = 0.45 计算所需指标
+        if rho == 0.45:
+            result['mvp_vol_at_rho45'] = std_mvp
+
+            # 目标收益 10% 对应的组合权重
+            w1_target = (r2 - 0.10) / (r2 - r1)
+            w2_target = 1 - w1_target
+            var_target = (w1_target**2 * var1 +
+                          w2_target**2 * var2 +
+                          2 * w1_target * w2_target * cov12)
+            std_target = np.sqrt(var_target)
+            result['frontier_vol_at_target'] = std_target
+
+    # 图像美化
+    plt.xlabel('Volatility (Standard Deviation)')
+    plt.ylabel('Expected Return')
+    plt.title('Efficient Frontier for Two Assets with Different Correlations')
+    plt.legend(title='Correlation')
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+
+    # 保存图形
+    figure_path = 'efficient_frontier.png'
+    plt.savefig(figure_path, dpi=150)
+    plt.close()
+
+    result['figure_path'] = figure_path
+
+    # 输出结果
+    print("=" * 50)
+    print("计算结果")
+    print("=" * 50)
+    print(f"ρ=0.45 时最小方差组合的波动率: {result['mvp_vol_at_rho45']:.4f} ({result['mvp_vol_at_rho45']*100:.2f}%)")
+    print(f"ρ=0.45 时目标收益 10% 的最小波动率: {result['frontier_vol_at_target']:.4f} ({result['frontier_vol_at_target']*100:.2f}%)")
+    print(f"图形已保存至: {result['figure_path']}")
+    print("=" * 50)
+
+    return result
+
+if __name__ == '__main__':
+    result = main()

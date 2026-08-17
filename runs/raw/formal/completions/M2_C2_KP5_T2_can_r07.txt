@@ -1,0 +1,82 @@
+```python
+import os
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# -------------------------------
+# 1. 读取数据并构造头寸日损益
+# -------------------------------
+DATA_PATH = 'data/market_snapshot_v1.csv'
+POSITION_VALUE = 1_000_000  # 1,000,000 元人民币头寸
+CONFIDENCE_LEVEL = 0.95    # 可调参数：置信水平
+ALPHA = 1 - CONFIDENCE_LEVEL
+
+# 读取 CSV
+try:
+    df = pd.read_csv(DATA_PATH)
+except FileNotFoundError:
+    raise FileNotFoundError(f"数据文件未找到：{DATA_PATH}")
+
+# 提取 fund 列的日收益序列，剔除缺失值
+if 'fund' not in df.columns:
+    raise KeyError(f"CSV中不存在 'fund' 列，现有列：{df.columns.tolist()}")
+
+fund_returns = df['fund'].dropna().to_numpy(dtype=np.float64)
+
+# ---- 处理收益率格式（小数 vs 百分比）----
+# 假设课程数据中收益率可能是小数（如0.01）或百分比（如1.0代表1%）。
+# 若绝对值最大值超过1，则视为百分比形式，除以100转换为小数。
+if np.max(np.abs(fund_returns)) > 1.0:
+    fund_returns = fund_returns / 100.0
+
+# 构造头寸的日损益（人民币）
+daily_pnl = fund_returns * POSITION_VALUE
+
+# -------------------------------
+# 2. 计算 95% 历史 VaR（损失正数）
+# -------------------------------
+var_quantile = np.quantile(daily_pnl, ALPHA)
+hist_var_95_1d = float(-var_quantile)   # VaR 通常报告为正值损失
+
+# -------------------------------
+# 3. 画直方图并标注 VaR
+# -------------------------------
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 绘制日损益直方图
+ax.hist(daily_pnl, bins=50, color='steelblue', edgecolor='white',
+        alpha=0.8, label='日损益 (Daily P&L)')
+
+# 标注历史 VaR 竖线
+ax.axvline(var_quantile, color='red', linestyle='--', linewidth=2,
+           label=f'{CONFIDENCE_LEVEL*100:.0f}% 一日历史 VaR: ¥{hist_var_95_1d:,.2f}')
+
+# 图例和标签
+ax.set_xlabel('日损益 (CNY)', fontsize=12)
+ax.set_ylabel('频数', fontsize=12)
+ax.set_title('头寸日损益分布与历史 VaR (95% 置信水平)', fontsize=14)
+ax.legend(frameon=True)
+plt.tight_layout()
+
+# -------------------------------
+# 4. 保存图形并构建结果字典
+# -------------------------------
+FIGURE_FILENAME = 'var_histogram.png'
+plt.savefig(FIGURE_FILENAME, dpi=150)
+plt.close()
+
+figure_path = os.path.abspath(FIGURE_FILENAME)
+
+result = {
+    'hist_var_95_1d': hist_var_95_1d,
+    'figure_path': figure_path
+}
+
+# 打印输出供课堂展示
+print("=== 计算结果 ===")
+print(f"95% 一日历史 VaR (人民币): ¥{hist_var_95_1d:,.2f}")
+print(f"图形保存路径: {figure_path}")
+print("\nresult 字典:")
+print(result)
+```

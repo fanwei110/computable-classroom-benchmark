@@ -1,0 +1,104 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import minimize
+
+# 给定数据
+mu = np.array([0.071, 0.124])  # 资产期望收益
+vol = np.array([0.163, 0.289])  # 资产波动率
+corr_list = [0.15, 0.45, 0.75]  # 相关系数列表
+
+# 结果字典
+result = {}
+
+# 1. 构造协方差矩阵并绘制有效前沿
+plt.figure(figsize=(10, 6))
+
+for rho in corr_list:
+    # 构造协方差矩阵
+    Sigma = np.array([
+        [vol[0]**2, vol[0] * vol[1] * rho],
+        [vol[0] * vol[1] * rho, vol[1]**2]
+    ])
+
+    # 生成权重向量 (w1从-0.5到1.5，步长0.01)
+    w1_range = np.linspace(-0.5, 1.5, 200)
+    portfolio_vol = []
+    portfolio_ret = []
+
+    for w1 in w1_range:
+        w = np.array([w1, 1 - w1])
+        port_vol = np.sqrt(w.T @ Sigma @ w)
+        port_ret = w @ mu
+        portfolio_vol.append(port_vol)
+        portfolio_ret.append(port_ret)
+
+    # 绘制有效前沿
+    plt.plot(portfolio_vol, portfolio_ret, label=f'ρ={rho}')
+
+    # 2. 找到最小方差组合
+    def portfolio_variance(w, Sigma):
+        return w.T @ Sigma @ w
+
+    # 约束：权重之和为1
+    constraints = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1})
+    bounds = ((-1, 2), (-1, 2))  # 允许卖空
+
+    # 初始权重
+    w0 = np.array([0.5, 0.5])
+
+    # 优化
+    res = minimize(portfolio_variance, w0, args=(Sigma,), bounds=bounds, constraints=constraints)
+    w_mvp = res.x
+    vol_mvp = np.sqrt(portfolio_variance(w_mvp, Sigma))
+    ret_mvp = w_mvp @ mu
+
+    # 标记最小方差点
+    plt.scatter(vol_mvp, ret_mvp, color='red', zorder=5)
+    plt.text(vol_mvp, ret_mvp, f'MVP (ρ={rho})', fontsize=9, verticalalignment='bottom')
+
+    # 保存rho=0.45时的MVP波动率
+    if rho == 0.45:
+        result['mvp_vol_at_rho45'] = vol_mvp
+
+# 3. 对于rho=0.45，计算目标收益10%时的最小波动率
+rho = 0.45
+Sigma = np.array([
+    [vol[0]**2, vol[0] * vol[1] * rho],
+    [vol[0] * vol[1] * rho, vol[1]**2]
+])
+
+# 定义优化问题：最小化方差，约束收益=10%，权重之和=1
+def portfolio_variance(w, Sigma):
+    return w.T @ Sigma @ w
+
+constraints = (
+    {'type': 'eq', 'fun': lambda w: np.sum(w) - 1},
+    {'type': 'eq', 'fun': lambda w: w @ mu - 0.10}
+)
+bounds = ((-1, 2), (-1, 2))
+
+w0 = np.array([0.5, 0.5])
+res = minimize(portfolio_variance, w0, args=(Sigma,), bounds=bounds, constraints=constraints)
+w_opt = res.x
+vol_opt = np.sqrt(portfolio_variance(w_opt, Sigma))
+result['frontier_vol_at_target'] = vol_opt
+
+# 图形设置
+plt.title('Efficient Frontier for Two Assets with Different Correlations')
+plt.xlabel('Portfolio Volatility')
+plt.ylabel('Portfolio Return')
+plt.legend()
+plt.grid(True)
+
+# 保存图形
+figure_path = 'efficient_frontier.png'
+plt.savefig(figure_path)
+result['figure_path'] = figure_path
+
+# 显示图形（可选）
+plt.show()
+
+# 输出结果
+print(result)
+```

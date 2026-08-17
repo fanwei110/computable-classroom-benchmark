@@ -1,0 +1,104 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+
+# --- 债券参数 ---
+FACE = 100
+COUPON_RATE = 0.046
+MATURITY = 7
+Y0 = 0.053
+
+# --- 收益率变动幅度（可调参数） ---
+# 默认3.5%，使图表范围大致覆盖2%至9%
+YIELD_CHANGE_AMPLITUDE = 0.035 
+
+# --- 核心计算函数 ---
+def bond_price(y, face=FACE, coupon_rate=COUPON_RATE, maturity=MATURITY):
+    """计算债券精确价格，支持标量和numpy数组输入"""
+    c = face * coupon_rate
+    pv_cf = 0
+    for t in range(1, maturity + 1):
+        pv_cf += c / (1 + y)**t
+    pv_face = face / (1 + y)**maturity
+    return pv_cf + pv_face
+
+def mac_duration(y, face=FACE, coupon_rate=COUPON_RATE, maturity=MATURITY):
+    """计算麦考利久期"""
+    c = face * coupon_rate
+    p = bond_price(y, face, coupon_rate, maturity)
+    w_sum = 0
+    for t in range(1, maturity + 1):
+        w_sum += t * c / (1 + y)**t
+    w_sum += maturity * face / (1 + y)**maturity
+    return w_sum / p
+
+def mod_duration(y, face=FACE, coupon_rate=COUPON_RATE, maturity=MATURITY):
+    """计算修正久期"""
+    return mac_duration(y, face, coupon_rate, maturity) / (1 + y)
+
+# --- 指标计算 ---
+p0 = bond_price(Y0)
+d_mod = mod_duration(Y0)
+
+# 收益率上升100个基点(1%)后的精确价格
+y_up100 = Y0 + 0.01
+price_at_up100bp = bond_price(y_up100)
+
+# 用久期估计的相对价格变化（按小数表示）
+dur_approx_change_up100bp = -d_mod * 0.01
+
+# --- 绘图 ---
+fig, ax = plt.subplots(figsize=(10, 6))
+plt.subplots_adjust(bottom=0.25)
+
+y_range = np.linspace(Y0 - YIELD_CHANGE_AMPLITUDE, Y0 + YIELD_CHANGE_AMPLITUDE, 400)
+exact_prices = bond_price(y_range)
+approx_prices = p0 * (1 - d_mod * (y_range - Y0))
+
+line_exact, = ax.plot(y_range * 100, exact_prices, label='精确价格', color='blue', linewidth=2)
+line_approx, = ax.plot(y_range * 100, approx_prices, label='久期近似', linestyle='--', color='red', linewidth=2)
+ax.scatter([Y0 * 100], [p0], color='black', zorder=5, label=f'当前状态 (y={Y0*100:.1f}%)')
+
+ax.set_xlabel('收益率 (%)')
+ax.set_ylabel('债券价格')
+ax.set_title('债券价格随收益率变化曲线及久期近似')
+ax.legend()
+ax.grid(True, linestyle=':', alpha=0.7)
+
+# 添加滑动条，实现收益率变动幅度的可调
+ax_amp = plt.axes([0.25, 0.1, 0.65, 0.03])
+slider_amp = Slider(ax_amp, '变动幅度(%)', 1.0, 10.0, valinit=YIELD_CHANGE_AMPLITUDE * 100)
+
+def update(val):
+    amp = slider_amp.val / 100
+    new_y_range = np.linspace(Y0 - amp, Y0 + amp, 400)
+    exact_prices_new = bond_price(new_y_range)
+    approx_prices_new = p0 * (1 - d_mod * (new_y_range - Y0))
+    
+    line_exact.set_xdata(new_y_range * 100)
+    line_exact.set_ydata(exact_prices_new)
+    line_approx.set_xdata(new_y_range * 100)
+    line_approx.set_ydata(approx_prices_new)
+    
+    ax.set_xlim((Y0 - amp) * 100, (Y0 + amp) * 100)
+    ax.relim()
+    ax.autoscale_view()
+    fig.canvas.draw_idle()
+
+slider_amp.on_changed(update)
+
+# 保存图片
+figure_path = 'bond_price_vs_yield.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+
+# --- 封装输出 ---
+result = {
+    'price_at_up100bp': price_at_up100bp,
+    'dur_approx_change_up100bp': dur_approx_change_up100bp,
+    'figure_path': figure_path
+}
+
+# 打印结果供查看
+print(result)
+```

@@ -1,0 +1,22 @@
+import math
+from scipy.stats import norm
+
+position = 1_850_000
+annual_vol = 0.218
+# 正态分布分位数
+z_95 = norm.ppf(0.95)  # 单尾 95%
+z_99 = norm.ppf(0.99)  # 单尾 99%
+
+# 计算标准差
+sigma_1d = annual_vol * math.sqrt(1/252)
+sigma_10d = annual_vol * math.sqrt(10/252)
+
+# 参数法VaR
+var_95_1d = position * z_95 * sigma_1d
+var_99_10d = position * z_99 * sigma_10d
+
+result = {
+    'var_95_1d': round(var_95_1d, 2),
+    'var_99_10d': round(var_99_10d, 2)
+}
+result

@@ -1,0 +1,59 @@
+由于我无法直接访问你本地的数据文件，下面给出完整的计算逻辑与 Python 代码。你只需将数据加载为包含 `fund` 列的 DataFrame，运行代码即可得到年化夏普比率，并存入 `result` 字典。
+
+### 计算步骤与约定处理
+- **无风险利率**：年利率 2.1%（小数 0.021），按年复利报价，因此日化无风险利率为  
+  \[
+  r_{f,\text{daily}} = (1 + 0.021)^{1/252} - 1
+  \]
+- **日超额收益率**：  
+  \[
+  e_t = r_{\text{fund},t} - r_{f,\text{daily}}
+  \]
+- **年化超额收益率**：  
+  \[
+  \mu_{\text{annual}} = \bar{e} \times 252
+  \]
+- **年化波动率**：使用日超额收益率序列，样本标准差（ddof=1），年化  
+  \[
+  \sigma_{\text{annual}} = \sigma_{e,\text{daily}} \times \sqrt{252}
+  \]
+- **年化夏普比率**：  
+  \[
+  \text{Sharpe} = \frac{\mu_{\text{annual}}}{\sigma_{\text{annual}}}
+  \]
+
+### Python 代码
+```python
+import pandas as pd
+import numpy as np
+
+# 读取数据（请根据实际文件路径和格式调整）
+df = pd.read_csv('你的数据文件.csv')  # 或 pd.read_excel(...)
+fund_returns = df['fund']  # 日收益率，小数形式（例如 0.01 代表 1%）
+
+# 参数设定
+rf_annual = 0.021
+trading_days = 252
+
+# 日化无风险利率（年复利转日复利）
+rf_daily = (1 + rf_annual) ** (1 / trading_days) - 1
+
+# 日超额收益率
+excess_daily = fund_returns - rf_daily
+
+# 年化超额收益率与年化波动率（ddof=1）
+mean_excess_daily = excess_daily.mean()
+std_excess_daily = excess_daily.std(ddof=1)
+
+annual_excess_return = mean_excess_daily * trading_days
+annual_volatility = std_excess_daily * np.sqrt(trading_days)
+
+# 年化夏普比率
+sharpe_annual = annual_excess_return / annual_volatility
+
+# 按要求存入字典
+result = {'sharpe_annual': sharpe_annual}
+```
+
+### 输出契约
+运行上述代码后，`result` 字典将严格包含键 `'sharpe_annual'`，其值为计算出的年化夏普比率（小数形式）。你只需确保数据中的 `fund` 列为日收益率（小数），代码即可完成计算。

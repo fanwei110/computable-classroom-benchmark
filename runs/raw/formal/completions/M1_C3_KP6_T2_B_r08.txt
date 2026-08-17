@@ -1,0 +1,74 @@
+以下是计算60天滚动夏普比率并绘制图表的Python代码实现。我们假设`fund`是一个包含基金日收益率的Series或DataFrame列，`rf`是年化无风险利率（2.1%）。
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+def calculate_rolling_sharpe(fund, rf=0.021, window=60):
+    """
+    计算滚动夏普比率
+
+    参数:
+    - fund: Series或DataFrame列，包含基金的日收益率
+    - rf: 年化无风险利率，默认2.1%
+    - window: 滚动窗口长度，默认60天
+
+    返回:
+    - result: 包含最后一个窗口夏普比率和图片路径的字典
+    """
+    # 日度无风险利率
+    daily_rf = rf / 252
+
+    # 计算滚动超额收益均值和标准差
+    excess_return = fund - daily_rf
+    rolling_mean = excess_return.rolling(window=window).mean()
+    rolling_std = excess_return.rolling(window=window).std(ddof=1)
+
+    # 计算滚动夏普比率（年化）
+    rolling_sharpe = (rolling_mean / rolling_std) * np.sqrt(252)
+
+    # 获取最后一个窗口的夏普比率
+    last_sharpe = rolling_sharpe.iloc[-1]
+
+    # 绘制图形
+    plt.figure(figsize=(12, 6))
+    rolling_sharpe.plot(title=f'{window}-day Rolling Sharpe Ratio')
+    plt.xlabel('Date')
+    plt.ylabel('Sharpe Ratio')
+    plt.grid(True)
+
+    # 保存图片
+    figure_path = 'rolling_sharpe.png'
+    plt.savefig(figure_path)
+    plt.close()
+
+    # 返回结果
+    result = {
+        'rolling_sharpe_last': last_sharpe,
+        'figure_path': os.path.abspath(figure_path)
+    }
+
+    return result
+
+# 示例用法（假设fund是一个Series，包含基金的日收益率）
+# fund = pd.Series(...)  # 你的基金日收益率数据
+# result = calculate_rolling_sharpe(fund, rf=0.021, window=60)
+# print(result)
+```
+
+### 说明：
+1. **输入数据**：`fund`应为包含基金日收益率的`pandas.Series`或`DataFrame`的一列。
+2. **无风险利率**：年化无风险利率`rf`默认为2.1%，转换为日度无风险利率时除以252（交易日数）。
+3. **滚动计算**：
+   - 计算超额收益（基金收益率 - 无风险利率）。
+   - 计算滚动窗口（默认60天）的超额收益均值和标准差（样本标准差，`ddof=1`）。
+   - 夏普比率 = (滚动均值 / 滚动标准差) * √252（年化）。
+4. **输出**：
+   - `result['rolling_sharpe_last']`：最后一个窗口的夏普比率。
+   - `result['figure_path']`：保存的图片路径（绝对路径）。
+
+### 注意事项：
+- 确保`fund`的数据长度大于窗口长度（60天），否则无法计算。
+- 图片默认保存为当前目录下的`rolling_sharpe.png`，可根据需要修改路径。

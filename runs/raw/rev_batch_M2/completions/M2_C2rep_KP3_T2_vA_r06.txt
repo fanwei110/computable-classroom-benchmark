@@ -1,0 +1,97 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd   # 符合要求导入，但本脚本未直接使用
+import scipy as sp    # 符合要求导入，但本脚本未直接使用
+
+# ========================
+# 债券参数
+# ========================
+FACE = 100.0               # 面值
+COUPON_RATE = 0.046        # 票面利率（年化）
+MATURITY = 7               # 剩余期限（年）
+Y0 = 0.053                 # 当前到期收益率
+
+# 收益率变动幅度（可调，单位：小数形式的百分比）
+DELTA_Y = 0.01             # +100 个基点
+
+# ========================
+# 现金流设置（假设每年付息一次）
+# ========================
+years = np.arange(1, MATURITY + 1)
+coupon = FACE * COUPON_RATE
+cashflows = np.full(MATURITY, coupon)
+cashflows[-1] += FACE      # 最后一期还本
+
+# ========================
+# 定价函数（支持标量与向量化输入）
+# ========================
+def bond_price(ytm):
+    """
+    计算给定到期收益率对应的全价
+    ytm : float 或 array_like
+    """
+    ytm = np.asarray(ytm, dtype=float)
+    scalar = ytm.ndim == 0
+    ytm = np.atleast_1d(ytm)
+    # 折现因子矩阵：(len(ytm), MATURITY)
+    discount = (1.0 + ytm[:, np.newaxis]) ** (-years[np.newaxis, :])
+    prices = np.sum(cashflows[np.newaxis, :] * discount, axis=1)
+    return prices[0] if scalar else prices
+
+# ========================
+# 当前价格与久期
+# ========================
+P0 = bond_price(Y0)
+
+# 麦考利久期
+pv_cf = cashflows / (1 + Y0)**years
+D_mac = np.sum(years * pv_cf) / P0
+
+# 修正久期（年复利假设下 MD = D_mac / (1+y)）
+MD = D_mac / (1.0 + Y0)
+
+# ========================
+# 精确价格-收益率曲线
+# ========================
+y_grid = np.linspace(0.02, 0.09, 500)      # 2% 到 9%
+prices_exact = bond_price(y_grid)
+
+# 基于久期的线性近似价格
+prices_approx = P0 * (1.0 - MD * (y_grid - Y0))
+
+# ========================
+# 收益率上升 DELTA_Y 后的计算
+# ========================
+y_up = Y0 + DELTA_Y
+P_up_exact = bond_price(y_up)                     # 精确价格
+dur_approx_change = -MD * DELTA_Y                 # 久期法估算的相对价格变化（ΔP/P）
+
+# ========================
+# 绘图并保存
+# ========================
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.plot(y_grid * 100, prices_exact, linewidth=2, label='Exact Price')
+ax.plot(y_grid * 100, prices_approx, '--', linewidth=2, label='Duration Approximation')
+ax.axvline(Y0 * 100, color='gray', linestyle=':', label=f'Current YTM = {Y0*100:.1f}%')
+ax.set_xlabel('Yield to Maturity (%)')
+ax.set_ylabel('Bond Price')
+ax.set_title('Bond Price–Yield Curve')
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+figure_path = 'bond_price_yield.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close(fig)
+
+# ========================
+# 结果汇总
+# ========================
+result = {
+    'price_at_up100bp': round(P_up_exact, 6),
+    'dur_approx_change_up100bp': round(dur_approx_change, 6),
+    'figure_path': figure_path
+}
+
+print(result)
+```

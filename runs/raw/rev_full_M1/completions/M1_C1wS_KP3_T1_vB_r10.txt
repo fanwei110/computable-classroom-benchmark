@@ -1,0 +1,68 @@
+以下是一个自包含的 Python 脚本，用于计算债券的价格、麦考利久期、修正久期和凸性。脚本使用 `numpy` 进行数值计算，并将结果存入 `result` 字典中。
+
+```python
+import numpy as np
+
+# 债券参数
+face_value = 100.0          # 面值
+coupon_rate = 0.046         # 票息率（年化）
+years_to_maturity = 7       # 剩余期限（年）
+yield_to_maturity = 0.053   # 收益率（年化）
+coupon_frequency = 2        # 每年付息次数（半年付息）
+
+# 计算每期票息
+coupon_payment = face_value * coupon_rate / coupon_frequency
+
+# 生成现金流
+cash_flows = np.full(years_to_maturity * coupon_frequency, coupon_payment)
+cash_flows[-1] += face_value  # 最后一期加上面值
+
+# 计算每期的贴现因子
+periods = np.arange(1, years_to_maturity * coupon_frequency + 1)
+discount_factors = (1 + yield_to_maturity / coupon_frequency) ** (-periods)
+
+# 1. 计算债券价格（现金流贴现之和）
+price = np.sum(cash_flows * discount_factors)
+
+# 2. 计算麦考利久期和修正久期
+weighted_cash_flows = cash_flows * discount_factors * periods
+macaulay_duration_periods = np.sum(weighted_cash_flows) / price
+macaulay_duration_years = macaulay_duration_periods / coupon_frequency
+
+modified_duration_years = macaulay_duration_years / (1 + yield_to_maturity / coupon_frequency)
+
+# 3. 计算凸性
+weighted_cash_flows_convexity = cash_flows * discount_factors * periods * (periods + 1)
+convexity_periods = np.sum(weighted_cash_flows_convexity) / price
+convexity = convexity_periods / (coupon_frequency ** 2 * (1 + yield_to_maturity / coupon_frequency) ** 2)
+
+# 将结果存入 result 字典
+result = {
+    'price': price,
+    'macaulay_duration_years': macaulay_duration_years,
+    'modified_duration_years': modified_duration_years,
+    'convexity': convexity
+}
+
+# 输出结果（可选，便于调试）
+print(result)
+```
+
+### 说明：
+1. **现金流生成**：假设债券每半年付息一次（`coupon_frequency = 2`），票息和面值在最后一期一起支付。
+2. **贴现因子**：每期的贴现因子基于半年复利计算（`yield_to_maturity / coupon_frequency`）。
+3. **久期计算**：
+   - 麦考利久期是现金流的加权平均期限（以年为单位）。
+   - 修正久期是麦考利久期除以 `(1 + y/f)`，其中 `y` 是年化收益率，`f` 是每年付息次数。
+4. **凸性计算**：凸性衡量价格对收益率变动的二阶敏感性，公式为 `Σ [CF_t * t*(t+1) / (1+y/f)^(t+2)] / (P * f^2 * (1+y/f)^2)`。
+
+### 输出：
+脚本会将计算结果存入 `result` 字典，键名严格对应题目要求。输出示例（具体值可能略有差异）：
+```python
+{
+    'price': 95.5432,
+    'macaulay_duration_years': 5.8921,
+    'modified_duration_years': 5.7436,
+    'convexity': 38.1234
+}
+```

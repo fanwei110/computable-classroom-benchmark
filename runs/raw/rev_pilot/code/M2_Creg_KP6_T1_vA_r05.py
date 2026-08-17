@@ -1,0 +1,58 @@
+import numpy as np
+import pandas as pd
+
+# ------------------------------------------------------------
+# 第一部分：基于模拟的 "fund" 列日收益计算年化夏普比率
+# ------------------------------------------------------------
+# 设定随机种子，确保可复现
+np.random.seed(42)
+# 生成 1000 个日收益，均值为 0.0005，标准差为 0.01
+daily_returns = np.random.normal(loc=0.0005, scale=0.01, size=1000)
+
+# 无风险利率（年化）
+rf_annual = 0.021
+# 年化交易日数
+trading_days = 252
+
+# 年化收益率
+ann_return = daily_returns.mean() * trading_days
+# 年化波动率
+ann_vol = daily_returns.std() * np.sqrt(trading_days)
+# 年化夏普比率
+sharpe_annual = (ann_return - rf_annual) / ann_vol
+
+# ------------------------------------------------------------
+# 第二部分：绩效归因 — 配置效应、选择效应、交互效应
+# ------------------------------------------------------------
+# 组合数据
+w_p = np.array([0.45, 0.35, 0.20])   # 组合权重
+r_p = np.array([0.083, 0.021, -0.014])  # 组合行业收益
+
+# 基准数据
+w_b = np.array([0.40, 0.40, 0.20])   # 基准权重
+r_b = np.array([0.067, 0.034, -0.009])  # 基准行业收益
+
+# 权重差异与收益差异
+delta_w = w_p - w_b
+delta_r = r_p - r_b
+
+# 配置效应 = sum( (w_p - w_b) * r_b )
+allocation_effect = np.sum(delta_w * r_b)
+# 选择效应 = sum( w_b * (r_p - r_b) )
+selection_effect = np.sum(w_b * delta_r)
+# 交互效应 = sum( (w_p - w_b) * (r_p - r_b) )
+interaction_effect = np.sum(delta_w * delta_r)
+
+# ------------------------------------------------------------
+# 输出结果字典
+# ------------------------------------------------------------
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+# 如果脚本直接运行，打印结果
+if __name__ == "__main__":
+    print(result)

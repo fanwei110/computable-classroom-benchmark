@@ -1,0 +1,73 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==================== 参数设置 ====================
+POSITION = 1000000          # 头寸规模：1,000,000 元人民币
+CONFIDENCE_LEVEL = 0.95     # 置信水平（可调参数）
+DATA_PATH = 'data/market_snapshot_v1.csv'
+FIGURE_PATH = 'hist_var_plot.png'
+
+# ==================== 1. 读取数据与构造日损益 ====================
+# 读取快照 CSV
+df = pd.read_csv(DATA_PATH)
+
+# 提取 fund 列的日收益序列并去除缺失值
+# 假设 "fund" 列为日收益率（如0.01代表1%）
+daily_returns = df['fund'].dropna()
+
+# 构造头寸的日损益 (PnL = Position * Return)
+pnl = POSITION * daily_returns
+
+# ==================== 2. 计算历史 VaR ====================
+# 历史模拟法：VaR 是损失分布的置信水平分位数
+# 损失 = -PnL，因此 PnL 的 (1 - 置信水平) 分位数取负即为 VaR
+pnl_quantile = np.percentile(pnl, (1 - CONFIDENCE_LEVEL) * 100)
+hist_var = -pnl_quantile
+
+# ==================== 3. 画直方图并加带标注的 VaR 线 ====================
+# 设置绘图风格
+plt.rcParams['font.size'] = 12
+plt.figure(figsize=(10, 6))
+
+# 绘制损益分布直方图
+plt.hist(pnl, bins=50, color='skyblue', edgecolor='black', alpha=0.75)
+
+# 添加 VaR 竖线
+plt.axvline(x=pnl_quantile, color='red', linestyle='--', linewidth=2, 
+            label=f'{CONFIDENCE_LEVEL*100:.0f}% 1-Day Historical VaR')
+
+# 在竖线旁添加文本标注
+ylim = plt.ylim()
+plt.text(pnl_quantile, ylim[1] * 0.85, 
+         f'VaR: {hist_var:,.2f} RMB\n({CONFIDENCE_LEVEL*100:.0f}% Confidence)', 
+         color='red', 
+         ha='right',    # 因 VaR 线在左尾，文字左对齐防重叠
+         va='top', 
+         fontweight='bold',
+         bbox=dict(facecolor='white', alpha=0.8, edgecolor='red', boxstyle='round,pad=0.5'))
+
+# 设置图表标签与标题
+plt.title(f'Daily Profit and Loss Distribution (Position = {POSITION:,} RMB)', fontsize=14)
+plt.xlabel('Daily Profit / Loss (RMB)', fontsize=12)
+plt.ylabel('Frequency', fontsize=12)
+plt.legend(loc='upper right')
+plt.grid(axis='y', linestyle=':', alpha=0.7)
+
+# ==================== 4. 保存图形并填充 result ====================
+plt.tight_layout()
+plt.savefig(FIGURE_PATH, dpi=150, bbox_inches='tight')
+plt.close()
+
+# 构建结果字典
+result = {
+    'hist_var_95_1d': hist_var,
+    'figure_path': FIGURE_PATH
+}
+
+# 脚本执行完毕后的控制台输出验证（可选，便于投屏展示最终结果）
+print(f"--- Calculation Result ---")
+print(f"Confidence Level: {CONFIDENCE_LEVEL*100:.0f}%")
+print(f"1-Day Historical VaR: {hist_var:,.2f} RMB")
+print(f"Figure saved to: {FIGURE_PATH}")
+print(f"Result dict: {result}")

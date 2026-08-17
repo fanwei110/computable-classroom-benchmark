@@ -1,0 +1,40 @@
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy import stats
+
+# 资产年化波动率
+sigma_A = 0.184
+sigma_B = 0.297
+
+# 组合权重（60/40）
+w_A = 0.6
+w_B = 0.4
+
+# 相关系数
+rho_before = 0.3
+rho_after = 0.8
+
+def portfolio_vol(w1, w2, s1, s2, rho):
+    """
+    计算两资产组合的年化波动率。
+    """
+    var = (w1**2 * s1**2 +
+           w2**2 * s2**2 +
+           2 * w1 * w2 * rho * s1 * s2)
+    return np.sqrt(var)
+
+# 计算
+vol_before = portfolio_vol(w_A, w_B, sigma_A, sigma_B, rho_before)
+vol_after  = portfolio_vol(w_A, w_B, sigma_A, sigma_B, rho_after)
+
+result = {
+    'vol_before_annual': vol_before,
+    'vol_after_annual': vol_after
+}
+
+# 可复现输出
+if __name__ == '__main__':
+    print(result)
+```

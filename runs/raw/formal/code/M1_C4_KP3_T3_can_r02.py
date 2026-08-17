@@ -1,0 +1,36 @@
+import numpy as np
+
+# 债券参数
+face_value = 100.0          # 面值
+annual_coupon_rate = 0.046  # 年票息率
+ytm = 0.053                 # 年收益率（年复利）
+years_to_maturity = 7       # 剩余期限（年）
+dy = 0.008                  # 收益率变动（80个基点）
+
+# 1. 计算每期现金流
+coupon_payment = face_value * annual_coupon_rate
+cash_flows = np.full(years_to_maturity, coupon_payment)
+cash_flows[-1] += face_value  # 最后一期加上面值
+
+# 2. 计算当前价格 P
+periods = np.arange(1, years_to_maturity + 1)
+discount_factors = (1 + ytm) ** periods
+P = np.sum(cash_flows / discount_factors)
+
+# 3. 计算麦考利久期
+weighted_cash_flows = cash_flows * periods
+macaulay_duration = np.sum(weighted_cash_flows / discount_factors) / P
+
+# 4. 计算修正久期
+modified_duration = macaulay_duration / (1 + ytm)
+
+# 5. 套用经验法则估算价格跌幅
+price_drop_pct = modified_duration * dy
+
+# 结果存入字典
+result = {
+    'price_drop_pct': price_drop_pct
+}
+
+# 输出 result 供课堂使用
+print(result)

@@ -1,0 +1,42 @@
+cff-version: 1.2.0
+message: "If you use this benchmark, please cite both the article and this artifact."
+title: "FinEdu-CodeGen: A Preregistered Reliability Benchmark for Live LLM-Generated Computational Finance Code"
+abstract: >-
+  A preregistered 2x2 reliability benchmark (convention information x structural
+  scaffolding) for live LLM-generated computational finance code in a
+  securities-investment classroom: 6 knowledge points x 3 task types x 4 prompt
+  conditions x 3 models = 2,160 generations, scored format-neutrally against
+  analytic/solver oracles, with a deterministic + blinded error-coding pipeline.
+type: dataset
+version: 1.0.0
+date-released: 2026-07-02
+license: MIT
+repository-code: "[REPO_URL]"
+doi: "[ZENODO_DOI]"
+keywords:
+  - reliability benchmark
+  - large language models
+  - code generation
+  - computational finance
+  - reproducibility
+authors:
+  # ORCID iDs to be added at release.
+  - family-names: "Guo"
+    given-names: "Ping"
+    affiliation: "School of Foreign Languages, Henan University of Technology, Zhengzhou, China"
+    email: "guopingapple@haut.edu.cn"   # corresponding author
+    orcid: "https://orcid.org/0009-0005-3867-1007"
+  - family-names: "Fan"
+    given-names: "Wei"
+    affiliation: "Business School, Zhengzhou University, Zhengzhou, China"
+    email: "vincentfan@whu.edu.cn"
+    orcid: "https://orcid.org/0000-0002-4174-1345"
+  - family-names: "Yang"
+    given-names: "Jiaqiang"
+    affiliation: "Laboratory of Key Metals, Zhengzhou University, Zhengzhou, China"
+    email: "jqyang@zzu.edu.cn"
+    orcid: "https://orcid.org/0000-0003-4707-2928"
+  - family-names: "Li"
+    given-names: "Xiaorui"
+    affiliation: "Business School, Zhengzhou University, Zhengzhou, China"
+    orcid: "https://orcid.org/0009-0003-5119-4079"

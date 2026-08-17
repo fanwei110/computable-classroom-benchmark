@@ -1,0 +1,57 @@
+我们将按照给定的条件计算债券的价格、Macaulay久期、修正久期和凸性。以下是详细的计算过程和结果：
+
+### 1. 债券价格（Price）
+债券价格是未来现金流的现值，包括每年的票息和到期时的面值。公式为：
+\[ P = \sum_{t=1}^{T} \frac{C}{(1 + y)^t} + \frac{F}{(1 + y)^T} \]
+其中：
+- \( C = 100 \times 4.6\% = 4.6 \)（年票息）
+- \( F = 100 \)（面值）
+- \( y = 5.3\% = 0.053 \)（YTM）
+- \( T = 7 \)（年期）
+
+计算过程：
+\[ P = \sum_{t=1}^{7} \frac{4.6}{(1 + 0.053)^t} + \frac{100}{(1 + 0.053)^7} \]
+
+逐项计算：
+\[ P = \frac{4.6}{1.053} + \frac{4.6}{1.053^2} + \frac{4.6}{1.053^3} + \frac{4.6}{1.053^4} + \frac{4.6}{1.053^5} + \frac{4.6}{1.053^6} + \frac{4.6}{1.053^7} + \frac{100}{1.053^7} \]
+\[ P \approx 4.3685 + 4.1486 + 3.9398 + 3.7434 + 3.5578 + 3.3823 + 3.2164 + 69.8329 \]
+\[ P \approx 96.19 \]
+
+### 2. Macaulay久期（Macaulay Duration）
+Macaulay久期是现金流的加权平均时间，权重为现金流的现值占债券价格的比例。公式为：
+\[ \text{Macaulay Duration} = \frac{1}{P} \sum_{t=1}^{T} \frac{t \cdot C}{(1 + y)^t} + \frac{T \cdot F}{(1 + y)^T} \]
+
+计算过程：
+\[ \text{Macaulay Duration} = \frac{1}{96.19} \left( \sum_{t=1}^{7} \frac{t \cdot 4.6}{(1 + 0.053)^t} + \frac{7 \cdot 100}{(1 + 0.053)^7} \right) \]
+\[ \approx \frac{1}{96.19} \left( 4.3685 \times 1 + 4.1486 \times 2 + 3.9398 \times 3 + 3.7434 \times 4 + 3.5578 \times 5 + 3.3823 \times 6 + 3.2164 \times 7 + 69.8329 \times 7 \right) \]
+\[ \approx \frac{1}{96.19} \left( 4.3685 + 8.2972 + 11.8194 + 14.9736 + 17.7890 + 20.2938 + 22.5148 + 488.8303 \right) \]
+\[ \approx \frac{588.8866}{96.19} \approx 6.12 \text{ 年} \]
+
+### 3. 修正久期（Modified Duration）
+修正久期是Macaulay久期对收益率的导数，衡量债券价格对收益率变化的敏感度。公式为：
+\[ \text{Modified Duration} = \frac{\text{Macaulay Duration}}{1 + y} \]
+\[ \text{Modified Duration} = \frac{6.12}{1 + 0.053} \approx 5.81 \text{ 年} \]
+
+### 4. 凸性（Convexity）
+凸性衡量债券价格对收益率变化的二阶敏感度。公式为：
+\[ \text{Convexity} = \frac{1}{P} \sum_{t=1}^{T} \frac{t(t + 1) \cdot C}{(1 + y)^{t + 2}} + \frac{T(T + 1) \cdot F}{(1 + y)^{T + 2}} \]
+
+计算过程：
+\[ \text{Convexity} = \frac{1}{96.19} \left( \sum_{t=1}^{7} \frac{t(t + 1) \cdot 4.6}{(1 + 0.053)^{t + 2}} + \frac{7 \cdot 8 \cdot 100}{(1 + 0.053)^{9}} \right) \]
+\[ \approx \frac{1}{96.19} \left( \frac{1 \cdot 2 \cdot 4.6}{1.053^3} + \frac{2 \cdot 3 \cdot 4.6}{1.053^4} + \frac{3 \cdot 4 \cdot 4.6}{1.053^5} + \frac{4 \cdot 5 \cdot 4.6}{1.053^6} + \frac{5 \cdot 6 \cdot 4.6}{1.053^7} + \frac{6 \cdot 7 \cdot 4.6}{1.053^8} + \frac{7 \cdot 8 \cdot 4.6}{1.053^9} + \frac{56 \cdot 100}{1.053^9} \right) \]
+\[ \approx \frac{1}{96.19} \left( 7.8796 + 19.9648 + 34.8806 + 51.6076 + 69.5602 + 88.3368 + 107.5848 + 1077.4248 \right) \]
+\[ \approx \frac{1457.2392}{96.19} \approx 15.15 \]
+
+### 最终结果
+将所有结果存入 `result` 字典：
+
+```python
+result = {
+    'price': 96.19,
+    'macaulay_duration_years': 6.12,
+    'modified_duration_years': 5.81,
+    'convexity': 15.15
+}
+```
+
+注：以上计算结果保留了两位小数，实际计算时可能需要更高精度。

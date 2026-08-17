@@ -1,0 +1,79 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib
+matplotlib.rcParams['font.sans-serif'] = ['SimHei', 'Arial']  # 用于中文显示
+matplotlib.rcParams['axes.unicode_minus'] = False
+
+# 债券参数
+face_value = 100
+coupon_rate = 0.046
+coupon = coupon_rate * face_value
+maturity = 7
+ytm0 = 0.053  # 当前到期收益率
+
+# -------- 计算当前精确价格 P0 和修正久期 --------
+# 现金流量与时间
+t = np.arange(1, maturity + 1)
+cash_flows = np.full(maturity, coupon)
+cash_flows[-1] += face_value  # 最后一期包含本金
+
+# 贴现因子
+discount_factors = (1 + ytm0) ** (-t)
+pv_cf = cash_flows * discount_factors
+P0 = np.sum(pv_cf)
+
+# 麦考利久期
+mac_duration = np.sum(t * pv_cf) / P0
+# 修正久期
+mod_duration = mac_duration / (1 + ytm0)
+
+print(f"P0 = {P0:.4f}, Macaulay Duration = {mac_duration:.4f}, Modified Duration = {mod_duration:.4f}")
+
+# -------- 收益率 +100bp 时的精确价格 --------
+dy = 0.01  # 100 bp
+ytm_up = ytm0 + dy
+discount_up = (1 + ytm_up) ** (-t)
+P_up = np.sum(cash_flows * discount_up)
+print(f"收益率上升100bp后的精确价格 = {P_up:.4f}")
+
+# 久期近似的相对变化
+dur_approx_change = -mod_duration * dy
+print(f"久期近似相对变化 = {dur_approx_change:.4%}")
+
+# -------- 价格-收益率曲线 --------
+yields = np.linspace(0.02, 0.09, 200)  # 收益率范围可调
+# 精确价格
+PV_coupons_exact = coupon * (1 - (1 + yields)**(-maturity)) / yields
+PV_face_exact = face_value * (1 + yields)**(-maturity)
+prices_exact = PV_coupons_exact + PV_face_exact
+
+# 久期近似价格（基于 ytm0 线性展开）
+prices_approx = P0 * (1 - mod_duration * (yields - ytm0))
+
+# 绘图
+plt.figure(figsize=(10, 6))
+plt.plot(yields * 100, prices_exact, label='精确价格', linewidth=2)
+plt.plot(yields * 100, prices_approx, '--', label='久期近似', linewidth=2)
+plt.axvline(ytm0 * 100, color='gray', linestyle=':', alpha=0.7)
+plt.axvline(ytm_up * 100, color='gray', linestyle=':', alpha=0.7)
+plt.xlabel('到期收益率 (%)')
+plt.ylabel('债券价格')
+plt.title('债券价格-收益率曲线 (面值100, 票息4.6%, 7年)')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+
+# 保存图像
+fig_path = 'price_yield_curve.png'
+plt.savefig(fig_path, dpi=150)
+plt.show()
+print(f"图片已保存至 {fig_path}")
+
+# -------- 输出契约 --------
+result = {
+    'price_at_up100bp': round(P_up, 4),
+    'dur_approx_change_up100bp': round(dur_approx_change, 6),
+    'figure_path': fig_path
+}
+
+print("\nresult =", result)

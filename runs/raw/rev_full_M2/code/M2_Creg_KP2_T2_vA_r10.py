@@ -1,0 +1,98 @@
+import numpy as np
+import scipy  # 满足库要求，实际未调用具体函数
+import pandas as pd
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+
+# =========================
+# 1. 可调参数的默认值
+# =========================
+rf_init = 0.023        # 无风险利率
+rm_init = 0.094        # 市场期望收益
+
+# =========================
+# 2. 股票数据
+# =========================
+stocks = pd.DataFrame({
+    'stock': ['X', 'Y', 'Z'],
+    'beta':  [0.62, 1.18, 1.51],
+    'return':[0.081, 0.131, 0.099]
+})
+
+# =========================
+# 3. 计算 SML 初始值
+# =========================
+beta_range = np.linspace(0, 2, 200)
+sml_init = rf_init + (rm_init - rf_init) * beta_range
+
+# =========================
+# 4. 创建交互图形
+# =========================
+fig, ax = plt.subplots(figsize=(9, 6))
+plt.subplots_adjust(bottom=0.25)   # 为滑块留出空间
+
+# 绘制 SML 线
+line, = ax.plot(beta_range, sml_init, 'b-', linewidth=2, label='SML')
+# 绘制股票散点
+sc = ax.scatter(stocks['beta'], stocks['return'],
+                color='red', s=80, zorder=5, label='Stocks')
+# 为每个点添加文本标注
+for _, row in stocks.iterrows():
+    ax.text(row['beta'], row['return'], f"  {row['stock']}",
+            fontweight='bold', va='bottom', color='darkred')
+
+# 坐标轴与装饰
+ax.set_xlabel('Beta', fontsize=12)
+ax.set_ylabel('Expected Return', fontsize=12)
+ax.set_title('Security Market Line (SML) with Adjustable Parameters', fontsize=13)
+ax.set_xlim(0, 2)
+ax.set_ylim(0, 0.2)
+ax.grid(True, linestyle='--', alpha=0.6)
+ax.legend(loc='lower right')
+
+# =========================
+# 5. 添加滑块（可调参数）
+# =========================
+ax_rf = plt.axes([0.2, 0.12, 0.65, 0.03])   # 无风险利率滑块
+ax_rm = plt.axes([0.2, 0.06, 0.65, 0.03])   # 市场收益滑块
+
+slider_rf = Slider(ax_rf, 'Risk-Free Rate', 0.0, 0.1,
+                   valinit=rf_init, valfmt='%1.3f')
+slider_rm = Slider(ax_rm, 'Market Return', 0.05, 0.2,
+                   valinit=rm_init, valfmt='%1.3f')
+
+# 滑块更新回调
+def update(val):
+    rf = slider_rf.val
+    rm = slider_rm.val
+    new_sml = rf + (rm - rf) * beta_range
+    line.set_ydata(new_sml)
+    fig.canvas.draw_idle()
+
+slider_rf.on_changed(update)
+slider_rm.on_changed(update)
+
+# =========================
+# 6. 保存图形并输出结果
+# =========================
+figure_path = 'sml_plot.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+
+# 计算所需的 SML 斜率与 beta=1.27 处的 CAPM 期望收益（基于初始参数）
+sml_slope = rm_init - rf_init
+beta_target = 1.27
+er_at_beta_127 = rf_init + sml_slope * beta_target
+
+# 按契约组织结果
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': figure_path
+}
+
+# 打印结果，确保可复现
+print("Result dictionary:")
+print(result)
+
+# 如果运行环境支持 GUI，可显示交互窗口；保存已包含初始静态图像
+plt.show()

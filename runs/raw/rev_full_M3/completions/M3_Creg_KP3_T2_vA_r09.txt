@@ -1,0 +1,111 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 债券参数定义
+# ==========================================
+face_value = 100          # 面值
+coupon_rate = 0.046       # 票息率 4.6%
+maturity = 7              # 期限 7 年
+current_yield = 0.053     # 当前收益率 5.3%
+
+# 收益率变动幅度（做成可调变量，便于调整观察范围）
+yield_min = 0.02          # 最小收益率 2%
+yield_max = 0.09          # 最大收益率 9%
+
+# ==========================================
+# 债券定价与久期计算函数
+# ==========================================
+def bond_price(F, c, n, y):
+    """
+    计算债券的精确价格
+    F: 面值, c: 票息率, n: 期限, y: 收益率
+    """
+    periods = np.arange(1, n + 1)
+    cash_flows = np.full(n, F * c)
+    cash_flows[-1] += F  # 最后一期加上面值
+    discount_factors = (1 + y) ** periods
+    price = np.sum(cash_flows / discount_factors)
+    return price
+
+def bond_modified_duration(F, c, n, y):
+    """
+    计算债券的修正久期
+    """
+    P = bond_price(F, c, n, y)
+    periods = np.arange(1, n + 1)
+    cash_flows = np.full(n, F * c)
+    cash_flows[-1] += F
+    discount_factors = (1 + y) ** periods
+    
+    # 加权现金流现值
+    weighted_pv = np.sum(periods * cash_flows / discount_factors)
+    
+    # 麦考利久期
+    mac_duration = weighted_pv / P
+    # 修正久期
+    mod_duration = mac_duration / (1 + y)
+    return mod_duration
+
+# ==========================================
+# 计算核心指标
+# ==========================================
+# 当前价格与修正久期
+P0 = bond_price(face_value, coupon_rate, maturity, current_yield)
+D_mod = bond_modified_duration(face_value, coupon_rate, maturity, current_yield)
+
+# 1. 收益率上升100个基点 (1%) 后的精确价格
+yield_up100bp = current_yield + 0.01
+price_at_up100bp = bond_price(face_value, coupon_rate, maturity, yield_up100bp)
+
+# 2. 久期法估计的相对价格变化
+delta_y = 0.01
+dur_approx_change_up100bp = -D_mod * delta_y
+
+# ==========================================
+# 绘制价格-收益率曲线与久期近似
+# ==========================================
+# 生成收益率序列
+yields = np.linspace(yield_min, yield_max, 500)
+
+# 精确价格序列
+exact_prices = np.array([bond_price(face_value, coupon_rate, maturity, y) for y in yields])
+
+# 基于久期的近似价格序列: P_approx = P0 - P0 * D_mod * (y - y0)
+approx_prices = P0 - P0 * D_mod * (yields - current_yield)
+
+plt.figure(figsize=(10, 6))
+plt.plot(yields, exact_prices, label='Exact Price-Yield Curve', color='blue', linewidth=2)
+plt.plot(yields, approx_prices, label='Duration-Based Approximation', color='red', linestyle='--', linewidth=2)
+
+# 标注当前收益率位置
+plt.axvline(x=current_yield, color='gray', linestyle=':', label=f'Current Yield ({current_yield:.1%})')
+plt.scatter([current_yield], [P0], color='black', zorder=5)
+
+plt.title('Price-Yield Curve and Duration Approximation')
+plt.xlabel('Yield to Maturity')
+plt.ylabel('Bond Price')
+plt.legend()
+plt.grid(True, linestyle='-', alpha=0.6)
+
+# 保存图像
+figure_path = 'price_yield_curve.png'
+plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# ==========================================
+# 封装输出结果
+# ==========================================
+result = {
+    'price_at_up100bp': price_at_up100bp,
+    'dur_approx_change_up100bp': dur_approx_change_up100bp,
+    'figure_path': figure_path
+}
+
+# 打印结果供查阅（可选）
+if __name__ == '__main__':
+    print(f"收益率上升100bp后的精确价格: {result['price_at_up100bp']:.4f}")
+    print(f"久期法估计的相对价格变化: {result['dur_approx_change_up100bp']:.4%}")
+    print(f"图表已保存至: {result['figure_path']}")
+```

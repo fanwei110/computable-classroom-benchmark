@@ -1,0 +1,71 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 债券基本参数
+F = 100          # 面值
+C = 4.6          # 票息
+T = 7            # 期限
+y0 = 0.053       # 初始到期收益率 (YTM)
+
+# 变动幅度可调参数（此处为+100bp，若需调整直接修改此值）
+delta_y = 0.01
+
+# 精确价格计算函数
+def bond_price(y, F=100, C=4.6, T=7):
+    return sum([C / (1+y)**t for t in range(1, T+1)]) + F / (1+y)**T
+
+# 修正久期计算函数
+def modified_duration(y, F=100, C=4.6, T=7):
+    P = bond_price(y)
+    # dP/dy = -sum(t*C*(1+y)^(-t-1)) - T*F*(1+y)^(-T-1)
+    dP_dy = -sum([t * C / (1+y)**(t+1) for t in range(1, T+1)]) - T * F / (1+y)**(T+1)
+    return -dP_dy / P
+
+# 计算当前YTM下的精确价格和修正久期
+P0 = bond_price(y0)
+D_mod = modified_duration(y0)
+
+# 计算+100bp后的精确价格与久期法估计的相对变化
+y_up = y0 + delta_y
+price_at_up100bp = bond_price(y_up)
+dur_approx_change_up100bp = -D_mod * delta_y
+
+# 绘制图形
+y_range = np.linspace(0.02, 0.09, 300)
+exact_prices = [bond_price(y) for y in y_range]
+dur_approx_prices = [P0 - D_mod * P0 * (y - y0) for y in y_range]
+
+plt.figure(figsize=(10, 6))
+plt.plot(y_range * 100, exact_prices, label='精确价格', color='blue', linewidth=2)
+plt.plot(y_range * 100, dur_approx_prices, label='久期近似', color='red', linestyle='--', linewidth=2)
+
+# 标注初始点与上升100bp后的点
+exact_P_up = bond_price(y0 + delta_y)
+approx_P_up = P0 * (1 - D_mod * delta_y)
+
+plt.scatter([y0*100], [P0], color='black', zorder=5, label=f'初始YTM ({y0*100}%)')
+plt.scatter([y_up*100], [exact_P_up], color='blue', marker='x', zorder=5, label=f'+100bp精确价 ({exact_P_up:.2f})')
+plt.scatter([y_up*100], [approx_P_up], color='red', marker='x', zorder=5, label=f'+100bp久期近似价 ({approx_P_up:.2f})')
+
+plt.axvline(x=y0*100, color='grey', linestyle=':', alpha=0.7)
+plt.axvline(x=y_up*100, color='grey', linestyle='--', alpha=0.7)
+
+plt.title('债券价格-收益率曲线与久期近似对比')
+plt.xlabel('到期收益率 (%)')
+plt.ylabel('债券价格')
+plt.legend(loc='upper right')
+plt.grid(True, linestyle='--', alpha=0.6)
+
+# 保存图片
+fig_path = 'price_yield_curve.png'
+plt.savefig(fig_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# 按照输出契约存入字典
+result = {
+    'price_at_up100bp': round(price_at_up100bp, 4),
+    'dur_approx_change_up100bp': round(dur_approx_change_up100bp, 4),
+    'figure_path': fig_path
+}
+
+print(result)

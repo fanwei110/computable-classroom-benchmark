@@ -1,0 +1,47 @@
+import numpy as np
+
+def main():
+    # 债券参数
+    face_value = 100.0          # 面值
+    coupon_rate = 0.046         # 票息率
+    years = 7                   # 期限（年）
+    ytm = 0.053                 # 到期收益率（年化）
+    coupon = face_value * coupon_rate  # 每期票息
+
+    # 现金流发生时间（年末）
+    t = np.arange(1, years + 1, dtype=float)
+
+    # 各期现金流（最后一年包含本金）
+    cash_flows = np.full(years, coupon)
+    cash_flows[-1] += face_value
+
+    # 折现因子与现金流现值
+    discount_factors = 1.0 / (1.0 + ytm) ** t
+    present_values = cash_flows * discount_factors
+
+    # 价格
+    price = np.sum(present_values)
+
+    # 麦考利久期（年）
+    macaulay_duration_years = np.sum(t * present_values) / price
+
+    # 修正久期（年）
+    modified_duration_years = macaulay_duration_years / (1.0 + ytm)
+
+    # 凸性
+    convexity = np.sum(t * (t + 1.0) * present_values) / (price * (1.0 + ytm) ** 2)
+
+    # 存入字典
+    result = {
+        'price': price,
+        'macaulay_duration_years': macaulay_duration_years,
+        'modified_duration_years': modified_duration_years,
+        'convexity': convexity
+    }
+
+    return result
+
+if __name__ == "__main__":
+    result = main()
+    for key, value in result.items():
+        print(f"{key}: {value:.6f}")

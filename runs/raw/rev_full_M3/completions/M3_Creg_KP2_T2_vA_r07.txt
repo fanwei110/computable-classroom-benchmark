@@ -1,0 +1,120 @@
+下面脚本自包含、可复现；收益率以“每年百分比”为单位，因此 SML 斜率单位是“百分比/单位 beta”。
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib
+matplotlib.use("Agg")
+import matplotlib.pyplot as plt
+
+# 可调参数：每年百分比收益率
+RISK_FREE_RATE = 2.3
+MARKET_EXPECTED_RETURN = 9.4
+TARGET_BETA = 1.27
+FIGURE_PATH = "sml_plot.png"
+
+
+def capm_expected_return(beta, rf, rm):
+    beta = np.asarray(beta, dtype=float)
+    return rf + beta * (rm - rf)
+
+
+def run_capm_sml(rf=RISK_FREE_RATE, rm=MARKET_EXPECTED_RETURN,
+                 target_beta=TARGET_BETA, figure_path=FIGURE_PATH):
+    sml_slope = float(rm - rf)
+
+    betas = np.linspace(0.0, 2.0, 201)
+    sml_returns = capm_expected_return(betas, rf, rm)
+
+    er_at_beta_127 = float(capm_expected_return(target_beta, rf, rm))
+
+    stocks = pd.DataFrame({
+        "stock": ["X", "Y", "Z"],
+        "beta": [0.62, 1.18, 1.51],
+        "realized_return": [8.1, 13.1, 9.9],
+    })
+    stocks["capm_return"] = capm_expected_return(stocks["beta"].to_numpy(), rf, rm)
+
+    fig, ax = plt.subplots(figsize=(8.2, 5.6))
+
+    ax.plot(
+        betas,
+        sml_returns,
+        color="black",
+        lw=2,
+        label=f"SML: RF={rf:.1f}%, E(Rm)={rm:.1f}%, slope={sml_slope:.3f}% per beta"
+    )
+
+    # SML 上的无风险点和市场点
+    ax.scatter([0.0, 1.0], [rf, rm], color="gray", zorder=4)
+    ax.annotate(f"RF: beta=0, E(R)={rf:.1f}%", xy=(0, rf), xytext=(8, -18),
+                textcoords="offset points", fontsize=8)
+    ax.annotate(f"Market: beta=1, E(R)={rm:.1f}%", xy=(1, rm), xytext=(8, 10),
+                textcoords="offset points", fontsize=8)
+
+    # 股票 X/Y/Z
+    colors = {"X": "#1f77b4", "Y": "#ff7f0e", "Z": "#d62728"}
+    offsets = {"X": (10, 10), "Y": (10, 10), "Z": (10, -22)}
+
+    for row in stocks.itertuples(index=False):
+        c = colors[row.stock]
+        ax.scatter(row.beta, row.realized_return, color=c, s=80, zorder=5,
+                   edgecolor="white", linewidth=0.8)
+        ax.annotate(
+            f"{row.stock}\nbeta={row.beta:.2f}, r={row.realized_return:.1f}%",
+            xy=(row.beta, row.realized_return),
+            xytext=offsets[row.stock],
+            textcoords="offset points",
+            fontsize=9,
+            color=c,
+            arrowprops=dict(arrowstyle="-", color=c, lw=0.8)
+        )
+
+    # beta=1.27 处的 CAPM 期望收益点
+    ax.scatter([target_beta], [er_at_beta_127], marker="x", color="green",
+               zorder=5, s=70)
+    ax.annotate(
+        f"beta={target_beta:.2f}\nE(R)={er_at_beta_127:.3f}%",
+        xy=(target_beta, er_at_beta_127),
+        xytext=(-110, 12),
+        textcoords="offset points",
+        fontsize=8,
+        color="green"
+    )
+
+    ax.set_xlabel("Beta")
+    ax.set_ylabel("Return (% per year)")
+    ax.set_title("Security Market Line (CAPM)")
+    ax.set_xlim(0, 2)
+
+    all_y = np.concatenate([
+        sml_returns,
+        stocks["realized_return"].to_numpy(),
+        [er_at_beta_127]
+    ])
+    ax.set_ylim(float(np.min(all_y)) - 2.0, float(np.max(all_y)) + 3.0)
+
+    ax.grid(True, alpha=0.3)
+    ax.legend(loc="upper left", fontsize=9)
+
+    fig.tight_layout()
+    fig.savefig(figure_path, dpi=150, bbox_inches="tight")
+    plt.close(fig)
+
+    return {
+        "sml_slope": float(round(sml_slope, 6)),
+        "er_at_beta_127": float(round(er_at_beta_127, 6)),
+        "figure_path": figure_path,
+    }
+
+
+if __name__ == "__main__":
+    result = run_capm_sml()
+    print(result)
+```
+
+运行后输出为：
+
+```python
+{'sml_slope': 7.1, 'er_at_beta_127': 11.317, 'figure_path': 'sml_plot.png'}
+```

@@ -1,0 +1,78 @@
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+# ============================================================
+# 0. 可调参数
+# ============================================================
+WINDOW = 60                # 滚动窗口长度（交易日天数）
+RISK_FREE_RATE = 0.021     # 年化无风险利率
+TRADING_DAYS = 252         # 年化交易日数
+DATA_PATH = Path("data/market_snapshot_v1.csv")
+FIGURE_PATH = "rolling_sharpe_ratio.png"
+
+# ============================================================
+# 1. 读取数据并计算超额收益
+# ============================================================
+df = pd.read_csv(DATA_PATH)
+
+# 若存在日期列则将其设为索引并转换为datetime，否则使用整数索引
+date_cols = [c for c in df.columns if c.lower() in ("date", "datetime", "time")]
+if date_cols:
+    df[date_cols[0]] = pd.to_datetime(df[date_cols[0]])
+    df = df.set_index(date_cols[0])
+
+# 提取基金日收益率序列（假设为小数形式，例如0.01代表1%）
+fund = df["fund"]
+
+# 日化无风险利率
+rf_daily = RISK_FREE_RATE / TRADING_DAYS
+
+# 超额收益
+excess_return = fund - rf_daily
+
+# ============================================================
+# 2. 计算滚动年化夏普比率
+# ============================================================
+# 滚动均值和标准差，要求窗口内最少有 WINDOW 个有效数据点
+rolling_mean = excess_return.rolling(window=WINDOW, min_periods=WINDOW).mean()
+rolling_std = excess_return.rolling(window=WINDOW, min_periods=WINDOW).std()
+
+# 年化夏普比率 = (日均超额 / 日标准差) * sqrt(252)
+rolling_sharpe = (rolling_mean / rolling_std) * np.sqrt(TRADING_DAYS)
+
+# 移除因窗口不足产生的NaN
+rolling_sharpe = rolling_sharpe.dropna()
+
+# ============================================================
+# 3. 最近一个窗口的夏普值
+# ============================================================
+rolling_sharpe_last = float(rolling_sharpe.iloc[-1])
+
+# ============================================================
+# 4. 绘图并保存
+# ============================================================
+fig, ax = plt.subplots(figsize=(12, 5))
+ax.plot(rolling_sharpe.index, rolling_sharpe.values, linewidth=1.5, color="steelblue")
+ax.axhline(0, color="gray", linestyle="--", linewidth=0.8)
+ax.set_title(f"{WINDOW}-Day Rolling Annualized Sharpe Ratio", fontsize=14)
+ax.set_xlabel("Date" if date_cols else "Time index")
+ax.set_ylabel("Annualized Sharpe Ratio")
+ax.grid(True, alpha=0.3)
+fig.tight_layout()
+fig.savefig(FIGURE_PATH, dpi=150)
+plt.close(fig)
+
+# ============================================================
+# 5. 存储结果
+# ============================================================
+result = {
+    "rolling_sharpe_last": rolling_sharpe_last,
+    "figure_path": FIGURE_PATH,
+}
+
+# 屏幕展示（供教师投屏查看）
+print(result)
+```

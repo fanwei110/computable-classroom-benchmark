@@ -1,0 +1,43 @@
+import numpy as np
+from scipy.stats import norm
+
+# ==================== 基础参数 ====================
+S = 103.7       # 股票现价
+K = 97.5        # 行权价
+sigma = 0.276   # 隐含波动率 (年化)
+r = 0.043       # 无风险利率 (年化)
+T = 0.58        # 剩余期限 (年)
+
+# ==================== 步骤1：计算 d1 与 d2 ====================
+d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+d2 = d1 - sigma * np.sqrt(T)
+
+# ==================== 步骤2：计算期权价格与 delta ====================
+# 欧式看涨期权价格 C = S * N(d1) - K * exp(-rT) * N(d2)
+call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+
+# 欧式看涨期权 delta = N(d1)
+call_delta = norm.cdf(d1)
+
+# ==================== 步骤3：计算 vega ====================
+# vega = S * sqrt(T) * N'(d1) (对于不分红资产，q=0)
+# N'(d1) 为标准正态分布的概率密度函数
+call_vega = S * np.sqrt(T) * norm.pdf(d1)
+
+# ==================== 步骤4：填充 result ====================
+result = {
+    'call_price': call_price,
+    'call_delta': call_delta,
+    'call_vega': call_vega
+}
+
+# 投屏展示结果，保留4位小数以便课堂阅读
+print("="*40)
+print("Black-Scholes 欧式看涨期权计算结果")
+print("="*40)
+print(f"d1        : {d1:.4f}")
+print(f"d2        : {d2:.4f}")
+print(f"Call Price: {result['call_price']:.4f}")
+print(f"Call Delta: {result['call_delta']:.4f}")
+print(f"Call Vega : {result['call_vega']:.4f}")
+print("="*40)

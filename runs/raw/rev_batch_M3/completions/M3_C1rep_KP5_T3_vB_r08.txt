@@ -1,0 +1,18 @@
+要计算95%的一日VaR（Value at Risk），我们需要使用参数法（方差-协方差法）的VaR公式：
+
+$$ \text{VaR} = \text{头寸} \times Z_{\alpha} \times \sigma_{\text{1d}} $$
+
+其中：
+1. **头寸** = 2,700,000
+2. **$Z_{\alpha}$** = 95%置信水平下的正态分布分位数，通常取 **1.645**
+3. **$\sigma_{\text{1d}}$** = 日波动率。交易台报的是年化波动率24%，转换为日波动率需除以 $\sqrt{252}$（假设一年有252个交易日）：
+   $$ \sigma_{\text{1d}} = \frac{\sigma_{\text{ann}}}{\sqrt{252}} = \frac{24\%}{\sqrt{252}} \approx 1.5119\% $$
+
+代入计算：
+$$ \text{VaR}_{95\%, \text{1d}} = 2,700,000 \times 1.645 \times \frac{0.24}{\sqrt{252}} \approx 67,146.72 $$
+
+按照输出契约，结果如下：
+
+```python
+result = {'var_95_1d': 67146.72}
+```

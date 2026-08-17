@@ -1,0 +1,72 @@
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+import os
+
+# ===================== 可调参数 =====================
+K = 97.5          # 行权价
+r = 0.043         # 无风险利率
+T = 0.58          # 剩余期限(年)
+S_min, S_max = 70, 140  # 标的价格范围
+volatilities = [0.15, 0.276, 0.40]  # 波动率列表(可调)
+vol_labels = ['15%', '27.6%', '40%']
+
+# 目标计算点
+S_target = 110
+sigma_target = 0.276
+# ====================================================
+
+def bs_call_delta(S, K, r, T, sigma):
+    """计算欧式看涨期权的Delta"""
+    S = np.asarray(S, dtype=float)
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# 计算目标点的Delta
+delta_at_s110 = float(bs_call_delta(S_target, K, r, T, sigma_target))
+
+# 生成标的价格序列
+S_range = np.linspace(S_min, S_max, 500)
+
+# 绘图
+fig, ax = plt.subplots(figsize=(10, 6))
+colors = ['#2196F3', '#FF5722', '#4CAF50']
+
+for sigma, label, color in zip(volatilities, vol_labels, colors):
+    deltas = bs_call_delta(S_range, K, r, T, sigma)
+    ax.plot(S_range, deltas, label=f'σ = {label}', color=color, linewidth=2)
+
+ax.axvline(x=K, color='gray', linestyle='--', linewidth=0.8, alpha=0.6, label=f'行权价 K={K}')
+ax.axhline(y=0.5, color='gray', linestyle=':', linewidth=0.6, alpha=0.4)
+
+# 标注目标点
+delta_target = bs_call_delta(np.array([S_target]), K, r, T, sigma_target)[0]
+ax.plot(S_target, delta_target, 'ko', markersize=8, zorder=5)
+ax.annotate(f'S={S_target}, σ=27.6%\nΔ={delta_target:.4f}',
+            xy=(S_target, delta_target),
+            xytext=(S_target + 5, delta_target - 0.12),
+            fontsize=10,
+            arrowprops=dict(arrowstyle='->', color='black'),
+            bbox=dict(boxstyle='round,pad=0.3', facecolor='lightyellow', edgecolor='gray'))
+
+ax.set_xlabel('标的价格 (S)', fontsize=13)
+ax.set_ylabel('Delta (Δ)', fontsize=13)
+ax.set_title(f'看涨期权 Delta vs 标的价格\n(K={K}, r={r*100}%, T={T}年)', fontsize=14)
+ax.legend(fontsize=11, loc='upper left')
+ax.set_xlim(S_min, S_max)
+ax.set_ylim(-0.02, 1.02)
+ax.grid(True, alpha=0.3)
+
+plt.tight_layout()
+figure_path = os.path.abspath('delta_vs_price.png')
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# 构建结果字典
+result = {
+    'delta_at_s110': round(delta_at_s110, 6),
+    'figure_path': figure_path
+}
+
+print(result)
+print(f"\n当标的价格=110、波动率=27.6%时，Delta = {delta_at_s110:.6f}")

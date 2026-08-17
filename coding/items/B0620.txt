@@ -1,0 +1,57 @@
+=== B0620  任务 KP4_T1 (T1) ===
+
+--- 任务要求的输出键 ---
+call_price, call_delta, call_vega
+
+--- 判分失败明细 ---
+call_price: 提交值 13.3334  |  参考值 13.313704651787951
+call_delta: 提交值 0.6976  |  参考值 0.6974381730146305
+call_vega: 提交值 27.5679  |  参考值 27.56457460271352
+
+--- 提取出的代码 ---
+result = {
+    'call_price': 13.3334,
+    'call_delta': 0.6976,
+    'call_vega': 27.5679
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+要计算不分红欧式看涨期权（European Call）的价格、Delta 和 Vega，我们使用 Black-Scholes 模型。
+
+**参数如下：**
+*   标的资产价格 ($S$) = 103.7
+*   行权价 ($K$) = 97.5
+*   波动率 ($\sigma$) = 27.6% = 0.276
+*   无风险利率 ($r$) = 4.3% = 0.043
+*   到期时间 ($T$) = 0.58 年
+*   股息率 ($q$) = 0
+
+**计算步骤：**
+1. 计算中间变量 $d_1$ 和 $d_2$：
+   $$d_1 = \frac{\ln(S/K) + (r + \sigma^2/2)T}{\sigma\sqrt{T}} = \frac{\ln(103.7/97.5) + (0.043 + 0.276^2/2) \times 0.58}{0.276 \times \sqrt{0.58}} \approx 0.5171365$$
+   $$d_2 = d_1 - \sigma\sqrt{T} = 0.5171365 - 0.276 \times \sqrt{0.58} \approx 0.3069412$$
+
+2. 计算标准正态分布的累积概率和概率密度：
+   *   $N(d_1) \approx 0.69763$
+   *   $N(d_2) \approx 0.62056$
+   *   $N'(d_1) = \frac{1}{\sqrt{2\pi}} e^{-d_1^2/2} \approx 0.34903$
+
+3. 计算期权价格 ($C$)：
+   $$C = S \cdot N(d_1) - K \cdot e^{-rT} \cdot N(d_2)$$
+   $$C = 103.7 \times 0.69763 - 97.5 \times e^{-0.043 \times 0.58} \times 0.62056 \approx 72.3450 - 59.0117 \approx 13.3334$$
+
+4. 计算 Delta：
+   $$\Delta_{call} = N(d_1) \approx 0.6976$$
+
+5. 计算 Vega（按波动率绝对值变动1个单位计，即 $\partial C / \partial \sigma$）：
+   $$\text{Vega} = S \sqrt{T} N'(d_1) = 103.7 \times \sqrt{0.58} \times 0.34903 \approx 27.5679$$
+   *(注：若按波动率变动1%即0.01报价，Vega为0.2757。此处按数学导数原值输出)*
+
+```python
+result = {
+    'call_price': 13.3334,
+    'call_delta': 0.6976,
+    'call_vega': 27.5679
+}
+```

@@ -1,0 +1,95 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==================== 参数设置（可调） ====================
+FACE = 100.0            # 面值
+COUPON_RATE = 0.046     # 票息率（小数）
+MATURITY = 7            # 期限（年）
+Y0 = 0.053              # 当前收益率（小数）
+DY_UP = 0.01            # 收益率上升幅度（可调，此处100个基点）
+DY_PLOT_RANGE = 0.02    # 切线/凸性曲线显示的收益率变动范围（±200bp）
+Y_MIN, Y_MAX = 0.02, 0.09  # 精确曲线的收益率范围
+
+# ==================== 现金流 ====================
+coupon = FACE * COUPON_RATE
+cf = np.array([coupon] * (MATURITY - 1) + [coupon + FACE])  # 每年末现金流
+t = np.arange(1, MATURITY + 1, dtype=float)                 # 现金流时间
+
+# ==================== 定价函数 ====================
+def price_at_yield(y):
+    """计算给定收益率下的债券价格（年复利）"""
+    return np.sum(cf / (1 + y) ** t)
+
+# ==================== 当前收益率下的指标 ====================
+P0 = price_at_yield(Y0)
+
+# 麦考利久期
+pv_cf = cf / (1 + Y0) ** t
+mac_dur = np.sum(t * pv_cf) / P0
+
+# 修正久期
+mod_dur = mac_dur / (1 + Y0)
+
+# 凸性 (公式: Σ[t(t+1)CF_t/(1+y)^{t+2}] / P)
+conv = np.sum(t * (t + 1) * cf / (1 + Y0) ** (t + 2)) / P0
+
+# ==================== +100bp 下的精确价格与一阶相对变化 ====================
+y_up = Y0 + DY_UP
+P_up = price_at_yield(y_up)
+
+# 一阶相对变化（小数，下跌为负）
+dur_approx_change = -mod_dur * DY_UP
+
+# ==================== 画图 ====================
+y_grid = np.linspace(Y_MIN, Y_MAX, 300)
+price_exact = price_at_yield(y_grid)
+
+# 一阶久期近似（切线）
+price_dur_approx = P0 * (1 - mod_dur * (y_grid - Y0))
+
+# 二阶久期+凸性近似
+price_conv_approx = P0 * (1 - mod_dur * (y_grid - Y0) + 0.5 * conv * (y_grid - Y0) ** 2)
+
+plt.figure(figsize=(10, 6))
+plt.plot(y_grid * 100, price_exact, label='精确价格', linewidth=2)
+plt.plot(y_grid * 100, price_dur_approx, '--', label='一阶久期近似', linewidth=1.5)
+plt.plot(y_grid * 100, price_conv_approx, '-.', label='久期+凸性近似', linewidth=1.5)
+
+# 标记当前收益率点
+plt.axvline(Y0 * 100, color='gray', linestyle=':', alpha=0.7)
+plt.scatter([Y0 * 100], [P0], color='red', zorder=5)
+plt.text(Y0 * 100 + 0.15, P0, f'当前收益率 {Y0*100:.2f}%', fontsize=9, color='red')
+
+# 标记 +100bp 点
+plt.axvline(y_up * 100, color='orange', linestyle=':', alpha=0.7)
+plt.scatter([y_up * 100], [P_up], color='orange', zorder=5)
+
+plt.xlabel('收益率 (%)')
+plt.ylabel('债券价格')
+plt.title('债券价格-收益率曲线 (面值100, 票息4.6%, 7年期)')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+
+fig_path = 'bond_price_curve.png'
+plt.savefig(fig_path, dpi=150)
+plt.close()
+
+# ==================== 输出结果 ====================
+result = {
+    'price_at_up100bp': P_up,
+    'dur_approx_change_up100bp': dur_approx_change,
+    'figure_path': fig_path
+}
+
+# 打印便于课堂查看
+print("=== 计算结果 ===")
+print(f"当前价格 (Y=5.3%): {P0:.4f}")
+print(f"麦考利久期: {mac_dur:.4f} 年")
+print(f"修正久期: {mod_dur:.4f}")
+print(f"凸性: {conv:.4f} 年²")
+print(f"收益率上升 {DY_UP*100:.0f} bp 后的精确价格: {P_up:.4f}")
+print(f"久期法估计的相对价格变化: {dur_approx_change:.6f} ({dur_approx_change*100:.4f}%)")
+print(f"图形已保存至: {fig_path}")
+print("\nresult 字典内容:")
+print(result)

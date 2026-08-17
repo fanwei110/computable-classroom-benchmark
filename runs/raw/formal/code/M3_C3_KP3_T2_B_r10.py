@@ -1,0 +1,166 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+
+# ===================== 债券参数 =====================
+F = 100              # 面值
+c_rate = 0.046       # 票息率 4.6%
+n_years = 7          # 期限 7 年
+y0 = 0.053           # 当前 YTM 5.3%
+
+# ===================== 核心函数 =====================
+def bond_price_exact(y, F=100, c_rate=0.046, n=7):
+    """精确债券价格：年复利报价，年付息"""
+    coupon = F * c_rate
+    pv_coupons = sum(coupon / (1 + y) ** t for t in range(1, n + 1))
+    pv_face = F / (1 + y) ** n
+    return pv_coupons + pv_face
+
+def macaulay_duration(y, F=100, c_rate=0.046, n=7):
+    """Macaulay 久期"""
+    coupon = F * c_rate
+    P = bond_price_exact(y, F, c_rate, n)
+    w_sum = sum(t * coupon / (1 + y) ** t for t in range(1, n + 1))
+    w_sum += n * F / (1 + y) ** n
+    return w_sum / P
+
+def modified_duration(y, F=100, c_rate=0.046, n=7):
+    """修正久期"""
+    return macaulay_duration(y, F, c_rate, n) / (1 + y)
+
+def duration_approx_price(y_target, y_base, P_base, MD_base):
+    """久期法近似价格（一阶切线近似）"""
+    return P_base * (1 - MD_base * (y_target - y_base))
+
+# ===================== 当前状态 =====================
+P0 = bond_price_exact(y0, F, c_rate, n_years)
+MacD0 = macaulay_duration(y0, F, c_rate, n_years)
+MD0 = modified_duration(y0, F, c_rate, n_years)
+
+# ===================== +100bp 计算 =====================
+dy_100bp = 0.01
+y_up = y0 + dy_100bp
+price_up_exact = bond_price_exact(y_up, F, c_rate, n_years)
+dur_approx_rel_change = -MD0 * dy_100bp          # 久期法估计的相对变化
+price_up_approx = P0 * (1 + dur_approx_rel_change)
+
+# ===================== 绘图数据 =====================
+y_range = np.linspace(0.02, 0.09, 700)
+exact_prices = np.array([bond_price_exact(y) for y in y_range])
+approx_prices = np.array([duration_approx_price(y, y0, P0, MD0) for y in y_range])
+
+# ===================== 画图 =====================
+fig, ax = plt.subplots(figsize=(13, 8.5))
+plt.subplots_adjust(bottom=0.22, left=0.10, right=0.95)
+
+# --- 精确价格曲线 ---
+ax.plot(y_range * 100, exact_prices, 'b-', linewidth=2.3,
+        label='精确价格曲线')
+
+# --- 久期近似曲线（切线） ---
+ax.plot(y_range * 100, approx_prices, 'r--', linewidth=2.0,
+        label=f'久期近似曲线（修正久期 = {MD0:.4f}）')
+
+# --- 当前 YTM 点 ---
+ax.plot(y0 * 100, P0, 'ko', markersize=9, zorder=5,
+        label=f'当前点 (y={y0*100:.1f}%, P={P0:.4f})')
+
+# --- +100bp 标记 ---
+ax.plot(y_up * 100, price_up_exact, 'b*', markersize=15, zorder=6,
+        label=f'+100bp 精确价格 = {price_up_exact:.4f}')
+ax.plot(y_up * 100, price_up_approx, 'r^', markersize=12, zorder=6,
+        label=f'+100bp 久期近似价格 = {price_up_approx:.4f}')
+
+# --- +100bp 箭头 ---
+ax.annotate('', xy=(y_up * 100, P0 - 0.8), xytext=(y0 * 100, P0 - 0.8),
+            arrowprops=dict(arrowstyle='->', color='forestgreen', lw=2.5))
+ax.text((y0 * 100 + y_up * 100) / 2, P0 - 2.2,
+        '+100bp', ha='center', fontsize=11, color='forestgreen', fontweight='bold')
+
+# --- 辅助线 ---
+ax.axhline(y=P0, color='gray', linestyle=':', alpha=0.4)
+ax.axvline(x=y0 * 100, color='gray', linestyle=':', alpha=0.4)
+
+# --- 偏差标注 ---
+mid_y = (price_up_exact + price_up_approx) / 2
+ax.annotate('',
+            xy=(y_up * 100 + 0.15, price_up_exact),
+            xytext=(y_up * 100 + 0.15, price_up_approx),
+            arrowprops=dict(arrowstyle='<->', color='purple', lw=1.5))
+ax.text(y_up * 100 + 0.35, mid_y,
+        f'偏差\n{price_up_exact - price_up_approx:.4f}',
+        fontsize=9, color='purple', va='center')
+
+ax.set_xlabel('收益率 (%)', fontsize=13)
+ax.set_ylabel('价格', fontsize=13)
+ax.set_title(
+    f'债券价格-收益率曲线：精确 vs 久期近似\n'
+    f'面值100  票息4.6%  7年  当前YTM=5.3%  '
+    f'修正久期={MD0:.4f}  Macaulay久期={MacD0:.4f}',
+    fontsize=13, fontweight='bold')
+ax.legend(loc='upper right', fontsize=10, framealpha=0.92)
+ax.grid(True, alpha=0.3)
+
+# ============= 滑块：变动幅度可调 =============
+ax_slider = plt.axes([0.20, 0.06, 0.60, 0.03])
+slider = Slider(ax_slider, '收益率变动(bp)', -300, 300,
+                valinit=100, valstep=10, color='lightgreen')
+
+# 动态图形元素
+dyn_exact, = ax.plot([], [], 'b*', markersize=15, zorder=7)
+dyn_approx, = ax.plot([], [], 'r^', markersize=12, zorder=7)
+dyn_vline = ax.axvline(x=-1, color='forestgreen', ls='-', alpha=0.5, lw=1)
+dyn_txt_ex = ax.text(0, 0, '', fontsize=9, color='blue', fontweight='bold')
+dyn_txt_ap = ax.text(0, 0, '', fontsize=9, color='red', fontweight='bold')
+
+def update_slider(val):
+    bps = slider.val
+    dy = bps / 10000
+    y_new = y0 + dy
+    if 0.02 <= y_new <= 0.09:
+        p_ex = bond_price_exact(y_new)
+        p_ap = duration_approx_price(y_new, y0, P0, MD0)
+        dyn_exact.set_data([y_new * 100], [p_ex])
+        dyn_approx.set_data([y_new * 100], [p_ap])
+        dyn_vline.set_xdata([y_new * 100])
+        dyn_txt_ex.set_position((y_new * 100 + 0.12, p_ex + 0.6))
+        dyn_txt_ex.set_text(f'精确:{p_ex:.3f}')
+        dyn_txt_ap.set_position((y_new * 100 + 0.12, p_ap - 1.8))
+        dyn_txt_ap.set_text(f'近似:{p_ap:.3f}')
+    else:
+        dyn_exact.set_data([], [])
+        dyn_approx.set_data([], [])
+        dyn_vline.set_xdata([-1])
+        dyn_txt_ex.set_text('')
+        dyn_txt_ap.set_text('')
+    fig.canvas.draw_idle()
+
+slider.on_changed(update_slider)
+
+# ===================== 保存 =====================
+figure_path = 'price_yield_curve.png'
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+
+# ===================== 输出结果 =====================
+print("=" * 65)
+print(f"  当前 YTM = {y0*100:.1f}%")
+print(f"  精确价格 P0          = {P0:.4f}")
+print(f"  Macaulay 久期        = {MacD0:.4f} 年")
+print(f"  修正久期 MD          = {MD0:.4f}")
+print("-" * 65)
+print(f"  收益率 +100bp 后:")
+print(f"    精确价格           = {price_up_exact:.4f}")
+print(f"    久期法相对变化     = {dur_approx_rel_change:.6f}  "
+      f"({dur_approx_rel_change*100:.4f}%)")
+print(f"    久期法近似价格     = {price_up_approx:.4f}")
+print(f"    近似偏差           = {price_up_exact - price_up_approx:.4f}")
+print("=" * 65)
+
+# ===================== result 字典 =====================
+result = {
+    'price_at_up100bp': round(price_up_exact, 4),
+    'dur_approx_change_up100bp': round(dur_approx_rel_change, 6),
+    'figure_path': figure_path
+}
+
+print(f"\nresult = {result}")

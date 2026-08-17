@@ -1,0 +1,69 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 资产参数
+r1 = 0.071
+r2 = 0.124
+sigma1 = 0.163
+sigma2 = 0.289
+rho_list = [0.15, 0.45, 0.75]
+
+# 生成组合权重的范围（包含部分卖空/借入）
+w_range = np.linspace(-0.5, 1.5, 500)
+
+plt.figure(figsize=(10, 6))
+
+# 存储结果
+result = {}
+
+for rho in rho_list:
+    # 计算组合收益与风险
+    r_p = w_range * r1 + (1 - w_range) * r2
+    var_p = (w_range**2 * sigma1**2 +
+             (1 - w_range)**2 * sigma2**2 +
+             2 * w_range * (1 - w_range) * rho * sigma1 * sigma2)
+    sigma_p = np.sqrt(var_p)
+    
+    # 绘制前沿曲线
+    plt.plot(sigma_p, r_p, label=f'ρ = {rho}')
+    
+    # 最小方差组合
+    cov = rho * sigma1 * sigma2
+    w_mvp = (sigma2**2 - cov) / (sigma1**2 + sigma2**2 - 2 * cov)
+    r_mvp = w_mvp * r1 + (1 - w_mvp) * r2
+    sigma_mvp = np.sqrt(w_mvp**2 * sigma1**2 +
+                        (1 - w_mvp)**2 * sigma2**2 +
+                        2 * w_mvp * (1 - w_mvp) * cov)
+    
+    # 在图上标记最小方差组合
+    plt.scatter(sigma_mvp, r_mvp, marker='*', s=150, 
+                label=f'MVP ρ={rho}', zorder=5)
+    
+    # 如果需要特定ρ的结果
+    if rho == 0.45:
+        result['mvp_vol_at_rho45'] = round(sigma_mvp, 6)
+        
+        # 目标收益10%的最小波动率
+        r_target = 0.10
+        w_target = (r_target - r2) / (r1 - r2)
+        cov_045 = 0.45 * sigma1 * sigma2
+        var_target = (w_target**2 * sigma1**2 +
+                      (1 - w_target)**2 * sigma2**2 +
+                      2 * w_target * (1 - w_target) * cov_045)
+        sigma_target = np.sqrt(var_target)
+        result['frontier_vol_at_target'] = round(sigma_target, 6)
+
+# 图形修饰
+plt.title('Efficient Frontiers under Different Correlations')
+plt.xlabel('Annualized Volatility')
+plt.ylabel('Expected Annual Return')
+plt.legend()
+plt.grid(True)
+
+# 保存图形
+fig_path = 'efficient_frontier.png'
+plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+result['figure_path'] = fig_path
+print(result)

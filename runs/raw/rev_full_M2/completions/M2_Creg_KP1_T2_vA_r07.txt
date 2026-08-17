@@ -1,0 +1,156 @@
+以下是满足要求的自包含 Python 脚本：
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.optimize import minimize
+
+# 给定数据
+mu = np.array([0.071, 0.124])
+sigma = np.array([0.163, 0.289])
+rho_values = [0.15, 0.45, 0.75]
+target_return = 0.10
+
+# 结果存储
+result = {}
+
+def portfolio_statistics(weights, mu, cov):
+    """计算组合的期望收益和标准差"""
+    weights = np.asarray(weights)
+    port_return = np.dot(weights, mu)
+    port_vol = np.sqrt(np.dot(weights.T, np.dot(cov, weights)))
+    return port_return, port_vol
+
+def min_variance_portfolio(cov):
+    """计算最小方差组合（允许卖空、满仓）"""
+    n = len(cov)
+    # 最小化方差：min w' Σ w，约束 sum(w) = 1
+    def objective(w):
+        return np.dot(w.T, np.dot(cov, w))
+    constraints = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1})
+    w0 = np.ones(n) / n
+    result_opt = minimize(objective, w0, method='SLSQP', constraints=constraints)
+    return result_opt.x
+
+def optimal_volatility_for_return(target, mu, cov):
+    """计算给定收益下最小方差组合（允许卖空、满仓）"""
+    n = len(mu)
+    # 最小化方差：min w' Σ w，约束 sum(w)=1, w'μ = target
+    def objective(w):
+        return np.dot(w.T, np.dot(cov, w))
+    constraints = (
+        {'type': 'eq', 'fun': lambda w: np.sum(w) - 1},
+        {'type': 'eq', 'fun': lambda w: np.dot(w, mu) - target}
+    )
+    # 寻找可行初始点
+    w0 = min_variance_portfolio(cov)
+    result_opt = minimize(objective, w0, method='SLSQP', constraints=constraints)
+    return result_opt.x, np.sqrt(result_opt.fun)
+
+# 绘图设置
+fig, ax = plt.subplots(figsize=(10, 8))
+colors = ['blue', 'red', 'green']
+
+for idx, rho in enumerate(rho_values):
+    # 构建协方差矩阵
+    cov = np.array([
+        [sigma[0]**2, rho * sigma[0] * sigma[1]],
+        [rho * sigma[0] * sigma[1], sigma[1]**2]
+    ])
+    
+    # 计算最小方差组合
+    w_mvp = min_variance_portfolio(cov)
+    ret_mvp, vol_mvp = portfolio_statistics(w_mvp, mu, cov)
+    
+    # 如果是相关系数0.45，保存MVP波动率
+    if rho == 0.45:
+        result['mvp_vol_at_rho45'] = vol_mvp
+    
+    # 构建有效前沿（改变组合权重计算一系列点）
+    # 方法：从MVP到更高收益的组合，以及一些低收益点
+    front_returns = []
+    front_vols = []
+    
+    # 使用参数化方法：组合w = w_mvp + λ * [mu - mu_mvp]
+    # 这可以在有效前沿上生成点
+    n_points = 200
+    lambda_values = np.linspace(-2, 4, n_points)
+    
+    for lam in lambda_values:
+        w_raw = np.array([1.0, 0.0]) - w_mvp  # 构造另一方向
+        # 更好的方法：使用μ和MVP构造有效前沿
+        w = w_mvp + lam * np.array([0.1, -0.1])  # 这是近似的，改用标准方法
+        
+    # 改用标准前沿构造：最小化方差对不同目标收益
+    returns_vec = np.linspace(min(mu)-0.05, max(mu)+0.10, 300)
+    frontier_returns = []
+    frontier_vols = []
+    
+    for tr in returns_vec:
+        try:
+            w_opt, vol_opt = optimal_volatility_for_return(tr, mu, cov)
+            frontier_returns.append(tr)
+            frontier_vols.append(vol_opt)
+        except:
+            continue
+    
+    frontier_returns = np.array(frontier_returns)
+    frontier_vols = np.array(frontier_vols)
+    
+    # 标记最小方差组合
+    ax.scatter(vol_mvp, ret_mvp, marker='o', s=80, 
+               color=colors[idx], zorder=5, label=f'MVP ρ={rho}')
+    
+    # 绘制前沿曲线
+    ax.plot(frontier_vols, frontier_returns, color=colors[idx], 
+            linewidth=2, label=f'ρ={rho}')
+    
+    # 计算rho=0.45时目标收益10%的最小波动率
+    if rho == 0.45:
+        w_target, vol_target = optimal_volatility_for_return(target_return, mu, cov)
+        result['frontier_vol_at_target'] = vol_target
+        # 在图上标记目标点
+        ax.scatter(vol_target, target_return, marker='*', s=200, 
+                   color='black', zorder=10, label=f'Target {target_return*100}%')
+        print(f"rho=0.45: 目标收益{target_return*100}%的最小波动率 = {vol_target*100:.2f}%")
+
+# 图形装饰
+ax.set_xlabel('Volatility (Standard Deviation)', fontsize=12)
+ax.set_ylabel('Expected Return', fontsize=12)
+ax.set_title('Mean-Variance Frontier for Different Correlations', fontsize=14)
+ax.grid(True, alpha=0.3)
+ax.legend(loc='best')
+ax.set_xlim(0, max(frontier_vols)*1.1)
+ax.set_ylim(min(frontier_returns)*0.9, max(frontier_returns)*1.1)
+
+# 保存图形
+figure_path = 'mean_variance_frontier.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+result['figure_path'] = figure_path
+
+# 打印结果
+print("\n===== 结果输出 =====")
+print(f"相关系数 0.45 时最小方差组合的年化波动率: {result['mvp_vol_at_rho45']*100:.4f}%")
+print(f"相关系数 0.45 时目标收益 10% 的最小年化波动率: {result['frontier_vol_at_target']*100:.4f}%")
+print(f"图形已保存至: {result['figure_path']}")
+print("===================")
+
+# 验证结果字典
+print("\nresult 字典内容:")
+for k, v in result.items():
+    if isinstance(v, float):
+        print(f"  {k}: {v}")
+    else:
+        print(f"  {k}: {v}")
+```
+
+这个脚本会：
+1. 计算三种相关系数（0.15, 0.45, 0.75）下的均值-方差前沿
+2. 在每个前沿上标出最小方差组合（MVP）
+3. 在rho=0.45时计算MVP的年化波动率
+4. 计算rho=0.45时目标收益10%的最小年化波动率
+5. 保存图形并在控制台输出所有结果
+6. 将所有要求的结果存入`result`字典

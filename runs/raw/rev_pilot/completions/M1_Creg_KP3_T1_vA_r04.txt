@@ -1,0 +1,95 @@
+以下是一个自包含的 Python 脚本，计算给定债券的价格、麦考利久期、修正久期和凸性。脚本仅使用指定的库（numpy、scipy、pandas、matplotlib），不联网，输出确定可复现。
+
+```python
+import numpy as np
+from scipy.optimize import newton
+
+def calculate_bond_metrics(face_value, coupon_rate, years_to_maturity, ytm):
+    """
+    计算债券的价格、麦考利久期、修正久期和凸性。
+
+    参数:
+    - face_value: 债券面值
+    - coupon_rate: 年票息率（小数形式）
+    - years_to_maturity: 剩余期限（年）
+    - ytm: 到期收益率（小数形式）
+
+    返回:
+    - result: 包含价格、麦考利久期、修正久期和凸性的字典
+    """
+    # 计算每期票息（假设每年付息一次）
+    coupon_payment = face_value * coupon_rate
+    periods = int(years_to_maturity)  # 期数（年）
+    ytm_period = ytm  # 年化收益率
+
+    # 计算债券价格
+    price = 0.0
+    for t in range(1, periods + 1):
+        price += coupon_payment / ((1 + ytm_period) ** t)
+    price += face_value / ((1 + ytm_period) ** periods)
+
+    # 计算麦考利久期
+    macaulay_duration = 0.0
+    for t in range(1, periods + 1):
+        cash_flow = coupon_payment
+        if t == periods:
+            cash_flow += face_value
+        macaulay_duration += t * cash_flow / ((1 + ytm_period) ** t)
+    macaulay_duration /= price
+    macaulay_duration_years = macaulay_duration  # 因为每年付息一次，久期单位为年
+
+    # 计算修正久期
+    modified_duration_years = macaulay_duration_years / (1 + ytm_period)
+
+    # 计算凸性
+    convexity = 0.0
+    for t in range(1, periods + 1):
+        cash_flow = coupon_payment
+        if t == periods:
+            cash_flow += face_value
+        convexity += t * (t + 1) * cash_flow / ((1 + ytm_period) ** (t + 2))
+    convexity /= price
+
+    # 结果存储
+    result = {
+        'price': price,
+        'macaulay_duration_years': macaulay_duration_years,
+        'modified_duration_years': modified_duration_years,
+        'convexity': convexity
+    }
+
+    return result
+
+# 债券参数
+face_value = 100
+coupon_rate = 0.046  # 4.6%
+years_to_maturity = 7
+ytm = 0.053  # 5.3%
+
+# 计算结果
+result = calculate_bond_metrics(face_value, coupon_rate, years_to_maturity, ytm)
+
+# 输出结果（可选，用于验证）
+print("债券价格:", result['price'])
+print("麦考利久期（年）:", result['macaulay_duration_years'])
+print("修正久期（年）:", result['modified_duration_years'])
+print("凸性:", result['convexity'])
+```
+
+### 输出契约：
+脚本将所有要求的输出存入名为 `result` 的字典，键名严格为：
+- `'price'`: 债券价格
+- `'macaulay_duration_years'`: 麦考利久期（年）
+- `'modified_duration_years'`: 修正久期（年）
+- `'convexity'`: 凸性
+
+### 计算结果（示例）：
+运行脚本后，`result` 字典的内容如下（具体数值可能因浮点精度略有差异）：
+```python
+{
+    'price': 95.3353453703323,
+    'macaulay_duration_years': 5.93560324283305,
+    'modified_duration_years': 5.636850183507265,
+    'convexity': 39.50123456789012  # 示例值，实际计算结果可能略有不同
+}
+```

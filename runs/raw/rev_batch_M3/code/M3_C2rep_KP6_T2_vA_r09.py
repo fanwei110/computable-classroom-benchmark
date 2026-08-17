@@ -1,0 +1,74 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ================= 参数与假设设置 =================
+# 数据路径与指定列
+FILE_PATH = 'data/market_snapshot_v1.csv'
+FUND_COL = 'fund'
+
+# 无风险利率与年化假设
+RF_ANNUAL = 0.021               # 年化无风险利率 2.1%
+TRADING_DAYS = 252               # 一年交易日，用于年化
+
+# 滚动窗口参数（可调）
+WINDOW = 60                      # 滚动窗口长度
+
+# 图形保存路径
+FIGURE_PATH = 'rolling_sharpe_ratio.png'
+
+# 假设说明：
+# 1. 日无风险利率：采用复利折算 rf_daily = (1 + RF_ANNUAL)^(1/252) - 1
+# 2. 波动率年化：基于日收益独立同分布假设，年化标准差 = 日标准差 * sqrt(252)
+# 3. 滚动标准差：采用样本标准差 (ddof=1) 作为风险估计
+
+# ================= 1. 读取快照 CSV；计入无风险利率 =================
+df = pd.read_csv(FILE_PATH)
+
+# 提取基金日收益率序列
+fund_returns = df[FUND_COL]
+
+# 计算日无风险利率
+rf_daily = (1 + RF_ANNUAL) ** (1 / TRADING_DAYS) - 1
+
+# 计算日超额收益
+excess_returns = fund_returns - rf_daily
+
+# ================= 2. 计算 60 日滚动年化夏普，窗口可调 =================
+# 计算滚动均值与滚动标准差
+rolling_mean = excess_returns.rolling(window=WINDOW).mean()
+rolling_std = excess_returns.rolling(window=WINDOW).std(ddof=1)
+
+# 计算滚动年化夏普比率
+# 年化夏普 = (日均值 / 日标准差) * sqrt(252)
+rolling_sharpe_annual = (rolling_mean / rolling_std) * np.sqrt(TRADING_DAYS)
+
+# ================= 3. 报告最后一个窗口的值；画出时间序列 =================
+# 获取最后一个窗口（最近一天）的夏普值
+rolling_sharpe_last = rolling_sharpe_annual.iloc[-1]
+
+# 绘制时间序列图
+plt.figure(figsize=(12, 6))
+plt.plot(rolling_sharpe_annual, color='tab:blue', linewidth=1.2, 
+         label=f'{WINDOW}-Day Rolling Annualized Sharpe Ratio')
+plt.axhline(y=0, color='black', linestyle='--', linewidth=0.8, alpha=0.7)
+plt.title(f'Rolling Annualized Sharpe Ratio (Window={WINDOW}, Rf={RF_ANNUAL*100:.1f}%)', fontsize=14)
+plt.xlabel('Date / Observation', fontsize=12)
+plt.ylabel('Annualized Sharpe Ratio', fontsize=12)
+plt.legend(fontsize=12)
+plt.grid(True, linestyle=':', alpha=0.6)
+plt.tight_layout()
+
+# ================= 4. 保存图形并填充 result =================
+plt.savefig(FIGURE_PATH, dpi=150)
+plt.close()
+
+# 按照输出契约构建结果字典
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': FIGURE_PATH
+}
+
+# 课堂打印输出，便于投屏观察
+print(f"==> 最后 {WINDOW} 日窗口的年化夏普比率: {rolling_sharpe_last:.4f}")
+print(f"==> 图形已保存至: {FIGURE_PATH}")

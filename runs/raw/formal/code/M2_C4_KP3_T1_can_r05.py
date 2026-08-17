@@ -1,0 +1,46 @@
+import numpy as np
+
+# 债券参数
+face_value = 100.0
+coupon_rate = 0.046   # 4.6%
+ytm = 0.053           # 5.3%
+maturity = 7           # 年
+
+# 现金流生成：每年票息 + 最后一年面值
+cash_flows = np.full(maturity, face_value * coupon_rate)
+cash_flows[-1] += face_value
+
+# 时间点 (1, 2, ..., maturity)
+t = np.arange(1, maturity + 1)
+
+# 贴现因子
+discount_factors = (1 + ytm) ** t
+
+# 现金流现值
+present_values = cash_flows / discount_factors
+
+# 价格
+price = np.sum(present_values)
+
+# 麦考利久期：∑ (t * PV(t)) / Price
+weighted_times = t * present_values
+macaulay_duration = np.sum(weighted_times) / price
+
+# 修正久期 = 麦考利久期 / (1 + y)
+modified_duration = macaulay_duration / (1 + ytm)
+
+# 凸性：∑ [t*(t+1)*CF/(1+y)^(t+2)] / Price
+convexity_numerator = np.sum(t * (t + 1) * cash_flows / (1 + ytm) ** (t + 2))
+convexity = convexity_numerator / price
+
+# 结果存储
+result = {
+    'price': price,
+    'macaulay_duration_years': macaulay_duration,
+    'modified_duration_years': modified_duration,
+    'convexity': convexity
+}
+
+# 输出（课堂上运行时可看到清晰的结果）
+for key, val in result.items():
+    print(f"{key}: {val:.6f}")

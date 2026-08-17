@@ -1,0 +1,156 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+
+# ================= 1. 参数与数据定义 =================
+rf_init = 0.023      # 无风险利率 2.3%
+rm_init = 0.094      # 市场组合期望收益 9.4%
+
+# 股票数据: X(0.62, 8.1%), Y(1.18, 13.1%), Z(1.51, 9.9%)
+stocks = {
+    'X': {'beta': 0.62, 'er': 0.081},
+    'Y': {'beta': 1.18, 'er': 0.131},
+    'Z': {'beta': 1.51, 'er': 0.099}
+}
+
+# ================= 2. 计算函数与核心指标 =================
+def calc_expected_return(rf, rm, beta):
+    """CAPM 公式：计算期望收益"""
+    return rf + beta * (rm - rf)
+
+# 初始静态计算
+sml_slope_init = rm_init - rf_init
+er_at_beta_127_init = calc_expected_return(rf_init, rm_init, 1.27)
+
+# ================= 3. 构建字典 result =================
+result = {
+    'sml_slope': sml_slope_init,
+    'er_at_beta_127': er_at_beta_127_init,
+    'figure_path': 'sml_capm_plot.png'
+}
+
+# ================= 4. 绘图与交互设计 =================
+# 设置中文字体与负号显示
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'Arial Unicode MS']
+plt.rcParams['axes.unicode_minus'] = False
+
+fig, ax = plt.subplots(figsize=(10, 7))
+plt.subplots_adjust(bottom=0.28)  # 为底部滑块腾出空间
+
+# SML 线的 beta 范围与初始位置
+betas = np.linspace(0, 2, 100)
+sml_y = calc_expected_return(rf_init, rm_init, betas)
+
+# 绘制 SML 线
+sml_line, = ax.plot(betas, sml_y, 'b-', linewidth=2.5, label='SML (证券市场线)')
+
+# 标出无风险利率 rf 点和市场组合 M 点
+rf_point, = ax.plot(0, rf_init, 'ko', markersize=7, zorder=5, label='Rf (无风险)')
+m_point, = ax.plot(1, rm_init, 'r^', markersize=9, zorder=5, label='M (市场组合)')
+
+# 标出 beta=1.27 对应的 SML 收益点
+beta_127_point, = ax.plot(1.27, er_at_beta_127_init, 'g*', markersize=12, zorder=5, 
+                          label=f'Beta=1.27 (E(R)={er_at_beta_127_init:.2%})')
+
+# 绘制股票 X, Y, Z 的点，并画出垂直虚线标示 Alpha (偏离 SML 的部分)
+stock_plots = {}
+alpha_lines = {}
+alpha_texts = {}
+
+# 初始设置坐标系范围
+ax.set_xlim(-0.05, 2.1)
+ax.set_ylim(-0.03, 0.22)
+
+for name, data in stocks.items():
+    # 股票实际点
+    pt, = ax.plot(data['beta'], data['er'], 's', markersize=9, zorder=6, label=f'Stock {name}')
+    stock_plots[name] = pt
+    
+    # 对应 SML 上的均衡点
+    sml_er = calc_expected_return(rf_init, rm_init, data['beta'])
+    # Alpha 垂直线 (连接 SML 与实际点)
+    ln, = ax.plot([data['beta'], data['beta']], [sml_er, data['er']], 
+                  'k--', alpha=0.7, linewidth=1.2)
+    alpha_lines[name] = ln
+    
+    # Alpha 数值标注
+    alpha_val = data['er'] - sml_er
+    offset_y = 0.005 if alpha_val >= 0 else -0.015
+    txt = ax.text(data['beta'] + 0.02, data['er'] + offset_y, 
+                 f'α={alpha_val:.2%}', fontsize=9, color='darkred', weight='bold')
+    alpha_texts[name] = txt
+
+# 在图上添加核心文本报告
+info_text = ax.text(0.02, 0.95, 
+                    f"SML斜率(市场风险溢价): {sml_slope_init:.2%}\n"
+                    f"Beta=1.27 期望收益: {er_at_beta_127_init:.2%}", 
+                    transform=ax.transAxes, verticalalignment='top',
+                    bbox=dict(boxstyle='round', facecolor='wheat', alpha=0.8), fontsize=11)
+
+# 格式化坐标轴
+ax.set_xlabel('Beta (β)', fontsize=12)
+ax.set_ylabel('Expected Return E(R)', fontsize=12)
+ax.set_title('CAPM 与证券市场线 (可拖动参数调整)', fontsize=14)
+ax.grid(True, linestyle=':', alpha=0.6)
+ax.yaxis.set_major_formatter(plt.FuncFormatter(lambda y, _: '{:.1%}'.format(y)))
+ax.legend(loc='lower right', fontsize=9)
+
+# ================= 5. 添加拖动滑块(交互组件) =================
+ax_rf = plt.axes([0.15, 0.12, 0.7, 0.03])
+ax_rm = plt.axes([0.15, 0.06, 0.7, 0.03])
+
+slider_rf = Slider(ax_rf, '无风险利率 Rf', 0.0, 0.10, valinit=rf_init, valfmt='.2%')
+slider_rm = Slider(ax_rm, '市场收益 Rm', 0.0, 0.20, valinit=rm_init, valfmt='.2%')
+
+def update(val):
+    """滑块拖动时的更新回调函数"""
+    rf = slider_rf.val
+    rm = slider_rm.val
+    slope = rm - rf
+    er_127 = calc_expected_return(rf, rm, 1.27)
+
+    # 更新 SML 线
+    sml_y = calc_expected_return(rf, rm, betas)
+    sml_line.set_ydata(sml_y)
+
+    # 更新 Rf 点和 M 点
+    rf_point.set_ydata([rf])
+    m_point.set_ydata([rm])
+
+    # 更新 Beta=1.27 的点
+    beta_127_point.set_ydata([er_127])
+
+    # 更新三只股票的 Alpha 垂线和文本
+    for name, data in stocks.items():
+        sml_er = calc_expected_return(rf, rm, data['beta'])
+        alpha_val = data['er'] - sml_er
+        
+        # 更新垂直虚线起止点
+        alpha_lines[name].set_ydata([sml_er, data['er']])
+        
+        # 更新 Alpha 文本与位置
+        offset_y = 0.005 if alpha_val >= 0 else -0.015
+        alpha_texts[name].set_text(f'α={alpha_val:.2%}')
+        alpha_texts[name].set_position((data['beta'] + 0.02, data['er'] + offset_y))
+
+    # 更新核心文本报告
+    info_text.set_text(f"SML斜率(市场风险溢价): {slope:.2%}\n"
+                       f"Beta=1.27 期望收益: {er_127:.2%}")
+
+    fig.canvas.draw_idle()
+
+# 绑定回调
+slider_rf.on_changed(update)
+slider_rm.on_changed(update)
+
+# ================= 6. 保存与输出 =================
+# 保存图形(包含初始状态)
+plt.savefig(result['figure_path'], dpi=200, bbox_inches='tight')
+
+# 在课堂投屏时保留交互窗口
+plt.show()
+
+# 打印结果字典供查验
+print("result dict:", result)
+```

@@ -1,0 +1,58 @@
+import pandas as pd
+import numpy as np
+
+# =============================================
+# 第一部分：计算年化夏普比率
+# =============================================
+# 读取数据快照
+df = pd.read_csv('data/market_snapshot_v1.csv')
+fund_returns = df['fund'].dropna().values  # 基金日收益（小数形式）
+
+# 无风险利率参数
+rf_annual = 0.021
+trading_days = 252
+rf_daily = rf_annual / trading_days
+
+# 计算超额日收益
+excess_returns = fund_returns - rf_daily
+
+# 计算日平均超额收益与日标准差（样本标准差）
+mean_excess_daily = np.mean(excess_returns)
+std_excess_daily = np.std(excess_returns, ddof=1)
+
+# 年化夏普比率
+sharpe_annual = (mean_excess_daily / std_excess_daily) * np.sqrt(trading_days)
+
+# =============================================
+# 第二部分：业绩归因（配置、选择、交互效应）
+# =============================================
+# 组合与基准数据
+w_p = np.array([0.45, 0.35, 0.20])   # 组合权重
+r_p = np.array([0.083, 0.021, -0.014])  # 组合行业收益
+w_b = np.array([0.40, 0.40, 0.20])   # 基准权重
+r_b = np.array([0.067, 0.034, -0.009])  # 基准行业收益
+
+# 基准整体收益
+R_b = np.sum(w_b * r_b)
+
+# 配置效应：∑ (w_p,i - w_b,i) * (r_b,i - R_b)
+allocation_effect = np.sum((w_p - w_b) * (r_b - R_b))
+
+# 选择效应：∑ w_b,i * (r_p,i - r_b,i)
+selection_effect = np.sum(w_b * (r_p - r_b))
+
+# 交互效应：∑ (w_p,i - w_b,i) * (r_p,i - r_b,i)
+interaction_effect = np.sum((w_p - w_b) * (r_p - r_b))
+
+# =============================================
+# 结果汇总
+# =============================================
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+# 打印结果，便于课堂投屏展示
+print(result)

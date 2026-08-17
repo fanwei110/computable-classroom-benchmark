@@ -1,0 +1,38 @@
+import numpy as np
+from scipy.stats import norm
+
+def black_scholes_call(S, K, T, r, sigma):
+    """计算欧式看涨期权价格、delta 和 vega"""
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    delta = norm.cdf(d1)
+    vega = S * norm.pdf(d1) * np.sqrt(T)
+    return price, delta, vega
+
+# 市场参数
+S0 = 103.7        # 标的现价
+K = 97.5          # 行权价
+T = 0.58          # 剩余时间（年）
+r = 0.043         # 无风险利率
+sigma0 = 0.276    # 初始波动率
+dsigma = 0.01     # 波动率上升一个百分点
+
+# 初始期权价格与 vega
+price0, delta0, vega0 = black_scholes_call(S0, K, T, r, sigma0)
+
+# 价格变化：vega 对 1 个单位波动率变化敏感度，乘以 0.01 即为对 1 个百分点的响应
+price_change = vega0 * dsigma
+
+# 若用两种波动率分别定价作为验证（可选，此处仅用 vega 更符合“推算响应”的题意）
+# _, _, _ = black_scholes_call(S0, K, T, r, sigma0 + dsigma)
+# price_change_alt = price1 - price0   # 与 price_change 一致
+
+# 按要求存入字典
+result = {'price_change': price_change}
+
+if __name__ == '__main__':
+    print(f"初始期权价格: {price0:.4f}")
+    print(f"Vega: {vega0:.6f} (波动率每变动1单位的价格变化)")
+    print(f"波动率上升一个百分点引起的价格变化: {price_change:.4f}")
+    print(f"结果字典: {result}")

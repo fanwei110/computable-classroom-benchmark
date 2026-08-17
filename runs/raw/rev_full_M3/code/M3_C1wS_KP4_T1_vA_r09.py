@@ -1,0 +1,39 @@
+import numpy as np
+from scipy.stats import norm
+
+# ================= 基础参数 =================
+S = 103.7       # 标的现价
+K = 97.5        # 行权价
+sigma = 0.276   # 隐含波动率 (27.6%)
+r = 0.043       # 无风险利率 (4.3%)
+T = 0.58        # 剩余到期时间（年）
+# 根据假设，不分红，因此红利收益率 q = 0
+
+# ================= 步骤 1：计算 d1 与 d2 =================
+d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+d2 = d1 - sigma * np.sqrt(T)
+
+# ================= 步骤 2：计算期权价格与 delta =================
+# 欧式看涨期权价格 (Black-Scholes 闭式解)
+call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+
+# 看涨期权 Delta
+call_delta = norm.cdf(d1)
+
+# ================= 步骤 3：计算 vega =================
+# 数学闭式解：Vega = S * norm.pdf(d1) * sqrt(T)
+# 注：此计算结果为波动率每变动 1.0 (即100%) 时的绝对变化量。
+# 金融实务中常报告波动率每变动 1% (0.01) 时的变化量，若需此口径，将结果乘以 0.01 即可。
+call_vega = S * norm.pdf(d1) * np.sqrt(T)
+
+# ================= 步骤 4：填充 result =================
+result = {
+    'call_price': call_price,
+    'call_delta': call_delta,
+    'call_vega': call_vega
+}
+
+# 输出结果以供验证
+print(f"d1 = {d1:.6f}")
+print(f"d2 = {d2:.6f}")
+print(f"结果字典: {result}")

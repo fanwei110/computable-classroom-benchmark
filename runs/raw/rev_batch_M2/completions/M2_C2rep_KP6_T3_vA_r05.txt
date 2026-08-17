@@ -1,0 +1,70 @@
+```python
+import pandas as pd
+import numpy as np
+
+# ------------------------------------------------------------
+# 1. 读取数据
+# ------------------------------------------------------------
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# ------------------------------------------------------------
+# 2. 自动推断数据频率（通过日期列）
+# ------------------------------------------------------------
+date_col = None
+for col in df.columns:
+    if 'date' in col.lower():
+        date_col = col
+        break
+
+if date_col is not None:
+    df[date_col] = pd.to_datetime(df[date_col])
+    df = df.sort_values(date_col)
+    # 计算相邻观测日期间隔的中位数
+    day_diffs = df[date_col].diff().dropna().dt.days
+    median_diff = day_diffs.median()
+    if median_diff <= 2:          # 日度
+        periods_per_year = 252
+    elif median_diff <= 6:        # 周度
+        periods_per_year = 52
+    elif median_diff <= 31:       # 月度
+        periods_per_year = 12
+    elif median_diff <= 92:       # 季度
+        periods_per_year = 4
+    else:                         # 年度
+        periods_per_year = 1
+else:
+    # 若文件中没有日期列，默认按日度处理
+    periods_per_year = 252
+
+# ------------------------------------------------------------
+# 3. 提取基金序列，并转换为收益率
+# ------------------------------------------------------------
+fund_series = df['fund']
+
+# 判断序列是净值（价格>0且均值远离0）还是已经为收益率
+if fund_series.min() > 0 and fund_series.mean() > 1:
+    # 假设是净值，计算简单百分比收益率
+    returns = fund_series.pct_change().dropna()
+else:
+    # 假设已经是收益率，直接剔除缺失值
+    returns = fund_series.dropna()
+
+# ------------------------------------------------------------
+# 4. 计算年化夏普比率
+# ------------------------------------------------------------
+rf_annual = 0.021                        # 年化无风险利率
+rf_period = rf_annual / periods_per_year # 单期无风险利率
+
+excess_returns = returns - rf_period     # 超额收益率
+
+# 年化夏普 = sqrt(年周期数) * (单期超额收益率均值 / 单期超额收益率标准差)
+sharpe_annual = np.sqrt(periods_per_year) * (
+    excess_returns.mean() / excess_returns.std()
+)
+
+# ------------------------------------------------------------
+# 5. 输出结果
+# ------------------------------------------------------------
+result = {'sharpe_annual': sharpe_annual}
+print(result)
+```

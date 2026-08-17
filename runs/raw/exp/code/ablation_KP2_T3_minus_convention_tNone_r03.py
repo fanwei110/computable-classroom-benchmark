@@ -1,0 +1,19 @@
+import numpy as np
+
+# 给定参数
+beta = 1.42
+market_return_monthly = -5.8 / 100  # 市场收益率月度，小数形式
+annual_risk_free_rate = 4.7 / 100  # 年无风险利率，小数形式
+
+# 1. 年无风险利率按简单除法折算为月利率
+monthly_risk_free_rate = annual_risk_free_rate / 12
+
+# 2. 在月度层面套用 CAPM：E(R_i) = R_f + beta * (R_m - R_f)
+capm_return_monthly = monthly_risk_free_rate + beta * (market_return_monthly - monthly_risk_free_rate)
+
+# 3. 填充 result 字典
+result = {
+    'capm_return_monthly': capm_return_monthly
+}
+
+print("CAPM 月度预期收益率（小数形式）：", result['capm_return_monthly'])

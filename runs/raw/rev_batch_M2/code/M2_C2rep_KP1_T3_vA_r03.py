@@ -1,0 +1,48 @@
+import numpy as np
+
+# 资产年化波动率
+sigma_A = 0.184
+sigma_B = 0.297
+
+# 权重
+w_A = 0.6
+w_B = 0.4
+
+# 相关系数
+rho_before = 0.3
+rho_after = 0.8
+
+# 构建协方差矩阵（年化）
+# 协方差 = 相关系数 * 标准差A * 标准差B
+cov_before = np.array([
+    [sigma_A**2, rho_before * sigma_A * sigma_B],
+    [rho_before * sigma_A * sigma_B, sigma_B**2]
+])
+
+cov_after = np.array([
+    [sigma_A**2, rho_after * sigma_A * sigma_B],
+    [rho_after * sigma_A * sigma_B, sigma_B**2]
+])
+
+weights = np.array([w_A, w_B])
+
+# 计算组合方差：w' Σ w
+var_before = weights.T @ cov_before @ weights
+var_after = weights.T @ cov_after @ weights
+
+# 年化波动率
+vol_before_annual = np.sqrt(var_before)
+vol_after_annual = np.sqrt(var_after)
+
+# 存入字典
+result = {
+    'vol_before_annual': vol_before_annual,
+    'vol_after_annual': vol_after_annual
+}
+
+# 打印输出，便于教师查看
+print("=== 结果 ===")
+print(f"相关系数 0.3 时组合年化波动率: {vol_before_annual:.4f} ({vol_before_annual*100:.2f}%)")
+print(f"相关系数 0.8 时组合年化波动率: {vol_after_annual:.4f} ({vol_after_annual*100:.2f}%)")
+print(f"波动率变化: {vol_after_annual - vol_before_annual:.4f}")
+print("\nresult 字典内容:", result)

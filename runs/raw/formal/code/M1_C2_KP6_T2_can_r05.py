@@ -1,0 +1,79 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+# 1. 读取数据并计入无风险利率
+def load_and_preprocess_data(filepath):
+    df = pd.read_csv(filepath, parse_dates=['date'])
+    df = df.sort_values('date').reset_index(drop=True)
+
+    # 提取fund列的日收益率
+    fund_returns = df.set_index('date')['fund'].dropna()
+
+    # 无风险利率年化2.1%，转换为日利率
+    annual_rf_rate = 0.021
+    daily_rf_rate = (1 + annual_rf_rate) ** (1/252) - 1
+
+    return fund_returns, daily_rf_rate
+
+# 2. 计算滚动年化夏普比率
+def calculate_rolling_sharpe(returns, risk_free_rate, window=60):
+    # 计算超额收益
+    excess_returns = returns - risk_free_rate
+
+    # 滚动计算均值和标准差
+    rolling_mean = excess_returns.rolling(window=window).mean()
+    rolling_std = excess_returns.rolling(window=window).std()
+
+    # 年化夏普比率
+    annualized_sharpe = rolling_mean / rolling_std * np.sqrt(252)
+
+    return annualized_sharpe
+
+# 3. 绘制时间序列并报告最后一个窗口值
+def plot_and_report(rolling_sharpe, window=60):
+    plt.figure(figsize=(12, 6))
+    rolling_sharpe.plot(title=f'{window}-Day Rolling Annualized Sharpe Ratio')
+    plt.ylabel('Sharpe Ratio')
+    plt.grid(True)
+
+    # 保存图形
+    figure_path = Path('rolling_sharpe.png')
+    plt.savefig(figure_path)
+    plt.close()
+
+    # 获取最后一个窗口的值
+    last_sharpe = rolling_sharpe.iloc[-1]
+
+    return last_sharpe, figure_path
+
+# 主流程
+def main():
+    # 文件路径
+    data_path = Path('data/market_snapshot_v1.csv')
+
+    # 加载数据
+    fund_returns, daily_rf_rate = load_and_preprocess_data(data_path)
+
+    # 设置窗口长度
+    window_length = 60
+
+    # 计算滚动夏普比率
+    rolling_sharpe = calculate_rolling_sharpe(fund_returns, daily_rf_rate, window=window_length)
+
+    # 绘图并报告结果
+    last_sharpe, figure_path = plot_and_report(rolling_sharpe, window=window_length)
+
+    # 准备结果字典
+    result = {
+        'rolling_sharpe_last': last_sharpe,
+        'figure_path': str(figure_path)
+    }
+
+    return result
+
+# 执行并输出结果
+if __name__ == '__main__':
+    result = main()
+    print(result)

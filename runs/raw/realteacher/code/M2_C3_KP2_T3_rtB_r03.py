@@ -1,0 +1,13 @@
+# 计算月度无风险利率（年复利转月复利，按 252 个交易日，1个月 = 1/12 年）
+rf_annual = 0.047
+rf_monthly = (1 + rf_annual) ** (1 / 12) - 1
+
+# 市场月度收益率和 beta
+rm_monthly = -0.058
+beta = 1.42
+
+# CAPM 月度理论收益
+capm_return = rf_monthly + beta * (rm_monthly - rf_monthly)
+
+result = {'capm_return_monthly': round(capm_return, 6)}
+result

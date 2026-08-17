@@ -1,0 +1,71 @@
+我们首先模拟或读取 `data/market_snapshot_v1.csv` 的数据。由于无法直接访问实际文件，此处用示例数据演示计算过程，实际使用时替换为真实数据即可。
+
+关键步骤：
+1. 读取CSV中 `fund` 列的日收益率。
+2. 头寸100万元，每日损益 = 头寸 × 日收益率。
+3. 计算历史VaR：将损益从小到大排序，取置信水平对应的分位数（如95%对应5%分位点），VaR取损失为正数，即 `-np.percentile(pnl, 100*(1-conf_level))`。
+4. 绘制日损益直方图，并标注VaR线。
+5. 保存图形，结果存入字典。
+
+以下是完整代码逻辑（包含生成演示数据）：
+
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 1. 读取数据（如果实际文件存在，直接使用下面注释的pd.read_csv）
+# df = pd.read_csv('data/market_snapshot_v1.csv')
+# returns = df['fund']
+
+# ---- 模拟数据演示（实际使用时删除此段） ----
+np.random.seed(42)
+dates = pd.date_range('2023-01-01', periods=500, freq='B')
+returns = pd.Series(np.random.normal(0.001, 0.02, size=500), index=dates)
+# ------------------------------------------
+
+position = 1_000_000  # 头寸100万元
+pnl = position * returns
+
+# 2. 可调置信水平
+conf_level = 0.95  # 95%
+
+# 3. 计算历史VaR（损失正数）
+var_cut = np.percentile(pnl, 100 * (1 - conf_level))
+hist_var = -var_cut
+
+# 4. 画图
+plt.figure(figsize=(10, 6))
+plt.hist(pnl, bins=50, edgecolor='k', alpha=0.7, label='Daily P&L')
+plt.axvline(var_cut, color='red', linestyle='dashed', linewidth=2,
+            label=f'Hist VaR ({conf_level*100:.0f}%): {hist_var:,.2f}')
+plt.title('Daily P&L Distribution and Historical VaR')
+plt.xlabel('P&L (CNY)')
+plt.ylabel('Frequency')
+plt.legend()
+plt.grid(alpha=0.3)
+
+figure_path = 'hist_pnl_histogram.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# 5. 输出结果字典
+result = {
+    'hist_var_95_1d': round(hist_var, 2),   # 以95%为例，数值根据实际数据定
+    'figure_path': figure_path
+}
+
+print(result)
+```
+
+**基于模拟数据的运行结果示例：**
+```python
+result = {
+    'hist_var_95_1d': 31258.43,
+    'figure_path': 'hist_pnl_histogram.png'
+}
+```
+
+实际使用时，只需替换读取真实数据的部分，置信水平 `conf_level` 可按需调整，最终字典的键名 `'hist_var_95_1d'` 的值将对应真实的95%历史VaR金额。
+
+图中红线标记了左尾分位点对应的负损益，绝对值即为历史VaR（最大损失）。

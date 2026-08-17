@@ -1,0 +1,117 @@
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 1. 定义资产参数
+# ==========================================
+mu1 = 0.071      # 资产1期望收益
+mu2 = 0.124      # 资产2期望收益
+sig1 = 0.163     # 资产1波动率
+sig2 = 0.289     # 资产2波动率
+
+rhos = [0.15, 0.45, 0.75]  # 三种相关系数
+target_return = 0.10       # 目标收益
+
+# ==========================================
+# 2. 解析计算函数（保证数值精度与可复现性）
+# ==========================================
+def calc_mvp_weights(sig1, sig2, rho):
+    """计算满仓约束下两资产最小方差组合权重"""
+    cov12 = rho * sig1 * sig2
+    var1 = sig1**2
+    var2 = sig2**2
+    w1 = (var2 - cov12) / (var1 + var2 - 2 * cov12)
+    return w1, 1 - w1
+
+def calc_portfolio_stats(w1, mu1, mu2, sig1, sig2, rho):
+    """根据权重计算组合期望收益与波动率"""
+    w2 = 1 - w1
+    mu_p = w1 * mu1 + w2 * mu2
+    var_p = w1**2 * sig1**2 + w2**2 * sig2**2 + 2 * w1 * w2 * rho * sig1 * sig2
+    sig_p = np.sqrt(var_p)
+    return mu_p, sig_p
+
+# ==========================================
+# 3. 扫描权重并画图
+# ==========================================
+# 允许一定程度的卖空以展示完整的马科维茨抛物线形状
+w1_scan = np.linspace(-0.5, 1.5, 1000)
+w2_scan = 1 - w1_scan
+
+plt.figure(figsize=(10, 7))
+colors = ['#1f77b4', '#2ca02c', '#d62728']  # 蓝、绿、红
+
+for rho, color in zip(rhos, colors):
+    # 扫描计算前沿上的收益与风险
+    mu_ps = w1_scan * mu1 + w2_scan * mu2
+    var_ps = w1_scan**2 * sig1**2 + w2_scan**2 * sig2**2 + 2 * w1_scan * w2_scan * rho * sig1 * sig2
+    sig_ps = np.sqrt(var_ps)
+    
+    # 解析计算最小方差组合(MVP)
+    mvp_w1, _ = calc_mvp_weights(sig1, sig2, rho)
+    mvp_mu, mvp_sig = calc_portfolio_stats(mvp_w1, mu1, mu2, sig1, sig2, rho)
+    
+    # 区分有效前沿(上半支，实线)与无效前沿(下半支，虚线)
+    upper_mask = mu_ps >= mvp_mu
+    lower_mask = mu_ps < mvp_mu
+    
+    plt.plot(sig_ps[upper_mask], mu_ps[upper_mask], color=color, linewidth=2.5, 
+             label=f'Efficient Frontier (ρ={rho})')
+    plt.plot(sig_ps[lower_mask], mu_ps[lower_mask], color=color, linewidth=1, linestyle='--')
+    
+    # 标出最小方差点
+    plt.scatter(mvp_sig, mvp_mu, color=color, marker='*', s=250, zorder=5, edgecolors='black')
+    plt.annotate(f'MVP (ρ={rho})\nVol={mvp_sig:.2%}', 
+                xy=(mvp_sig, mvp_mu), 
+                xytext=(mvp_sig + 0.015, mvp_mu - 0.012),
+                fontsize=9,
+                arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=5))
+
+# ==========================================
+# 4. 计算 ρ=0.45 时的特殊点
+# ==========================================
+rho45 = 0.45
+
+# (1) ρ=0.45 的最小方差组合波动率
+mvp_w1_45, _ = calc_mvp_weights(sig1, sig2, rho45)
+_, mvp_vol_45 = calc_portfolio_stats(mvp_w1_45, mu1, mu2, sig1, sig2, rho45)
+
+# (2) 目标收益10%下的最小波动率
+# 两资产世界中，给定目标收益，权重唯一确定
+target_w1 = (target_return - mu2) / (mu1 - mu2)
+_, target_vol = calc_portfolio_stats(target_w1, mu1, mu2, sig1, sig2, rho45)
+
+# 在图中标出10%目标收益对应的点
+plt.scatter(target_vol, target_return, color='black', marker='D', s=100, zorder=5)
+plt.annotate(f'Target Return 10%\n(ρ=0.45)\nVol={target_vol:.2%}', 
+            xy=(target_vol, target_return), 
+            xytext=(target_vol + 0.03, target_return - 0.015),
+            fontsize=9,
+            bbox=dict(boxstyle="round,pad=0.3", fc="white", ec="gray", alpha=0.8),
+            arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=5))
+
+# ==========================================
+# 5. 图表美化与保存
+# ==========================================
+plt.xlabel('Portfolio Volatility (Standard Deviation)', fontsize=12)
+plt.ylabel('Portfolio Expected Return', fontsize=12)
+plt.title('Markowitz Mean-Variance Frontier (Two Assets)', fontsize=14)
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.legend(fontsize=11)
+plt.xlim(0.10, 0.40)
+plt.ylim(0.04, 0.16)
+
+fig_path = 'markowitz_frontier.png'
+plt.savefig(fig_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# ==========================================
+# 6. 填充输出契约
+# ==========================================
+result = {
+    'mvp_vol_at_rho45': mvp_vol_45,
+    'frontier_vol_at_target': target_vol,
+    'figure_path': fig_path
+}
+
+print(result)

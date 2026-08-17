@@ -1,0 +1,58 @@
+针对您的两个问题，计算过程和结果如下：
+
+### 问题一：年化夏普比率
+由于无法直接读取您本地的“课程数据文件”，这里提供基于日收益计算年化夏普比率的完整逻辑（假设一年252个交易日）：
+1. **日无风险利率**：$r_{f,daily} = (1 + 0.021)^{1/252} - 1$
+2. **日超额收益**：$R_{ex} = R_{fund} - r_{f,daily}$
+3. **年化夏普比率**：$Sharpe_{annual} = \frac{Mean(R_{ex})}{Std(R_{ex})} \times \sqrt{252}$
+
+### 问题二：业绩归因（Brinson-Hood-Beebower模型）
+基于BHB模型，归因计算如下（所有收益以小数形式参与计算）：
+1. **配置效应** $= \sum (W_p - W_b) \times R_b$
+   $= (0.45-0.40)\times0.067 + (0.35-0.40)\times0.034 + (0.20-0.20)\times(-0.009)$
+   $= 0.00335 - 0.00170 + 0 = \mathbf{0.00165}$ (即 0.165%)
+
+2. **选择效应** $= \sum W_b \times (R_p - R_b)$
+   $= 0.40\times(0.083-0.067) + 0.40\times(0.021-0.034) + 0.20\times(-0.014 - (-0.009))$
+   $= 0.00640 - 0.00520 - 0.00100 = \mathbf{0.00020}$ (即 0.020%)
+
+3. **交互效应** $= \sum (W_p - W_b) \times (R_p - R_b)$
+   $= (0.45-0.40)\times(0.083-0.067) + (0.35-0.40)\times(0.021-0.034) + (0.20-0.20)\times(-0.005)$
+   $= 0.00080 + 0.00065 + 0 = \mathbf{0.00145}$ (即 0.145%)
+
+*(验证：总超额收益 = 组合收益 4.190% - 基准收益 3.860% = 0.330%；配置0.165% + 选择0.020% + 交互0.145% = 0.330%，完全吻合)*
+
+---
+
+### 输出契约
+按照契约要求，将结果存入字典 `result`（由于问题一缺少数据文件，`sharpe_annual` 键值需通过您运行代码后的实际数据来填充，此处暂用逻辑计算代码占位；问题二已填入精确计算值）：
+
+```python
+import numpy as np
+import pandas as pd
+
+# =============== 问题 1 计算逻辑 ===============
+# df = pd.read_csv('课程数据文件.csv') # 请替换为实际文件读取方式
+# daily_returns = df['fund']
+# rf_daily = (1 + 0.021) ** (1/252) - 1
+# excess_returns = daily_returns - rf_daily
+# sharpe_annual = (excess_returns.mean() / excess_returns.std()) * np.sqrt(252)
+
+# =============== 问题 2 计算结果 ===============
+w_p = np.array([0.45, 0.35, 0.20])
+r_p = np.array([0.083, 0.021, -0.014])
+w_b = np.array([0.40, 0.40, 0.20])
+r_b = np.array([0.067, 0.034, -0.009])
+
+allocation_effect = float(np.sum((w_p - w_b) * r_b))
+selection_effect = float(np.sum(w_b * (r_p - r_b)))
+interaction_effect = float(np.sum((w_p - w_b) * (r_p - r_b)))
+
+# =============== 输出字典 ===============
+result = {
+    'sharpe_annual': None,  # 需将此替换为上述问题1计算得出的 sharpe_annual 数值
+    'allocation_effect': 0.00165,
+    'selection_effect': 0.0002,
+    'interaction_effect': 0.00145
+}
+```

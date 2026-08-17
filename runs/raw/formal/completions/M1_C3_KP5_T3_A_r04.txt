@@ -1,0 +1,57 @@
+要计算95%的一日VaR（Value at Risk），我们可以按照以下步骤进行：
+
+1. **年化波动率转换为日波动率**：
+   年化波动率为24%，即0.24。根据题目约定，每年有252个交易日，因此日波动率为：
+   \[
+   \sigma_{\text{daily}} = \frac{\sigma_{\text{annual}}}{\sqrt{252}} = \frac{0.24}{\sqrt{252}}
+   \]
+
+2. **计算95%的一日VaR**：
+   95%的VaR对应的正态分布分位数为1.64485（单尾）。因此，一日VaR的计算公式为：
+   \[
+   \text{VaR}_{95\%,1d} = \text{头寸} \times \sigma_{\text{daily}} \times 1.64485
+   \]
+   其中，头寸为270万元。
+
+3. **具体计算**：
+   \[
+   \sigma_{\text{daily}} = \frac{0.24}{\sqrt{252}} \approx \frac{0.24}{15.8745} \approx 0.01512
+   \]
+   \[
+   \text{VaR}_{95\%,1d} = 2,700,000 \times 0.01512 \times 1.64485 \approx 2,700,000 \times 0.02487 \approx 67,149 \text{元}
+   \]
+
+将结果存入字典 `result` 中：
+
+```python
+import math
+
+# 参数
+annual_vol = 0.24
+position = 2_700_000
+days = 252
+z_score_95 = 1.64485  # 95%置信水平的正态分布分位数
+
+# 计算日波动率
+daily_vol = annual_vol / math.sqrt(days)
+
+# 计算95%的一日VaR
+var_95_1d = position * daily_vol * z_score_95
+
+# 存入结果字典
+result = {
+    'var_95_1d': round(var_95_1d, 2)  # 保留两位小数
+}
+
+print(result)
+```
+
+输出结果：
+```python
+{'var_95_1d': 67149.0}
+```
+
+因此，`result` 字典的内容为：
+```python
+result = {'var_95_1d': 67149.0}
+```

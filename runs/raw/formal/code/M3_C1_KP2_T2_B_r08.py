@@ -1,0 +1,113 @@
+import matplotlib.pyplot as plt
+import numpy as np
+import matplotlib.ticker as mticker
+
+# 1. 参数设定与计算
+rf_val = 0.023
+rm_val = 0.094
+
+# 计算SML斜率
+sml_slope = rm_val - rf_val
+
+# 计算Beta 1.27对应的期望收益
+er_at_beta_127 = rf_val + 1.27 * sml_slope
+
+# 2. 绘图
+fig, ax = plt.subplots(figsize=(10, 7))
+beta_range = np.linspace(0, 2, 100)
+sml_y = rf_val + beta_range * sml_slope
+
+sml_line, = ax.plot(beta_range, sml_y, label='SML', color='blue', linewidth=2)
+
+# 标出X, Y, Z三点
+points_data = {'X': (0.62, 0.081), 'Y': (1.18, 0.131), 'Z': (1.51, 0.099)}
+for name, (b, er) in points_data.items():
+    ax.plot(b, er, 'ro', markersize=8, zorder=5)
+    ax.annotate(f'{name} ($\\beta$={b}, E[R]={er*100:.1f}%)', 
+                (b, er), textcoords="offset points", xytext=(10, 10), 
+                ha='left', fontsize=10, 
+                bbox=dict(boxstyle="round,pad=0.3", fc="yellow", alpha=0.5))
+
+# 标出Rf和Market点，并设为可拖拽
+rf_point, = ax.plot(0, rf_val, 'gs', markersize=12, label='Rf (Draggable)', zorder=5)
+m_point, = ax.plot(1, rm_val, 'c^', markersize=12, label='Market (Draggable)', zorder=5)
+ax.annotate(f'Rf ({rf_val*100:.1f}%)', (0, rf_val), textcoords="offset points", xytext=(-15, -15), ha='center', fontsize=10)
+ax.annotate(f'Market ({rm_val*100:.1f}%)', (1, rm_val), textcoords="offset points", xytext=(15, -15), ha='left', fontsize=10)
+
+# 3. 实现拖拽交互功能
+class DraggablePoint:
+    lock = None  # 同一时间只允许拖拽一个点
+    
+    def __init__(self, point, line, is_rf, other_point):
+        self.point = point
+        self.line = line
+        self.is_rf = is_rf
+        self.other_point = other_point
+        self.press = None
+        self.canvas = point.figure.canvas
+        self.canvas.mpl_connect('button_press_event', self.on_press)
+        self.canvas.mpl_connect('button_release_event', self.on_release)
+        self.canvas.mpl_connect('motion_notify_event', self.on_motion)
+
+    def on_press(self, event):
+        if event.inaxes != self.point.axes or DraggablePoint.lock is not None:
+            return
+        contains, attrd = self.point.contains(event)
+        if not contains:
+            return
+        DraggablePoint.lock = self
+        self.press = (self.point.get_ydata()[0], event.ydata)
+
+    def on_motion(self, event):
+        if DraggablePoint.lock is not self or self.press is None:
+            return
+        if event.inaxes != self.point.axes:
+            return
+            
+        y0, ypress = self.press
+        dy = event.ydata - ypress
+        new_y = y0 + dy
+        
+        self.point.set_ydata([new_y])
+        
+        # 获取当前的rf和rm
+        current_rf = new_y if self.is_rf else self.other_point.get_ydata()[0]
+        current_rm = new_y if not self.is_rf else self.other_point.get_ydata()[0]
+        
+        # 更新SML直线
+        beta_range_local = np.linspace(0, 2, 100)
+        new_sml_y = current_rf + beta_range_local * (current_rm - current_rf)
+        self.line.set_ydata(new_sml_y)
+        
+        self.canvas.draw_idle()
+
+    def on_release(self, event):
+        if DraggablePoint.lock is not self:
+            return
+        DraggablePoint.lock = None
+        self.press = None
+        self.canvas.draw_idle()
+
+# 绑定拖拽事件
+dp_rf = DraggablePoint(rf_point, sml_line, True, m_point)
+dp_m = DraggablePoint(m_point, sml_line, False, rf_point)
+
+# 4. 图表格式美化
+ax.set_xlim(-0.1, 2.2)
+ax.set_ylim(-0.02, 0.18)
+ax.set_xlabel('Beta ($\\beta$)', fontsize=12)
+ax.set_ylabel('Expected Return (E[R])', fontsize=12)
+ax.set_title('Security Market Line (SML) with Interactive Rf and Market', fontsize=14)
+ax.yaxis.set_major_formatter(mticker.PercentFormatter(1.0))
+ax.grid(True, linestyle='--', alpha=0.7)
+ax.legend(loc='upper left')
+
+# 5. 保存图像并构建输出契约字典
+fig_path = 'sml_plot.png'
+plt.savefig(fig_path, dpi=150, bbox_inches='tight')
+
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': fig_path
+}

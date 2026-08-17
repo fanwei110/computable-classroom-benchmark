@@ -1,0 +1,44 @@
+以下是自包含的Python脚本，按照要求计算全样本年化夏普比率：
+
+```python
+import pandas as pd
+import numpy as np
+
+# 1. 读取数据并设定无风险利率
+file_path = 'data/market_snapshot_v1.csv'
+data = pd.read_csv(file_path)
+risk_free_rate = 0.021  # 年化无风险利率2.1%
+
+# 提取fund列（假设fund列代表基金的日收益率）
+fund_returns = data['fund'].dropna()
+
+# 2. 计算年化夏普比率
+# 日收益率转换为年化收益率
+annualized_return = np.mean(fund_returns) * 252
+# 日收益率标准差转换为年化波动率
+annualized_volatility = np.std(fund_returns) * np.sqrt(252)
+# 计算夏普比率（年化）
+sharpe_ratio_annual = (annualized_return - risk_free_rate) / annualized_volatility
+
+# 3. 存储结果
+result = {
+    'sharpe_annual': sharpe_ratio_annual
+}
+
+# 输出结果（可选，用于验证）
+print(result)
+```
+
+### 说明：
+1. **数据读取**：直接读取CSV文件中的`fund`列，假设该列代表基金的日收益率。
+2. **无风险利率**：设定为2.1%（年化）。
+3. **年化处理**：
+   - 收益率年化：日均收益率乘以252（交易日天数）。
+   - 波动率年化：日收益率标准差乘以√252。
+4. **夏普比率**：计算公式为 `(年化收益率 - 无风险利率) / 年化波动率`。
+5. **结果存储**：将结果存入字典`result`，键名严格为`'sharpe_annual'`。
+
+### 注意事项：
+- 如果`fund`列不是日收益率，请根据实际含义调整年化系数（如月收益率则乘以12）。
+- 脚本假设数据文件路径为`data/market_snapshot_v1.csv`，请确保路径正确。
+- 输出结果可复现，无占位值或联网操作。

@@ -1,0 +1,51 @@
+import numpy as np
+from scipy.stats import norm
+from math import log, sqrt, exp
+
+def black_scholes_call(S, K, T, r, sigma):
+    """
+    计算欧式看涨期权的价格、Delta 和 Vega。
+
+    参数:
+    S (float): 标的资产现价
+    K (float): 行权价
+    T (float): 剩余期限（年化）
+    r (float): 无风险利率（年化）
+    sigma (float): 隐含波动率（年化）
+
+    返回:
+    dict: 包含 'call_price', 'call_delta', 'call_vega' 的字典
+    """
+    # 计算 d1 和 d2
+    d1 = (log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * sqrt(T))
+    d2 = d1 - sigma * sqrt(T)
+
+    # 计算期权价格
+    call_price = S * norm.cdf(d1) - K * exp(-r * T) * norm.cdf(d2)
+
+    # 计算 Delta
+    call_delta = norm.cdf(d1)
+
+    # 计算 Vega（对波动率的敏感度，单位为每 1% 波动率变化）
+    call_vega = S * sqrt(T) * norm.pdf(d1) * 0.01  # 乘以 0.01 将 Vega 转换为每 1% 变化
+
+    return {
+        'call_price': call_price,
+        'call_delta': call_delta,
+        'call_vega': call_vega
+    }
+
+# 输入参数
+S = 103.7      # 标的资产现价
+K = 97.5       # 行权价
+T = 0.58       # 剩余期限（年化）
+r = 0.043      # 无风险利率（年化）
+sigma = 0.276  # 隐含波动率（年化）
+
+# 计算结果
+result = black_scholes_call(S, K, T, r, sigma)
+
+# 输出结果（可选，用于验证）
+print("期权价格:", result['call_price'])
+print("Delta:", result['call_delta'])
+print("Vega:", result['call_vega'])

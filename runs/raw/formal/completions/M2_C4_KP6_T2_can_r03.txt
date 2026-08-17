@@ -1,0 +1,83 @@
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ==============================
+# 可调参数
+# ==============================
+WINDOW = 60                    # 滚动窗口交易日数
+RISK_FREE_RATE = 0.021         # 年化无风险利率 (2.1%)
+TRADING_DAYS = 252             # 年交易日数
+# ==============================
+
+def annualized_sharpe(excess_returns: np.ndarray) -> float:
+    """
+    根据日超额收益计算年化夏普比率
+    - 均值使用样本平均
+    - 波动率使用样本标准差 (ddof=1)
+    """
+    if len(excess_returns) < 2:
+        return np.nan
+    mu = np.mean(excess_returns)
+    sigma = np.std(excess_returns, ddof=1)
+    if sigma == 0:
+        return np.nan
+    daily_sharpe = mu / sigma
+    return daily_sharpe * np.sqrt(TRADING_DAYS)
+
+def main():
+    # 1. 读取数据
+    df = pd.read_csv('data/market_snapshot_v1.csv')
+    
+    # 如果存在日期列，转换为 datetime 并设为索引，便于绘图
+    if 'date' in df.columns:
+        df['date'] = pd.to_datetime(df['date'])
+        df.set_index('date', inplace=True)
+    
+    # 基金日收益率（小数形式）
+    fund_returns = df['fund']
+    
+    # 日无风险利率
+    rf_daily = RISK_FREE_RATE / TRADING_DAYS
+    
+    # 超额收益
+    excess = fund_returns - rf_daily
+    
+    # 2. 计算滚动年化夏普比率
+    rolling_sharpe = excess.rolling(window=WINDOW).apply(
+        annualized_sharpe, raw=True
+    )
+    
+    # 3. 最后（最近）一个窗口的夏普值
+    last_sharpe = rolling_sharpe.iloc[-1]
+    
+    # 4. 画图并保存
+    fig, ax = plt.subplots(figsize=(12, 6))
+    ax.plot(rolling_sharpe.index, rolling_sharpe.values, 
+            color='navy', linewidth=1.5, label=f'{WINDOW}-Day Rolling Ann. Sharpe')
+    ax.axhline(0, color='black', linewidth=0.8, linestyle='--')
+    ax.set_title(f'Rolling {WINDOW}-Day Annualized Sharpe Ratio (Risk-Free Rate = {RISK_FREE_RATE*100:.1f}%)')
+    ax.set_xlabel('Date' if isinstance(rolling_sharpe.index, pd.DatetimeIndex) else 'Time')
+    ax.set_ylabel('Annualized Sharpe Ratio')
+    ax.legend()
+    ax.grid(True, alpha=0.3)
+    fig.tight_layout()
+    
+    figure_path = 'rolling_sharpe.png'
+    fig.savefig(figure_path, dpi=150)
+    plt.close(fig)
+    
+    # 5. 填充结果字典
+    result = {
+        'rolling_sharpe_last': last_sharpe,
+        'figure_path': figure_path
+    }
+    
+    # 输出结果，方便课堂投屏查看
+    print(result)
+    return result
+
+if __name__ == '__main__':
+    main()
+```

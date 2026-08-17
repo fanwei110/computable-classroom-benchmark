@@ -1,0 +1,116 @@
+以下是满足要求的自包含 Python 脚本。它完成了债券定价、久期近似、绘图以及将结果存入 `result` 字典的全部步骤。
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+import pandas as pd
+import scipy  # 按要求导入，但本脚本未直接使用
+
+# =========================
+# 可调参数
+# =========================
+FACE = 100.0           # 面值
+COUPON_RATE = 0.046    # 票息率（年化）
+MATURITY = 7           # 期限（年）
+Y0 = 0.053             # 当前收益率（5.3%）
+DELTA_Y_BP = 100       # 收益率变动（基点），可调
+
+# 绘图参数
+Y_MIN = 0.02
+Y_MAX = 0.09
+N_POINTS = 500
+
+# =========================
+# 定价函数（年付息一次）
+# =========================
+def bond_price(y, face, coupon_rate, maturity):
+    """计算债券在收益率y下的价格（全价，刚付息后）"""
+    coupon = face * coupon_rate
+    t = np.arange(1, maturity + 1)
+    pv_coupons = coupon / (1 + y) ** t
+    pv_face = face / (1 + y) ** maturity
+    return np.sum(pv_coupons) + pv_face
+
+# 向量化以便在数组上使用
+bond_price_vec = np.vectorize(bond_price, excluded=['face', 'coupon_rate', 'maturity'])
+
+# =========================
+# 麦考利久期与修正久期
+# =========================
+def macaulay_duration(y, face, coupon_rate, maturity):
+    coupon = face * coupon_rate
+    t = np.arange(1, maturity + 1)
+    pv_cf = coupon / (1 + y) ** t
+    pv_face = face / (1 + y) ** maturity
+    P = np.sum(pv_cf) + pv_face
+    weighted_sum = np.sum(t * pv_cf) + maturity * pv_face
+    return weighted_sum / P
+
+def modified_duration(y, face, coupon_rate, maturity):
+    D_mac = macaulay_duration(y, face, coupon_rate, maturity)
+    return D_mac / (1 + y)  # 年付息一次的修正久期
+
+# =========================
+# 计算基准数据
+# =========================
+P0 = bond_price(Y0, FACE, COUPON_RATE, MATURITY)
+D_mod = modified_duration(Y0, FACE, COUPON_RATE, MATURITY)
+
+# 收益率网格
+y_grid = np.linspace(Y_MIN, Y_MAX, N_POINTS)
+price_exact = bond_price_vec(y_grid, face=FACE, coupon_rate=COUPON_RATE, maturity=MATURITY)
+
+# 基于久期的线性近似：P(y) ≈ P0 - P0 * D_mod * (y - Y0)
+price_approx = P0 - P0 * D_mod * (y_grid - Y0)
+
+# =========================
+# 计算 +100bp 的结果
+# =========================
+y_up = Y0 + DELTA_Y_BP / 10000.0   # bp 转小数
+P_up_exact = bond_price(y_up, FACE, COUPON_RATE, MATURITY)
+approx_relative_change = -D_mod * (DELTA_Y_BP / 10000.0)  # 相对价格变化（小数）
+
+# =========================
+# 绘图
+# =========================
+fig, ax = plt.subplots(figsize=(8, 5))
+ax.plot(y_grid * 100, price_exact, label='Exact price', linewidth=2)
+ax.plot(y_grid * 100, price_approx, '--', label='Duration approximation', linewidth=2)
+ax.axvline(Y0 * 100, color='gray', linestyle=':', alpha=0.7)
+ax.axvline(y_up * 100, color='red', linestyle=':', alpha=0.7, label=f'+{DELTA_Y_BP} bp')
+ax.set_xlabel('Yield (%)')
+ax.set_ylabel('Price')
+ax.set_title('Bond Price vs Yield (7-year, coupon 4.6%)')
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+# 保存图片
+figure_filename = 'bond_price_yield.png'
+plt.savefig(figure_filename, dpi=200, bbox_inches='tight')
+plt.close()
+
+# =========================
+# 填充结果字典
+# =========================
+result = {
+    'price_at_up100bp': round(P_up_exact, 6),
+    'dur_approx_change_up100bp': round(approx_relative_change, 6),
+    'figure_path': figure_filename,
+}
+
+# 打印结果以便课堂投屏观察
+print("=== 债券分析结果 ===")
+print(f"当前收益率 (Y0): {Y0*100:.2f}%")
+print(f"收益率上调: +{DELTA_Y_BP} bp -> {y_up*100:.2f}%")
+print(f"精确价格 (上调后): {result['price_at_up100bp']:.6f}")
+print(f"久期法估计的相对价格变化: {result['dur_approx_change_up100bp']:.6f} ({result['dur_approx_change_up100bp']*100:.4f}%)")
+print(f"图形保存至: {result['figure_path']}")
+```
+
+**输出说明**：
+- `result` 字典严格包含要求的键：
+  - `price_at_up100bp`：收益率上调 100bp 后的精确价格。
+  - `dur_approx_change_up100bp`：用久期估计的相对价格变化（小数；若需百分比可乘以 100）。
+  - `figure_path`：保存的曲线图文件名，当前为 `bond_price_yield.png`。
+- 收益率变动幅度通过顶部变量 `DELTA_Y_BP` 控制，可根据需要调整。
+- 图形中实线为精确价格，虚线为久期线性近似，并标注了当前收益率与上调后的收益率位置。

@@ -1,0 +1,43 @@
+要计算隐含波动率（隐波）上涨1个点时期权价格的变化，我们可以使用期权的Vega值。Vega衡量的是期权价格对隐含波动率变化的敏感性，即隐含波动率每变化1个百分点（1%），期权价格的变化量。
+
+假设题目中提到的期权Vega值为已知（例如Vega=0.15，即隐波变化1%时价格变化0.15元），那么隐波上涨1个点（即1%）时，期权价格的变化量就是Vega的值。
+
+如果题目没有给出具体Vega值，我们可以通过Black-Scholes模型或其他期权定价模型计算Vega。以下是基于Vega的通用计算方式：
+
+```python
+result = {
+    'price_change': vega  # 隐波涨1个点（1%）时的价格变化，单位为期权价格的货币单位
+}
+```
+
+如果题目中给出了具体的期权参数（如标的价格、行权价、到期时间、无风险利率、隐含波动率等），可以精确计算Vega值。例如：
+
+```python
+from scipy.stats import norm
+import numpy as np
+
+def black_scholes_vega(S, K, T, r, sigma):
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    vega = S * norm.pdf(d1) * np.sqrt(T) * 0.01  # 乘以0.01将1%转换为1个点
+    return vega
+
+# 示例参数
+S = 100    # 标的价格
+K = 100    # 行权价
+T = 1      # 到期时间（年）
+r = 0.05   # 无风险利率
+sigma = 0.2  # 隐含波动率（20%）
+
+vega = black_scholes_vega(S, K, T, r, sigma)
+result = {
+    'price_change': vega  # 隐波涨1个点（1%）时的价格变化
+}
+```
+
+请根据题目中的具体参数调整计算。如果题目没有给出具体参数，可以假设Vega值为已知（例如0.15），则：
+
+```python
+result = {
+    'price_change': 0.15  # 假设Vega=0.15
+}
+```

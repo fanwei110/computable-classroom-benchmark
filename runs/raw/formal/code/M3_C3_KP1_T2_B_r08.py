@@ -1,0 +1,91 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# --- 输入参数 ---
+r1 = 0.071
+r2 = 0.124
+vol1 = 0.163
+vol2 = 0.289
+rhos = [0.15, 0.45, 0.75]
+target_ret = 0.10
+
+# --- 计算函数 ---
+def portfolio_performance(w1, r1, r2, vol1, vol2, rho):
+    w2 = 1 - w1
+    ret = w1 * r1 + w2 * r2
+    vol = np.sqrt(w1**2 * vol1**2 + w2**2 * vol2**2 + 2 * w1 * w2 * rho * vol1 * vol2)
+    return ret, vol
+
+def get_mvp(r1, r2, vol1, vol2, rho):
+    # 最小方差组合权重 w1
+    w1_mvp = (vol2**2 - rho * vol1 * vol2) / (vol1**2 + vol2**2 - 2 * rho * vol1 * vol2)
+    ret_mvp, vol_mvp = portfolio_performance(w1_mvp, r1, r2, vol1, vol2, rho)
+    return w1_mvp, ret_mvp, vol_mvp
+
+def get_target_vol(target_ret, r1, r2, vol1, vol2, rho):
+    # 目标收益下的权重 w1
+    w1_target = (target_ret - r2) / (r1 - r2)
+    _, vol_target = portfolio_performance(w1_target, r1, r2, vol1, vol2, rho)
+    return vol_target
+
+# --- 计算 rho=0.45 的特定值 ---
+_, _, mvp_vol_45 = get_mvp(r1, r2, vol1, vol2, 0.45)
+frontier_vol_target = get_target_vol(target_ret, r1, r2, vol1, vol2, 0.45)
+
+# --- 绘图 ---
+plt.figure(figsize=(10, 7))
+colors = ['blue', 'green', 'red']
+
+w1_range = np.linspace(-0.5, 1.5, 500)
+
+for rho, color in zip(rhos, colors):
+    rets = []
+    vols = []
+    for w1 in w1_range:
+        ret, vol = portfolio_performance(w1, r1, r2, vol1, vol2, rho)
+        rets.append(ret)
+        vols.append(vol)
+    
+    plt.plot(vols, rets, label=f'ρ = {rho}', color=color)
+    
+    # 标出最小方差点
+    _, mvp_ret, mvp_vol = get_mvp(r1, r2, vol1, vol2, rho)
+    plt.scatter(mvp_vol, mvp_ret, color=color, zorder=5)
+    plt.annotate(f'MVP (ρ={rho})\nVol: {mvp_vol:.2%}', 
+                 xy=(mvp_vol, mvp_ret), 
+                 xytext=(mvp_vol + 0.02, mvp_ret - 0.005),
+                 fontsize=9,
+                 arrowprops=dict(facecolor='black', shrink=0.05, width=1, headwidth=5))
+
+# 标出单资产点
+plt.scatter(vol1, r1, color='black', marker='s', zorder=5)
+plt.annotate(f'Asset 1\nRet: {r1:.1%}, Vol: {vol1:.1%}', xy=(vol1, r1), xytext=(vol1+0.02, r1+0.005), fontsize=9)
+
+plt.scatter(vol2, r2, color='black', marker='s', zorder=5)
+plt.annotate(f'Asset 2\nRet: {r2:.1%}, Vol: {vol2:.1%}', xy=(vol2, r2), xytext=(vol2+0.02, r2+0.005), fontsize=9)
+
+# 图表装饰
+plt.title('Two-Asset Efficient Frontier with Different Correlations', fontsize=14)
+plt.xlabel('Volatility (Standard Deviation)', fontsize=12)
+plt.ylabel('Expected Return', fontsize=12)
+plt.legend(fontsize=11)
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.xlim(0, 0.55)
+plt.ylim(0.02, 0.18)
+
+# 保存图片
+figure_path = 'efficient_frontier.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# --- 封装结果 ---
+result = {
+    'mvp_vol_at_rho45': mvp_vol_45,
+    'frontier_vol_at_target': frontier_vol_target,
+    'figure_path': figure_path
+}
+
+print(f"rho=0.45 时的最小方差组合波动率: {mvp_vol_45:.6%}")
+print(f"目标收益10%时的最小波动率: {frontier_vol_target:.6%}")
+print(f"图表已保存至: {figure_path}")

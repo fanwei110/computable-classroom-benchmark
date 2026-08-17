@@ -1,0 +1,22 @@
+import numpy as np
+from scipy.stats import norm
+
+# 给定参数
+S = 103.7          # 标的现价
+K = 97.5           # 行权价
+sigma = 0.276      # 波动率 (27.6%)
+r = 0.043          # 无风险利率 (4.3%)
+T = 0.58           # 剩余期限 (年)
+delta_sigma = 0.01 # 波动率上升一个百分点 (1%)
+
+# 计算 d1
+d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+
+# 计算 Vega（波动率变动 1 单位时期权价格的变动）
+vega = S * np.sqrt(T) * norm.pdf(d1)
+
+# 波动率上升 1 个百分点带来的价格变动
+price_change = vega * delta_sigma
+
+# 按要求存入字典
+result = {'price_change': price_change}

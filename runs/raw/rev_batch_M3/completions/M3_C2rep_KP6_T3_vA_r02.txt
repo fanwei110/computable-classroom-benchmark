@@ -1,0 +1,43 @@
+```python
+import pandas as pd
+import numpy as np
+
+# 1. 读取快照 CSV
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 提取 fund 列
+fund_series = df['fund']
+
+# === 假设处理 ===
+# 假设1：判断 fund 列是净值还是收益率。
+# 金融数据中，若绝对值最大值大于1，通常为基金净值序列，需计算收益率；否则视为日收益率序列。
+if fund_series.abs().max() > 1.0:
+    returns = fund_series.pct_change().dropna()
+else:
+    returns = fund_series
+
+# 假设2：无风险利率与年化交易日
+# 无风险利率给定为年化 2.1%
+rf_annual = 0.021
+# 假设数据为日度交易数据，采用国际通用的一年 252 个交易日进行年化（国内有时取242，此处取252并在注释说明）
+trading_days = 252
+# 日度无风险利率采用简单平均折算
+rf_daily = rf_annual / trading_days
+
+# 2. 计算全样本年化夏普比率
+# 计算日度收益率的均值与标准差（样本标准差，ddof=1）
+mean_daily_return = returns.mean()
+std_daily_return = returns.std()
+
+# 年化夏普比率 = (日均收益 - 日无风险利率) / 日收益标准差 * sqrt(年交易日数)
+sharpe_daily = (mean_daily_return - rf_daily) / std_daily_return
+sharpe_annual = sharpe_daily * np.sqrt(trading_days)
+
+# 3. 把结果存入 result
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+# 课堂投屏展示辅助输出
+print(f"全样本年化夏普比率: {sharpe_annual:.4f}")
+```

@@ -1,0 +1,50 @@
+为了计算该基金在整个样本期间的年化夏普比率，我们需要基于基金的日度收益率数据，计算其年化收益率和年化波动率，然后带入夏普比率公式。
+
+根据您的计算约定：
+1. 年化交易日为 252 天。
+2. 无风险利率 $R_f = 2.1\% = 0.021$。
+3. 标准差使用样本估计量（自由度 `ddof=1`）。
+4. 所有比率用小数表示。
+
+以下是完整的 Python 计算代码：
+
+```python
+import numpy as np
+import pandas as pd
+
+# 假设课程数据已经加载为 DataFrame df，且 'fund' 列为基金的日收益率序列
+# daily_returns = df['fund'] 
+
+# 如果 'fund' 列是净值序列，则需要先计算日收益率：
+# daily_returns = df['fund'].pct_change().dropna()
+
+# ----------------- 计算过程 -----------------
+
+# 1. 计算日平均收益率与日标准差（样本估计量 ddof=1）
+mean_daily = daily_returns.mean()
+std_daily = daily_returns.std(ddof=1)
+
+# 2. 年化收益率与年化波动率
+# 年化收益率 = 日均收益率 * 252
+annual_return = mean_daily * 252
+
+# 年化波动率 = 日标准差 * sqrt(252)
+annual_volatility = std_daily * np.sqrt(252)
+
+# 3. 无风险利率
+rf = 0.021
+
+# 4. 计算年化夏普比率
+# Sharpe = (年化收益率 - 无风险利率) / 年化波动率
+sharpe_annual = (annual_return - rf) / annual_volatility
+
+# ----------------- 输出契约 -----------------
+result = {
+    'sharpe_annual': sharpe_annual
+}
+```
+
+### 核心逻辑说明：
+* **年化收益处理**：直接采用 `日均收益率 × 252` 的方式年化，这与日均超额收益年化在数学上等价。
+* **年化波动处理**：依据独立同分布假设，波动率按时间的平方根年化，即 `日标准差 × √252`。
+* **样本标准差**：`pandas` 的 `.std()` 默认 `ddof=1`，符合“样本估计量”的约定，分母为 $n-1$。

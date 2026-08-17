@@ -1,0 +1,70 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ================================
+# 参数设置
+# ================================
+CONFIDENCE_LEVEL = 0.95          # 可调置信水平
+POSITION_VALUE   = 1_000_000     # 头寸金额（人民币）
+DATA_PATH        = 'data/market_snapshot_v1.csv'
+FIGURE_PATH      = 'var_histogram.png'
+
+# ================================
+# 1. 读取数据并构造日损益序列
+# ================================
+df = pd.read_csv(DATA_PATH)
+returns_raw = df['fund'].astype(float)
+
+# 如果收益率看起来是百分数（绝对值 > 1），转换为小数形式
+if returns_raw.abs().max() > 1:
+    returns = returns_raw / 100.0
+else:
+    returns = returns_raw
+
+# 计算头寸的日损益 (P&L)
+pnl = POSITION_VALUE * returns
+
+# ================================
+# 2. 由经验分布计算历史 VaR
+# ================================
+var_percentile = 100 * (1 - CONFIDENCE_LEVEL)          # 左尾分位数对应的百分位
+pnl_at_var = np.percentile(pnl, var_percentile)        # 此时损益值（负数表示损失）
+var_value = -pnl_at_var                                # VaR 取损失的绝对值
+
+# ================================
+# 3. 画直方图并标注 VaR
+# ================================
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.hist(pnl, bins='auto', color='steelblue', edgecolor='white', alpha=0.8)
+
+# 添加 VaR 竖线
+ax.axvline(pnl_at_var, color='red', linestyle='--', linewidth=2,
+           label=f'{CONFIDENCE_LEVEL*100:.0f}% 1‑Day Historical VaR: {var_value:,.2f} CNY')
+
+# 在竖线上方添加文本框标注
+y_max = ax.get_ylim()[1]
+ax.text(pnl_at_var, y_max * 0.92, f'VaR = {var_value:,.2f} CNY',
+        ha='right', va='top', color='red', fontweight='bold',
+        bbox=dict(facecolor='white', edgecolor='red', boxstyle='round,pad=0.3'))
+
+ax.set_xlabel('Daily P&L (CNY)')
+ax.set_ylabel('Frequency')
+ax.set_title('Distribution of Daily P&L with Historical VaR')
+ax.legend(loc='upper left')
+
+plt.tight_layout()
+plt.savefig(FIGURE_PATH, dpi=150)
+plt.close()
+
+# ================================
+# 4. 输出结果存入字典
+# ================================
+result = {
+    'hist_var_95_1d': var_value,
+    'figure_path': FIGURE_PATH,
+}
+
+if __name__ == '__main__':
+    print(f"95% 1-Day Historical VaR: {result['hist_var_95_1d']:,.2f} CNY")
+    print(f"Figure saved to: {result['figure_path']}")

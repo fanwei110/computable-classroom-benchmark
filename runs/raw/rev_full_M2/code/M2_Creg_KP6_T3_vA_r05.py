@@ -1,0 +1,104 @@
+import pandas as pd
+import numpy as np
+
+# ----------------------------------------------------------------------
+# 配置
+# ----------------------------------------------------------------------
+DATA_FILE = "data.csv"          # 假设课程数据文件名为 data.csv
+RISK_FREE_RATE = 0.021         # 年化无风险利率 2.1%
+
+# ----------------------------------------------------------------------
+# 读取数据 & 列选择
+# ----------------------------------------------------------------------
+df = pd.read_csv(DATA_FILE)
+
+# 提取 fund 列，可能是 Series 或 DataFrame
+if isinstance(df, pd.DataFrame):
+    if "fund" in df.columns:
+        fund_series = df["fund"]
+    else:
+        # 若没有 fund 列，尝试使用第一列
+        fund_series = df.iloc[:, 0]
+        print("警告: 未找到 'fund' 列，使用第一列")
+else:
+    # 如果读了单个 Series
+    fund_series = df
+
+# ----------------------------------------------------------------------
+# 尝试解析日期索引（如果数据包含日期列）
+# ----------------------------------------------------------------------
+# 如果有日期列，通常叫 'date'，这里尝试把第一列转换为日期
+if isinstance(fund_series, pd.Series) and fund_series.index.dtype == 'O':
+    # 如果索引是对象类型，可能是日期字符串，尝试转换
+    try:
+        date_index = pd.to_datetime(fund_series.index)
+        fund_series.index = date_index
+    except Exception:
+        pass
+
+# 如果 fund 是 DataFrame 的一列，检查其它列是否有日期
+if "date" in df.columns:
+    date_col = pd.to_datetime(df["date"])
+    fund_series = pd.Series(fund_series.values, index=date_col, name="fund")
+elif df.index.dtype == 'O':
+    try:
+        date_index = pd.to_datetime(df.index)
+        fund_series.index = date_index
+    except Exception:
+        pass
+
+# ----------------------------------------------------------------------
+# 计算收益率：如果是价格序列，用百分比变化；如果是收益率序列，直接使用
+# ----------------------------------------------------------------------
+if fund_series.min() > 0 and fund_series.std() / fund_series.mean() > 0.01:
+    # 看起来像价格（全正，且波动相对均值明显）
+    ret = fund_series.pct_change().dropna()
+else:
+    # 可能就是收益率序列
+    ret = fund_series.dropna()
+
+# ----------------------------------------------------------------------
+# 推断时间频率以确定年化系数
+# ----------------------------------------------------------------------
+period = 252  # 默认日度
+
+if isinstance(ret.index, pd.DatetimeIndex) and len(ret.index) >= 2:
+    freq = pd.infer_freq(ret.index)
+    if freq is None:
+        # 用中位数时间差推断
+        delta = ret.index.to_series().diff().median()
+        days = delta.days
+        if days <= 1:
+            period = 252
+        elif 28 <= days <= 31:
+            period = 12
+        else:
+            period = 252  # fallback
+    else:
+        if 'B' in freq or 'D' in freq:
+            period = 252
+        elif 'M' in freq or 'MS' in freq:
+            period = 12
+        elif 'Q' in freq:
+            period = 4
+        else:
+            period = 252
+else:
+    # 没有日期索引时，假设为每日数据
+    period = 252
+
+# ----------------------------------------------------------------------
+# 年化夏普比率计算
+# ----------------------------------------------------------------------
+mu = ret.mean() * period
+sigma = ret.std() * np.sqrt(period)
+sharpe_annual = (mu - RISK_FREE_RATE) / sigma
+
+# ----------------------------------------------------------------------
+# 输出结果
+# ----------------------------------------------------------------------
+result = {
+    "sharpe_annual": sharpe_annual
+}
+
+print(result)

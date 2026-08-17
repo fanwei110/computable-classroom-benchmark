@@ -1,0 +1,37 @@
+import numpy as np
+from scipy.stats import norm
+
+# 输入参数
+position_value = 1850000.0       # 头寸价值（元）
+annual_volatility = 0.218        # 年化收益波动率（21.8%）
+trading_days_per_year = 252      # 每年交易日
+
+# 置信水平
+confidence_95 = 0.95
+confidence_99 = 0.99
+
+# 计算一日波动率
+daily_volatility = annual_volatility / np.sqrt(trading_days_per_year)
+
+# 计算正态分位数（单尾）
+z_95 = norm.ppf(confidence_95)  # 95%置信水平对应的z值
+z_99 = norm.ppf(confidence_99)  # 99%置信水平对应的z值
+
+# 计算一日VaR（均值取零）
+var_95_1d = position_value * daily_volatility * z_95
+var_95_1d = abs(var_95_1d)  # 报告为正的损失金额
+
+# 计算十日VaR（按sqrt(10)缩放）
+var_99_10d = position_value * daily_volatility * np.sqrt(10) * z_99
+var_99_10d = abs(var_99_10d)  # 报告为正的损失金额
+
+# 存入结果字典
+result = {
+    'var_95_1d': var_95_1d,
+    'var_99_10d': var_99_10d
+}
+
+# 打印结果以便验证
+print(f"95% 一日 VaR: {var_95_1d:,.2f} 元")
+print(f"99% 十日 VaR: {var_99_10d:,.2f} 元")
+print(f"\n结果字典: {result}")

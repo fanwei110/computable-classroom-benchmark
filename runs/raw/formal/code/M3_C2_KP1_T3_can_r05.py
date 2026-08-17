@@ -1,0 +1,60 @@
+import numpy as np
+
+# ==========================================
+# 1. 确定权重与基础参数
+# ==========================================
+# 假设：60/40 的权重分配方式为 资产A占60%，资产B占40%
+w_A = 0.6
+w_B = 0.4
+weights = np.array([w_A, w_B])
+
+# 资产年化波动率
+vol_A = 0.184
+vol_B = 0.297
+
+# 相关系数
+rho_before = 0.3
+rho_after = 0.8
+
+# ==========================================
+# 2. 构造两个协方差矩阵
+# ==========================================
+# 协方差 = 相关系数 * 波动率A * 波动率B
+cov_before = rho_before * vol_A * vol_B
+cov_after  = rho_after  * vol_A * vol_B
+
+# 协方差矩阵 (对称矩阵)
+cov_matrix_before = np.array([
+    [vol_A**2, cov_before],
+    [cov_before, vol_B**2]
+])
+
+cov_matrix_after = np.array([
+    [vol_A**2, cov_after],
+    [cov_after, vol_B**2]
+])
+
+# ==========================================
+# 3. 计算两个组合波动率
+# ==========================================
+# 组合方差公式：w'Σw
+var_before = weights @ cov_matrix_before @ weights
+var_after  = weights @ cov_matrix_after  @ weights
+
+# 组合波动率（标准差）
+vol_before_annual = np.sqrt(var_before)
+vol_after_annual  = np.sqrt(var_after)
+
+# ==========================================
+# 4. 填充 result 字典
+# ==========================================
+result = {
+    'vol_before_annual': vol_before_annual,
+    'vol_after_annual': vol_after_annual
+}
+
+# （投屏展示用）打印结果
+print(f"相关系数为 0.3 时的组合年化波动率: {vol_before_annual:.4%}")
+print(f"相关系数为 0.8 时的组合年化波动率: {vol_after_annual:.4%}")
+print(f"波动率变化量: {(vol_after_annual - vol_before_annual):.4%}")
+print(f"\nresult 字典内容: {result}")

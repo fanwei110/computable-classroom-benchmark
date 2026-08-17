@@ -1,0 +1,64 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 债券参数
+face_value = 100
+coupon_rate = 0.046
+coupon = face_value * coupon_rate
+T = 7  # 剩余期限（年）
+ytm_current = 0.053  # 当前到期收益率
+
+# 现金流时间
+times = np.arange(1, T + 1)
+cash_flows = np.full(T, coupon)
+cash_flows[-1] += face_value  # 最后一期包含本金
+
+# ---------- 计算当前价格与修正久期 ----------
+def bond_price(ytm):
+    """计算债券全价（年付息）"""
+    discount_factors = (1 + ytm) ** -times
+    return np.sum(cash_flows * discount_factors)
+
+P0 = bond_price(ytm_current)
+
+# 修正久期
+discount_factors_current = (1 + ytm_current) ** -times
+pv_cf = cash_flows * discount_factors_current
+mac_dur = np.sum(times * pv_cf) / P0
+mod_dur = mac_dur / (1 + ytm_current)
+
+# ---------- 收益率 +100 bp ----------
+ytm_up = ytm_current + 0.01  # +100bp
+price_up = bond_price(ytm_up)  # 精确价格
+dur_approx_change = -mod_dur * 0.01  # 久期估计的相对变化
+
+# ---------- 结果存入字典 ----------
+result = {
+    'price_at_up100bp': round(price_up, 4),
+    'dur_approx_change_up100bp': round(dur_approx_change, 5),
+    'figure_path': 'price_yield_curve.png'  # 图片保存路径
+}
+
+# ---------- 画图 ----------
+yields = np.linspace(0.02, 0.09, 200)
+prices_exact = bond_price(yields)
+
+# 久期近似直线（在当前YTM处的切线）
+prices_duration = P0 - P0 * mod_dur * (yields - ytm_current)
+
+plt.figure(figsize=(10, 6))
+plt.plot(yields * 100, prices_exact, label='精确价格 (Exact Price)', color='navy')
+plt.plot(yields * 100, prices_duration, '--', label='久期近似 (Duration Approximation)', color='darkorange')
+plt.axvline(x=ytm_current * 100, color='gray', linestyle=':', alpha=0.7, label=f'当前YTM={ytm_current*100:.1f}%')
+plt.xlabel('到期收益率 (%)')
+plt.ylabel('债券全价')
+plt.title('债券价格-收益率曲线 (7年, 票息4.6%)')
+plt.legend()
+plt.grid(True, alpha=0.3)
+plt.tight_layout()
+plt.savefig(result['figure_path'], dpi=150)
+plt.close()
+
+print(result)
+```

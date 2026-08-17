@@ -1,0 +1,61 @@
+要计算整个样本期的年化夏普比率（Sharpe ratio），我们按照以下步骤进行：
+
+1. **计算日超额收益**：基金的日收益减去无风险利率的日等价收益（2.1% 年化，按 252 个交易日计算）。
+2. **计算超额收益的均值和标准差**：使用样本估计量（`ddof=1`）。
+3. **年化夏普比率**：将日超额收益的均值和标准差年化（乘以 √252），然后计算比率。
+
+### 计算步骤：
+1. 无风险利率的日等价收益：
+   \[
+   r_{f,\text{daily}} = \frac{0.021}{252}
+   \]
+2. 日超额收益：
+   \[
+   r_{e,t} = r_{t} - r_{f,\text{daily}}
+   \]
+   其中 \( r_{t} \) 是基金的日收益。
+3. 超额收益的均值和标准差：
+   \[
+   \mu_{e} = \text{mean}(r_{e,t}), \quad \sigma_{e} = \text{std}(r_{e,t}, \text{ddof}=1)
+   \]
+4. 年化夏普比率：
+   \[
+   \text{Sharpe}_{\text{annual}} = \frac{\mu_{e} \times 252}{\sigma_{e} \times \sqrt{252}} = \frac{\mu_{e} \sqrt{252}}{\sigma_{e}}
+   \]
+
+### Python 代码实现：
+假设 `df` 是包含基金日收益的 DataFrame，列名为 `'fund'`，则代码如下：
+
+```python
+import numpy as np
+import pandas as pd
+
+# 示例数据（假设 df 已加载）
+# df = pd.read_csv('课程数据文件.csv')  # 实际应用中需替换为读取文件
+daily_returns = df['fund']  # 基金日收益
+
+# 无风险利率（年化 2.1%，转换为日收益）
+rf_annual = 0.021
+rf_daily = rf_annual / 252
+
+# 计算日超额收益
+excess_returns = daily_returns - rf_daily
+
+# 计算超额收益的均值和标准差（样本估计量）
+mu_excess = excess_returns.mean()
+sigma_excess = excess_returns.std(ddof=1)
+
+# 年化夏普比率
+sharpe_annual = (mu_excess * np.sqrt(252)) / sigma_excess
+
+# 存入结果字典
+result = {
+    'sharpe_annual': sharpe_annual
+}
+```
+
+### 输出：
+`result` 字典中的 `'sharpe_annual'` 即为年化夏普比率。例如，若计算结果为 `1.23`，则 `result` 为：
+```python
+{'sharpe_annual': 1.23}
+```

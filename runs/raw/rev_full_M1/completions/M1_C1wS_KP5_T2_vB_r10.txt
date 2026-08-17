@@ -1,0 +1,70 @@
+以下是自包含的Python脚本，满足您的所有要求：
+
+```python
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from pathlib import Path
+
+# 设置参数
+confidence_level = 0.95  # 置信水平
+position_size = 1_000_000  # 头寸规模（人民币）
+data_path = 'data/market_snapshot_v1.csv'  # 数据路径
+output_dir = Path('output')
+output_dir.mkdir(exist_ok=True)  # 创建输出目录
+figure_path = output_dir / 'var_histogram.png'
+
+# 1. 读取数据并计算日损益
+try:
+    df = pd.read_csv(data_path)
+    daily_returns = df['fund'].pct_change().dropna()  # 日收益率
+    daily_pnl = daily_returns * position_size  # 日损益（人民币）
+except Exception as e:
+    raise ValueError(f"数据读取或处理失败: {str(e)}")
+
+# 2. 计算历史VaR
+var_percentile = (1 - confidence_level) * 100
+historical_var = np.percentile(daily_pnl, var_percentile)
+
+# 3. 绘制直方图并添加VaR线
+plt.figure(figsize=(10, 6))
+n, bins, patches = plt.hist(daily_pnl, bins=50, alpha=0.75, color='skyblue', edgecolor='black')
+
+# 添加VaR线
+plt.axvline(x=historical_var, color='red', linestyle='--', linewidth=2,
+            label=f'{confidence_level:.0%} 1-day VaR: ¥{historical_var:,.2f}')
+
+# 图形美化
+plt.title(f'Daily P&L Distribution with {confidence_level:.0%} VaR', fontsize=14)
+plt.xlabel('Daily P&L (RMB)', fontsize=12)
+plt.ylabel('Frequency', fontsize=12)
+plt.grid(axis='y', alpha=0.3)
+plt.legend(fontsize=12)
+
+# 保存图形
+plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# 4. 准备结果
+result = {
+    'hist_var_95_1d': historical_var,
+    'figure_path': str(figure_path.resolve())
+}
+
+# 输出结果（供教师使用）
+print(result)
+```
+
+这个脚本实现了以下功能：
+1. 从CSV文件读取fund列数据，计算日收益率和日损益
+2. 使用历史模拟法计算95%置信水平下的1日VaR
+3. 绘制日损益直方图，并添加VaR标注线
+4. 将结果保存到result字典中，包括VaR数值和图形路径
+5. 图形保存为output/var_histogram.png文件
+
+注意事项：
+- 脚本假设CSV文件中有'fund'列，且数据格式正确
+- 置信水平可以通过修改confidence_level变量调整
+- 图形保存路径可根据需要调整
+- 脚本使用了Path对象处理文件路径，确保跨平台兼容性
+- 所有计算均基于人民币，单位为元

@@ -1,0 +1,60 @@
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+import os
+
+def black_scholes_delta(S, K, T, r, sigma):
+    """
+    计算欧式看涨期权的delta
+    S: 标的资产价格
+    K: 行权价
+    T: 剩余期限（年）
+    r: 无风险利率（连续复利）
+    sigma: 波动率
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# 参数设置
+K = 97.5          # 行权价
+r = 0.043         # 无风险利率
+T = 0.58          # 剩余期限（年）
+S_range = np.linspace(70, 140, 100)  # 标的价格范围
+
+# 波动率参数
+sigmas = [0.15, 0.276, 0.40]
+
+# 计算delta
+deltas = {}
+for sigma in sigmas:
+    deltas[sigma] = black_scholes_delta(S_range, K, T, r, sigma)
+
+# 绘图
+plt.figure(figsize=(10, 6))
+for sigma in sigmas:
+    plt.plot(S_range, deltas[sigma], label=f'σ = {sigma:.1%}')
+
+plt.title('European Call Option Delta vs Underlying Price')
+plt.xlabel('Underlying Price')
+plt.ylabel('Delta')
+plt.legend()
+plt.grid(True)
+
+# 保存图形
+figure_path = 'option_delta_plot.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 计算特定点的delta
+S_target = 110
+sigma_target = 0.276
+delta_at_s110 = black_scholes_delta(S_target, K, T, r, sigma_target)
+
+# 准备结果
+result = {
+    'delta_at_s110': float(delta_at_s110),
+    'figure_path': os.path.abspath(figure_path)
+}
+
+# 输出结果（供课堂使用）
+print(result)

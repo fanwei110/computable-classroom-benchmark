@@ -1,0 +1,74 @@
+我来生成有效前沿图并完成所需计算。参数设定：资产1年化收益 7.1%、波动率 16.3%；资产2年化收益 12.4%、波动率 28.9%。相关系数分别取 0.15、0.45 和 0.75。
+
+### 计算过程（ρ=0.45）
+**最小方差组合（MVP）**
+- 资产1权重：\(w^* = \frac{\sigma_2^2 - \rho\sigma_1\sigma_2}{\sigma_1^2 + \sigma_2^2 - 2\rho\sigma_1\sigma_2} \approx 0.9206\)
+- 组合波动率：\(\sigma_{MVP} = \sqrt{w^{*2}\sigma_1^2 + (1-w^*)^2\sigma_2^2 + 2w^*(1-w^*)\rho\sigma_1\sigma_2} \approx 0.1617\)
+
+**目标收益 10% 的最小波动率**
+- 资产1权重满足：\(0.071w + 0.124(1-w) = 0.10 \Rightarrow w \approx 0.4528\)
+- 组合波动率：\(\sigma_{10\%} \approx 0.2024\)
+
+### 结果字典
+```python
+result = {
+    'mvp_vol_at_rho45': 0.1617,
+    'frontier_vol_at_target': 0.2024,
+    'figure_path': 'efficient_frontier.png'
+}
+```
+
+### Python 绘图代码
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# 资产参数（小数）
+mu = np.array([0.071, 0.124])
+sigma = np.array([0.163, 0.289])
+rhos = [0.15, 0.45, 0.75]
+var_cov = np.array([[sigma[0]**2, 0], [0, sigma[1]**2]])
+
+# 准备绘图
+fig, ax = plt.subplots(figsize=(8, 6))
+w_range = np.linspace(-0.5, 1.5, 500)  # 权重范围，包含卖空
+
+for rho in rhos:
+    cov = rho * sigma[0] * sigma[1]
+    cov_mat = np.array([[var_cov[0, 0], cov],
+                        [cov, var_cov[1, 1]]])
+    
+    port_ret = w_range * mu[0] + (1 - w_range) * mu[1]
+    port_vol = np.sqrt(w_range**2 * var_cov[0, 0] +
+                       (1 - w_range)**2 * var_cov[1, 1] +
+                       2 * w_range * (1 - w_range) * cov)
+    
+    # 画可行集曲线
+    ax.plot(port_vol, port_ret, label=f'ρ = {rho}')
+    
+    # 最小方差组合
+    w_mvp = (var_cov[1, 1] - cov) / (var_cov[0, 0] + var_cov[1, 1] - 2 * cov)
+    mvp_ret = w_mvp * mu[0] + (1 - w_mvp) * mu[1]
+    mvp_vol = np.sqrt(w_mvp**2 * var_cov[0, 0] +
+                      (1 - w_mvp)**2 * var_cov[1, 1] +
+                      2 * w_mvp * (1 - w_mvp) * cov)
+    ax.scatter(mvp_vol, mvp_ret, marker='*', s=100,
+               label=f'MVP ρ={rho}' if rho == rhos[0] else "")
+
+# 图表装饰
+ax.set_xlabel('Volatility (annual)', fontsize=12)
+ax.set_ylabel('Expected Return (annual)', fontsize=12)
+ax.set_title('Efficient Frontiers for Different Correlations', fontsize=14)
+ax.legend(loc='lower right')
+ax.grid(True, alpha=0.3)
+plt.tight_layout()
+
+# 保存图片
+fig_path = 'efficient_frontier.png'
+plt.savefig(fig_path, dpi=150)
+plt.close()
+
+print("图片已保存至:", fig_path)
+```
+
+运行上述代码后，会生成 `efficient_frontier.png`，图中包含三条相关系数下的投资组合边界，并用星号标出了各自的最小方差组合（MVP）。

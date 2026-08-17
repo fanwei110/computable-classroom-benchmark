@@ -1,0 +1,32 @@
+import math
+
+# 资产参数
+sigma_A = 0.184
+sigma_B = 0.297
+w_A = 0.6
+w_B = 0.4
+
+# 方差项
+var_A = w_A**2 * sigma_A**2
+var_B = w_B**2 * sigma_B**2
+cov_term_base = 2 * w_A * w_B * sigma_A * sigma_B
+
+# 相关系数
+rho_before = 0.3
+rho_after = 0.8
+
+# 组合方差
+var_before = var_A + var_B + rho_before * cov_term_base
+var_after = var_A + var_B + rho_after * cov_term_base
+
+# 波动率（年化）
+vol_before = math.sqrt(var_before)
+vol_after = math.sqrt(var_after)
+
+result = {
+    'vol_before_annual': vol_before,
+    'vol_after_annual': vol_after
+}
+
+# 输出结果
+result

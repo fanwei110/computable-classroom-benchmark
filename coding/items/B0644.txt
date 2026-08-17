@@ -1,0 +1,177 @@
+=== B0644  任务 KP3_T2 (T2) ===
+
+--- 任务要求的输出键 ---
+price_at_up100bp, dur_approx_change_up100bp
+
+--- 判分失败明细 ---
+price_at_up100bp: 提交值 89.56755966185467  |  参考值 90.61031592055151
+dur_approx_change_up100bp: 提交值 -6.496387711244281  |  参考值 -0.05812519232346605
+
+--- 提取出的代码 ---
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import newton
+
+# Parameters
+face_value = 100
+coupon_rate = 0.046
+years_to_maturity = 7
+current_yield = 0.053
+yield_shift_bp = 100  # 100 basis points for reporting
+
+# Step 1: Bond pricing function (exact)
+def bond_price(yield_to_maturity, face_value, coupon_rate, years_to_maturity):
+    coupon = face_value * coupon_rate
+    periods = years_to_maturity
+    cash_flows = np.array([coupon] * periods + [face_value + coupon])
+    discount_factors = (1 + yield_to_maturity) ** np.arange(1, periods + 2)
+    price = np.sum(cash_flows / discount_factors)
+    return price
+
+# Generate yield grid from 2% to 9%
+yield_grid = np.linspace(0.02, 0.09, 100)
+exact_prices = np.array([bond_price(y, face_value, coupon_rate, years_to_maturity) for y in yield_grid])
+
+# Step 2: Duration and convexity at current yield (5.3%)
+def bond_duration_convexity(yield_to_maturity, face_value, coupon_rate, years_to_maturity):
+    coupon = face_value * coupon_rate
+    periods = years_to_maturity
+    cash_flows = np.array([coupon] * periods + [face_value + coupon])
+    times = np.arange(1, periods + 2)
+    discount_factors = (1 + yield_to_maturity) ** times
+    pv_cash_flows = cash_flows / discount_factors
+    price = np.sum(pv_cash_flows)
+    duration = np.sum(times * pv_cash_flows) / price / (1 + yield_to_maturity)
+    convexity = np.sum(times * (times + 1) * pv_cash_flows) / price / (1 + yield_to_maturity)**2
+    return duration, convexity
+
+duration, convexity = bond_duration_convexity(current_yield, face_value, coupon_rate, years_to_maturity)
+
+# Duration-based approximation
+def duration_approx_price(yield_change_bp, current_price, duration, convexity=None):
+    dy = yield_change_bp / 10000  # convert bp to decimal
+    if convexity is not None:
+        return current_price * (1 - duration * dy + 0.5 * convexity * dy**2)
+    else:
+        return current_price * (1 - duration * dy)
+
+current_price = bond_price(current_yield, face_value, coupon_rate, years_to_maturity)
+approx_prices = [duration_approx_price((y - current_yield) * 10000, current_price, duration, convexity)
+                 for y in yield_grid]
+
+# Step 3: Report +100bp exact price and duration approximation
+yield_up100bp = current_yield + yield_shift_bp / 10000
+price_at_up100bp = bond_price(yield_up100bp, face_value, coupon_rate, years_to_maturity)
+dur_approx_change_up100bp = -duration * (yield_shift_bp / 10000) * 100  # in percentage
+
+# Step 4: Plotting
+plt.figure(figsize=(10, 6))
+plt.plot(yield_grid * 100, exact_prices, label='Exact Price-Yield Curve', color='blue')
+plt.plot(yield_grid * 100, approx_prices, label='Duration Approximation', color='red', linestyle='--')
+plt.scatter(current_yield * 100, current_price, color='green', zorder=5, label='Current Yield (5.3%)')
+plt.xlabel('Yield to Maturity (%)')
+plt.ylabel('Bond Price')
+plt.title('Bond Price-Yield Curve with Duration Approximation')
+plt.legend()
+plt.grid(True)
+
+# Save figure
+figure_path = 'bond_price_yield_curve.png'
+plt.savefig(figure_path)
+plt.close()
+
+# Prepare result dictionary
+result = {
+    'price_at_up100bp': price_at_up100bp,
+    'dur_approx_change_up100bp': dur_approx_change_up100bp,
+    'figure_path': figure_path
+}
+
+# For demonstration, print result (in actual use, this would be returned)
+print(result)
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import newton
+
+# Parameters
+face_value = 100
+coupon_rate = 0.046
+years_to_maturity = 7
+current_yield = 0.053
+yield_shift_bp = 100  # 100 basis points for reporting
+
+# Step 1: Bond pricing function (exact)
+def bond_price(yield_to_maturity, face_value, coupon_rate, years_to_maturity):
+    coupon = face_value * coupon_rate
+    periods = years_to_maturity
+    cash_flows = np.array([coupon] * periods + [face_value + coupon])
+    discount_factors = (1 + yield_to_maturity) ** np.arange(1, periods + 2)
+    price = np.sum(cash_flows / discount_factors)
+    return price
+
+# Generate yield grid from 2% to 9%
+yield_grid = np.linspace(0.02, 0.09, 100)
+exact_prices = np.array([bond_price(y, face_value, coupon_rate, years_to_maturity) for y in yield_grid])
+
+# Step 2: Duration and convexity at current yield (5.3%)
+def bond_duration_convexity(yield_to_maturity, face_value, coupon_rate, years_to_maturity):
+    coupon = face_value * coupon_rate
+    periods = years_to_maturity
+    cash_flows = np.array([coupon] * periods + [face_value + coupon])
+    times = np.arange(1, periods + 2)
+    discount_factors = (1 + yield_to_maturity) ** times
+    pv_cash_flows = cash_flows / discount_factors
+    price = np.sum(pv_cash_flows)
+    duration = np.sum(times * pv_cash_flows) / price / (1 + yield_to_maturity)
+    convexity = np.sum(times * (times + 1) * pv_cash_flows) / price / (1 + yield_to_maturity)**2
+    return duration, convexity
+
+duration, convexity = bond_duration_convexity(current_yield, face_value, coupon_rate, years_to_maturity)
+
+# Duration-based approximation
+def duration_approx_price(yield_change_bp, current_price, duration, convexity=None):
+    dy = yield_change_bp / 10000  # convert bp to decimal
+    if convexity is not None:
+        return current_price * (1 - duration * dy + 0.5 * convexity * dy**2)
+    else:
+        return current_price * (1 - duration * dy)
+
+current_price = bond_price(current_yield, face_value, coupon_rate, years_to_maturity)
+approx_prices = [duration_approx_price((y - current_yield) * 10000, current_price, duration, convexity)
+                 for y in yield_grid]
+
+# Step 3: Report +100bp exact price and duration approximation
+yield_up100bp = current_yield + yield_shift_bp / 10000
+price_at_up100bp = bond_price(yield_up100bp, face_value, coupon_rate, years_to_maturity)
+dur_approx_change_up100bp = -duration * (yield_shift_bp / 10000) * 100  # in percentage
+
+# Step 4: Plotting
+plt.figure(figsize=(10, 6))
+plt.plot(yield_grid * 100, exact_prices, label='Exact Price-Yield Curve', color='blue')
+plt.plot(yield_grid * 100, approx_prices, label='Duration Approximation', color='red', linestyle='--')
+plt.scatter(current_yield * 100, current_price, color='green', zorder=5, label='Current Yield (5.3%)')
+plt.xlabel('Yield to Maturity (%)')
+plt.ylabel('Bond Price')
+plt.title('Bond Price-Yield Curve with Duration Approximation')
+plt.legend()
+plt.grid(True)
+
+# Save figure
+figure_path = 'bond_price_yield_curve.png'
+plt.savefig(figure_path)
+plt.close()
+
+# Prepare result dictionary
+result = {
+    'price_at_up100bp': price_at_up100bp,
+    'dur_approx_change_up100bp': dur_approx_change_up100bp,
+    'figure_path': figure_path
+}
+
+# For demonstration, print result (in actual use, this would be returned)
+print(result)
+```

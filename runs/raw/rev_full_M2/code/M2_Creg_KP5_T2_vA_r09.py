@@ -1,0 +1,62 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ======================
+# 可复现的模拟数据（实际应用时替换为真实数据读取）
+# ======================
+np.random.seed(42)  # 固定随机种子，确保结果可复现
+n_days = 250
+# 模拟日收益率（小数形式，例如0.01代表1%）
+# 实际使用时，请用以下代码替换：
+# df = pd.read_csv('your_data.csv')   # 或其他数据源
+# returns = df['fund']
+returns = pd.Series(np.random.normal(0.0005, 0.02, n_days), name='fund')
+
+# ======================
+# 参数设置
+# ======================
+position = 1_000_000          # 头寸（人民币）
+confidence_level = 0.95       # 置信水平，可调参数
+
+# ======================
+# 计算日损益序列
+# ======================
+pnl = position * returns      # 每日盈亏金额
+
+# ======================
+# 计算历史VaR
+# ======================
+var_alpha = 1 - confidence_level
+# 损益分位数（左尾），再取负值得到损失金额（正数）
+var_loss = -np.quantile(pnl, var_alpha)
+
+# ======================
+# 绘制直方图并标注VaR
+# ======================
+plt.figure(figsize=(10, 6))
+plt.hist(pnl, bins=30, edgecolor='black', alpha=0.7, color='steelblue')
+plt.axvline(x=-var_loss, color='red', linestyle='--', linewidth=2,
+            label=f'{confidence_level*100:.0f}% 1‑Day Historical VaR: ¥{var_loss:,.2f}')
+plt.xlabel('Daily P&L (¥)')
+plt.ylabel('Frequency')
+plt.title('Distribution of Daily Profit and Loss with Historical VaR')
+plt.legend(loc='upper left')
+plt.grid(True, alpha=0.3)
+
+# 保存图像
+figure_path = 'var_histogram.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ======================
+# 输出结果放入字典
+# ======================
+result = {
+    'hist_var_95_1d': var_loss,
+    'figure_path': figure_path
+}
+
+# 控制台报告
+print(f"95% 1-Day Historical VaR: ¥{var_loss:,.2f}")
+print(f"Figure saved to: {figure_path}")

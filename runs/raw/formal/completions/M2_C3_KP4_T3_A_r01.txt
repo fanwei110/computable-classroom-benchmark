@@ -1,0 +1,21 @@
+```python
+import math
+
+# 给定参数
+S = 103.7       # 标的资产价格
+K = 97.5        # 行权价
+sigma = 0.276   # 波动率
+r = 0.043       # 连续复利无风险利率
+T = 0.58        # 剩余期限（年）
+
+# 计算 d1
+d1 = (math.log(S / K) + (r + sigma**2 / 2) * T) / (sigma * math.sqrt(T))
+# 正态密度函数 n(d1)
+n_d1 = (1 / math.sqrt(2 * math.pi)) * math.exp(-0.5 * d1**2)
+# Vega = S * n(d1) * sqrt(T)
+vega = S * n_d1 * math.sqrt(T)
+# 隐含波动率上涨 1 个百分点（0.01），期权价格变化
+price_change = vega * 0.01
+
+result = {'price_change': price_change}
+```

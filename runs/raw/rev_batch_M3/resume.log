@@ -1,0 +1,219 @@
+to run: 36 (skipping 324 already done)
+Exception in thread Thread-1 (_readerthread):
+Traceback (most recent call last):
+  File "D:\nanconda3\Lib\threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "D:\nanconda3\Lib\threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\nanconda3\Lib\subprocess.py", line 1599, in _readerthread
+    buffer.append(fh.read())
+                  ^^^^^^^^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0xad in position 8: illegal multibyte sequence
+[1/36] M3_C2rep_KP4_T1_vA_r01: bucket=correct api=52.51s
+[2/36] M3_C1rep_KP4_T3_vB_r08: bucket=format_failure api=330.79s
+Exception in thread Thread-3 (_readerthread):
+Traceback (most recent call last):
+  File "D:\nanconda3\Lib\threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "D:\nanconda3\Lib\threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\nanconda3\Lib\subprocess.py", line 1599, in _readerthread
+    buffer.append(fh.read())
+                  ^^^^^^^^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x87 in position 146: illegal multibyte sequence
+[3/36] M3_C2rep_KP4_T3_vA_r08: bucket=defensible api=115.33s
+Exception in thread Thread-5 (_readerthread):
+Traceback (most recent call last):
+  File "D:\nanconda3\Lib\threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "D:\nanconda3\Lib\threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\nanconda3\Lib\subprocess.py", line 1599, in _readerthread
+    buffer.append(fh.read())
+                  ^^^^^^^^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 2: illegal multibyte sequence
+[4/36] M3_C1rep_KP6_T2_vB_r08: bucket=numeric_wrong api=25.94s
+[5/36] M3_C1rep_KP6_T2_vA_r09: bucket=numeric_wrong api=65.75s
+Exception in thread Thread-9 (_readerthread):
+Traceback (most recent call last):
+  File "D:\nanconda3\Lib\threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "D:\nanconda3\Lib\threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\nanconda3\Lib\subprocess.py", line 1599, in _readerthread
+    buffer.append(fh.read())
+                  ^^^^^^^^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 2: illegal multibyte sequence
+[6/36] M3_C1rep_KP6_T2_vB_r10: bucket=numeric_wrong api=37.49s
+Exception in thread Thread-11 (_readerthread):
+Traceback (most recent call last):
+  File "D:\nanconda3\Lib\threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "D:\nanconda3\Lib\threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\nanconda3\Lib\subprocess.py", line 1599, in _readerthread
+    buffer.append(fh.read())
+                  ^^^^^^^^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 2: illegal multibyte sequence
+[7/36] M3_C2rep_KP6_T2_vA_r01: bucket=correct api=25.23s
+Exception in thread Thread-13 (_readerthread):
+Traceback (most recent call last):
+  File "D:\nanconda3\Lib\threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "D:\nanconda3\Lib\threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\nanconda3\Lib\subprocess.py", line 1599, in _readerthread
+    buffer.append(fh.read())
+                  ^^^^^^^^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 2: illegal multibyte sequence
+[8/36] M3_C2rep_KP6_T2_vA_r02: bucket=correct api=78.76s
+Exception in thread Thread-15 (_readerthread):
+Traceback (most recent call last):
+  File "D:\nanconda3\Lib\threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "D:\nanconda3\Lib\threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\nanconda3\Lib\subprocess.py", line 1599, in _readerthread
+    buffer.append(fh.read())
+                  ^^^^^^^^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x8e in position 20: illegal multibyte sequence
+[9/36] M3_C2rep_KP6_T2_vA_r03: bucket=correct api=45.97s
+Exception in thread Thread-17 (_readerthread):
+Traceback (most recent call last):
+  File "D:\nanconda3\Lib\threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "D:\nanconda3\Lib\threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\nanconda3\Lib\subprocess.py", line 1599, in _readerthread
+    buffer.append(fh.read())
+                  ^^^^^^^^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 2: illegal multibyte sequence
+[10/36] M3_C2rep_KP6_T2_vA_r04: bucket=correct api=61.32s
+[11/36] M3_C2rep_KP6_T2_vA_r05: bucket=correct api=39.04s
+Exception in thread Thread-21 (_readerthread):
+Traceback (most recent call last):
+  File "D:\nanconda3\Lib\threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "D:\nanconda3\Lib\threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\nanconda3\Lib\subprocess.py", line 1599, in _readerthread
+    buffer.append(fh.read())
+                  ^^^^^^^^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 2: illegal multibyte sequence
+[12/36] M3_C2rep_KP6_T2_vA_r06: bucket=correct api=50.56s
+Exception in thread Thread-23 (_readerthread):
+Traceback (most recent call last):
+  File "D:\nanconda3\Lib\threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "D:\nanconda3\Lib\threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\nanconda3\Lib\subprocess.py", line 1599, in _readerthread
+    buffer.append(fh.read())
+                  ^^^^^^^^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 2: illegal multibyte sequence
+[13/36] M3_C2rep_KP6_T2_vA_r07: bucket=correct api=67.07s
+Exception in thread Thread-25 (_readerthread):
+Traceback (most recent call last):
+  File "D:\nanconda3\Lib\threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "D:\nanconda3\Lib\threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\nanconda3\Lib\subprocess.py", line 1599, in _readerthread
+    buffer.append(fh.read())
+                  ^^^^^^^^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 2: illegal multibyte sequence
+[14/36] M3_C2rep_KP6_T2_vA_r08: bucket=numeric_wrong api=96.15s
+Exception in thread Thread-27 (_readerthread):
+Traceback (most recent call last):
+  File "D:\nanconda3\Lib\threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "D:\nanconda3\Lib\threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\nanconda3\Lib\subprocess.py", line 1599, in _readerthread
+    buffer.append(fh.read())
+                  ^^^^^^^^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 6: illegal multibyte sequence
+[15/36] M3_C2rep_KP6_T2_vA_r09: bucket=numeric_wrong api=58.66s
+Exception in thread Thread-29 (_readerthread):
+Traceback (most recent call last):
+  File "D:\nanconda3\Lib\threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "D:\nanconda3\Lib\threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\nanconda3\Lib\subprocess.py", line 1599, in _readerthread
+    buffer.append(fh.read())
+                  ^^^^^^^^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x80 in position 2: illegal multibyte sequence
+[16/36] M3_C2rep_KP6_T2_vA_r10: bucket=correct api=62.76s
+[17/36] M3_C1rep_KP6_T3_vA_r01: bucket=code_error api=83.72s
+[18/36] M3_C1rep_KP6_T3_vB_r02: bucket=code_error api=33.92s
+[19/36] M3_C1rep_KP6_T3_vA_r03: bucket=code_error api=34.04s
+[20/36] M3_C1rep_KP6_T3_vB_r04: bucket=code_error api=88.77s
+[21/36] M3_C1rep_KP6_T3_vA_r05: bucket=code_error api=77.1s
+[22/36] M3_C1rep_KP6_T3_vB_r06: bucket=numeric_wrong api=38.27s
+[23/36] M3_C1rep_KP6_T3_vA_r07: bucket=code_error api=75.64s
+[24/36] M3_C1rep_KP6_T3_vB_r08: bucket=code_error api=27.67s
+[25/36] M3_C1rep_KP6_T3_vA_r09: bucket=code_error api=90.77s
+[26/36] M3_C1rep_KP6_T3_vB_r10: bucket=code_error api=23.64s
+[27/36] M3_C2rep_KP6_T3_vA_r01: bucket=numeric_wrong api=52.3s
+Exception in thread Thread-53 (_readerthread):
+Traceback (most recent call last):
+  File "D:\nanconda3\Lib\threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "D:\nanconda3\Lib\threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\nanconda3\Lib\subprocess.py", line 1599, in _readerthread
+    buffer.append(fh.read())
+                  ^^^^^^^^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0xac in position 8: illegal multibyte sequence
+[28/36] M3_C2rep_KP6_T3_vA_r02: bucket=correct api=82.02s
+[29/36] M3_C2rep_KP6_T3_vA_r03: bucket=correct api=93.38s
+[30/36] M3_C2rep_KP6_T3_vA_r04: bucket=numeric_wrong api=51.43s
+Exception in thread Thread-59 (_readerthread):
+Traceback (most recent call last):
+  File "D:\nanconda3\Lib\threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "D:\nanconda3\Lib\threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\nanconda3\Lib\subprocess.py", line 1599, in _readerthread
+    buffer.append(fh.read())
+                  ^^^^^^^^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0xac in position 8: illegal multibyte sequence
+[31/36] M3_C2rep_KP6_T3_vA_r05: bucket=numeric_wrong api=25.47s
+Exception in thread Thread-61 (_readerthread):
+Traceback (most recent call last):
+  File "D:\nanconda3\Lib\threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "D:\nanconda3\Lib\threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\nanconda3\Lib\subprocess.py", line 1599, in _readerthread
+    buffer.append(fh.read())
+                  ^^^^^^^^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0xac in position 8: illegal multibyte sequence
+[32/36] M3_C2rep_KP6_T3_vA_r06: bucket=numeric_wrong api=76.53s
+[33/36] M3_C2rep_KP6_T3_vA_r07: bucket=numeric_wrong api=54.25s
+[34/36] M3_C2rep_KP6_T3_vA_r08: bucket=numeric_wrong api=33.6s
+Exception in thread Thread-67 (_readerthread):
+Traceback (most recent call last):
+  File "D:\nanconda3\Lib\threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "D:\nanconda3\Lib\threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\nanconda3\Lib\subprocess.py", line 1599, in _readerthread
+    buffer.append(fh.read())
+                  ^^^^^^^^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0xae in position 16: illegal multibyte sequence
+[35/36] M3_C2rep_KP6_T3_vA_r09: bucket=correct api=110.12s
+Exception in thread Thread-69 (_readerthread):
+Traceback (most recent call last):
+  File "D:\nanconda3\Lib\threading.py", line 1073, in _bootstrap_inner
+    self.run()
+  File "D:\nanconda3\Lib\threading.py", line 1010, in run
+    self._target(*self._args, **self._kwargs)
+  File "D:\nanconda3\Lib\subprocess.py", line 1599, in _readerthread
+    buffer.append(fh.read())
+                  ^^^^^^^^^
+UnicodeDecodeError: 'gbk' codec can't decode byte 0x9f in position 33: illegal multibyte sequence
+[36/36] M3_C2rep_KP6_T3_vA_r10: bucket=correct api=50.28s
+
+done: 36 ok, 0 failed -> D:\onedrive\桌面\论文\可计算课堂\Paper_C_金融代码生成\benchmark\runs\raw\rev_batch_M3\rev_batch_M3.jsonl

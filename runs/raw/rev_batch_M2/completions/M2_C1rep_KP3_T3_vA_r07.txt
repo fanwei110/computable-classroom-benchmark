@@ -1,0 +1,5 @@
+```json
+{
+  "price_drop_pct": 4.52
+}
+```

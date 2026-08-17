@@ -1,0 +1,46 @@
+```python
+# -*- coding: utf-8 -*-
+"""
+CAPM 与 alpha 计算演示
+课堂实时编程 —— 证券投资学
+无风险利率、市场收益、beta 均使用小数表示
+"""
+
+import numpy as np
+
+# ---------- 给定条件 ----------
+rf = 0.023          # 无风险利率 2.3%
+rm = 0.094          # 市场期望收益 9.4%
+mrp = rm - rf       # 市场风险溢价 7.1%
+
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+
+actual_return_y = 0.131  # 股票 Y 当年实际收益 13.1%
+
+# ---------- CAPM 期望收益 ----------
+er_x = rf + beta_x * mrp
+er_y = rf + beta_y * mrp
+er_z = rf + beta_z * mrp
+
+# ---------- 股票 Y 的 alpha ----------
+alpha_y = actual_return_y - er_y
+
+# ---------- 结果字典 ----------
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+
+# 输出以供课堂投屏查看
+print("=== CAPM 计算结果 ===")
+print(f"E[R_x] = {er_x:.6f} ({er_x*100:.4f}%)")
+print(f"E[R_y] = {er_y:.6f} ({er_y*100:.4f}%)")
+print(f"E[R_z] = {er_z:.6f} ({er_z*100:.4f}%)")
+print(f"Alpha_Y = {alpha_y:.6f} ({alpha_y*100:.4f}%)")
+print("\nresult 字典内容：")
+print(result)
+```

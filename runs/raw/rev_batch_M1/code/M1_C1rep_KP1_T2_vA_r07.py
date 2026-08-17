@@ -1,0 +1,99 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.optimize import minimize
+
+# 资产参数
+mu = np.array([0.071, 0.124])  # 期望收益
+sigma = np.array([0.163, 0.289])  # 波动率
+
+# 相关系数列表
+rhos = [0.15, 0.45, 0.75]
+
+# 计算协方差矩阵
+def get_cov_matrix(rho):
+    cov = np.array([
+        [sigma[0]**2, rho * sigma[0] * sigma[1]],
+        [rho * sigma[0] * sigma[1], sigma[1]**2]
+    ])
+    return cov
+
+# 计算组合的收益和波动率
+def portfolio_stats(weights, mu, cov):
+    port_return = weights @ mu
+    port_vol = np.sqrt(weights @ cov @ weights.T)
+    return port_return, port_vol
+
+# 找到最小方差组合
+def find_mvp(mu, cov):
+    n = len(mu)
+    def objective(weights):
+        return np.sqrt(weights @ cov @ weights.T)
+    constraints = ({'type': 'eq', 'fun': lambda w: np.sum(w) - 1})
+    bounds = tuple((0, 1) for _ in range(n))
+    result = minimize(objective, n*[1./n], method='SLSQP', bounds=bounds, constraints=constraints)
+    return result.x
+
+# 找到给定目标收益下的最小波动率组合
+def find_optimal_portfolio(target_return, mu, cov):
+    n = len(mu)
+    def objective(weights):
+        return np.sqrt(weights @ cov @ weights.T)
+    constraints = (
+        {'type': 'eq', 'fun': lambda w: np.sum(w) - 1},
+        {'type': 'eq', 'fun': lambda w: w @ mu - target_return}
+    )
+    bounds = tuple((0, 1) for _ in range(n))
+    result = minimize(objective, n*[1./n], method='SLSQP', bounds=bounds, constraints=constraints)
+    return result.x
+
+# 绘制有效前沿
+plt.figure(figsize=(10, 6))
+colors = ['blue', 'green', 'red']
+labels = ['ρ=0.15', 'ρ=0.45', 'ρ=0.75']
+
+for rho, color, label in zip(rhos, colors, labels):
+    cov = get_cov_matrix(rho)
+    mvp_weights = find_mvp(mu, cov)
+    mvp_return, mvp_vol = portfolio_stats(mvp_weights, mu, cov)
+
+    # 生成有效前沿点
+    target_returns = np.linspace(mvp_return, max(mu), 50)
+    frontier_vols = []
+    for tr in target_returns:
+        weights = find_optimal_portfolio(tr, mu, cov)
+        _, vol = portfolio_stats(weights, mu, cov)
+        frontier_vols.append(vol)
+
+    plt.plot(frontier_vols, target_returns, color=color, label=label)
+    plt.scatter(mvp_vol, mvp_return, color=color, marker='o', s=100, label=f'{label} MVP')
+
+# 特殊计算
+rho_45 = 0.45
+cov_45 = get_cov_matrix(rho_45)
+mvp_weights_45 = find_mvp(mu, cov_45)
+mvp_return_45, mvp_vol_45 = portfolio_stats(mvp_weights_45, mu, cov_45)
+
+target_return = 0.10
+optimal_weights = find_optimal_portfolio(target_return, mu, cov_45)
+_, frontier_vol_at_target = portfolio_stats(optimal_weights, mu, cov_45)
+
+# 图形设置
+plt.title('Efficient Frontier with Different Correlations')
+plt.xlabel('Portfolio Volatility')
+plt.ylabel('Portfolio Return')
+plt.legend()
+plt.grid(True)
+
+# 保存图形
+figure_path = 'efficient_frontier.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 存储结果
+result = {
+    'mvp_vol_at_rho45': float(mvp_vol_45),
+    'frontier_vol_at_target': float(frontier_vol_at_target),
+    'figure_path': figure_path
+}
+
+print(result)

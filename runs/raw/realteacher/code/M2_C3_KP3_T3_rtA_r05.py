@@ -1,0 +1,23 @@
+import numpy as np
+
+# 债券参数
+face = 100.0
+coupon = 4.6
+y0 = 0.053
+y1 = 0.053 + 0.008  # +80 bps
+T = 7
+
+# 计算初始价格 P0
+t = np.arange(1, T + 1)
+cf = np.full(T, coupon)
+cf[-1] += face  # 最后一年加上本金
+P0 = np.sum(cf / (1 + y0) ** t)
+
+# 计算新价格 P1
+P1 = np.sum(cf / (1 + y1) ** t)
+
+# 价格跌幅百分比（正数表示下跌）
+price_drop_pct = (P0 - P1) / P0 * 100
+
+result = {'price_drop_pct': round(price_drop_pct, 4)}
+print(result)

@@ -1,0 +1,43 @@
+以下脚本符合题目要求：读取当前目录下的 `fund.csv` 文件（需包含列名为 `fund` 的收益率序列），按 2.1% 年化无风险利率计算全样本年化夏普比率，并将结果存入 `result` 字典。
+
+```python
+import numpy as np
+import pandas as pd
+import scipy.stats as stats          # 仅导入以满足要求，实际未直接使用
+import matplotlib.pyplot as plt      # 同上
+
+# ---------- 1. 读取快照 CSV ----------
+# 假设文件名固定为 fund.csv，其中 'fund' 列为基金的每日收益率（小数形式，如 0.001 表示 0.1%）
+df = pd.read_csv('fund.csv')
+returns = df['fund'].dropna()        # 剔除缺失值
+
+# ---------- 2. 参数设定 ----------
+rf_annual = 0.021                    # 年化无风险利率 2.1%
+trading_days = 252                   # 一年交易天数假设
+rf_daily = rf_annual / trading_days  # 日度无风险利率（简单利率折算）
+
+# ---------- 3. 计算全样本年化夏普比率 ----------
+excess_returns = returns - rf_daily
+mean_excess = excess_returns.mean()
+sigma_excess = excess_returns.std(ddof=1)   # 样本标准差（自由度 n-1）
+
+sharpe_annual = np.sqrt(trading_days) * (mean_excess / sigma_excess)
+
+# ---------- 4. 存入结果字典 ----------
+result = {
+    'sharpe_annual': round(sharpe_annual, 4)
+}
+
+# ---------- 输出（教师投屏时可直接看到） ----------
+print("基金全样本年化夏普比率计算完成。")
+print(result)
+```
+
+**代码说明与假设**  
+- 文件名：`fund.csv`，与脚本置于同一目录。  
+- 列名：须有一列名为 `fund`，其值为基金每日收益率（小数）。若提供的是净值，需先通过 `pct_change()` 转换为收益率。  
+- 年化无风险利率 2.1%，按 252 个交易日折算为日无风险利率（`rf_annual / 252`）。  
+- 使用样本标准差（`ddof=1`）计算波动率，确保统计无偏。  
+- 年化夏普比率公式：\(\sqrt{252} \times \frac{\text{日均超额收益}}{\text{日超额收益率的标准差}}\)。  
+
+教师运行该脚本后，终端将打印 `result` 字典，键 `sharpe_annual` 即为所求结果。

@@ -1,0 +1,36 @@
+import numpy as np
+
+# ================= 输入参数 =================
+rf = 0.023      # 无风险利率 2.3%
+erm = 0.094     # 市场期望收益 9.4%
+
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+
+actual_ry = 0.131  # 股票 Y 的实际收益 13.1%
+
+# ================= 计算步骤 =================
+# 1. 套用 CAPM 公式：E[Ri] = rf + beta * (E[Rm] - rf)
+market_premium = erm - rf
+
+er_x = rf + beta_x * market_premium
+er_y = rf + beta_y * market_premium
+er_z = rf + beta_z * market_premium
+
+# 2. 计算 Y 的 alpha：alpha = 实际收益 - CAPM期望收益
+alpha_y = actual_ry - er_y
+
+# ================= 填充结果 =================
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+
+# 输出结果以便教师投屏查看
+if __name__ == "__main__":
+    print("CAPM 期望收益与 Alpha 计算结果：")
+    for key, value in result.items():
+        print(f"{key}: {value:.5f} (即 {value*100:.3f}%)")

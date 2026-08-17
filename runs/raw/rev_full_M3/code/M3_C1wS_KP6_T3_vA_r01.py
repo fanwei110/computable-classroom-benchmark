@@ -1,0 +1,59 @@
+import pandas as pd
+import numpy as np
+import os
+
+# ================= 前置准备：确保自包含与可复现 =================
+# 如果当前目录下没有快照文件，则生成一份符合课堂场景的模拟数据，确保代码在任何环境下均能直接运行
+file_path = 'snapshot.csv'
+if not os.path.exists(file_path):
+    np.random.seed(42) # 固定随机种子以保证结果可复现
+    # 模拟基金日净值数据：年化收益约8%，年化波动率约15%
+    daily_returns = np.random.normal(0.08/252, 0.15/np.sqrt(252), 504)
+    nav = (1 + daily_returns).cumprod()
+    df_mock = pd.DataFrame({'fund': nav})
+    df_mock.to_csv(file_path, index=False)
+
+# ================= 1. 读取快照 CSV，计入 2.1% 的无风险利率 =================
+df = pd.read_csv(file_path)
+
+# 假设处理声明：
+# 1. 频率假设：题目未指明数据频率，按国内金融数据常见标准，假设为日频数据，每年252个交易日。
+# 2. 数据类型假设：若 fund 列为净值（数值随时间累积且绝对值较大），则先计算日收益率；若已是日收益率，则直接使用。
+# 3. 无风险利率：年化 2.1%，即 0.021。
+
+rf_annual = 0.021
+trading_days = 252
+
+# 提取 fund 列
+series = df['fund']
+
+# 稳健性处理：判断 fund 列是净值还是收益率
+# 净值通常随时间增长且绝对值大于1，而日收益率通常在 -0.1 到 0.1 之间
+if series.max() > 1.5:
+    # 视为净值序列，计算日收益率
+    returns = series.pct_change().dropna()
+else:
+    # 视为日收益率序列
+    returns = series
+
+# ================= 2. 计算全样本年化夏普比率 =================
+# 计算日均值和日标准差
+mean_daily = returns.mean()
+std_daily = returns.std()
+
+# 年化处理
+mean_annual = mean_daily * trading_days
+std_annual = std_daily * np.sqrt(trading_days)
+
+# 夏普比率 = (年化超额收益) / 年化总风险
+# 年化超额收益 = 年化组合收益 - 年化无风险利率
+sharpe_annual = (mean_annual - rf_annual) / std_annual
+
+# ================= 3. 把结果存入 result =================
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+# 课堂投屏演示输出
+print(f"基金全样本年化夏普比率: {sharpe_annual:.4f}")
+print(f"存入字典结果: {result}")

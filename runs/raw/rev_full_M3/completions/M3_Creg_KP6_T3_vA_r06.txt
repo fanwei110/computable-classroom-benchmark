@@ -1,0 +1,60 @@
+```python
+import numpy as np
+import pandas as pd
+
+# ==========================================
+# 1. 自包含数据生成 (保证脚本独立可运行与结果可复现)
+# 在实际课程环境中，此部分会被真实的课程数据文件替代
+# ==========================================
+np.random.seed(42)
+dates = pd.date_range(start='2020-01-01', periods=500, freq='B')
+# 模拟基金日收益率
+daily_returns_sim = np.random.normal(loc=0.0005, scale=0.01, size=len(dates))
+# 根据日收益率模拟基金净值序列
+fund_nav_sim = (1 + daily_returns_sim).cumprod()
+df_sim = pd.DataFrame({'date': dates, 'fund': fund_nav_sim})
+# 写入本地文件，模拟读取课程数据的过程
+df_sim.to_csv('data.csv', index=False)
+
+# ==========================================
+# 2. 核心计算逻辑
+# ==========================================
+# 读取课程数据文件
+df = pd.read_csv('data.csv')
+
+# 提取 fund 列并剔除缺失值
+fund_data = df['fund'].dropna()
+
+# 智能判断 fund 列的数据类型：
+# 如果数据最大值显著大于1，通常为基金净值序列，需先计算日收益率；
+# 如果数据多分布在-0.1到0.1之间，通常已经是日收益率序列。
+if fund_data.max() > 1.5:
+    returns = fund_data.pct_change().dropna()
+else:
+    returns = fund_data
+
+# 设定参数
+rf_annual = 0.021       # 年化无风险利率 2.1%
+trading_days = 252      # 一年交易日天数
+
+# 将年化无风险利率转换为日度无风险利率（常用近似除法）
+rf_daily = rf_annual / trading_days
+
+# 计算日超额收益率的均值和标准差
+# pandas 的 .std() 默认 ddof=1 计算样本标准差，符合金融计量惯例
+mean_excess_return = returns.mean() - rf_daily
+std_return = returns.std()
+
+# 计算年化夏普比率 (日度夏普乘以 sqrt(252) 进行年化)
+sharpe_annual = (mean_excess_return / std_return) * np.sqrt(trading_days)
+
+# ==========================================
+# 3. 按照输出契约存入字典
+# ==========================================
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+# 输出结果验证
+print(result)
+```

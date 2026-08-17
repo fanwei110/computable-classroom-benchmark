@@ -1,0 +1,23 @@
+import numpy as np
+from scipy.stats import norm
+
+S = 103.7
+K = 97.5
+sigma = 0.276
+r = 0.043
+T = 0.58
+
+d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+d2 = d1 - sigma * np.sqrt(T)
+
+call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+call_delta = norm.cdf(d1)
+call_vega = S * norm.pdf(d1) * np.sqrt(T)
+
+result = {
+    'call_price': call_price,
+    'call_delta': call_delta,
+    'call_vega': call_vega
+}
+
+print(result)

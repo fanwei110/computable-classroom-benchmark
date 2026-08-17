@@ -1,0 +1,41 @@
+import numpy as np
+
+def main():
+    # 债券参数
+    face_value = 100.0      # 面值
+    coupon_rate = 0.046     # 票息率（小数）
+    ytm = 0.053             # 到期收益率（小数）
+    n = 7                   # 年限
+    dy = 0.008              # 收益率上升 80 bps
+
+    # --- 现金流 ---
+    t = np.arange(1, n + 1)                      # [1,2,...,7]
+    coupon = face_value * coupon_rate             # 年票息
+    cf = np.full(n, coupon)                       # 前 n-1 期票息
+    cf[-1] += face_value                          # 最后一期加本金
+
+    # --- 价格 ---
+    discount = (1 + ytm) ** t
+    pv = cf / discount
+    price = np.sum(pv)
+
+    # --- 麦考利久期 ---
+    weighted_time = np.sum(t * pv)
+    mac_duration = weighted_time / price
+
+    # --- 修正久期（年复利） ---
+    mod_duration = mac_duration / (1 + ytm)
+
+    # --- 一阶近似价格跌幅 ---
+    price_drop = mod_duration * dy   # dP/P 的绝对值（正小数）
+
+    # 输出契约
+    result = {
+        'price_drop_pct': price_drop   # 跌幅，小数形式
+    }
+
+    print(result)
+    return result
+
+if __name__ == '__main__':
+    main()

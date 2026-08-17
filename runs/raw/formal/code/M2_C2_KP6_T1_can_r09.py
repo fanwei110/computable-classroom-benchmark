@@ -1,0 +1,62 @@
+import pandas as pd
+import numpy as np
+
+# ------------------------------
+# ç¬¬ä¸é¨åï¼å¹´åå¤æ®æ¯ç
+# ------------------------------
+# è¯»åè¯¾ç¨å¿«çæ°æ®ï¼åè®¾å"fund"åçæ¥æ¶ççï¼
+df = pd.read_csv('data/market_snapshot_v1.csv')
+fund_ret = df['fund'].values.astype(float)
+
+# ç¨³å¥å¤çï¼è¥æ¶ççä»¥ç¾åæ°å½¢å¼ç»åºï¼å¦ 1.0 ä»£è¡¨ 1%ï¼ï¼èªå¨è½¬æ¢ä¸ºå°æ°
+if np.max(np.abs(fund_ret)) > 1.0:
+    fund_ret = fund_ret / 100.0
+
+# å¹´åæ é£é©å©ç 2.1%ï¼æ¢ç®ä¸ºæ¥æ é£é©å©çï¼ä¸å¹´æ252ä¸ªäº¤ææ¥ï¼
+rf_annual = 0.021
+rf_daily = rf_annual / 252
+
+# è®¡ç®æ¥è¶æ¶ç
+excess_daily = fund_ret - rf_daily
+
+# å¹´åå¤æ®æ¯ç = (å¹³åæ¥è¶æ¶ç / æ¥è¶æ¶çæ åå·®) * sqrt(252)
+sharpe_annual = (np.mean(excess_daily) / np.std(excess_daily)) * np.sqrt(252)
+
+# ------------------------------
+# ç¬¬äºé¨åï¼ä¸ç»©å½å ï¼éãéæ©ãäº¤äºæåºï¼
+# ------------------------------
+# ç»åä¸åºåçè¡ä¸æéåè¡ä¸æ¶ç
+wp = np.array([0.45, 0.35, 0.20])          # ç»åæé
+Rp = np.array([0.083, 0.021, -0.014])      # ç»åè¡ä¸æ¶ç
+wb = np.array([0.40, 0.40, 0.20])          # åºåæé
+Rb = np.array([0.067, 0.034, -0.009])      # åºåè¡ä¸æ¶ç
+
+# æéå·®å¼ä¸æ¶çå·®å¼
+delta_w = wp - wb
+delta_R = Rp - Rb
+
+# éæåºï¼Î£ (w_pi - w_bi) * R_bi
+allocation_effect = np.sum(delta_w * Rb)
+
+# éæ©æåºï¼Î£ w_bi * (R_pi - R_bi)
+selection_effect = np.sum(wb * delta_R)
+
+# äº¤äºæåºï¼Î£ (w_pi - w_bi) * (R_pi - R_bi)
+interaction_effect = np.sum(delta_w * delta_R)
+
+# ï¼å¯ééªè¯ï¼ä¸»å¨æ¶ç = é + éæ© + äº¤äºï¼
+# active_return = np.sum(wp * Rp) - np.sum(wb * Rb)
+# assert np.allclose(active_return, allocation_effect + selection_effect + interaction_effect)
+
+# ------------------------------
+# è¾åºç»æå­å
+# ------------------------------
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation_effect,
+    'selection_effect': selection_effect,
+    'interaction_effect': interaction_effect
+}
+
+# æå°ç»æä»¥ä¾¿è¯¾å æå±æ¥ç
+print(result)

@@ -1,0 +1,28 @@
+# 计算参数法VaR
+import math
+from scipy.stats import norm
+
+position = 1_850_000  # 仓位价值
+annual_vol = 0.218    # 年化波动率
+trading_days = 252    # 一年交易日数
+
+# 分位数
+z_95 = norm.ppf(0.95)   # 1.6448536269514722
+z_99 = norm.ppf(0.99)   # 2.3263478740408408
+
+# 1天波动率
+sigma_1d = annual_vol / math.sqrt(trading_days)
+# 10天波动率
+sigma_10d = annual_vol * math.sqrt(10 / trading_days)
+
+# VaR计算（金额损失取正）
+var_95_1d = position * sigma_1d * z_95
+var_99_10d = position * sigma_10d * z_99
+
+# 结果字典
+result = {
+    'var_95_1d': round(var_95_1d, 2),
+    'var_99_10d': round(var_99_10d, 2)
+}
+
+result

@@ -1,0 +1,127 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+from scipy.optimize import brentq
+
+# ============================================================
+# 债券参数设定
+# ============================================================
+face_value = 100.0          # 面值
+coupon_rate = 0.046         # 票息率 4.6%
+maturity = 7.0              # 期限（年）
+coupon_freq = 1             # 年度付息（题目未指定，采用年度付息）
+ytm_current = 0.053         # 当前到期收益率 5.3%
+
+# 收益率变动幅度（可调参数）
+yield_shift = 0.01          # 收益率变动 +100 bp = 0.01
+
+# ============================================================
+# 1. 定价函数（现金流贴现）
+# ============================================================
+def bond_price(ytm, face, coupon_rate, maturity, freq=1):
+    """
+    计算债券的净价（全价减去应计利息）。
+    采用标准贴现法：每期现金流 = 面值 * 票息率 / 频率，
+    最后加上面值。
+    """
+    periods = int(round(maturity * freq))
+    coupon = face * coupon_rate / freq
+    # 时间点（以年为单位）
+    times = np.arange(1, periods + 1) / freq
+    cash_flows = np.full(periods, coupon)
+    cash_flows[-1] += face  # 期末归还本金
+    pv = np.sum(cash_flows / (1 + ytm/freq) ** (times * freq))
+    return pv
+
+# ============================================================
+# 2. 久期与凸性计算（麦考利久期、修正久期、凸性）
+# ============================================================
+def bond_duration_convexity(ytm, face, coupon_rate, maturity, freq=1):
+    """
+    返回 (mac_duration, mod_duration, convexity)
+    """
+    periods = int(round(maturity * freq))
+    coupon = face * coupon_rate / freq
+    times = np.arange(1, periods + 1) / freq
+    cash_flows = np.full(periods, coupon)
+    cash_flows[-1] += face
+
+    disc = 1.0 / (1 + ytm/freq) ** (times * freq)
+    pv_cf = cash_flows * disc
+    price = np.sum(pv_cf)
+
+    # 麦考利久期（年）
+    mac_dur = np.sum(times * pv_cf) / price
+
+    # 修正久期
+    mod_dur = mac_dur / (1 + ytm/freq)
+
+    # 凸性
+    convexity = np.sum(times * (times + 1/freq) * pv_cf) / (price * (1 + ytm/freq)**2)
+
+    return mac_dur, mod_dur, convexity
+
+# ============================================================
+# 3. 主计算
+# ============================================================
+# --- 精确定价网格：收益率从 2% 到 9% ---
+ytm_grid = np.linspace(0.02, 0.09, 300)  # 稠密网格，曲线平滑
+price_exact = np.array([bond_price(y, face_value, coupon_rate, maturity, coupon_freq) 
+                        for y in ytm_grid])
+
+# 当前收益率下的债券价格与久期
+P0 = bond_price(ytm_current, face_value, coupon_rate, maturity, coupon_freq)
+mac_dur, mod_dur, convexity = bond_duration_convexity(ytm_current, face_value, coupon_rate, maturity, coupon_freq)
+
+print(f"当前收益率 {ytm_current*100:.2f}% 下的精确价格: {P0:.4f}")
+print(f"麦考利久期: {mac_dur:.4f} 年")
+print(f"修正久期: {mod_dur:.4f}")
+print(f"凸性: {convexity:.4f}")
+
+# --- 基于久期的近似价格-收益率曲线 ---
+# 近似公式: P(y) ≈ P0 * [1 - mod_dur * (y - y0)]
+price_dur_approx = P0 * (1 - mod_dur * (ytm_grid - ytm_current))
+
+# --- 收益率上升 100 bp 的情形 ---
+ytm_up = ytm_current + yield_shift
+P_up_exact = bond_price(ytm_up, face_value, coupon_rate, maturity, coupon_freq)
+# 久期法估计的相对变化：ΔP/P ≈ -mod_dur * Δy
+delta_rel_dur = -mod_dur * yield_shift
+
+print(f"\n收益率上升 {yield_shift*100:.0f} bp 后 (到 {ytm_up*100:.2f}%):")
+print(f"  精确价格: {P_up_exact:.4f}")
+print(f"  久期法估计的相对价格变化: {delta_rel_dur*100:.4f}%")
+print(f"  久期法估计的价格: {P0 * (1 + delta_rel_dur):.4f}")
+
+# ============================================================
+# 4. 绘图
+# ============================================================
+fig, ax = plt.subplots(figsize=(10, 6))
+ax.plot(ytm_grid * 100, price_exact, 'b-', linewidth=2, label='Exact Price')
+ax.plot(ytm_grid * 100, price_dur_approx, 'r--', linewidth=2, label='Duration Approximation')
+# 标记当前收益率点
+ax.axvline(x=ytm_current*100, color='gray', linestyle=':', alpha=0.7)
+ax.plot(ytm_current*100, P0, 'ko', markersize=6, label=f'Current YTM={ytm_current*100:.1f}%')
+
+ax.set_xlabel('Yield to Maturity (%)')
+ax.set_ylabel('Bond Price')
+ax.set_title('Bond Price-Yield Curve\n(Face=100, Coupon=4.6%, Maturity=7Y, Annual Pay)')
+ax.legend()
+ax.grid(True, alpha=0.3)
+
+# 保存图形
+figure_filename = 'bond_price_yield_curve.png'
+fig.savefig(figure_filename, dpi=150, bbox_inches='tight')
+plt.close(fig)
+
+# ============================================================
+# 5. 结果汇总
+# ============================================================
+result = {
+    'price_at_up100bp': round(P_up_exact, 6),
+    'dur_approx_change_up100bp': round(delta_rel_dur, 6),
+    'figure_path': figure_filename
+}
+
+print("\n=== 最终结果字典 ===")
+print(result)

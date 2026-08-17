@@ -1,0 +1,58 @@
+由于我无法直接读取你本地的课程数据文件，我为你提供计算整个样本期年化 Sharpe Ratio 的完整 Python 代码。你只需将数据文件读入并替换代码中的文件路径即可得到符合输出契约的 `result` 字典。
+
+计算逻辑严格遵循了你的约定：
+1. **无风险利率**：2.1% 即 0.021，采用最符合年化夏普比率线性特征的日化方式 $r_{f,daily} = 0.021 / 252$，等效于年化时直接减去 0.021（若课程要求必须按连续复利日化，可将代码中 `rf_daily` 替换为 `np.exp(0.021/252) - 1`，差异极小）。
+2. **标准差**：使用样本估计量，即 `ddof=1`。
+3. **年化**：均值乘 252，标准差乘 $\sqrt{252}$。
+4. **小数表示**：所有计算均在 0.05 即 5% 的小数层面上进行（如果你的原数据是百分比数值如 5，需先除以 100）。
+
+```python
+import pandas as pd
+import numpy as np
+
+# ===== 1. 读取数据 =====
+# 请将 'your_data_file.csv' 替换为你真实的课程数据文件路径及文件名
+# 如果是 Excel 文件，可使用 pd.read_excel('your_data_file.xlsx')
+df = pd.read_csv('your_data_file.csv')
+
+# ===== 2. 提取基金日收益率并确保为小数表示 =====
+# 假设数据已经是小数（如 0.05 表示 5%）；如果原始数据是百分数（如 5 表示 5%），请加上下面一行：
+# df['fund'] = df['fund'] / 100
+R_daily = df['fund']
+
+# ===== 3. 计算统计量 =====
+# 日收益率样本均值
+mean_daily = R_daily.mean()
+
+# 日收益率样本标准差（严格遵照 ddof=1 的样本估计量约定）
+std_daily = R_daily.std(ddof=1)
+
+# 无风险利率参数
+rf_annual = 0.021
+
+# 日化无风险利率（通常采用简单除法，与年化时直接减 rf_annual 完全等效）
+rf_daily = rf_annual / 252
+
+# 如果你的课程严格要求期权无风险利率按连续复利日化，请注释上一行，改用下一行：
+# rf_daily = np.exp(rf_annual / 252) - 1
+
+# ===== 4. 计算年化 Sharpe Ratio =====
+# 日超额收益均值
+excess_mean_daily = mean_daily - rf_daily
+
+# 日夏普比率
+sharpe_daily = excess_mean_daily / std_daily
+
+# 年化夏普比率（乘以 sqrt(252)）
+sharpe_annual = sharpe_daily * np.sqrt(252)
+
+# ===== 5. 构建输出契约字典 =====
+result = {'sharpe_annual': sharpe_annual}
+
+# 打印结果以供检查
+print(result)
+```
+
+**关键计算公式说明**：
+$$ \text{Sharpe}_{annual} = \frac{E[R_{daily}] - R_{f,daily}}{\sigma_{daily}} \times \sqrt{252} $$
+其中 $R_{f,daily} = \frac{0.021}{252}$，$\sigma_{daily}$ 为日收益率的样本标准差（自由度 $n-1$）。此公式与 $\frac{E[R_{daily}] \times 252 - 0.021}{\sigma_{daily} \times \sqrt{252}}$ 在数学上是完全等价的。

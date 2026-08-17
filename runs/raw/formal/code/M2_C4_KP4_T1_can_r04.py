@@ -1,0 +1,29 @@
+import numpy as np
+from scipy.stats import norm
+
+# ---------- 输入参数 ----------
+S0 = 103.7          # 标的现价
+K = 97.5            # 行权价
+sigma = 0.276       # 隐含波动率（年化，小数表示）
+r = 0.043           # 连续复利无风险利率（小数表示）
+T = 0.58            # 剩余期限（年）
+
+# ---------- d1 与 d2 ----------
+d1 = (np.log(S0 / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+d2 = d1 - sigma * np.sqrt(T)
+
+# ---------- 期权价格与 Delta ----------
+call_price = S0 * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+call_delta = norm.cdf(d1)
+
+# ---------- Vega（每单位波动率，即 dC/dσ）----------
+call_vega = S0 * np.sqrt(T) * norm.pdf(d1)   # 波动率每变动1（100%）时的期权价格变动
+
+# ---------- 输出结果 ----------
+result = {
+    'call_price': call_price,
+    'call_delta': call_delta,
+    'call_vega': call_vega
+}
+
+print(result)

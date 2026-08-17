@@ -1,0 +1,34 @@
+import numpy as np
+from scipy.stats import norm
+
+def black_scholes_call(S, K, T, r, sigma):
+    """
+    计算欧式看涨期权的 Black-Scholes 价格
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma ** 2) * T) / (sigma * np.sqrt(T))
+    d2 = d1 - sigma * np.sqrt(T)
+    call_price = S * norm.cdf(d1) - K * np.exp(-r * T) * norm.cdf(d2)
+    return call_price
+
+# 给定参数
+S = 103.7       # 标的现价
+K = 97.5        # 行权价
+T = 0.58        # 剩余期限（年）
+r = 0.043       # 无风险利率
+sigma_0 = 0.276 # 初始波动率（27.6%）
+sigma_1 = 0.286 # 上升一个百分点后的波动率（28.6%）
+
+# 计算初始波动率下的期权价格
+price_0 = black_scholes_call(S, K, T, r, sigma_0)
+
+# 计算波动率上升1个百分点后的期权价格
+price_1 = black_scholes_call(S, K, T, r, sigma_1)
+
+# 期权价格的变化量
+price_change = price_1 - price_0
+
+# 按要求存入字典
+result = {'price_change': price_change}
+
+# 打印结果以便验证
+print(result)

@@ -1,0 +1,36 @@
+import numpy as np
+
+# 参数
+face_value = 100
+coupon_rate = 0.046
+ytm = 0.053
+n = 7
+coupon = face_value * coupon_rate
+
+# 现金流：前 n-1 年利息，最后一年利息+本金
+cash_flows = np.array([coupon] * (n - 1) + [coupon + face_value])
+t = np.arange(1, n + 1)
+
+# 折现因子（年复利）
+discount_factors = (1 + ytm) ** (-t)
+pv_cf = cash_flows * discount_factors
+
+price = np.sum(pv_cf)
+
+# Macaulay 久期
+macaulay_duration = np.sum(t * pv_cf) / price
+
+# 修正久期
+modified_duration = macaulay_duration / (1 + ytm)
+
+# 凸性（年复利标准公式）
+convexity = np.sum(t * (t + 1) * pv_cf) / (price * (1 + ytm)**2)
+
+result = {
+    'price': round(price, 6),
+    'macaulay_duration_years': round(macaulay_duration, 6),
+    'modified_duration_years': round(modified_duration, 6),
+    'convexity': round(convexity, 6)
+}
+
+result

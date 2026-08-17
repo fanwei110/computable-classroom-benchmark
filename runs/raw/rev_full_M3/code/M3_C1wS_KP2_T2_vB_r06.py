@@ -1,0 +1,119 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+from matplotlib.ticker import PercentFormatter
+
+# ==================== 1. 初始化参数 ====================
+rf_init = 0.023   # 初始无风险利率 2.3%
+rm_init = 0.094   # 初始市场收益 9.4%
+stocks = {
+    'X': (0.62, 0.081),  # Beta: 0.62, 期望收益: 8.1%
+    'Y': (1.18, 0.131),  # Beta: 1.18, 期望收益: 13.1%
+    'Z': (1.51, 0.099)   # Beta: 1.51, 期望收益: 9.9%
+}
+b_target = 1.27    # 目标Beta
+
+# ==================== 2. 计算要求报告的数值 ====================
+sml_slope = rm_init - rf_init
+er_at_beta_127 = rf_init + b_target * sml_slope
+
+# ==================== 3. 准备绘图数据 ====================
+betas = np.linspace(0, 2, 100)
+sml_y_init = rf_init + betas * sml_slope
+
+# ==================== 4. 创建图形与坐标轴 ====================
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Microsoft YaHei', 'Arial Unicode MS']
+plt.rcParams['axes.unicode_minus'] = False
+
+fig, ax = plt.subplots(figsize=(10, 8))
+plt.subplots_adjust(bottom=0.3)
+
+# 绘制 SML 线
+line_sml, = ax.plot(betas, sml_y_init, 'b-', lw=2, label='证券市场线 (SML)')
+
+# 标注无风险利率和市场组合点
+point_rf, = ax.plot(0, rf_init, 'ko', label=f'无风险利率 (rf)')
+point_m, = ax.plot(1, rm_init, 'ro', label=f'市场组合 (M)')
+
+# 标注 Beta=1.27 的点
+er_127_init = er_at_beta_127
+point_127, = ax.plot(b_target, er_127_init, 'y*', markersize=15, label='Beta=1.27')
+text_127 = ax.text(b_target + 0.05, er_127_init, f'Beta=1.27\nE(R)={er_127_init:.2%}', fontsize=10)
+
+# 标注三只股票及其 Alpha
+texts_stocks = []
+colors = ['red', 'green', 'purple']
+for idx, (name, (b, r)) in enumerate(stocks.items()):
+    alpha = r - (rf_init + b * sml_slope)
+    ax.plot(b, r, 'o', color=colors[idx], markersize=8)
+    t = ax.text(b + 0.05, r, f'{name}\nα={alpha:.2%}', fontsize=10, color=colors[idx])
+    texts_stocks.append(t)
+
+# 坐标轴与格式美化
+ax.set_xlim(0, 2)
+ax.set_ylim(-0.02, 0.20)
+ax.set_xlabel('Beta', fontsize=12)
+ax.set_ylabel('期望收益率', fontsize=12)
+ax.set_title('CAPM 与证券市场线 (SML) 演示', fontsize=14)
+ax.yaxis.set_major_formatter(PercentFormatter(1.0))
+ax.grid(True, linestyle='--', alpha=0.7)
+ax.legend(loc='upper left')
+
+# ==================== 5. 添加可拖动 Slider (参数化) ====================
+ax_rf = plt.axes([0.2, 0.15, 0.6, 0.03])
+ax_rm = plt.axes([0.2, 0.1, 0.6, 0.03])
+
+slider_rf = Slider(ax_rf, '无风险利率', 0.0, 0.1, valinit=rf_init, valstep=0.001)
+slider_rm = Slider(ax_rm, '市场收益率', 0.0, 0.3, valinit=rm_init, valstep=0.001)
+
+# 设置 Slider 初始显示格式为百分比
+slider_rf.valtext.set_text(f'{rf_init:.1%}')
+slider_rm.valtext.set_text(f'{rm_init:.1%}')
+
+# 定义 Slider 更新响应函数
+def update(val):
+    rf = slider_rf.val
+    rm = slider_rm.val
+    slope = rm - rf
+    
+    # 更新 SML 线
+    line_sml.set_ydata(rf + betas * slope)
+    
+    # 更新 rf 和 M 点
+    point_rf.set_ydata([rf])
+    point_m.set_ydata([rm])
+    
+    # 更新 Beta=1.27 点及标注
+    er_127 = rf + b_target * slope
+    point_127.set_ydata([er_127])
+    text_127.set_text(f'Beta=1.27\nE(R)={er_127:.2%}')
+    text_127.set_position((b_target + 0.05, er_127))
+    
+    # 更新三只股票的 Alpha 文本
+    for idx, (name, (b, r)) in enumerate(stocks.items()):
+        alpha = r - (rf + b * slope)
+        texts_stocks[idx].set_text(f'{name}\nα={alpha:.2%}')
+        
+    # 更新 Slider 显示文本
+    slider_rf.valtext.set_text(f'{rf:.1%}')
+    slider_rm.valtext.set_text(f'{rm:.1%}')
+    
+    fig.canvas.draw_idle()
+
+slider_rf.on_changed(update)
+slider_rm.on_changed(update)
+
+# ==================== 6. 保存图形并填充 result ====================
+fig_path = 'sml_plot.png'
+fig.savefig(fig_path, bbox_inches='tight')
+
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': fig_path
+}
+
+print(result)
+
+# 展示交互图形（可拖动 Slider）
+plt.show()

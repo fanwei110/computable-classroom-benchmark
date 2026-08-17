@@ -1,0 +1,58 @@
+import numpy as np
+
+# ==========================================
+# 步骤 1: 自行确定 60/40 权重与两只资产的对应方式
+# ==========================================
+# 假设：A 占 60%，B 占 40%。
+# 理由：A 的波动率(18.4%)低于 B(29.7%)，在常规投资组合中，通常给波动率较低(或常被视为核心/债券类)的资产分配更高权重，"六四开"自然对应 A=0.6, B=0.4。
+w = np.array([0.6, 0.4])
+
+# ==========================================
+# 基础参数设置 (输入的波动率本身即为年化数据)
+# ==========================================
+vol_A = 0.184
+vol_B = 0.297
+corr_before = 0.3
+corr_after = 0.8
+
+# ==========================================
+# 步骤 2: 构造相关系数 0.3 与 0.8 两个协方差矩阵
+# ==========================================
+# 协方差计算公式: Cov(A,B) = rho * vol_A * vol_B
+cov_before = corr_before * vol_A * vol_B
+cov_after = corr_after * vol_A * vol_B
+
+Sigma_before = np.array([
+    [vol_A**2,  cov_before],
+    [cov_before, vol_B**2]
+])
+
+Sigma_after = np.array([
+    [vol_A**2, cov_after],
+    [cov_after, vol_B**2]
+])
+
+# ==========================================
+# 步骤 3: 计算两个组合波动率
+# ==========================================
+# 组合方差公式: sigma_p^2 = w' * Sigma * w
+var_before = w.T @ Sigma_before @ w
+var_after = w.T @ Sigma_after @ w
+
+# 组合年化波动率 = sqrt(组合年化方差)
+vol_before_annual = np.sqrt(var_before)
+vol_after_annual = np.sqrt(var_after)
+
+# ==========================================
+# 步骤 4: 填充 result 字典
+# ==========================================
+result = {
+    'vol_before_annual': vol_before_annual,
+    'vol_after_annual': vol_after_annual
+}
+
+# (课堂展示辅助打印，非必需但有助于投屏观察)
+print(f"假设权重: A=60%, B=40%")
+print(f"相关性 0.3 时, 组合年化波动率: {result['vol_before_annual']:.4%}")
+print(f"相关性 0.8 时, 组合年化波动率: {result['vol_after_annual']:.4%}")
+print(f"\nresult字典完整输出:\n{result}")

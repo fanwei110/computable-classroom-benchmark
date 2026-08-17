@@ -1,0 +1,70 @@
+```python
+import matplotlib.pyplot as plt
+import numpy as np
+
+# ===== 可调参数 =====
+rf = 0.023          # 无风险利率
+mkt_ret = 0.094     # 市场期望收益
+# ===================
+
+# 计算SML斜率
+sml_slope = mkt_ret - rf
+
+# beta = 1.27 时的期望收益
+beta_target = 1.27
+er_at_beta_127 = rf + sml_slope * beta_target
+
+# 生成beta范围
+beta = np.linspace(0, 2, 100)
+sml = rf + sml_slope * beta
+
+# 三个待标点
+points = {
+    'X': (0.62, 0.081),
+    'Y': (1.18, 0.131),
+    'Z': (1.51, 0.099)
+}
+
+# ===== 画图 =====
+plt.figure(figsize=(8, 5))
+plt.plot(beta, sml, 'b-', linewidth=2, label='SML')
+plt.scatter(*zip(*points.values()), color='red', zorder=5)
+for name, (b, er) in points.items():
+    plt.annotate(f'{name}({b}, {er*100:.1f}%)', (b, er),
+                 textcoords="offset points", xytext=(0, 10), ha='center')
+
+plt.xlabel('Beta')
+plt.ylabel('Expected Return')
+plt.title('Security Market Line (SML)')
+plt.axhline(y=rf, color='gray', linestyle='--', alpha=0.5, label=f'rf = {rf*100:.1f}%')
+plt.legend()
+plt.grid(alpha=0.3)
+
+# 保存图片
+figure_path = './sml.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ===== 输出结果 =====
+result = {
+    'sml_slope': sml_slope,
+    'er_at_beta_127': er_at_beta_127,
+    'figure_path': figure_path
+}
+
+print(result)
+```
+
+**结果说明：**
+- SML斜率（市场风险溢价）：**0.071**（即 7.1%）
+- β = 1.27 时的期望收益：**0.11317**（约 11.32%）
+
+```python
+# result 字典内容
+{
+    'sml_slope': 0.071,
+    'er_at_beta_127': 0.11317,
+    'figure_path': './sml.png'
+}
+```
+图中红色散点为 X(0.62, 8.1%)、Y(1.18, 13.1%)、Z(1.51, 9.9%)，蓝色直线为 SML。无风险利率与市场期望收益已在代码开头设为变量，可随时调整。

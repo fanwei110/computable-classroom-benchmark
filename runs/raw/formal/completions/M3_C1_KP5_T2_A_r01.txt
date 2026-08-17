@@ -1,0 +1,104 @@
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ========== 参数设置 ==========
+confidence_level = 0.95          # 可调置信水平
+position = 1_000_000             # 头寸（元）
+holding_period = 1               # 持有期（天）
+file_path = 'data/market_snapshot_v1.csv'
+figure_path = 'hist_var_pnl_histogram.png'
+
+# ========== 1. 读取数据 & 计算日收益率 ==========
+df = pd.read_csv(file_path)
+fund_prices = df['fund'].dropna().sort_index()
+
+# 日收益率 (简单收益率)
+daily_returns = fund_prices.pct_change().dropna()
+
+# ========== 2. 计算历史法 VaR ==========
+# 历史法：对收益率排序，取对应分位数
+# VaR = -分位数 × 头寸 （取损失为正的惯例）
+sorted_returns = daily_returns.sort_values(ascending=True)
+alpha = 1 - confidence_level  # 0.05
+# 第 alpha 分位数（即最差的 5% 分位点）
+var_quantile = sorted_returns.quantile(alpha, interpolation='lower')
+hist_var = -var_quantile * position * np.sqrt(holding_period)
+
+# 也用更精确的 numpy percentile 算一次作交叉验证
+var_quantile_np = np.percentile(sorted_returns.values, alpha * 100)
+hist_var_np = -var_quantile_np * position
+
+print(f"日收益率数量: {len(daily_returns)}")
+print(f"日收益率均值: {daily_returns.mean():.6f}")
+print(f"日收益率标准差: {daily_returns.std():.6f}")
+print(f"{int(confidence_level*100)}% 1日历史VaR (pandas quantile): {hist_var:,.2f} 元")
+print(f"{int(confidence_level*100)}% 1日历史VaR (numpy percentile): {hist_var_np:,.2f} 元")
+
+# ========== 3. 计算日损益 ==========
+daily_pnl = daily_returns * position
+
+# ========== 4. 画直方图 + VaR线 ==========
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 直方图
+n, bins, patches = ax.hist(daily_pnl, bins=50, color='steelblue',
+                           edgecolor='white', alpha=0.75, density=False)
+
+# VaR 线（损失为正，所以 VaR 线画在 -VaR 处，即 PnL = -VaR）
+var_line_x = -hist_var  # PnL 轴上 VaR 对应的位置
+ax.axvline(x=var_line_x, color='red', linestyle='--', linewidth=2,
+           label=f'{int(confidence_level*100)}% 1-day Hist VaR\n= {hist_var:,.0f} 元 (损失)')
+
+# 标注
+ax.set_title(f'日损益直方图 & {int(confidence_level*100)}% 1日历史VaR（头寸 {position/1e4:.0f} 万元）',
+             fontsize=14, fontweight='bold')
+ax.set_xlabel('日损益（元）', fontsize=12)
+ax.set_ylabel('频数', fontsize=12)
+ax.legend(fontsize=11, loc='upper right')
+
+# 在 VaR 线左侧区域着色表示尾部
+ax.axvspan(daily_pnl.min(), var_line_x, color='red', alpha=0.10,
+           label='尾部区域（超过VaR的损失）')
+
+ax.legend(fontsize=11, loc='upper right')
+plt.tight_layout()
+fig.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+print(f"\n图表已保存至: {figure_path}")
+
+# ========== 5. 输出契约 ==========
+result = {
+    'hist_var_95_1d': hist_var,
+    'figure_path': figure_path
+}
+
+print(f"\n===== 结果 =====")
+print(f"hist_var_95_1d = {result['hist_var_95_1d']:,.2f} 元")
+print(f"figure_path = {result['figure_path']}")
+```
+
+## 代码说明
+
+### 核心逻辑
+
+| 步骤 | 说明 |
+|------|------|
+| **数据读取** | 从 `data/market_snapshot_v1.csv` 读取 `fund` 列，按时间排序 |
+| **日收益率** | $r_t = \frac{P_t - P_{t-1}}{P_{t-1}}$，用 `pct_change()` |
+| **历史VaR** | 对收益率**升序排列**，取第 $\alpha = 1 - 95\% = 5\%$ 分位数 $q_\alpha$，则 $\text{VaR} = -q_\alpha \times \text{头寸}$ |
+| **日损益** | $\text{PnL}_t = r_t \times 1{,}000{,}000$ |
+| **可视化** | 直方图展示日损益分布，红色虚线标注 VaR，尾部区域浅红着色 |
+
+### 置信水平可调
+
+只需修改顶部 `confidence_level = 0.95` 这一行，即可切换为 99%、90% 等任意置信水平，后续计算和绘图会自动适配。
+
+### 输出契约
+
+`result` 字典包含：
+- **`hist_var_95_1d`**：95% 一日历史 VaR 数值（元，损失为正）
+- **`figure_path`**：保存的直方图文件路径

@@ -1,0 +1,86 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ================= 债券参数 =================
+F = 100.0                # 面值
+coupon_rate = 0.046      # 票息率 4.6%
+T = 7                    # 期限 7 年
+y0 = 0.053               # 当前收益率 5.3%
+
+# ================= 可调参数 =================
+# 收益率变动幅度，用于控制当前收益率附近近似曲线的绘制区间
+DY_RANGE = 0.035         
+
+# ================= 现金流构造 =================
+# 票息每年支付一次
+t_arr = np.arange(1, T + 1)
+CF_arr = np.full(T, coupon_rate * F)
+CF_arr[-1] += F          # 最后一期还本
+
+# ================= 向量化定价函数 =================
+def bond_price(y, CF, t):
+    """支持标量或数组收益率，计算债券精确价格"""
+    y = np.atleast_1d(np.asarray(y))
+    prices = np.sum(CF / (1 + y[:, np.newaxis])**t, axis=-1)
+    return prices.item() if prices.size == 1 else prices
+
+# ================= 当前收益率下的精确价格与指标 =================
+P0 = bond_price(y0, CF_arr, t_arr)
+
+# 麦考利久期: D_mac = Σ[t * CF_t / (1+y)^t] / P
+D_mac = np.sum(t_arr * CF_arr / (1 + y0)**t_arr) / P0
+
+# 修正久期: D_mod = D_mac / (1+y)
+D_mod = D_mac / (1 + y0)
+
+# 凸性: C = Σ[t(t+1)CF_t / (1+y)^(t+2)] / P
+C = np.sum(t_arr * (t_arr + 1) * CF_arr / (1 + y0)**(t_arr + 2)) / P0
+
+# ================= +100bp 的计算 =================
+y_up = y0 + 0.01
+P_up = bond_price(y_up, CF_arr, t_arr)
+
+# 久期法估计的相对价格变化 (dP/P = -D_mod * dy)
+dur_approx_change_up100bp = -D_mod * 0.01
+
+# ================= 画图 =================
+# 1. 精确价格-收益率曲线 (2% 到 9%)
+y_grid = np.linspace(0.02, 0.09, 1000)
+P_exact = bond_price(y_grid, CF_arr, t_arr)
+
+# 2. 当前收益率附近的近似曲线
+y_local = np.linspace(y0 - DY_RANGE, y0 + DY_RANGE, 500)
+dy_local = y_local - y0
+
+# 一阶久期近似: dP/P = -D_mod * dy  =>  P = P0 * (1 - D_mod * dy)
+P_dur_approx = P0 * (1 - D_mod * dy_local)
+
+# 久期+凸性近似: dP/P = -D_mod * dy + 0.5 * C * dy^2  =>  P = P0 * (1 - D_mod * dy + 0.5 * C * dy^2)
+P_dur_conv_approx = P0 * (1 - D_mod * dy_local + 0.5 * C * dy_local**2)
+
+# 绘图设置
+plt.figure(figsize=(10, 6))
+plt.plot(y_grid, P_exact, label='Exact Price-Yield Curve', color='blue', linewidth=2)
+plt.plot(y_local, P_dur_approx, label='Duration Approximation', color='orange', linestyle='--', linewidth=2)
+plt.plot(y_local, P_dur_conv_approx, label='Duration + Convexity Approximation', color='green', linestyle='-.', linewidth=2)
+plt.scatter([y0], [P0], color='red', zorder=5, label=f'Current Yield ({y0*100:.1f}%)')
+
+plt.xlabel('Yield (Annual Compound)')
+plt.ylabel('Bond Price')
+plt.title('Bond Price-Yield Curve and Sensitivity Approximations')
+plt.legend()
+plt.grid(True, linestyle=':', alpha=0.7)
+
+# 保存图形
+fig_path = 'bond_price_yield_curve.png'
+plt.savefig(fig_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# ================= 输出结果 =================
+result = {
+    'price_at_up100bp': P_up,
+    'dur_approx_change_up100bp': dur_approx_change_up100bp,
+    'figure_path': fig_path
+}
+```

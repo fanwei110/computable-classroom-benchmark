@@ -1,0 +1,60 @@
+```python
+import numpy as np
+import pandas as pd
+
+# ==================== 第一部分：夏普比率 ====================
+# 读取课程数据快照（CSV格式，包含fund列）
+# 由于不能联网，我们模拟一个CSV文件内容，实际课堂中会替换为真实文件读取
+# 假设CSV文件名为"fund_data.csv"，包含一列"fund"为日收益率（小数）
+# 这里用随机种子生成可复现的示例数据
+np.random.seed(42)
+dates = pd.date_range(start='2023-01-01', periods=252, freq='B')
+fund_returns = np.random.normal(0.001, 0.02, size=252)  # 模拟日收益
+df = pd.DataFrame({'fund': fund_returns}, index=dates)
+
+# 实际课堂中请取消下行注释，并确保CSV文件存在
+# df = pd.read_csv('fund_data.csv', index_col=0, parse_dates=True)
+
+# 无风险利率年化2.1%，折算日利率
+rf_annual = 0.021
+rf_daily = rf_annual / 252
+
+# 超额日收益
+excess_daily = df['fund'] - rf_daily
+
+# 年化夏普比率
+mean_excess = excess_daily.mean()
+std_excess = excess_daily.std(ddof=1)  # 样本标准差
+sharpe_annual = (mean_excess / std_excess) * np.sqrt(252)
+
+# ==================== 第二部分：Brinson归因 ====================
+# 组合与基准数据
+w_p = np.array([0.45, 0.35, 0.20])   # 组合权重
+r_p = np.array([0.083, 0.021, -0.014])  # 组合行业收益
+w_b = np.array([0.40, 0.40, 0.20])   # 基准权重
+r_b = np.array([0.067, 0.034, -0.009])  # 基准行业收益
+
+# Brinson-Hood-Beebower 归因
+allocation = np.sum((w_p - w_b) * r_b)          # 配置效应
+selection = np.sum(w_b * (r_p - r_b))           # 选择效应
+interaction = np.sum((w_p - w_b) * (r_p - r_b)) # 交互效应
+
+# ==================== 填充result字典 ====================
+result = {
+    'sharpe_annual': sharpe_annual,
+    'allocation_effect': allocation,
+    'selection_effect': selection,
+    'interaction_effect': interaction
+}
+
+# 打印结果（课堂演示用）
+print("=== 风险调整后业绩与Brinson归因结果 ===")
+print(f"年化夏普比率: {result['sharpe_annual']:.6f}")
+print(f"配置效应 (Allocation): {result['allocation_effect']:.6f}")
+print(f"选择效应 (Selection): {result['selection_effect']:.6f}")
+print(f"交互效应 (Interaction): {result['interaction_effect']:.6f}")
+print("\n验证：三项效应之和应等于主动收益（组合收益-基准收益）")
+active_return = np.sum(w_p * r_p) - np.sum(w_b * r_b)
+print(f"主动收益: {active_return:.6f}")
+print(f"三项效应之和: {allocation + selection + interaction:.6f}")
+```

@@ -1,0 +1,36 @@
+由于您没有提供“fund”列的具体数据，我为您提供按照上述计算约定编写的 Python 代码。您只需将您的数据代入，即可得到符合输出契约的 `result` 字典。
+
+计算逻辑说明：
+1. **年化超额收益**：每日收益率减去日化无风险利率（$rf / 252$），求均值后乘以 252 天。
+2. **年化波动率**：使用样本标准差（`ddof=1`）计算日波动率，乘以 $\sqrt{252}$ 年化。
+3. **年化夏普比率**：年化超额收益除以年化波动率。
+
+```python
+import numpy as np
+import pandas as pd
+
+# 假设 fund 是包含全样本日收益率（小数表示）的 pandas Series
+# fund = pd.Series([...]) 
+
+rf = 0.021  # 2.1% 用小数表示
+trading_days = 252
+
+# 1. 计算日超额收益率
+daily_excess_return = fund - (rf / trading_days)
+
+# 2. 计算年化超额收益（算术平均年化）
+annualized_excess_return = daily_excess_return.mean() * trading_days
+
+# 3. 计算年化波动率（样本标准差 ddof=1，乘以 sqrt(252) 年化）
+annualized_vol = fund.std(ddof=1) * np.sqrt(trading_days)
+
+# 4. 计算年化夏普比率
+sharpe_annual = annualized_excess_return / annualized_vol
+
+# 5. 按照输出契约存入字典
+result = {'sharpe_annual': sharpe_annual}
+
+print(result)
+```
+
+如果您有具体的收益率数据，请提供，我可以直接为您算出具体的数值结果。

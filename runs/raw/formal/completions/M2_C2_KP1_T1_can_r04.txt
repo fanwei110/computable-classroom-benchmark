@@ -1,0 +1,47 @@
+以下是一个自包含的 Python 脚本，它从给定的波动率与相关系数出发，构造协方差矩阵，通过闭式解计算全局最小方差组合的权重和年化波动率，并将结果存入指定字典 `result`。
+
+```python
+import numpy as np
+
+# 年化波动率
+sigma = np.array([0.187, 0.243, 0.312])
+
+# 相关系数矩阵
+corr = np.array([
+    [1.00,  0.21, -0.13],
+    [0.21,  1.00,  0.37],
+    [-0.13, 0.37,  1.00]
+])
+
+# 1. 构造协方差矩阵 Σ = diag(sigma) @ corr @ diag(sigma)
+cov = np.diag(sigma) @ corr @ np.diag(sigma)
+
+# 2. 全局最小方差组合权重（允许卖空，满仓）
+# w = Σ^{-1} 1 / (1' Σ^{-1} 1)
+inv_cov = np.linalg.inv(cov)
+ones = np.ones(len(sigma))
+w_mvp = inv_cov @ ones / (ones @ inv_cov @ ones)
+
+# 3. 组合年化波动率
+var_mvp = w_mvp @ cov @ w_mvp
+vol_mvp = np.sqrt(var_mvp)
+
+# 4. 按要求键名填充结果
+result = {
+    'mvp_weights': list(w_mvp),  # 转为普通列表，确保可序列化
+    'mvp_vol_annual': float(vol_mvp)
+}
+
+# 展示结果（会被教师投屏看到）
+print("全局最小方差组合计算结果：")
+print("权重：", result['mvp_weights'])
+print(f"年化波动率：{result['mvp_vol_annual']:.4f}")
+```
+
+**代码说明**  
+- 协方差矩阵由公式 `Σ = diag(σ) · R · diag(σ)` 构建，能自动处理不对称数值。  
+- 权重公式 `w = (Σ⁻¹·1) / (1ᵀ·Σ⁻¹·1)` 是解析解，严格满足权重之和为 1，并使组合方差最小。  
+- 组合方差 = `wᵀ·Σ·w`，再开平方即得年化波动率。  
+- 输出键名完全符合要求，权重以列表给出，波动率为浮点数。  
+
+运行脚本即可得到确定且可复现的结果，适合课堂投屏演示。

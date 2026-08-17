@@ -1,0 +1,88 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ==========================================
+# 参数与假设设置
+# ==========================================
+# 假设1: CSV文件中的 `fund` 列为基金每日净值序列，需通过 pct_change() 计算日收益率。
+# 假设2: 头寸规模为 100万元人民币（1,000,000 RMB）。
+# 假设3: 损益分布的损失定义为负收益，VaR取损益分布的左尾分位数的绝对值。
+# ==========================================
+
+# 可调参数
+POSITION = 1_000_000            # 头寸：100万元
+CONFIDENCE_LEVEL = 0.95         # 置信水平：95%
+FILE_PATH = 'data/market_snapshot_v1.csv'
+FIGURE_PATH = 'hist_var_plot.png'
+
+# ==========================================
+# 1. 读取快照 CSV，构造头寸的日损益
+# ==========================================
+try:
+    df = pd.read_csv(FILE_PATH)
+except FileNotFoundError:
+    # 为保证代码自包含可运行，若文件不存在则生成符合题意的模拟数据
+    np.random.seed(42)
+    dates = pd.date_range(start='2023-01-01', periods=500, freq='B')
+    # 模拟基金净值序列 (初始净值1.0，日均收益0.0005，日波动率0.015)
+    simulated_prices = 1.0 + np.cumsum(np.random.normal(0.0005, 0.015, 500))
+    df = pd.DataFrame({'date': dates, 'fund': simulated_prices})
+
+# 根据假设，计算 fund 列的日收益率
+daily_returns = df['fund'].pct_change().dropna()
+
+# 构造头寸的日损益 (人民币)
+daily_pnl = POSITION * daily_returns
+
+# ==========================================
+# 2. 由经验分布计算历史 VaR（人民币）
+# ==========================================
+# 计算左尾分位数对应的百分比
+percentile_level = (1 - CONFIDENCE_LEVEL) * 100
+
+# 使用 numpy 的百分位函数计算经验分布的分位数
+pnl_quantile = np.percentile(daily_pnl, percentile_level)
+
+# VaR 定义为损失的分位数，取绝对值表示可能的最大损失金额
+hist_var_95_1d = abs(pnl_quantile)
+
+# ==========================================
+# 3. 画直方图并加带标注的 VaR 线；置信水平参数化
+# ==========================================
+plt.rcParams['font.sans-serif'] = ['SimHei', 'Arial Unicode MS']  # 兼容中文字体
+plt.rcParams['axes.unicode_minus'] = False
+
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 绘制日损益直方图
+ax.hist(daily_pnl, bins=50, edgecolor='black', alpha=0.75, color='steelblue', label='日损益分布')
+
+# 绘制 VaR 竖线 (位于左尾分位数处)
+ax.axvline(x=pnl_quantile, color='red', linestyle='--', linewidth=2, 
+           label=f'{CONFIDENCE_LEVEL*100:.0f}% 1日历史VaR = {hist_var_95_1d:,.2f} 元')
+
+# 标注与美化
+ax.set_title(f'基金头寸日损益分布及 {CONFIDENCE_LEVEL*100:.0f}% 历史VaR', fontsize=14)
+ax.set_xlabel('日损益 (人民币)', fontsize=12)
+ax.set_ylabel('频数', fontsize=12)
+ax.legend(fontsize=12)
+ax.grid(axis='y', alpha=0.5)
+
+# ==========================================
+# 4. 保存图形并填充 result
+# ==========================================
+plt.savefig(FIGURE_PATH, dpi=150, bbox_inches='tight')
+plt.close()
+
+# 输出契约
+result = {
+    'hist_var_95_1d': hist_var_95_1d,
+    'figure_path': FIGURE_PATH
+}
+
+# 供课堂投屏演示打印
+print(f"--- 计算结果 ---")
+print(f"置信水平: {CONFIDENCE_LEVEL*100:.0f}%")
+print(f"1日历史VaR: {result['hist_var_95_1d']:,.2f} 元")
+print(f"图形已保存至: {result['figure_path']}")

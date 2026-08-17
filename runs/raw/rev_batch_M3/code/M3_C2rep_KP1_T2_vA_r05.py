@@ -1,0 +1,82 @@
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.ticker as mticker
+
+# ==========================================
+# 证券投资学 - 马科维茨均值-方差组合理论
+# ==========================================
+
+# 资产参数设定
+mu = np.array([0.071, 0.124])       # 期望年收益
+sigma = np.array([0.163, 0.289])     # 年化波动率
+rhos = [0.15, 0.45, 0.75]           # 相关系数
+
+result = {}
+
+plt.figure(figsize=(10, 7))
+
+# 组合权重扫描范围（允许卖空，因此w1可以超出[0,1]区间）
+w1_range = np.linspace(-1.0, 2.0, 500)
+w2_range = 1 - w1_range
+
+for rho in rhos:
+    # 1. 构造协方差矩阵
+    cov = np.array([
+        [sigma[0]**2, rho * sigma[0] * sigma[1]],
+        [rho * sigma[0] * sigma[1], sigma[1]**2]
+    ])
+    
+    # 2. 扫描权重，计算前沿收益与波动率
+    port_rets = w1_range * mu[0] + w2_range * mu[1]
+    port_vars = w1_range**2 * cov[0,0] + w2_range**2 * cov[1,1] + 2 * w1_range * w2_range * cov[0,1]
+    port_vols = np.sqrt(np.maximum(port_vars, 0))
+    
+    # 绘制前沿曲线
+    plt.plot(port_vols, port_rets, label=f'Frontier (ρ={rho:.2f})')
+    
+    # 3. 计算并标出最小方差组合(MVP)
+    # 利用解析解：w_mvp = Σ^{-1} * 1 / (1' * Σ^{-1} * 1)
+    inv_cov = np.linalg.inv(cov)
+    w_mvp = inv_cov @ np.ones(2)
+    w_mvp = w_mvp / np.sum(w_mvp)
+    
+    mvp_vol = np.sqrt(w_mvp @ cov @ w_mvp)
+    mvp_ret = w_mvp @ mu
+    
+    plt.scatter(mvp_vol, mvp_ret, marker='*', s=200, zorder=5, label=f'MVP (ρ={rho:.2f})')
+    
+    # 4. 针对相关系数0.45计算特定指标
+    if rho == 0.45:
+        result['mvp_vol_at_rho45'] = mvp_vol
+        
+        # 目标期望收益10%下的最小波动率
+        # 由于两资产且满仓约束，目标收益率唯一确定了组合权重，不存在其他最优化自由度
+        # w1*mu1 + (1-w1)*mu2 = 0.10
+        w1_target = (0.10 - mu[1]) / (mu[0] - mu[1])
+        w_target = np.array([w1_target, 1 - w1_target])
+        
+        target_vol = np.sqrt(w_target @ cov @ w_target)
+        result['frontier_vol_at_target'] = target_vol
+
+# 图表格式设置
+plt.title('Mean-Variance Frontiers for Different Correlations')
+plt.xlabel('Annual Volatility')
+plt.ylabel('Expected Annual Return')
+plt.xlim(0, 0.55)
+plt.ylim(-0.02, 0.22)
+
+# 格式化坐标轴为百分比显示
+plt.gca().xaxis.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=1))
+plt.gca().yaxis.set_major_formatter(mticker.PercentFormatter(xmax=1, decimals=1))
+
+plt.legend()
+plt.grid(True)
+
+# 5. 保存图形并填充结果
+fig_path = 'mean_variance_frontier.png'
+plt.savefig(fig_path, dpi=300, bbox_inches='tight')
+plt.close()
+result['figure_path'] = fig_path
+
+# 打印结果以供核验
+print(result)

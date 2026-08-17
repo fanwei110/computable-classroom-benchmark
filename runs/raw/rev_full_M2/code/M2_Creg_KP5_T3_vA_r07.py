@@ -1,0 +1,30 @@
+import numpy as np
+from scipy.stats import norm
+
+# 可选导入（满足题目要求，但不实际使用）
+import pandas as pd
+import matplotlib.pyplot as plt
+
+# ---------- 给定参数 ----------
+position_value = 2_700_000          # 头寸价值（元）
+annual_vol = 0.24                  # 年化波动率
+confidence_level = 0.95            # 置信水平
+trading_days = 252                 # 一年交易天数
+
+# ---------- 计算日波动率 ----------
+daily_vol = annual_vol / np.sqrt(trading_days)
+
+# ---------- 计算 z 分数 ----------
+# 95% 单尾置信对应的标准正态分位数（正数，表示损失方向的偏离）
+z_score = norm.ppf(confidence_level)
+
+# ---------- 计算 1 日 VaR ----------
+# 假设均值为 0，VaR = 头寸 × 日波动率 × z分数
+var_95_1d = position_value * daily_vol * z_score
+
+# ---------- 输出契约 ----------
+result = {'var_95_1d': var_95_1d}
+
+# 便于查看结果（可注释掉）
+if __name__ == "__main__":
+    print(result)

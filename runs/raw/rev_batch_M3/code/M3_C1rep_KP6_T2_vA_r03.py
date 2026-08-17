@@ -1,0 +1,60 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+
+# ================= 1. 生成模拟数据 (替换为你的真实数据) =================
+# 假设有两年的交易日数据，fund列为基金净值
+np.random.seed(42)
+dates = pd.date_range(start='2022-01-01', end='2023-12-31', freq='B')
+fund_prices = 1.0 * np.cumprod(1 + np.random.normal(0.0005, 0.015, len(dates)))
+df = pd.DataFrame({'date': dates, 'fund': fund_prices})
+df.set_index('date', inplace=True)
+
+# ================= 2. 参数设置与计算 =================
+rf_annual = 0.021  # 无风险利率 2.1%
+window = 60        # 滚动窗口大小（可调参数，如需修改直接改此值）
+trading_days = 252 # 年化交易日天数
+
+# 计算日收益率
+df['daily_return'] = df['fund'].pct_change()
+
+# 计算日均无风险利率
+rf_daily = (1 + rf_annual) ** (1 / trading_days) - 1
+# 注：简单计算也可使用 rf_daily = rf_annual / trading_days，此处使用复利折算更严谨
+
+# 计算滚动均值和滚动标准差
+df['rolling_mean'] = df['daily_return'].rolling(window=window).mean()
+df['rolling_std'] = df['daily_return'].rolling(window=window).std()
+
+# 计算滚动年化夏普比率
+# 年化夏普 = (滚动日均收益 - 日均无风险) / 滚动日标准差 * sqrt(252)
+df['rolling_sharpe'] = ((df['rolling_mean'] - rf_daily) / df['rolling_std']) * np.sqrt(trading_days)
+
+# 获取最后一个窗口的数值（剔除因窗口期产生的NaN）
+valid_sharpes = df['rolling_sharpe'].dropna()
+rolling_sharpe_last = valid_sharpes.iloc[-1]
+
+# ================= 3. 绘图与保存 =================
+plt.figure(figsize=(12, 6))
+plt.plot(df.index, df['rolling_sharpe'], label=f'{window}-Day Rolling Annualized Sharpe', color='tab:blue')
+plt.axhline(y=0, color='red', linestyle='--', linewidth=1, alpha=0.7)
+plt.title(f'{window}-Day Rolling Annualized Sharpe Ratio (rf={rf_annual*100}%)', fontsize=14)
+plt.xlabel('Date', fontsize=12)
+plt.ylabel('Sharpe Ratio', fontsize=12)
+plt.legend()
+plt.grid(True, alpha=0.3)
+
+# 保存图片
+figure_path = 'rolling_sharpe_curve.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ================= 4. 按照输出契约构造字典 =================
+result = {
+    'rolling_sharpe_last': rolling_sharpe_last,
+    'figure_path': figure_path
+}
+
+# 打印结果供验证
+print(f"最后一个窗口的夏普比率: {result['rolling_sharpe_last']:.4f}")
+print(f"图片保存路径: {result['figure_path']}")

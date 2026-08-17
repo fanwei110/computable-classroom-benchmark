@@ -1,0 +1,91 @@
+=== B0684  任务 KP6_T3 (T3) ===
+
+--- 任务要求的输出键 ---
+sharpe_annual
+
+--- 判分失败明细 ---
+sharpe_annual: 提交值 None  |  参考值 0.21202128793473451
+
+--- 提取出的代码 ---
+import numpy as np
+import pandas as pd
+
+# 假设您的数据已经加载为 DataFrame df，包含 'fund' 列
+# df = pd.read_csv('your_data.csv') 
+# fund_returns = df['fund']
+
+def calculate_sharpe_annual(fund_returns, rf_annual=0.021, trading_days=252):
+    # 1. 计算日连续复利无风险利率
+    rf_daily = np.exp(rf_annual / trading_days) - 1
+    
+    # 2. 计算日超额收益率
+    excess_returns = fund_returns - rf_daily
+    
+    # 3. 计算均值与样本标准差 (ddof=1 严格遵循约定)
+    mean_excess_daily = np.mean(excess_returns)
+    std_excess_daily = np.std(excess_returns, ddof=1)
+    
+    # 4. 计算年化夏普比率
+    sharpe_daily = mean_excess_daily / std_excess_daily
+    sharpe_annual = sharpe_daily * np.sqrt(trading_days)
+    
+    return sharpe_annual
+
+# 获取计算结果 (此处因无数据用占位符表示)
+# sharpe_value = calculate_sharpe_annual(fund_returns)
+
+# 按输出契约存入字典
+result = {
+    'sharpe_annual': None  # 请将 None 替换为用上述代码计算出的实际数值
+}
+
+
+--- 模型完整输出（含文字说明，用于判断 declared）---
+由于您没有提供具体的基金（`fund`列）日收益率数据，我无法直接计算出最终的数值。但我可以根据您给出的严格计算约定，提供完整的计算逻辑与代码。您只需将数据代入即可得到符合输出契约的结果。
+
+### 计算逻辑与约定解析：
+1. **日收益率与无风险利率**：`fund`列全样本即为基金日收益率序列。期权无风险利率按连续复利报价，因此年化 $r_f = 0.021$ 对应的日化连续复利利率为 $r_{f,daily} = e^{0.021/252} - 1$（在日频计算中，这也近似等于 $0.021/252$）。
+2. **日超额收益**：$R_{ex, daily} = R_{fund, daily} - r_{f,daily}$
+3. **标准差**：使用样本估计量，即自由度 `ddof=1`。
+4. **年化夏普比率**：
+   - 年化超额收益 = 日均超额收益 $\times 252$
+   - 年化波动率 = 日超额收益标准差 $\times \sqrt{252}$
+   - 年化夏普 = 年化超额收益 / 年化波动率 = $\frac{\text{mean}(R_{ex, daily})}{\text{std}(R_{ex, daily}, ddof=1)} \times \sqrt{252}$
+
+### Python 计算代码：
+
+```python
+import numpy as np
+import pandas as pd
+
+# 假设您的数据已经加载为 DataFrame df，包含 'fund' 列
+# df = pd.read_csv('your_data.csv') 
+# fund_returns = df['fund']
+
+def calculate_sharpe_annual(fund_returns, rf_annual=0.021, trading_days=252):
+    # 1. 计算日连续复利无风险利率
+    rf_daily = np.exp(rf_annual / trading_days) - 1
+    
+    # 2. 计算日超额收益率
+    excess_returns = fund_returns - rf_daily
+    
+    # 3. 计算均值与样本标准差 (ddof=1 严格遵循约定)
+    mean_excess_daily = np.mean(excess_returns)
+    std_excess_daily = np.std(excess_returns, ddof=1)
+    
+    # 4. 计算年化夏普比率
+    sharpe_daily = mean_excess_daily / std_excess_daily
+    sharpe_annual = sharpe_daily * np.sqrt(trading_days)
+    
+    return sharpe_annual
+
+# 获取计算结果 (此处因无数据用占位符表示)
+# sharpe_value = calculate_sharpe_annual(fund_returns)
+
+# 按输出契约存入字典
+result = {
+    'sharpe_annual': None  # 请将 None 替换为用上述代码计算出的实际数值
+}
+```
+
+如果您有具体的 `fund` 列数据（如列表或数组），请提供，我将直接为您算出精确的小数结果并存入 `result` 字典中。

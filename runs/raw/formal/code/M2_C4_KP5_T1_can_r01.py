@@ -1,0 +1,35 @@
+import numpy as np
+from scipy.stats import norm
+
+# ---------- 参数设置 ----------
+position_value = 1_850_000      # 头寸价值（元）
+sigma_annual   = 0.218          # 年化波动率
+trading_days   = 252            # 年交易日数
+
+# 置信水平
+conf_95 = 0.95
+conf_99 = 0.99
+
+# 期限
+horizon_1d = 1
+horizon_10d = 10
+
+# ---------- 计算 ----------
+# 1. 去年化得到日波动率
+sigma_daily = sigma_annual / np.sqrt(trading_days)
+
+# 2. 单尾正态分位数（正值，代表损失方向）
+z_95 = norm.ppf(conf_95)   # ≈ 1.64485
+z_99 = norm.ppf(conf_99)   # ≈ 2.32635
+
+# 3. 参数法 VaR（均值取零，VaR 为正的损失金额）
+var_95_1d  = position_value * sigma_daily * np.sqrt(horizon_1d)  * z_95
+var_99_10d = position_value * sigma_daily * np.sqrt(horizon_10d) * z_99
+
+# ---------- 输出契约 ----------
+result = {
+    'var_95_1d':  round(var_95_1d, 2),
+    'var_99_10d': round(var_99_10d, 2)
+}
+
+print(result)

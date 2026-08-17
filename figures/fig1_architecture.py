@@ -18,7 +18,7 @@ OUT = Path(__file__).resolve().parent / "fig1_architecture.pdf"
 
 plt.rcParams.update({"font.family": "DejaVu Sans", "font.size": 7.5})
 
-FIG_W, FIG_H = 7.16, 3.55
+FIG_W, FIG_H = 7.16, 4.05
 fig, ax = plt.subplots(figsize=(FIG_W, FIG_H))
 ax.set_xlim(0, 100)
 ax.set_ylim(0, 50)
@@ -39,52 +39,54 @@ def arrow(x1, y1, x2, y2, lw=0.9, ls="-"):
 
 
 # ---- left: question entry + router + library ------------------------------
-box(1.5, 35.0, 16.5, 10.5,
-    "Student question\n(instructor-mediated,\nnatural language)", fc="0.92")
-box(1.5, 15.0, 16.5, 13.0,
-    "Router\nin the CKU library?\nwithin a unit's\ndomain?")
-arrow(9.75, 34.6, 9.75, 28.6)
+# label pad: white box so labels stay readable over arrows (AE fix)
+LB = dict(boxstyle="round,pad=0.2", fc="white", ec="none", alpha=0.92)
 
-box(1.5, 1.2, 16.5, 7.6,
-    "CKU library\nconcept card | ref. impl.\nvis. spec | template", fc="0.85", fs=6.6)
-arrow(9.75, 15.0, 9.75, 9.4)
+box(0.8, 35.0, 19, 10.5,
+    "Student question\n(instructor-mediated,\nnatural language)", fc="0.92", fs=7.0)
+box(0.8, 15.0, 19, 13.0,
+    "Router\n\n(in the\nCKU library?)")
+arrow(10.3, 34.6, 10.3, 28.6)
+
+box(0.8, 1.2, 19, 7.6,
+    "CKU library\n(prefab CKU units)", fc="0.85", fs=6.9)
+arrow(10.3, 15.0, 10.3, 9.4)
 
 # ---- middle: two reliable layers + a hard boundary -------------------------
 lx, lw_ = 26.5, 30
 box(lx, 37.0, lw_, 8.6,
-    "Layer 1 - Prefabricated demo\nverified CKU, ground-truth checked",
-    fc="0.90", weight="bold", fs=7.0)
+    "Layer 1: Prefabricated demo\n(verified CKU)",
+    fc="0.90", weight="bold", fs=7.2)
 box(lx, 23.0, lw_, 8.6,
-    "Layer 2 - In-library generation\nthrough the CKU prompt template",
-    fc="0.95", weight="bold", fs=7.0)
+    "Layer 2: In-library generation\n(via CKU template)",
+    fc="0.95", weight="bold", fs=7.2)
 # hard boundary of reliable live inquiry
-ax.plot([lx - 1.5, lx + lw_ + 1.5], [20.0, 20.0], color="black",
+ax.plot([29.0, lx + lw_ + 1.5], [20.0, 20.0], color="black",
         lw=1.1, linestyle=(0, (5, 2)))
-ax.text(lx + lw_ / 2, 21.0, "perimeter of reliable live inquiry",
-        fontsize=6.2, ha="center", style="italic")
+ax.text(lx + lw_ - 1.0, 21.4, "perimeter of reliable live inquiry",
+        fontsize=6.2, ha="right", style="italic", bbox=LB)
 box(lx, 9.0, lw_, 8.6,
-    "Out-of-library question\nno live demo - improvised generation\n"
-    "is unreliable and a convention header\ndoes not rescue it",
-    fc="white", weight="bold", fs=6.4)
+    "Out-of-library question\nno live demo; improvised\ngeneration is unreliable",
+    fc="white", weight="bold", fs=6.9)
 
-arrow(18.4, 25.5, lx - 0.5, 41.0)
-arrow(18.4, 21.5, lx - 0.5, 27.3)
-arrow(18.4, 17.5, lx - 0.5, 13.3)
-ax.text(21.2, 34.2, "anticipated", fontsize=6.2, ha="center", style="italic",
-        rotation=44)
-ax.text(22.4, 25.6, "in-domain,\nunanticipated", fontsize=6.2, ha="center",
-        style="italic", rotation=14)
-ax.text(21.8, 14.0, "out-of-library", fontsize=6.2, ha="center", style="italic",
-        rotation=-13)
+arrow(19.8, 25.5, lx - 0.5, 41.0)
+arrow(19.8, 21.5, lx - 0.5, 27.3)
+arrow(19.8, 17.5, lx - 0.5, 13.3)
+# route labels: horizontal, offset from the arrows, on white pads (AE fix)
+ax.text(22.8, 35.5, "anticipated", fontsize=6.2, ha="center", style="italic",
+        bbox=LB)
+ax.text(21.6, 22.2, "in-domain,\nunanticipated", fontsize=6.2, ha="center",
+        style="italic", bbox=LB)
+ax.text(16.5, 11.0, "out-of-library", fontsize=6.2, ha="center", style="italic",
+        bbox=LB)
 
-# library feeds layers 1 and 2 (dashed)
-arrow(18.4, 6.8, lx + 3.0, 22.6, ls=(0, (2, 2)), lw=0.8)
-ax.text(20.0, 8.6, "templates,\nverified units", fontsize=6.0, ha="center",
-        style="italic")
+# library feeds layer 2 (dashed); self-explanatory ("via CKU template" is in
+# the Layer-2 box), so no on-arrow label -- the corner was too crowded (AE fix)
+arrow(19.8, 6.8, lx + 3.0, 22.6, ls=(0, (2, 2)), lw=0.8)
 # out-of-library questions are harvested back into the library as new CKUs
-arrow(lx + 6.0, 8.6, 14.0, 5.2, ls=(0, (2, 2)), lw=0.8)
-ax.text(24.0, 3.6, "harvested as draft CKUs", fontsize=6.0, ha="center",
-        style="italic")
+arrow(lx + 3.5, 8.7, 20.2, 5.6, ls=(0, (2, 2)), lw=0.8)
+ax.text(31.5, 3.0, "harvested as draft CKUs", fontsize=6.0, ha="center",
+        style="italic", bbox=LB)
 
 # ---- right: classroom chain -------------------------------------------------
 cx, cw = 62.0, 15
@@ -100,15 +102,16 @@ arrow(lx + lw_ + 0.5, 41.5, cx - 0.5, 45.2)
 arrow(lx + lw_ + 0.5, 27.3, cx - 0.5, 43.4)
 
 # ---- instructor verification loop --------------------------------------------
-box(80.0, 22.0, 19, 17.5,
-    "Instructor verification\ntwo-stage check\n"
-    "1  did it COMPUTE?\n(code, not constants)\n"
-    "2  convention spot-check\n(units, annualization,\nestimator details)",
-    fc="0.85", fs=6.3, weight="bold")
+box(79.5, 22.0, 20, 17.5,
+    "Instructor verification\n(two-stage)\n\n"
+    "① Did it COMPUTE?\n(code, not constants)\n"
+    "② Convention check\n(units, annualization)",
+    fc="0.85", fs=6.4, weight="bold")
 arrow(cx + cw + 0.5, 44.6, 88.0, 39.9)              # code -> verification
 arrow(79.5, 26.5, cx + cw + 0.5, 31.5, ls=(0, (3, 2)))  # approve -> project
-ax.text(89.0, 18.6, "approve / correct, then project", fontsize=6.2,
-        ha="center", style="italic")
+ax.text(86.5, 18.4, "approve / correct, then project", fontsize=6.2,
+        ha="center", style="italic", bbox=LB)
 
 fig.savefig(OUT, bbox_inches="tight")
-print(f"wrote {OUT}")
+fig.savefig(str(OUT).replace(".pdf", ".png"), dpi=220, bbox_inches="tight")
+print(f"wrote {OUT} (+png)")

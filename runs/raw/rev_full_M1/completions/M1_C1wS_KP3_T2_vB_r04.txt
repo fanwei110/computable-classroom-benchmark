@@ -1,0 +1,82 @@
+```python
+import numpy as np
+from scipy.optimize import root
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+# 设定参数
+face_value = 100.0
+coupon_rate = 0.046
+years_to_maturity = 7
+ytm_initial = 0.053  # 初始YTM
+yield_grid = np.linspace(0.02, 0.09, 100)  # 收益率网格 2%到9%
+yield_shift = 0.01  # 100bp变动
+
+# 计算每期现金流
+coupon_payment = face_value * coupon_rate
+periods = years_to_maturity
+cash_flows = np.full(periods, coupon_payment)
+cash_flows[-1] += face_value  # 最后一期加上面值
+
+# 精确定价函数
+def bond_price(yield_to_maturity, cash_flows, periods):
+    discount_factors = (1 + yield_to_maturity) ** np.arange(1, periods + 1)
+    return np.sum(cash_flows / discount_factors)
+
+# 计算精确价格
+exact_prices = np.array([bond_price(y, cash_flows, periods) for y in yield_grid])
+
+# 计算久期和凸性
+def bond_duration_convexity(yield_to_maturity, cash_flows, periods):
+    discount_factors = (1 + yield_to_maturity) ** np.arange(1, periods + 1)
+    discounted_cash_flows = cash_flows / discount_factors
+    price = np.sum(discounted_cash_flows)
+    weights = discounted_cash_flows / price
+    duration = np.sum(weights * np.arange(1, periods + 1))
+    convexity = np.sum(weights * np.arange(1, periods + 1) * (np.arange(1, periods + 1) + 1)) / (1 + yield_to_maturity)**2
+    return duration, convexity
+
+duration_initial, convexity_initial = bond_duration_convexity(ytm_initial, cash_flows, periods)
+
+# 久期近似价格
+def duration_approx_price(yield_change, initial_price, duration, convexity=None):
+    if convexity is not None:
+        return initial_price * (1 - duration * yield_change + 0.5 * convexity * yield_change**2)
+    else:
+        return initial_price * (1 - duration * yield_change)
+
+initial_price = bond_price(ytm_initial, cash_flows, periods)
+approx_prices = duration_approx_price(yield_grid - ytm_initial, initial_price, duration_initial)
+
+# 计算+100bp后的精确价格和久期近似变化
+ytm_up100bp = ytm_initial + yield_shift
+price_at_up100bp = bond_price(ytm_up100bp, cash_flows, periods)
+dur_approx_change_up100bp = (duration_approx_price(yield_shift, initial_price, duration_initial) - initial_price) / initial_price
+
+# 绘图
+plt.figure(figsize=(10, 6))
+plt.plot(yield_grid * 100, exact_prices, label='Exact Price', color='blue')
+plt.plot(yield_grid * 100, approx_prices, label='Duration Approximation', color='red', linestyle='--')
+plt.scatter(ytm_initial * 100, initial_price, color='green', zorder=5, label='Initial YTM (5.3%)')
+plt.xlabel('Yield to Maturity (%)')
+plt.ylabel('Bond Price')
+plt.title('Bond Price vs Yield to Maturity')
+plt.legend()
+plt.grid(True)
+
+# 保存图形
+figure_path = 'bond_price_duration_approx.png'
+plt.savefig(figure_path)
+plt.close()
+
+# 填充result字典
+result = {
+    'price_at_up100bp': price_at_up100bp,
+    'dur_approx_change_up100bp': dur_approx_change_up100bp,
+    'figure_path': os.path.abspath(figure_path)
+}
+
+# 输出result以供验证
+print(result)
+```

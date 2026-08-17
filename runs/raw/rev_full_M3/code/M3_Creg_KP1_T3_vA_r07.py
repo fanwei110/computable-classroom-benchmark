@@ -1,0 +1,34 @@
+import numpy as np
+
+# 给定的资产参数
+vol_A = 0.184  # 资产 A 的年化波动率 18.4%
+vol_B = 0.297  # 资产 B 的年化波动率 29.7%
+
+weight_A = 0.60  # 资产 A 的权重
+weight_B = 0.40  # 资产 B 的权重
+
+corr_before = 0.3  # 变化前的相关系数
+corr_after = 0.8   # 变化后的相关系数
+
+# 定义计算投资组合波动率的函数
+# 公式: sigma_p = sqrt(w_A^2 * sigma_A^2 + w_B^2 * sigma_B^2 + 2 * w_A * w_B * rho * sigma_A * sigma_B)
+def calculate_portfolio_vol(w_A, w_B, s_A, s_B, rho):
+    variance = (w_A**2) * (s_A**2) + \
+               (w_B**2) * (s_B**2) + \
+               2 * w_A * w_B * rho * s_A * s_B
+    return np.sqrt(variance)
+
+# 计算相关系数变化前后的组合波动率
+vol_before = calculate_portfolio_vol(weight_A, weight_B, vol_A, vol_B, corr_before)
+vol_after = calculate_portfolio_vol(weight_A, weight_B, vol_A, vol_B, corr_after)
+
+# 按照输出契约存入字典
+result = {
+    'vol_before_annual': vol_before,
+    'vol_after_annual': vol_after
+}
+
+# 打印结果以便验证
+print(f"相关系数为 0.3 时，60/40 组合的年化波动率: {result['vol_before_annual']:.4%}")
+print(f"相关系数为 0.8 时，60/40 组合的年化波动率: {result['vol_after_annual']:.4%}")
+print(f"波动率变化: {result['vol_after_annual'] - result['vol_before_annual']:.4%}")

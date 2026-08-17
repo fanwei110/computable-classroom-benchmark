@@ -1,0 +1,77 @@
+以下是一个自包含的 Python 脚本，它使用给定的无风险利率、市场期望收益和各股票的 beta 值计算 CAPM 期望收益，并计算股票 Y 的 alpha。脚本还会绘制证券市场线（SML）并将结果直观展示出来，所有要求的输出均存入 `result` 字典。
+
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+
+# -------------------- 输入数据 --------------------
+rf = 0.023                # 无风险利率
+market_return = 0.094     # 市场期望收益
+market_premium = market_return - rf   # 市场风险溢价
+
+# 各股票 beta 值
+beta_X = 0.62
+beta_Y = 1.18
+beta_Z = 1.51
+
+# 股票 Y 的实际收益
+actual_return_Y = 0.131
+
+# -------------------- CAPM 计算 --------------------
+er_X = rf + beta_X * market_premium
+er_Y = rf + beta_Y * market_premium
+er_Z = rf + beta_Z * market_premium
+
+# Alpha 计算 (仅 Y)
+alpha_Y = actual_return_Y - er_Y
+
+# -------------------- 输出结果 --------------------
+result = {
+    'er_x': er_X,
+    'er_y': er_Y,
+    'er_z': er_Z,
+    'alpha_y': alpha_Y
+}
+
+print("CAPM 计算结果：")
+for key, value in result.items():
+    print(f"{key}: {value:.6f} ({value*100:.4f}%)")
+
+# -------------------- 可视化（SML） --------------------
+plt.figure(figsize=(8, 5))
+
+# 绘制 SML 线
+beta_range = np.linspace(0, 1.8, 100)
+sml = rf + beta_range * market_premium
+plt.plot(beta_range, sml, 'k-', linewidth=2, label='SML (CAPM)')
+
+# 标出 X, Y, Z 的 CAPM 预期点
+plt.scatter([beta_X, beta_Y, beta_Z], [er_X, er_Y, er_Z],
+            color='blue', s=80, zorder=5)
+plt.text(beta_X, er_X, ' X', fontsize=12, verticalalignment='bottom')
+plt.text(beta_Y, er_Y, ' Y (CAPM)', fontsize=12, verticalalignment='bottom')
+plt.text(beta_Z, er_Z, ' Z', fontsize=12, verticalalignment='bottom')
+
+# 标出 Y 的实际收益点，并画 alpha 虚线
+plt.scatter(beta_Y, actual_return_Y, color='red', s=80, zorder=5)
+plt.text(beta_Y, actual_return_Y, ' Y (actual)', fontsize=12,
+         verticalalignment='bottom', color='red')
+plt.plot([beta_Y, beta_Y], [er_Y, actual_return_Y], 'r--', linewidth=1.5, 
+         label=f'α = {alpha_Y:.4f} ({alpha_Y*100:.2f}%)')
+plt.legend()
+
+plt.xlabel('Beta (β)')
+plt.ylabel('Expected Return')
+plt.title('Security Market Line (SML) & Alpha of Stock Y')
+plt.grid(True, linestyle='--', alpha=0.6)
+plt.tight_layout()
+plt.show()
+```
+
+**脚本说明：**
+- 严格按照 CAPM 公式 \( E[R_i] = r_f + \beta_i (E[R_m] - r_f) \) 计算三只股票的期望收益。
+- `alpha_Y` = 实际收益 − CAPM 预测收益。
+- 所有最终结果存入字典 `result`，键名与题目要求完全一致，值为浮点数（小数形式）。
+- 绘图直观展示 SML 以及股票 Y 的 alpha 偏离，方便课堂投屏讲解。
+
+运行该脚本即可得到可复现的数值结果并显示图表。

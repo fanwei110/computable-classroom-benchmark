@@ -1,0 +1,60 @@
+import numpy as np
+
+# ==========================================
+# 马科维茨均值-方差组合理论 - 课堂实时计算
+# ==========================================
+
+# 1. 确定权重与资产对应方式
+# 题目提到“A波动18.4%左右 B大概29.7% 六四开”。
+# 参照经典投资组合习惯（如60/40股债组合），通常将较大的权重分配给波动率较低的资产，
+# 因此假设：资产A权重为60%，资产B权重为40%。
+w_A = 0.6
+w_B = 0.4
+weights = np.array([w_A, w_B])
+
+# 2. 设定资产波动率（已转换为小数，且题目给定的即为年化波动率）
+vol_A = 0.184
+vol_B = 0.297
+
+# 3. 构造协方差矩阵并计算组合波动率
+# 组合方差公式：sigma_p^2 = w'Σw
+# 协方差矩阵 Σ = [[vol_A^2, rho*vol_A*vol_B], 
+#                 [rho*vol_A*vol_B, vol_B^2]]
+
+def calc_portfolio_vol(vol_A, vol_B, rho, weights):
+    """计算给定相关系数下的组合年化波动率"""
+    cov_AB = rho * vol_A * vol_B
+    cov_matrix = np.array([
+        [vol_A**2, cov_AB],
+        [cov_AB,    vol_B**2]
+    ])
+    # 计算组合方差 w'Σw
+    port_var = weights.T @ cov_matrix @ weights
+    # 计算年化波动率
+    port_vol = np.sqrt(port_var)
+    return port_vol
+
+# 场景一：相关系数从 0.3 飙升前
+rho_before = 0.3
+vol_before_annual = calc_portfolio_vol(vol_A, vol_B, rho_before, weights)
+
+# 场景二：相关系数飙升到 0.8 后
+rho_after = 0.8
+vol_after_annual = calc_portfolio_vol(vol_A, vol_B, rho_after, weights)
+
+# 4. 填充 result 字典
+result = {
+    'vol_before_annual': vol_before_annual,
+    'vol_after_annual': vol_after_annual
+}
+
+# ------------------------------------------
+# 课堂投屏辅助打印（非契约要求，仅供教师展示）
+# ------------------------------------------
+print(f"假设条件：资产A权重 {w_A*100:.0f}%，波动率 {vol_A*100:.1f}%")
+print(f"        资产B权重 {w_B*100:.0f}%，波动率 {vol_B*100:.1f}%")
+print("-" * 40)
+print(f"相关性为 0.3 时，组合年化波动率: {result['vol_before_annual']:.4%}")
+print(f"相关性飙升至 0.8 时，组合年化波动率: {result['vol_after_annual']:.4%}")
+print("-" * 40)
+print(f"波动率增加值: {result['vol_after_annual'] - result['vol_before_annual']:.4%}")

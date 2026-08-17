@@ -1,0 +1,48 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+
+# ---------- 参数设置 ----------
+K = 97.5               # 行权价
+r = 0.043              # 无风险利率（年化）
+T = 0.58               # 剩余期限（年）
+S_range = np.linspace(70, 140, 300)   # 标的价格范围
+S_target = 110.0       # 报告 delta 的特定标的价格
+
+# 可调参数：波动率列表
+volatilities = [0.15, 0.276, 0.40]
+
+# ---------- 函数：计算欧式看涨期权 delta ----------
+def bs_call_delta(S, K, r, T, sigma):
+    """Black-Scholes 看涨期权 delta"""
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# ---------- 计算目标 delta ----------
+delta_target = bs_call_delta(S_target, K, r, T, 0.276)
+
+# ---------- 绘图 ----------
+plt.figure(figsize=(10, 6))
+for sigma in volatilities:
+    delta_curve = bs_call_delta(S_range, K, r, T, sigma)
+    plt.plot(S_range, delta_curve, label=f'σ = {sigma*100:.1f}%')
+
+plt.title(f'European Call Delta (K={K}, r={r*100}%, T={T}yr)')
+plt.xlabel('Underlying Price S')
+plt.ylabel('Delta')
+plt.legend()
+plt.grid(True)
+
+# 保存图片
+figure_path = 'delta_curve.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# ---------- 输出契约 ----------
+result = {
+    'delta_at_s110': delta_target,
+    'figure_path': figure_path
+}
+
+# 可选：输出到控制台检查
+print(result)

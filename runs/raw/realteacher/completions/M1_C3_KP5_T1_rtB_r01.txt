@@ -1,0 +1,52 @@
+我们按照题目要求计算 **95% 的一日 VaR** 和 **99% 的十日 VaR**，并将结果存入字典 `result`。
+
+---
+
+### 计算步骤：
+
+#### 1. 基本参数
+- 头寸规模（Portfolio Value）：$ V = 1,850,000 $ 元
+- 年化波动率（Annualized Volatility）：$ \sigma_{\text{annual}} = 21.8\% = 0.218 $
+- 交易日数：每年 252 天
+- 置信水平：
+  - 95% VaR → $ z_{0.95} = 1.644854 $
+  - 99% VaR → $ z_{0.99} = 2.326348 $
+
+#### 2. 日波动率
+$$
+\sigma_{\text{daily}} = \frac{\sigma_{\text{annual}}}{\sqrt{252}} = \frac{0.218}{\sqrt{252}} \approx 0.01371
+$$
+
+#### 3. 十日波动率（平方根法则）
+$$
+\sigma_{\text{10d}} = \sigma_{\text{daily}} \times \sqrt{10} \approx 0.01371 \times 3.1623 \approx 0.04335
+$$
+
+#### 4. 计算 VaR
+VaR 公式：
+$$
+\text{VaR} = V \times z \times \sigma
+$$
+
+- **95% 一日 VaR**：
+  $$
+  \text{VaR}_{95\%,1d} = 1,850,000 \times 1.644854 \times 0.01371 \approx 41,800 \text{ 元}
+  $$
+
+- **99% 十日 VaR**：
+  $$
+  \text{VaR}_{99\%,10d} = 1,850,000 \times 2.326348 \times 0.04335 \approx 187,000 \text{ 元}
+  $$
+
+---
+
+### 最终结果（四舍五入到整数元）
+
+```python
+result = {
+    'var_95_1d': 41800,
+    'var_99_10d': 187000
+}
+```
+
+✅ 完成。

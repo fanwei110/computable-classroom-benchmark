@@ -1,0 +1,50 @@
+import numpy as np
+from scipy.stats import norm
+import matplotlib.pyplot as plt
+import pandas as pd  # 允许使用，本例未直接使用，但符合导入限制
+
+# ==================== 可调参数区 ====================
+K = 97.5          # 行权价
+r = 0.043         # 无风险利率（连续复利，小数形式）
+T = 0.58          # 剩余期限（年）
+S_min, S_max = 70.0, 140.0   # 标的价格作图范围
+S_target = 110.0  # 报告点标的价格
+SIGMAS = [0.15, 0.276, 0.40]  # 三条曲线的波动率，可调
+
+# ==================== 函数定义 ====================
+def delta_call(S, K, T, r, sigma):
+    """欧式看涨期权 delta = N(d1)（标的不分红）"""
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# ==================== 计算与作图 ====================
+# 标的网格
+S_grid = np.linspace(S_min, S_max, 300)
+
+fig, ax = plt.subplots(figsize=(8, 5))
+for sigma in SIGMAS:
+    delta_vals = delta_call(S_grid, K, T, r, sigma)
+    ax.plot(S_grid, delta_vals, label=f'$\sigma$ = {sigma*100:.1f}%')
+
+ax.set_xlabel('标的价格 S')
+ax.set_ylabel('Delta')
+ax.set_title('欧式看涨期权 Delta 曲线 (B-S 模型)')
+ax.legend()
+ax.grid(True, linestyle='--', alpha=0.6)
+
+# 保存图形
+figure_filename = 'delta_curve.png'
+fig.savefig(figure_filename, dpi=150, bbox_inches='tight')
+plt.close(fig)
+
+# ==================== 报告指定点的 Delta ====================
+delta_at_s110 = delta_call(S_target, K, T, r, sigma=0.276)
+
+# ==================== 构建输出字典 ====================
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': figure_filename
+}
+
+# 打印结果以便教师查看（保留足够精度）
+print(result)

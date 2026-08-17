@@ -1,0 +1,53 @@
+import numpy as np
+
+# ================= 步骤 1：确定权重与资产参数 =================
+# 假设 60/40 权重对应：资产 A 占 60%，资产 B 占 40%
+w_A = 0.6
+w_B = 0.4
+w = np.array([w_A, w_B])
+
+# 题目给定的年化波动率
+vol_A = 0.184
+vol_B = 0.297
+
+# ================= 步骤 2：构造协方差矩阵 =================
+# 相关系数变化前（0.3）与变化后（0.8）
+rho_before = 0.3
+rho_after = 0.8
+
+# 协方差矩阵 Σ = [σ_A^2,       ρ*σ_A*σ_B]
+#                [ρ*σ_A*σ_B,  σ_B^2       ]
+cov_before = np.array([
+    [vol_A**2, rho_before * vol_A * vol_B],
+    [rho_before * vol_A * vol_B, vol_B**2]
+])
+
+cov_after = np.array([
+    [vol_A**2, rho_after * vol_A * vol_B],
+    [rho_after * vol_A * vol_B, vol_B**2]
+])
+
+# ================= 步骤 3：计算组合波动率 =================
+# 马科维茨组合方差公式：σ_p^2 = w'Σw
+# 组合波动率：σ_p = sqrt(w'Σw)
+var_before = w @ cov_before @ w
+var_after  = w @ cov_after @ w
+
+vol_before_annual = np.sqrt(var_before)
+vol_after_annual  = np.sqrt(var_after)
+
+# ================= 步骤 4：填充 result =================
+result = {
+    'vol_before_annual': vol_before_annual,
+    'vol_after_annual': vol_after_annual
+}
+
+# （课堂投屏辅助展示，供教师参考）
+if __name__ == '__main__':
+    print(f"资产 A 年化波动率: {vol_A:.1%}")
+    print(f"资产 B 年化波动率: {vol_B:.1%}")
+    print(f"组合权重: A={w_A:.0%}, B={w_B:.0%}")
+    print("-" * 35)
+    print(f"相关系数 = 0.3 时，组合年化波动率: {result['vol_before_annual']:.4%}")
+    print(f"相关系数 = 0.8 时，组合年化波动率: {result['vol_after_annual']:.4%}")
+    print(f"波动率变化量: {result['vol_after_annual'] - result['vol_before_annual']:.4%}")

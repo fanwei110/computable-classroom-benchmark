@@ -1,0 +1,72 @@
+```python
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import os
+
+# ========================
+# 可调参数
+# ========================
+CONFIDENCE_LEVEL = 0.95          # 置信水平，可在此修改
+POSITION_SIZE = 1_000_000.0     # 头寸规模（人民币）
+DATA_FILE = 'data/market_snapshot_v1.csv'  # 数据文件路径
+FIGURE_PATH = 'var_histogram.png'          # 输出图形路径
+
+# ========================
+# 1. 读取数据并构造日损益
+# ========================
+# 读取CSV，假设"fund"列为日收益率（小数形式，如0.01表示1%）
+df = pd.read_csv(DATA_FILE)
+# 剔除缺失值
+returns = df['fund'].dropna().values
+
+# 计算日损益序列：头寸 × 收益率
+pnl = POSITION_SIZE * returns
+
+# ========================
+# 2. 计算历史VaR
+# ========================
+# VaR定义为损失的正值：在置信水平下，最大损失不超过VaR
+# 即损益分布的第 (1 - CONFIDENCE_LEVEL) 分位数的相反数
+percentile = 100 * (1 - CONFIDENCE_LEVEL)
+var_loss = -np.percentile(pnl, percentile)
+
+# 存储结果
+hist_var_95_1d = var_loss
+
+# ========================
+# 3. 绘制直方图并标注VaR线
+# ========================
+fig, ax = plt.subplots(figsize=(10, 6))
+
+# 绘制日损益直方图
+n, bins, patches = ax.hist(pnl, bins=50, color='steelblue', edgecolor='white', alpha=0.8)
+
+# 标注95% VaR线
+ax.axvline(x=-hist_var_95_1d, color='red', linestyle='--', linewidth=2,
+           label=f'{CONFIDENCE_LEVEL*100:.0f}% 历史 VaR: {hist_var_95_1d:,.2f} 元')
+
+# 添加图形元素
+ax.set_xlabel('日损益 (元)', fontsize=12)
+ax.set_ylabel('频数', fontsize=12)
+ax.set_title(f'日损益分布与历史 VaR ({CONFIDENCE_LEVEL*100:.0f}% 置信水平)', fontsize=14)
+ax.legend(loc='upper left', fontsize=11)
+ax.grid(True, alpha=0.3)
+
+# 保存图形
+plt.tight_layout()
+plt.savefig(FIGURE_PATH, dpi=150)
+plt.close(fig)
+
+# ========================
+# 4. 整理输出结果
+# ========================
+result = {
+    'hist_var_95_1d': hist_var_95_1d,
+    'figure_path': os.path.abspath(FIGURE_PATH)  # 确保是绝对路径，便于查找
+}
+
+# 控制台输出（方便教师查看）
+print(f"95% 一日历史 VaR: {hist_var_95_1d:,.2f} 元")
+print(f"图形已保存至: {result['figure_path']}")
+```

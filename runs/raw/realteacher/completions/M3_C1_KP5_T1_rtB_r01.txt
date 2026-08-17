@@ -1,0 +1,43 @@
+```python
+import math
+
+# 已知参数
+position = 1850000
+annual_vol = 0.218
+
+# 一般假设一年有252个交易日
+trading_days = 252
+
+# 计算日波动率
+daily_vol = annual_vol / math.sqrt(trading_days)
+
+# Z-score 常量
+z_95 = 1.6448536269514722  # 95%置信度
+z_99 = 2.3263478740408408  # 99%置信度
+
+# 计算 95% 的一日 VaR
+var_95_1d = position * daily_vol * z_95
+
+# 计算 99% 的十日 VaR
+# 10日波动率 = 日波动率 * sqrt(10)
+var_99_10d = position * daily_vol * z_99 * math.sqrt(10)
+
+# 按照契约存入字典，保留两位小数（通常货币单位保留两位）
+result = {
+    'var_95_1d': round(var_95_1d, 2),
+    'var_99_10d': round(var_99_10d, 2)
+}
+
+# 如果需要直接查看结果
+print(result)
+```
+
+**计算过程说明：**
+1. **日波动率换算**：$\sigma_{daily} = \frac{\sigma_{annual}}{\sqrt{252}} = \frac{0.218}{\sqrt{252}} \approx 0.013736$
+2. **95%的一日VaR**：$VaR_{95\%, 1d} = 头寸 \times \sigma_{daily} \times Z_{95\%} = 1,850,000 \times 0.013736 \times 1.6449 \approx 41,798.05$
+3. **99%的十日VaR**：$VaR_{99\%, 10d} = 头寸 \times \sigma_{daily} \times Z_{99\%} \times \sqrt{10} = 1,850,000 \times 0.013736 \times 2.3263 \times 3.1623 \approx 186,920.65$
+
+最终输出字典 `result` 为：
+```python
+{'var_95_1d': 41798.05, 'var_99_10d': 186920.65}
+```

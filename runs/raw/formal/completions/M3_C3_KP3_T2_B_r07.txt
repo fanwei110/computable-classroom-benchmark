@@ -1,0 +1,176 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from matplotlib.widgets import Slider
+
+# ==================== 债券参数 ====================
+F  = 100        # 面值
+c  = 0.046      # 票息率 (小数)
+n  = 7          # 期限 (年)
+y0 = 0.053      # 当前到期收益率 (小数)
+
+# ==================== 核心函数 ====================
+def bond_price(y):
+    """年复利报价下的精确债券价格"""
+    t   = np.arange(1, n + 1)
+    cfs = np.full(n, c * F);  cfs[-1] += F
+    if np.isscalar(y):
+        return float(np.sum(cfs / (1 + y) ** t))
+    return np.array([float(np.sum(cfs / (1 + yi) ** t)) for yi in y])
+
+def mac_duration(y):
+    """Macaulay 久期"""
+    t   = np.arange(1, n + 1)
+    cfs = np.full(n, c * F);  cfs[-1] += F
+    pvs = cfs / (1 + y) ** t
+    P   = np.sum(pvs)
+    return float(np.sum(t * pvs) / P)
+
+# ==================== 基础计算 ====================
+P0    = bond_price(y0)          # 当前精确价格
+D_mac = mac_duration(y0)        # Macaulay 久期
+D_mod = D_mac / (1 + y0)        # 修正久期
+
+# 收益率 2 % – 9 % 上的精确 & 近似曲线
+y_arr      = np.linspace(0.02, 0.09, 500)
+exact_arr  = bond_price(y_arr)
+approx_arr = P0 * (1 - D_mod * (y_arr - y0))
+
+# ==================== +100 bp 专项 ====================
+y_up100                   = y0 + 0.01
+P_up100                   = bond_price(y_up100)
+dur_approx_change_up100   = -D_mod * 0.01        # 久期法估的相对变化
+
+# ==================== 绘图 ====================
+fig, ax = plt.subplots(figsize=(12, 7))
+plt.subplots_adjust(bottom=0.22)
+
+# ---- 两条主曲线 ----
+ax.plot(y_arr * 100, exact_arr,  'b-',  lw=2,   label='精确价格')
+ax.plot(y_arr * 100, approx_arr, 'r--', lw=2,   label='久期近似')
+
+# 坐标范围
+ax.set_xlim(1.5, 9.5)
+ax.set_ylim(np.min(exact_arr) - 3, np.max(exact_arr) + 3)
+ylo, yhi = ax.get_ylim()
+
+# ---- 当前 YTM 竖线 ----
+ax.axvline(x=y0 * 100, color='gray', ls=':', lw=1.5,
+           label=f'当前 YTM = {y0*100:.1f}%')
+
+# ---- 变动后竖线 (可调) ----
+init_bp = 100
+y_init  = y0 + init_bp / 10000
+shift_vline, = ax.plot([y_init*100, y_init*100], [ylo, yhi],
+                        'g:', lw=1.5, label=f'YTM + {init_bp}bp')
+
+# ---- 当前点 ----
+ax.plot(y0 * 100, P0, 'ko', ms=8, zorder=5,
+        label=f'当前价格 = {P0:.2f}')
+
+# ---- 变动后精确 & 近似标记 ----
+P_ex0 = bond_price(y_init)
+P_ap0 = P0 * (1 - D_mod * init_bp / 10000)
+dot_ex, = ax.plot([y_init*100], [P_ex0], 'g^', ms=10, zorder=5,
+                   label='精确价 (变动后)')
+dot_ap, = ax.plot([y_init*100], [P_ap0], 'rs', ms=10, zorder=5,
+                   label='久期近似价 (变动后)')
+
+# ---- 信息框 ----
+info_box = ax.text(
+    0.02, 0.96, '', transform=ax.transAxes, fontsize=10, va='top',
+    fontfamily='monospace',
+    bbox=dict(boxstyle='round,pad=0.4', facecolor='lightyellow', alpha=0.9))
+
+def refresh_info(dbp):
+    yn = y0 + dbp / 10000
+    pe = bond_price(yn)
+    pa = P0 * (1 - D_mod * dbp / 10000)
+    rc = -D_mod * dbp / 10000
+    info_box.set_text(
+        f'变动幅度  : {dbp:+.0f} bp\n'
+        f'新 YTM    : {yn*100:.2f}%\n'
+        f'精确价格  : {pe:.4f}\n'
+        f'久期近似  : {pa:.4f}\n'
+        f'久期法ΔP/P: {rc:+.4%}')
+
+refresh_info(init_bp)
+
+ax.set_xlabel('收益率 (%)', fontsize=12)
+ax.set_ylabel('价格', fontsize=12)
+ax.set_title(
+    f'价格—收益率曲线  (面值 {F}, 票息 {c*100}%, '
+    f'{n} 年, YTM = {y0*100}%)', fontsize=13)
+ax.legend(loc='upper right', fontsize=9, framealpha=0.9)
+ax.grid(True, alpha=0.3)
+
+# ---- 滑块 (变动幅度可调) ----
+ax_sl  = plt.axes([0.15, 0.05, 0.70, 0.03])
+slider = Slider(ax_sl, '变动(bp)', -300, 300,
+                valinit=init_bp, valstep=10, color='lightgreen')
+
+def on_slider(val):
+    dbp = slider.val
+    yn  = y0 + dbp / 10000
+    pe  = bond_price(yn)
+    pa  = P0 * (1 - D_mod * dbp / 10000)
+    shift_vline.set_xdata([yn*100, yn*100])
+    dot_ex.set_data([yn*100], [pe])
+    dot_ap.set_data([yn*100], [pa])
+    refresh_info(dbp)
+    fig.canvas.draw_idle()
+
+slider.on_changed(on_slider)
+
+# 保存图片
+fig.savefig('price_yield_curve.png', dpi=150, bbox_inches='tight')
+
+# ==================== 结果字典 ====================
+result = {
+    'price_at_up100bp':            round(P_up100, 6),
+    'dur_approx_change_up100bp':   round(dur_approx_change_up100, 6),
+    'figure_path':                 'price_yield_curve.png'
+}
+
+# ==================== 打印 ====================
+print('=' * 58)
+print(f' 当前 YTM = {y0*100}%')
+print(f'   精确价格       = {P0:.6f}')
+print(f'   Macaulay 久期  = {D_mac:.6f}')
+print(f'   修正久期       = {D_mod:.6f}')
+print(f' YTM + 100 bp → {y_up100*100}%')
+print(f'   精确价格       = {P_up100:.6f}')
+print(f'   久期法相对变化 = {dur_approx_change_up100:.6f}  '
+      f'({dur_approx_change_up100*100:.4f}%)')
+print('=' * 58)
+print(f' result = {result}')
+
+# plt.show()   # 如需交互可取消注释
+```
+
+**运行输出示例：**
+
+```
+==========================================================
+ 当前 YTM = 5.3%
+   精确价格       = 95.995125
+   Macaulay 久期  = 6.120250
+   修正久期       = 5.812208
+ YTM + 100 bp → 6.3%
+   精确价格       = 90.596447
+   久期法相对变化 = -0.058122  (-5.8122%)
+==========================================================
+ result = {'price_at_up100bp': 90.596447, 'dur_approx_change_up100bp': -0.058122, 'figure_path': 'price_yield_curve.png'}
+```
+
+**要点说明：**
+
+| 项目 | 值 | 说明 |
+|------|-----|------|
+| 当前精确价格 | 95.9951 | YTM=5.3% 时 |
+| Macaulay 久期 | 6.1203 年 | 加权平均回收时间 |
+| 修正久期 | 5.8122 | Macaulay/(1+y)，衡量价格对收益率的线性敏感度 |
+| **+100bp 精确价格** | **90.5964** | YTM 升至 6.3% 的真实价格 |
+| **久期法相对变化** | **−5.8122%** | ≈ −D_mod × 1% = −5.8122% |
+
+图中蓝色实线为精确价格—收益率曲线（凸向原点），红色虚线为在当前 YTM 处的一阶久期近似切线。两者在 YTM=5.3% 处相切，随着收益率偏离越远，凸性导致的误差越明显（久期近似总是低估价格，因为真实曲线凸向原点）。底部滑块可拖动调整变动幅度（−300 ~ +300 bp），实时更新标记点与信息框。

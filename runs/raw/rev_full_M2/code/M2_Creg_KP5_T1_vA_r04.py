@@ -1,0 +1,29 @@
+import numpy as np
+from scipy.stats import norm
+
+# ----- 给定参数 -----
+position = 1_850_000          # 头寸价值
+annual_vol = 0.218            # 年化波动率
+trading_days = 252            # 年交易日数，行业惯例
+
+# ----- 波动率换算 -----
+daily_vol = annual_vol / np.sqrt(trading_days)                # 日波动率
+ten_day_vol = annual_vol * np.sqrt(10 / trading_days)         # 10日波动率（直接由年化换算）
+
+# ----- 分位数 -----
+z_95 = norm.ppf(0.95)   # 95% 置信度对应的标准正态分位数（单尾）
+z_99 = norm.ppf(0.99)   # 99% 置信度对应的标准正态分位数（单尾）
+
+# ----- 计算 VaR（假设期望收益为零的 delta‑normal 模型） -----
+var_95_1d = position * z_95 * daily_vol
+var_99_10d = position * z_99 * ten_day_vol
+
+# ----- 按要求存入字典 -----
+result = {
+    'var_95_1d': var_95_1d,
+    'var_99_10d': var_99_10d
+}
+
+# 打印以供查看（非必须，但便于验证）
+if __name__ == "__main__":
+    print(result)

@@ -1,0 +1,63 @@
+```python
+import numpy as np
+import scipy.stats as si
+import matplotlib.pyplot as plt
+
+def bs_call_delta(S, K, T, r, sigma, q=0.0):
+    """
+    计算欧式看涨期权的 Delta
+    S: 标的价格
+    K: 行权价
+    T: 剩余期限(年)
+    r: 无风险利率
+    sigma: 波动率
+    q: 连续股息率
+    """
+    d1 = (np.log(S / K) + (r - q + sigma**2 / 2) * T) / (sigma * np.sqrt(T))
+    delta = si.norm.cdf(d1)
+    return delta
+
+# 基础参数
+K = 97.5
+r = 0.043
+T = 0.58
+q = 0.0
+
+# 标的价格范围
+S_range = np.linspace(70, 140, 500)
+
+# 可调参数：波动率列表
+volatilities = [0.15, 0.276, 0.40]
+vol_labels = ['15%', '27.6%', '40%']
+
+# 绘制 Delta 曲线
+plt.figure(figsize=(10, 6))
+
+for sigma, label in zip(volatilities, vol_labels):
+    deltas = bs_call_delta(S_range, K, T, r, sigma, q)
+    plt.plot(S_range, deltas, label=f'Volatility = {label}')
+
+plt.title('European Call Option Delta vs. Spot Price')
+plt.xlabel('Spot Price (S)')
+plt.ylabel('Delta')
+plt.legend()
+plt.grid(True)
+
+# 保存图片
+figure_path = 'delta_curve.png'
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# 报告特定点的 Delta (标的价格 110, 波动率 27.6%)
+S_target = 110
+sigma_target = 0.276
+delta_at_s110 = bs_call_delta(S_target, K, T, r, sigma_target, q)
+
+# 按照输出契约存入字典
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': figure_path
+}
+
+print(result)
+```

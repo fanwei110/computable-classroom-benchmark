@@ -1,0 +1,17 @@
+根据题目给定的计算约定，计算过程如下：
+
+1. **日波动率转换**：
+   年化波动率 $\sigma_{annual} = 0.24$，按每年252个交易日转换为日波动率：
+   $$\sigma_{daily} = \frac{\sigma_{annual}}{\sqrt{252}} = \frac{0.24}{\sqrt{252}} \approx 0.015119$$
+
+2. **计算95%一日VaR**：
+   95%置信水平对应的正态分布分位数 $z_{0.95} \approx 1.64485$（即 `scipy.stats.norm.ppf(0.95)`）。
+   头寸价值 $V = 2,700,000$。
+   $$VaR_{95\%, 1d} = V \times z_{0.95} \times \sigma_{daily}$$
+   $$VaR_{95\%, 1d} = 2,700,000 \times 1.64485 \times \frac{0.24}{\sqrt{252}} \approx 67113.75$$
+
+根据输出契约，将结果存入字典：
+
+```python
+result = {'var_95_1d': 67113.75}
+```

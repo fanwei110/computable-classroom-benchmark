@@ -1,0 +1,30 @@
+import numpy as np
+
+def main():
+    # 给定的参数（小数表示）
+    beta = 1.42
+    market_return_monthly = -0.058  # 上个月市场跌了 5.8%
+    risk_free_annual = 0.047       # 年无风险利率 4.7%
+
+    # 1. 将年无风险利率折算为月利率（简单除法）
+    risk_free_monthly = risk_free_annual / 12.0
+
+    # 2. 月度层面套用 CAPM 公式：E(R) = R_f + beta * (R_m - R_f)
+    #    这里 R_m 是上个月的市场实际收益率，作为期望的代理
+    capm_return_monthly = risk_free_monthly + beta * (market_return_monthly - risk_free_monthly)
+
+    # 3. 输出结果字典
+    result = {
+        'capm_return_monthly': capm_return_monthly
+    }
+
+    # 为便于课堂投屏，也打印结果
+    print(f"月无风险利率: {risk_free_monthly:.6f} ({risk_free_monthly*100:.4f}%)")
+    print(f"市场月收益率: {market_return_monthly:.6f} ({market_return_monthly*100:.4f}%)")
+    print(f"CAPM 预期月收益率: {capm_return_monthly:.6f} ({capm_return_monthly*100:.4f}%)")
+    print(f"result = {result}")
+
+    return result
+
+if __name__ == "__main__":
+    result = main()

@@ -1,0 +1,53 @@
+```python
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+import os
+
+# ========== 可调参数 ==========
+K = 97.5          # 行权价
+r = 0.043         # 无风险利率(每年)
+T = 0.58          # 剩余期限(年)
+sigmas = [0.15, 0.276, 0.40]   # 波动率列表，可按需修改
+S_target = 110.0                # 报告点：标的价格
+sigma_target = 0.276            # 报告点：波动率
+# ==============================
+
+def delta_call(S, K, T, r, sigma):
+    """欧式看涨期权 Black-Scholes Delta: N(d1)"""
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# 标的价格网格
+S_range = np.linspace(70, 140, 500)
+
+# 绘图
+plt.figure(figsize=(10, 6))
+for sigma in sigmas:
+    delta_vals = delta_call(S_range, K, T, r, sigma)
+    plt.plot(S_range, delta_vals, label=f'σ = {sigma*100:.1f}%')
+
+plt.xlabel('Underlying Price (S)')
+plt.ylabel('Delta')
+plt.title('Call Option Delta Curves (Black-Scholes)')
+plt.legend()
+plt.grid(True)
+
+# 保存图形
+figure_path = os.path.join(os.getcwd(), 'delta_curve.png')
+plt.savefig(figure_path, dpi=150, bbox_inches='tight')
+plt.close()
+
+# 计算特定点的 Delta
+delta_val = delta_call(S_target, K, T, r, sigma_target)
+
+# 结果字典
+result = {
+    'delta_at_s110': delta_val,
+    'figure_path': figure_path
+}
+
+# 终端输出便于教师查看
+print(f"Delta at S=110, σ=27.6%: {delta_val:.6f}")
+print(f"Figure saved to: {figure_path}")
+```

@@ -1,0 +1,275 @@
+```python
+import numpy as np
+import plotly.graph_objects as go
+
+# 初始参数（小数形式）
+rf_init = 0.023
+rm_init = 0.094
+beta_range = np.linspace(0, 2, 200)
+
+# 计算斜率与特定 beta 下的收益
+sml_slope = rm_init - rf_init
+beta_target = 1.27
+er_at_beta_127 = rf_init + beta_target * sml_slope
+
+# 需要标注的三个点
+points = {
+    'X': (0.62, 0.081),
+    'Y': (1.18, 0.131),
+    'Z': (1.51, 0.099),
+}
+
+# 构建图形
+fig = go.Figure()
+
+# SML 线初始
+er_line = rf_init + beta_range * sml_slope
+fig.add_trace(
+    go.Scatter(
+        x=beta_range,
+        y=er_line,
+        mode='lines',
+        name='SML',
+        line=dict(color='blue')
+    )
+)
+
+# 市场组合点 (可拖动思路：使用滑块改变参数，这里仅作标注)
+fig.add_trace(
+    go.Scatter(
+        x=[1],
+        y=[rm_init],
+        mode='markers+text',
+        name='市场组合 (M)',
+        marker=dict(color='red', size=10),
+        text=['M'],
+        textposition='top center'
+    )
+)
+
+# 无风险利率点
+fig.add_trace(
+    go.Scatter(
+        x=[0],
+        y=[rf_init],
+        mode='markers+text',
+        name='无风险利率 (Rf)',
+        marker=dict(color='green', size=10),
+        text=['Rf'],
+        textposition='top center'
+    )
+)
+
+# 标注 X, Y, Z
+for name, (bx, er) in points.items():
+    fig.add_trace(
+        go.Scatter(
+            x=[bx],
+            y=[er],
+            mode='markers+text',
+            name=f'{name} (β={bx}, ER={er:.1%})',
+            marker=dict(size=10, symbol='x', color='orange'),
+            text=[name],
+            textposition='bottom center'
+        )
+    )
+
+# 滑块设置：调整 Rf 与 Rm
+steps = []
+rf_vals = np.linspace(0.01, 0.05, 9)   # 1% ~ 5%
+rm_vals = np.linspace(0.07, 0.12, 11) # 7% ~ 12%
+
+for rf_val in rf_vals:
+    for rm_val in rm_vals:
+        new_slope = rm_val - rf_val
+        new_line = rf_val + beta_range * new_slope
+        step = dict(
+            method='update',
+            label=f'Rf={rf_val:.1%}, Rm={rm_val:.1%}',
+            args=[
+                {'y': [new_line, [rm_val], [rf_val], 
+                       [points['X'][1]], [points['Y'][1]], [points['Z'][1]]]},
+                {'title': f'SML: Rf={rf_val:.1%}, Rm={rm_val:.1%}, 斜率={new_slope:.4f} (即{new_slope*100:.2f}%)'}
+            ]
+        )
+        steps.append(step)
+
+# 我们无法用两个维度的滑块简单组合，这里改用两个单独的滑块控件
+# 更实用的方案：使用两个 slider，通过回调函数更新。plotly 中简单实现：使用 updatemenus 或借助 dash。
+# 为了满足“能拖的”要求，使用两个滑块分别控制 rf 和 rm 并实时更新 SML 线。
+# 最简单的是分别创建 slider 控制 rf 和 rm。但 plotly 原生的 slider 是一维的。
+# 我们将使用两个独立的 slider，通过把参数编码到步骤中不太现实。换一种方法：
+# 改用 Dash 会过于复杂。要求只是“画条SML...rf和市场收益做成能拖的”，也许可以接受简单的滑块动图。
+# 我们使用 Jupyter Notebook 风格的 ipywidgets 不合适。这里使用 plotly 的 frames 和 slider，
+# 固定 rm 改变 rf，或反过来？ 不，我们可以创建两个单独的 figure 分别演示，但要求一个图。
+# 妥协方案：做一个滑块改变 rf，另一个作为下拉菜单？ 但最好使用 HTML 中嵌入两个 slider 的简单页面。
+# 可以直接用 plotly 创建包含多个滑块的布局，但是原生 plotly 不支持两个 slider 控制同一个 trace。
+# 我们可以采用一个 slider 控制 rf，另一个用 updatemenu 控制 rm；或者生成一个完整的 html，用 JavaScript 控制。
+# 为满足“能拖的”直观要求，可以生成一个带有 range input 的简单 HTML，用 plotly 的 JS API。但这需要编写大量 js。
+# 重新解读：“rf和市场收益做成能拖的” 可能是指图上点可以用鼠标拖动。plotly 的拖拽点 editing 功能：
+# 可以开启 config edits 让点可拖动，然后通过监听事件更新 SML 线。但静态 HTML 保存可能不行。
+# 更实际的实现：使用 matplotlib 的滑块（Slider）并保存为图片？图片无法交互。
+# 输出要求有 figure_path，可能是 png 或 html。鉴于“能拖的”通常意味着 html 交互式。
+# 我决定采用 plotly 的 frames 和 slider 实现一个滑块同时改变 rf 和 rm 的组合，虽然不灵活，但至少可以拖动滑块看到不同 SML。
+# 或者使用一个滑块控制 rf，另一个控制 rm？可以将 rf 和 rm 的变化组合在一个滑块中，例如步长一起变，先改变 rf，再改变 rm。
+# 更简单：只设置一个滑块改变市场风险溢价（斜率），保持 rf 固定？但是要求“rf和市场收益做成能拖的”两者独立拖动。
+# 我会使用 plotly 的 range slider 或者两个滑块？尝试使用 plotly.figure 的 layout 中增加两个 range slider 是不可能的。
+# 评估：在结果中提供一个 plotly html，包含两个 form input 并通过 javascript 更新 SML 线。编写一个完整的 HTML 模板。
+# 这是最可靠的交互方案：保存一个自包含的 HTML 文件，包含两个 range input 和 plotly 图表，js 动态更新。
+# 由于对话限制不能执行外部 js？可以生成 html 代码并保存。
+# 简化：假设“能拖的”是指使用 ipywidgets 或交互式环境，但最终保存的图片可能是静态的？不行，明确“rf和市场收益做成能拖的”。
+# 我决定生成一个 HTML 文件，内嵌 plotly.js 并使用两个 input range 拖动 rf 和 rm，实时更新 SML 线和标注点。
+# 将 HTML 路径保存到 figure_path。
+# 编写完整的 HTML 内容并写入文件。
+# 注意：文件名需要有意义，例如 sml_interactive.html。
+# 最终 result 字典包含 sml_slope, er_at_beta_127, figure_path。
+
+import os
+import json
+
+# 生成自包含的交互式 HTML
+html_content = f"""
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+    <style>
+        body {{ font-family: Arial, sans-serif; }}
+        .slider-container {{ display: flex; gap: 20px; margin: 10px; }}
+        .slider-group {{ display: flex; flex-direction: column; }}
+        label {{ font-weight: bold; }}
+        #chart {{ width: 900px; height: 600px; }}
+    </style>
+</head>
+<body>
+    <h2>证券市场线 (SML) - 交互式</h2>
+    <div class="slider-container">
+        <div class="slider-group">
+            <label for="rfSlider">无风险利率 Rf: <span id="rfValue">2.30%</span></label>
+            <input type="range" id="rfSlider" min="0.5" max="5" step="0.01" value="2.3">
+        </div>
+        <div class="slider-group">
+            <label for="rmSlider">市场收益率 Rm: <span id="rmValue">9.40%</span></label>
+            <input type="range" id="rmSlider" min="6" max="15" step="0.01" value="9.4">
+        </div>
+    </div>
+    <div id="chart"></div>
+    <div id="info">
+        <p>斜率 (市场风险溢价): <span id="slopeDisplay">7.10%</span></p>
+        <p>β = 1.27 时的预期收益率: <span id="beta127Display">11.317%</span></p>
+    </div>
+    <script>
+        const betaRange = Array.from({{ length: 201 }}, (_, i) => i * 0.01); // 0 到 2
+        const X = {{ beta: 0.62, er: 0.081 }};
+        const Y = {{ beta: 1.18, er: 0.131 }};
+        const Z = {{ beta: 1.51, er: 0.099 }};
+        
+        const layout = {{
+            xaxis: {{ title: 'β (Beta)', range: [0, 2.1], dtick: 0.2 }},
+            yaxis: {{ title: '预期收益率', tickformat: '.1%', range: [0, 0.16] }},
+            showlegend: true,
+            legend: {{ x: 0.01, y: 0.99 }},
+            margin: {{ t: 30 }}
+        }};
+        
+        const config = {{ responsive: true }};
+        
+        function updateChart() {{
+            const rf_percent = parseFloat(document.getElementById('rfSlider').value);
+            const rm_percent = parseFloat(document.getElementById('rmSlider').value);
+            const rf = rf_percent / 100;
+            const rm = rm_percent / 100;
+            const slope = rm - rf;
+            
+            document.getElementById('rfValue').textContent = rf_percent.toFixed(2) + '%';
+            document.getElementById('rmValue').textContent = rm_percent.toFixed(2) + '%';
+            document.getElementById('slopeDisplay').textContent = (slope * 100).toFixed(2) + '%';
+            const er_beta127 = rf + 1.27 * slope;
+            document.getElementById('beta127Display').textContent = (er_beta127 * 100).toFixed(3) + '%';
+            
+            const sml_y = betaRange.map(b => rf + b * slope);
+            
+            const traces = [
+                {{
+                    x: betaRange,
+                    y: sml_y,
+                    mode: 'lines',
+                    name: 'SML',
+                    line: {{ color: 'blue' }}
+                }},
+                {{
+                    x: [1],
+                    y: [rm],
+                    mode: 'markers+text',
+                    name: '市场组合 (M)',
+                    marker: {{ color: 'red', size: 10 }},
+                    text: ['M'],
+                    textposition: 'top center'
+                }},
+                {{
+                    x: [0],
+                    y: [rf],
+                    mode: 'markers+text',
+                    name: '无风险利率 (Rf)',
+                    marker: {{ color: 'green', size: 10 }},
+                    text: ['Rf'],
+                    textposition: 'top center'
+                }},
+                {{
+                    x: [X.beta],
+                    y: [X.er],
+                    mode: 'markers+text',
+                    name: 'X (β=0.62, ER=8.1%)',
+                    marker: {{ color: 'orange', size: 10, symbol: 'x' }},
+                    text: ['X'],
+                    textposition: 'bottom center'
+                }},
+                {{
+                    x: [Y.beta],
+                    y: [Y.er],
+                    mode: 'markers+text',
+                    name: 'Y (β=1.18, ER=13.1%)',
+                    marker: {{ color: 'orange', size: 10, symbol: 'x' }},
+                    text: ['Y'],
+                    textposition: 'bottom center'
+                }},
+                {{
+                    x: [Z.beta],
+                    y: [Z.er],
+                    mode: 'markers+text',
+                    name: 'Z (β=1.51, ER=9.9%)',
+                    marker: {{ color: 'orange', size: 10, symbol: 'x' }},
+                    text: ['Z'],
+                    textposition: 'bottom center'
+                }}
+            ];
+            
+            Plotly.react('chart', traces, layout, config);
+        }}
+        
+        // 初始绑定
+        document.getElementById('rfSlider').addEventListener('input', updateChart);
+        document.getElementById('rmSlider').addEventListener('input', updateChart);
+        window.onload = updateChart;
+    </script>
+</body>
+</html>
+"""
+
+# 保存 HTML 文件
+figure_path = "sml_interactive.html"
+with open(figure_path, "w", encoding="utf-8") as f:
+    f.write(html_content)
+
+# 结果字典
+result = {
+    'sml_slope': sml_slope,            # 0.071
+    'er_at_beta_127': er_at_beta_127,  # 0.11317
+    'figure_path': os.path.abspath(figure_path)
+}
+
+# 打印结果（用于验证）
+import pprint
+pprint.pprint(result)
+```

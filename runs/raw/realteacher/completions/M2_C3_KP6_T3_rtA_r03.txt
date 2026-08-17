@@ -1,0 +1,72 @@
+我来帮你计算年化夏普比率。首先让我读取并分析数据文件。
+
+```python
+import pandas as pd
+import numpy as np
+
+# 读取数据
+df = pd.read_csv('data.csv')
+df
+```
+
+```python
+# 查看列名和前几行数据
+print(df.columns.tolist())
+print(df.head())
+```
+
+```python
+# 查看fund列的数据
+print(df['fund'].describe())
+print(f"\n数据类型: {df['fund'].dtype}")
+```
+
+```python
+# 计算日收益的统计量
+fund_returns = df['fund'].dropna()
+
+# 无风险利率（年化）
+rf_annual = 0.021
+
+# 转换为日无风险利率（按连续复利）
+rf_daily = rf_annual / 252
+
+# 计算日超额收益
+excess_returns = fund_returns - rf_daily
+
+# 计算年化夏普比率
+# 年化超额收益 = 日均超额收益 * 252
+annual_excess_return = excess_returns.mean() * 252
+
+# 年化标准差 = 日标准差 * sqrt(252)，使用ddof=1
+annual_std = excess_returns.std(ddof=1) * np.sqrt(252)
+
+# 年化夏普比率
+sharpe_annual = annual_excess_return / annual_std
+
+print(f"日均超额收益: {excess_returns.mean():.6f}")
+print(f"年化超额收益: {annual_excess_return:.6f}")
+print(f"日标准差(ddof=1): {excess_returns.std(ddof=1):.6f}")
+print(f"年化标准差: {annual_std:.6f}")
+print(f"年化夏普比率: {sharpe_annual:.6f}")
+```
+
+```python
+# 构建结果字典
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+print(result)
+```
+
+根据计算结果，年化夏普比率已存入名为 `result` 的字典中。
+
+**计算说明：**
+- 使用了 fund 列的日收益率数据
+- 无风险利率为年化 2.1%（即 0.021），按年化 252 个交易日转换为日无风险利率
+- 超额收益 = 日收益 - 日无风险利率
+- 年化超额收益 = 日均超额收益 × 252
+- 年化标准差 = 日超额收益的标准差（ddof=1）× √252
+- 年化夏普比率 = 年化超额收益 / 年化标准差
+- 结果以小数形式表示

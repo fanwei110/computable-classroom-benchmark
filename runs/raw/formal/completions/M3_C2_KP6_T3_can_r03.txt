@@ -1,0 +1,42 @@
+```python
+import pandas as pd
+import numpy as np
+
+# ================= 假设说明 =================
+# 1. 频率假设：题目未指明数据频率，按金融惯例假设数据为日度频率，年化计算采用 252 个交易日。
+# 2. 序列假设：假设 'fund' 列为基金净值（NAV）序列，需先使用 pct_change() 计算日度简单收益率。
+# 3. 风险度量：采用样本标准差（自由度 ddof=1）衡量波动率，符合统计学与金融业界标准。
+# 4. 年化方法：Sharpe_annual = (Mean_daily_excess / Std_daily) * sqrt(252)
+# ==========================================
+
+# 1. 读取快照 CSV
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 提取 fund 列并计算日度简单收益率
+fund_nav = df['fund']
+daily_returns = fund_nav.pct_change().dropna()
+
+# 2. 计算全样本年化夏普比率
+rf_annual = 0.021            # 年化无风险利率 2.1%
+trading_days = 252           # 年化交易日因子
+rf_daily = rf_annual / trading_days  # 日度无风险利率
+
+# 计算日度超额收益
+excess_daily_returns = daily_returns - rf_daily
+
+# 计算日度超额收益均值与日度收益率标准差
+mean_excess_daily = excess_daily_returns.mean()
+std_daily = daily_returns.std(ddof=1)  # 使用样本标准差
+
+# 计算年化夏普比率
+sharpe_annual = (mean_excess_daily / std_daily) * np.sqrt(trading_days)
+
+# 3. 把结果存入 result
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+# 课堂投屏展示辅助输出
+print(f"基金年化夏普比率: {sharpe_annual:.4f}")
+print(f"result = {result}")
+```

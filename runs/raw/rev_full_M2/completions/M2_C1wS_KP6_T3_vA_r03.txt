@@ -1,0 +1,69 @@
+```python
+import pandas as pd
+import numpy as np
+
+# ----------------------------------------------------------------------
+# 1. 读取数据 —— 假设课程文件名为 fund_data.csv，包含至少一列 'fund'
+#    若存在 'date' 列，则用于推断数据频率；否则默认为月度数据
+# ----------------------------------------------------------------------
+DATA_FILE = 'fund_data.csv'          # 教师运行时会提供该文件
+Rf_annual = 0.021                    # 年化无风险利率 2.1%
+
+df = pd.read_csv(DATA_FILE)
+
+# 确保基金收益率列存在
+if 'fund' not in df.columns:
+    raise ValueError("CSV 文件中必须包含 'fund' 列，代表基金收益率")
+
+returns = df['fund'].astype(float)
+
+# ----------------------------------------------------------------------
+# 2. 推断数据频率并确定年化因子
+# ----------------------------------------------------------------------
+if 'date' in df.columns:
+    dates = pd.to_datetime(df['date'])
+    # 计算相邻日期间隔的中位数（秒、天等）
+    diffs = dates.diff().dropna()
+    median_diff = diffs.median()
+    # 转换为天数
+    days = median_diff.total_seconds() / (24 * 3600)
+    if days <= 1.5:                # 日频
+        periods_per_year = 252
+    elif 5 <= days <= 9:           # 周频
+        periods_per_year = 52
+    elif 20 <= days <= 35:         # 月频
+        periods_per_year = 12
+    elif 60 <= days <= 120:        # 季频
+        periods_per_year = 4
+    else:                          # 默认月频
+        periods_per_year = 12
+else:
+    # 没有日期信息，默认月度数据
+    periods_per_year = 12
+
+# ----------------------------------------------------------------------
+# 3. 计算年化夏普比率
+#    期间无风险利率 = 年化无风险利率 / 年化周期数
+#    超额收益序列 = 基金收益率 - 期间无风险利率
+#    夏普比率 = 平均超额收益 / 超额收益标准差 * sqrt(周期数)
+# ----------------------------------------------------------------------
+rf_period = Rf_annual / periods_per_year
+excess_returns = returns - rf_period
+
+# 样本均值与标准差（自由度 ddof=1，使用样本标准差）
+mean_excess = excess_returns.mean()
+std_excess = excess_returns.std(ddof=1)   # 无偏估计
+
+# 年化夏普比率
+sharpe_annual = (mean_excess / std_excess) * np.sqrt(periods_per_year)
+
+# ----------------------------------------------------------------------
+# 4. 存入结果字典
+# ----------------------------------------------------------------------
+result = {
+    'sharpe_annual': round(sharpe_annual, 6)   # 保留6位小数，便于展示
+}
+
+# 打印结果，方便教师投屏查看
+print(result)
+```

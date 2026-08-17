@@ -1,0 +1,69 @@
+import numpy as np
+import pandas as pd
+import matplotlib.pyplot as plt
+import os
+
+# ------------------------- 可调参数 -------------------------
+WINDOW = 60                     # 滚动窗口长度（交易日）
+RISK_FREE_RATE = 0.021          # 年化无风险利率
+ANNUAL_FACTOR = 252             # 年化交易日数
+SEED = 42                       # 示例数据随机种子
+DATA_FILE = "fund_data.csv"     # 期望的数据文件路径
+FIGURE_FILE = "rolling_sharpe.png"  # 输出图片路径
+# ------------------------------------------------------------
+
+def load_data():
+    """尝试从文件读取 fund 列日收益，若文件不存在则生成示例数据。"""
+    if os.path.exists(DATA_FILE):
+        df = pd.read_csv(DATA_FILE, parse_dates=True, index_col=0)
+        if 'fund' not in df.columns:
+            raise ValueError("数据文件缺少 'fund' 列")
+        return df['fund']
+    else:
+        print(f"未找到 '{DATA_FILE}'，使用随机种子 {SEED} 生成示例数据。")
+        np.random.seed(SEED)
+        dates = pd.bdate_range(start='2020-01-01', periods=500)
+        # 生成对数收益率，使其大致符合正态分布，并转换为简单收益率
+        log_returns = np.random.normal(0.0003, 0.015, size=500)
+        simple_returns = np.exp(log_returns) - 1
+        return pd.Series(simple_returns, index=dates, name='fund')
+
+def compute_rolling_sharpe(daily_returns, window):
+    """计算滚动年化夏普比率。"""
+    rf_daily = RISK_FREE_RATE / ANNUAL_FACTOR
+    rolling_mean = daily_returns.rolling(window).mean()
+    rolling_std = daily_returns.rolling(window).std()
+    rolling_sharpe = (rolling_mean - rf_daily) / rolling_std * np.sqrt(ANNUAL_FACTOR)
+    return rolling_sharpe
+
+def main():
+    # 1. 读取数据
+    daily_returns = load_data()
+    
+    # 2. 计算滚动夏普比率
+    rolling_sharpe = compute_rolling_sharpe(daily_returns, WINDOW)
+    
+    # 3. 提取最后一个窗口的夏普值
+    rolling_sharpe_last = rolling_sharpe.dropna().iloc[-1]
+    
+    # 4. 画图并保存
+    plt.figure(figsize=(10, 5))
+    plt.plot(rolling_sharpe.index, rolling_sharpe.values, color='steelblue', linewidth=1.2)
+    plt.title(f"{WINDOW}-Day Rolling Annualized Sharpe Ratio (fund)", fontsize=14)
+    plt.xlabel("Date")
+    plt.ylabel("Sharpe Ratio")
+    plt.grid(True, alpha=0.3)
+    plt.tight_layout()
+    plt.savefig(FIGURE_FILE, dpi=150)
+    plt.close()
+    
+    # 5. 组装结果字典
+    result = {
+        'rolling_sharpe_last': round(rolling_sharpe_last, 6),
+        'figure_path': os.path.abspath(FIGURE_FILE)
+    }
+    print(result)
+    return result
+
+if __name__ == "__main__":
+    main()

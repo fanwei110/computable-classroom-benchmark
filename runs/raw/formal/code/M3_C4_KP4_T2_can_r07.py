@@ -1,0 +1,62 @@
+import numpy as np
+import matplotlib.pyplot as plt
+from scipy.stats import norm
+
+def bs_call_delta(S, K, T, r, sigma):
+    """
+    计算无分红欧式看涨期权的 Delta (连续复利)
+    Delta = N(d1)
+    d1 = [ln(S/K) + (r + 0.5 * sigma^2) * T] / (sigma * sqrt(T))
+    """
+    d1 = (np.log(S / K) + (r + 0.5 * sigma**2) * T) / (sigma * np.sqrt(T))
+    return norm.cdf(d1)
+
+# ---------------- 基础参数设置 ----------------
+K = 97.5          # 行权价
+r = 0.043         # 无风险利率 (4.3%)
+T = 0.58          # 剩余期限 (年)
+q = 0.0           # 标的资产无分红
+
+# 标的资产价格网格
+S_grid = np.linspace(70, 140, 500)
+
+# 波动率参数化（可调参数列表）
+volatilities = [0.15, 0.276, 0.40]
+
+# ---------------- 绘制 Delta 曲线 ----------------
+plt.figure(figsize=(10, 6))
+
+for sigma in volatilities:
+    # 计算当前波动率下的 Delta 序列
+    deltas = bs_call_delta(S_grid, K, T, r, sigma)
+    # 绘制曲线
+    plt.plot(S_grid, deltas, label=f'σ = {sigma:.1%}', linewidth=2)
+
+# 图表格式设置
+plt.title('European Call Option Delta vs Underlying Price', fontsize=14)
+plt.xlabel('Underlying Price (S)', fontsize=12)
+plt.ylabel('Delta (Δ)', fontsize=12)
+plt.axhline(0, color='black', linewidth=0.5)
+plt.axhline(1, color='black', linewidth=0.5)
+plt.legend(fontsize=11)
+plt.grid(True, linestyle='--', alpha=0.7)
+
+# 保存图形
+figure_path = 'bs_call_delta_curve.png'
+plt.savefig(figure_path, dpi=300, bbox_inches='tight')
+plt.close()
+
+# ---------------- 计算特定点的 Delta ----------------
+S_target = 110
+sigma_target = 0.276
+delta_at_s110 = bs_call_delta(S_target, K, T, r, sigma_target)
+
+# ---------------- 封装输出 ----------------
+result = {
+    'delta_at_s110': delta_at_s110,
+    'figure_path': figure_path
+}
+
+# 打印结果以便课堂投屏展示
+print(f"标的价格110、波动率27.6%时的Delta: {delta_at_s110:.6f}")
+print(f"图形已保存至: {figure_path}")

@@ -1,0 +1,21 @@
+# 计算过程
+Rf = 0.023
+Rm = 0.094
+market_premium = Rm - Rf  # 0.071
+
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+actual_return_y = 0.131
+
+er_x = Rf + beta_x * market_premium  # 0.023 + 0.62*0.071 = 0.06702
+er_y = Rf + beta_y * market_premium  # 0.023 + 1.18*0.071 = 0.10678
+er_z = Rf + beta_z * market_premium  # 0.023 + 1.51*0.071 = 0.13021
+alpha_y = actual_return_y - er_y      # 0.131 - 0.10678 = 0.02422
+
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}

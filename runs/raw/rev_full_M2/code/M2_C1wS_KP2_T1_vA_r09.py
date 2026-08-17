@@ -1,0 +1,38 @@
+import numpy as np
+
+# 输入参数
+rf = 0.023          # 无风险利率，每年2.3%
+E_Rm = 0.094        # 市场期望收益，每年9.4%
+beta_x = 0.62
+beta_y = 1.18
+beta_z = 1.51
+actual_return_y = 0.131   # Y 实际年收益 13.1%
+
+# 市场风险溢价
+market_risk_premium = E_Rm - rf   # 9.4% - 2.3% = 7.1%
+
+# 1. 根据 CAPM 计算期望收益
+er_x = rf + beta_x * market_risk_premium
+er_y = rf + beta_y * market_risk_premium
+er_z = rf + beta_z * market_risk_premium
+
+# 2. 计算 Y 的 alpha
+alpha_y = actual_return_y - er_y
+
+# 3. 填充结果字典
+result = {
+    'er_x': er_x,
+    'er_y': er_y,
+    'er_z': er_z,
+    'alpha_y': alpha_y
+}
+
+# 输出结果
+if __name__ == "__main__":
+    print("CAPM 期望收益与 Alpha 计算结果：")
+    print(f"X 期望收益: {er_x:.4f} ({er_x*100:.2f}%)")
+    print(f"Y 期望收益: {er_y:.4f} ({er_y*100:.2f}%)")
+    print(f"Z 期望收益: {er_z:.4f} ({er_z*100:.2f}%)")
+    print(f"Y Alpha:     {alpha_y:.4f} ({alpha_y*100:.2f}%)")
+    print("\nresult 字典内容：")
+    print(result)

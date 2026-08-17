@@ -1,0 +1,38 @@
+根据题目给定的计算约定，债券收益率按年复利报价，因此每年付息1次，折现率为 $(1+0.053)^t$。
+
+**1. 计算债券价格 (Price)**
+债券价格是未来现金流的现值总和：
+$$ P = \sum_{t=1}^{7} \frac{C}{(1+y)^t} + \frac{F}{(1+y)^7} $$
+其中，面值 $F = 100$，票息 $C = 100 \times 0.046 = 4.6$，到期收益率 $y = 0.053$。
+$$ P = \frac{4.6}{0.053} \left(1 - \frac{1}{1.053^7}\right) + \frac{100}{1.053^7} $$
+$$ P \approx 86.79245 \times 0.30399267 + 69.60073 $$
+$$ P \approx 26.38426 + 69.60073 = 95.98499 $$
+
+**2. 计算麦考利久期 (Macaulay Duration)**
+$$ MacD = \frac{1}{P} \left[ \sum_{t=1}^{7} \frac{t \cdot C}{(1+y)^t} + \frac{7 \cdot F}{(1+y)^7} \right] $$
+利用年金求和公式计算 $\sum t \cdot v^t$：
+$$ \sum_{t=1}^{7} t \cdot v^t = \frac{v - 8v^8 + 7v^9}{(1-v)^2} \approx 22.21651 $$
+票息部分现值加权和 = $4.6 \times 22.21651 \approx 102.19593$
+本金部分现值加权和 = $7 \times 100 \times 0.69600733 \approx 487.20513$
+$$ MacD = \frac{102.19593 + 487.20513}{95.98499} = \frac{589.40106}{95.98499} \approx 6.13829 \text{ 年} $$
+
+**3. 计算修正久期 (Modified Duration)**
+$$ ModD = \frac{MacD}{1+y} = \frac{6.13829}{1.053} \approx 5.82962 \text{ 年} $$
+
+**4. 计算凸性 (Convexity)**
+$$ Conv = \frac{1}{P(1+y)^2} \left[ \sum_{t=1}^{7} \frac{t(t+1) \cdot C}{(1+y)^t} + \frac{7 \times 8 \cdot F}{(1+y)^7} \right] $$
+利用公式计算 $\sum t(t+1) \cdot v^t = \sum t(t-1) v^t + 2\sum t v^t$：
+$$ \sum_{t=1}^{7} t(t-1) v^t \approx 196.46543 $$
+$$ \sum_{t=1}^{7} t(t+1) v^t \approx 196.46543 + 2 \times 22.21651 = 240.89845 $$
+票息部分 = $4.6 \times 240.89845 \approx 1108.13287$
+本金部分 = $56 \times 100 \times 0.69600733 \approx 3897.64103$
+$$ Conv = \frac{1108.13287 + 3897.64103}{95.98499 \times 1.053^2} = \frac{5005.77390}{106.43276} \approx 47.03253 $$
+
+```python
+result = {
+    'price': 95.98499,
+    'macaulay_duration_years': 6.13829,
+    'modified_duration_years': 5.82962,
+    'convexity': 47.03253
+}
+```

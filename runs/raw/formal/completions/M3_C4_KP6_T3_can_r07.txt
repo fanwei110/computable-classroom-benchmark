@@ -1,0 +1,30 @@
+```python
+import pandas as pd
+import numpy as np
+
+# 1. 读取数据
+df = pd.read_csv('data/market_snapshot_v1.csv')
+
+# 提取 fund 列的日收益率
+fund_returns = df['fund']
+
+# 2. 计算日无风险利率及日超额收益
+rf_annual = 0.021
+rf_daily = rf_annual / 252
+excess_daily_returns = fund_returns - rf_daily
+
+# 3. 计算全样本夏普比率并年化
+# 日超额收益的均值与样本标准差(ddof=1)
+mean_excess_daily = excess_daily_returns.mean()
+std_excess_daily = excess_daily_returns.std(ddof=1)
+
+# 年化夏普比率 = (日超额收益均值 / 日超额收益标准差) * sqrt(252)
+sharpe_annual = (mean_excess_daily / std_excess_daily) * np.sqrt(252)
+
+# 4. 存入结果字典
+result = {
+    'sharpe_annual': sharpe_annual
+}
+
+print(result)
+```

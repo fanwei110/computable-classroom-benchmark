@@ -1,0 +1,60 @@
+```python
+import numpy as np
+
+# ================= 1. 确定权重与资产的对应方式 =================
+# 假设：A占六成(w_A=0.6)，B占四成(w_B=0.4)
+w_A = 0.6
+w_B = 0.4
+w = np.array([w_A, w_B])
+
+# ================= 2. 获取资产波动率并构造协方差矩阵 =================
+# 将给定的百分比波动率转化为小数形式进行计算
+vol_A = 0.184
+vol_B = 0.297
+
+# 计算方差
+var_A = vol_A ** 2
+var_B = vol_B ** 2
+
+# 设定两种情形的相关系数
+rho_before = 0.3
+rho_after = 0.8
+
+# 计算协方差: Cov(A, B) = rho * vol_A * vol_B
+cov_before = rho_before * vol_A * vol_B
+cov_after = rho_after * vol_A * vol_B
+
+# 构造协方差矩阵 Σ
+Sigma_before = np.array([
+    [var_A, cov_before],
+    [cov_before, var_B]
+])
+
+Sigma_after = np.array([
+    [var_A, cov_after],
+    [cov_after, var_B]
+])
+
+# ================= 3. 计算两个组合波动率 =================
+# 组合方差公式: σ_p^2 = w'Σw
+# 组合波动率公式: σ_p = sqrt(w'Σw)
+
+var_portfolio_before = w.T @ Sigma_before @ w
+var_portfolio_after = w.T @ Sigma_after @ w
+
+vol_portfolio_before = np.sqrt(var_portfolio_before)
+vol_portfolio_after = np.sqrt(var_portfolio_after)
+
+# ================= 4. 填充 result =================
+result = {
+    'vol_before_annual': vol_portfolio_before,
+    'vol_after_annual': vol_portfolio_after
+}
+
+# 课堂投屏辅助打印（方便教师展示验证）
+print(f"组合权重: A = {w_A:.1%}, B = {w_B:.1%}")
+print(f"相关系数为 {rho_before} 时，组合年化波动率: {vol_portfolio_before:.4%}")
+print(f"相关系数为 {rho_after} 时，组合年化波动率: {vol_portfolio_after:.4%}")
+print("\n最终输出 result 字典:")
+print(result)
+```
