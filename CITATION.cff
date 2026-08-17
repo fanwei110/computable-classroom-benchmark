@@ -12,6 +12,7 @@ version: 1.0.0
 date-released: 2026-08-17
 license: MIT
 repository-code: "https://github.com/fanwei110/computable-classroom-benchmark"
+doi: "10.5281/zenodo.21972267"
 keywords:
   - reliability benchmark
   - large language models
