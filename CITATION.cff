@@ -9,10 +9,9 @@ abstract: >-
   analytic/solver oracles, with a deterministic + blinded error-coding pipeline.
 type: dataset
 version: 1.0.0
-date-released: 2026-07-02
+date-released: 2026-08-17
 license: MIT
-repository-code: "[REPO_URL]"
-doi: "[ZENODO_DOI]"
+repository-code: "https://github.com/fanwei110/computable-classroom-benchmark"
 keywords:
   - reliability benchmark
   - large language models
@@ -20,7 +19,6 @@ keywords:
   - computational finance
   - reproducibility
 authors:
-  # ORCID iDs to be added at release.
   - family-names: "Guo"
     given-names: "Ping"
     affiliation: "School of Foreign Languages, Henan University of Technology, Zhengzhou, China"
